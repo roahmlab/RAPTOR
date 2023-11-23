@@ -1,4 +1,5 @@
 #include "FourierCurves.h"
+#include "InverseDynamics.h"
 
 using namespace IDTO;
 

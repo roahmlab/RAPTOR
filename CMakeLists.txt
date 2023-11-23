@@ -16,6 +16,9 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+# Add pinocchio configurations
+include(cmake/pinocchio_config.cmake)
+
 ## Trajectories library
 add_library(trajlib SHARED
     Trajectories/src/FourierCurves.cpp 
@@ -23,6 +26,16 @@ add_library(trajlib SHARED
 
 target_include_directories(trajlib PUBLIC
     Trajectories/include)
+
+## Inverse dynamics library
+add_library(IDlib SHARED
+    InverseDynamics/src/InverseDynamics.cpp)
+
+target_include_directories(IDlib PUBLIC
+    InverseDynamics/include)
+
+target_compile_options(IDlib PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 ## Example scripts
 add_executable(IDTO_example 
@@ -33,11 +46,19 @@ target_include_directories(IDTO_example PRIVATE
 
 target_link_libraries(IDTO_example PRIVATE
     trajlib 
+    IDlib
     ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES})
 
+target_compile_options(IDTO_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 ## Install
 install(TARGETS trajlib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS IDlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
