@@ -42,14 +42,14 @@ public:
     VecX tspan;   // a column vector of discrete time instances to check constraint violation
 
     // compute results are stored here
-    Eigen::Array<VecX, 1, 1> q;
-    Eigen::Array<VecX, 1, 1> q_d;
-    Eigen::Array<VecX, 1, 1> q_dd;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> q;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> q_d;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> q_dd;
 
     // compute results are stored here
-    Eigen::Array<SpaMatX, 1, 1> pq_pz;
-    Eigen::Array<SpaMatX, 1, 1> pq_d_pz;
-    Eigen::Array<SpaMatX, 1, 1> pq_dd_pz;
+    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_pz;
+    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_d_pz;
+    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_dd_pz;
 };
 
 }; // namespace IDTO    

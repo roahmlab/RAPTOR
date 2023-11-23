@@ -5,23 +5,23 @@ namespace IDTO {
 FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
-    Eigen::VectorXd F = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd dF = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd ddF = Eigen::VectorXd::Zero(2 * degree + 1);
+    F = VecX::Zero(2 * degree + 1);
+    dF = VecX::Zero(2 * degree + 1);
+    ddF = VecX::Zero(2 * degree + 1);
 
-    Eigen::VectorXd F0 = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd dF0 = Eigen::VectorXd::Zero(2 * degree + 1);
+    F0 = VecX::Zero(2 * degree + 1);
+    dF0 = VecX::Zero(2 * degree + 1);
 }
 
 FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
     Trajectories(T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
-    Eigen::VectorXd F = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd dF = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd ddF = Eigen::VectorXd::Zero(2 * degree + 1);
+    F = VecX::Zero(2 * degree + 1);
+    dF = VecX::Zero(2 * degree + 1);
+    ddF = VecX::Zero(2 * degree + 1);
 
-    Eigen::VectorXd F0 = Eigen::VectorXd::Zero(2 * degree + 1);
-    Eigen::VectorXd dF0 = Eigen::VectorXd::Zero(2 * degree + 1);
+    F0 = VecX::Zero(2 * degree + 1);
+    dF0 = VecX::Zero(2 * degree + 1);
 }
 
 void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
@@ -33,8 +33,12 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
     for (int x = 0; x < N; x++) {
         double t = tspan(x);
 
+        q(x) = VecX::Zero(Nact);
+        q_d(x) = VecX::Zero(Nact);
+        q_dd(x) = VecX::Zero(Nact);
+
         for (int i = 0; i < Nact; i++) {
-            Eigen::VectorXd kernel = coefficients.block(0, i, 2 * degree + 1, 1);
+            VecX kernel = coefficients.block(0, i, 2 * degree + 1, 1);
             double w = coefficients(2 * degree + 1, i);
 
             ddF(0) = 1;
