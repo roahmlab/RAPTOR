@@ -29,7 +29,9 @@ target_include_directories(trajlib PUBLIC
 
 ## Inverse dynamics library
 add_library(IDlib SHARED
-    InverseDynamics/src/InverseDynamics.cpp)
+    InverseDynamics/src/InverseDynamics.cpp
+    InverseDynamics/src/DynamicsConstraints.cpp
+    InverseDynamics/src/ConstrainedInverseDynamics.cpp)
 
 target_include_directories(IDlib PUBLIC
     InverseDynamics/include)

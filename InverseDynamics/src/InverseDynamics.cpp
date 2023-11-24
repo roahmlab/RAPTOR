@@ -10,8 +10,8 @@ InverseDynamics::InverseDynamics(const Model& model_input, int N_input) :
     tau.resize(1, N);
 
     ptau_pq.resize(1, N);
-    ptau_pq_d.resize(1, N);
-    ptau_pq_dd.resize(1, N);
+    ptau_pv.resize(1, N);
+    ptau_pa.resize(1, N);
 
     rnea_partial_dq = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     rnea_partial_dv = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
@@ -19,22 +19,22 @@ InverseDynamics::InverseDynamics(const Model& model_input, int N_input) :
 }
 
 void InverseDynamics::compute(const Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 
-                              const Eigen::Array<VecX, 1, Eigen::Dynamic>& q_d, 
-                              const Eigen::Array<VecX, 1, Eigen::Dynamic>& q_dd,
+                              const Eigen::Array<VecX, 1, Eigen::Dynamic>& v, 
+                              const Eigen::Array<VecX, 1, Eigen::Dynamic>& a,
                               bool compute_derivatives) {
     for (int i = 0; i < N; i++) {
         if (!compute_derivatives) {
-            pinocchio::rnea(*modelPtr_, *dataPtr_, q(i), q_d(i), q_dd(i));
+            pinocchio::rnea(*modelPtr_, *dataPtr_, q(i), v(i), a(i));
         }
         else {
-            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, q(i), q_d(i), q_dd(i), 
+            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, q(i), v(i), a(i), 
                                               rnea_partial_dq, rnea_partial_dv, rnea_partial_da);
         }
         
         // adjust with damping force and rotor inertia force
         tau(i) = dataPtr_->tau + 
-                 modelPtr_->damping.cwiseProduct(q_d(i)) + 
-                 modelPtr_->rotorInertia.cwiseProduct(q_dd(i));
+                 modelPtr_->damping.cwiseProduct(v(i)) + 
+                 modelPtr_->rotorInertia.cwiseProduct(a(i));
                 
         if (compute_derivatives) {
             // rnea_partial_da is just the inertia matrix.
@@ -56,8 +56,8 @@ void InverseDynamics::compute(const Eigen::Array<VecX, 1, Eigen::Dynamic>& q,
             }
 
             ptau_pq(i) = rnea_partial_dq;
-            ptau_pq_d(i) = rnea_partial_dv;
-            ptau_pq_dd(i) = rnea_partial_da;
+            ptau_pv(i) = rnea_partial_dv;
+            ptau_pa(i) = rnea_partial_da;
         }
     }
 }

@@ -39,10 +39,10 @@ public:
     ~InverseDynamics() = default;
 
     // class methods:
-    void compute(const Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 
-                 const Eigen::Array<VecX, 1, Eigen::Dynamic>& q_d, 
-                 const Eigen::Array<VecX, 1, Eigen::Dynamic>& q_dd,
-                 bool compute_derivatives = true);
+    virtual void compute(const Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 
+                         const Eigen::Array<VecX, 1, Eigen::Dynamic>& v, 
+                         const Eigen::Array<VecX, 1, Eigen::Dynamic>& a,
+                         bool compute_derivatives = true);
 
     // class members:
     std::unique_ptr<Model> modelPtr_;
@@ -59,8 +59,8 @@ public:
 
         // compute results are stored here
     Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pq;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pq_d;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pq_dd;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pv;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pa;
 };
 
 }; // namespace IDTO
