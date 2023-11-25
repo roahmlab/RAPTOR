@@ -11,6 +11,7 @@ public:
     using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+    using QRSolver = Eigen::ColPivHouseholderQR<MatX>;
 
     // Constructor
     DynamicsConstraints() = default;
@@ -60,6 +61,21 @@ public:
         // return independent rows in a matrix
     virtual void get_independent_rows(MatX& r, const MatX& m) = 0;
 
+    // class methods:
+        // fill in dependent joint positions in the full joint vector q
+        // that satisfies the constraints
+        // This usually involves solving inverse kinematics. 
+        // You need to implement this method in your derived class!!!
+    virtual void setupJointPosition(VecX& q) = 0;
+
+        // fill in dependent joint positions and velocities in the full joint vector q and v
+        // that satisfies the constraints
+    // virtual void setupJointPositionVelocity(VecX& q, VecX& v);
+
+        // fill in dependent joint positions, velocities, and accelerations in the full joint vector q, v, and a
+        // that satisfies the constraints
+    virtual void setupJointPositionVelocityAcceleration(VecX& q, VecX& v, VecX& a, bool compute_derivatives = true);
+
     // constraint c(q)
     virtual void get_c(const VecX& q) = 0;
 
@@ -87,6 +103,14 @@ public:
     MatX Jx_partial_dq;
     MatX JTx_partial_dq;
     MatX Jxy_partial_dq;
+
+        // updated in setupJointPositionVelocityAcceleration()
+    QRSolver J_dep_qr;
+    QRSolver J_dep_T_qr;
+
+        // updated in setupJointPositionVelocityAcceleration()
+    MatX J_dep;
+    MatX J_indep;
 };
 
 }; // namespace IDTO

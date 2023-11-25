@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_multiroots.h>
+
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
@@ -108,6 +111,12 @@ public:
         // return independent rows in a matrix
     void get_independent_rows(MatX& r, const MatX& m) override;
 
+        // fill in dependent joint positions in the full joint vector q
+        // that satisfies the constraints
+        // This usually involves solving inverse kinematics. 
+        // You need to implement this method in your derived class!!!
+    void setupJointPosition(VecX& q) override;
+
         // constraint c(q)
     void get_c(const VecX& q) override;
 
@@ -151,7 +160,16 @@ public:
     Transform stance_foot_endT;
 
     Transform stance_foot_T_des;
+
+
+    Eigen::VectorXd qcopy;
 };
+
+int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f);
+
+int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J);
+
+int fillDependent_fdf(const gsl_vector* x, void *params, gsl_vector* f, gsl_matrix* J);
 
 }; // namespace Digit
 }; // namespace IDTO
