@@ -17,7 +17,7 @@ public:
     DynamicsConstraints() = default;
 
     // Constructor
-    DynamicsConstraints(const Model& model_input, int numDependentJoints);
+    DynamicsConstraints(const Model& model_input, int numDependentJoints_input);
 
     // Destructor
     ~DynamicsConstraints() = default;
@@ -97,12 +97,22 @@ public:
     // class members:
     std::unique_ptr<Model> modelPtr_;
 
+    int numDependentJoints = 0;
+    int numIndependentJoints = 0;
+
         // compute results are stored here
     VecX c;
     MatX J;
     MatX Jx_partial_dq;
     MatX JTx_partial_dq;
     MatX Jxy_partial_dq;
+
+    MatX pq_unact_pq_act;
+    MatX pq_unact_d_pq;
+    MatX pq_unact_d_pq_act_d;
+    MatX pq_unact_dd_pq;
+    MatX pq_unact_dd_pq_d;
+    MatX pq_unact_dd_pq_act_dd;
 
         // updated in setupJointPositionVelocityAcceleration()
     QRSolver J_dep_qr;
@@ -111,6 +121,18 @@ public:
         // updated in setupJointPositionVelocityAcceleration()
     MatX J_dep;
     MatX J_indep;
+
+        // temporary variables updated in setupJointPositionVelocityAcceleration()
+    MatX P_dep;
+    VecX Pa_indep;
+    MatX temp1;
+    VecX temp2_1;
+    MatX temp2;
+    MatX temp3;
+
+    MatX v_dep_partial_dq;
+    MatX a_dep_partial_dq;
+    MatX a_dep_partial_dv;
 };
 
 }; // namespace IDTO

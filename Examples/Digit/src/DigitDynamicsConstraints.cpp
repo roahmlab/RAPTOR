@@ -60,7 +60,7 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const Model& model_input,
 }
 
 void DigitDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX& v, const bool setZero) {
-    assert(r.size() == modelPtr_->nq);
+    assert(r.size() == modelPtr_->nv);
     assert(v.size() == NUM_DEPENDENT_JOINTS);
 
     if (setZero) r.setZero();
@@ -71,7 +71,7 @@ void DigitDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX& v, con
 }
 
 void DigitDynamicsConstraints::fill_independent_vector(VecX& r, const VecX& v, const bool setZero) {
-    assert(r.size() == modelPtr_->nq);
+    assert(r.size() == modelPtr_->nv);
     assert(v.size() == NUM_INDEPENDENT_JOINTS);
 
     if (setZero) r.setZero();
@@ -83,7 +83,7 @@ void DigitDynamicsConstraints::fill_independent_vector(VecX& r, const VecX& v, c
 
 void DigitDynamicsConstraints::fill_dependent_columns(MatX& r, const MatX& m, const bool setZero) {
     assert(m.cols() == NUM_DEPENDENT_JOINTS);
-    assert(r.cols() == modelPtr_->nq);
+    assert(r.cols() == modelPtr_->nv);
     assert(m.rows() == r.rows());
 
     if (setZero) r.setZero();
@@ -95,7 +95,7 @@ void DigitDynamicsConstraints::fill_dependent_columns(MatX& r, const MatX& m, co
 
 void DigitDynamicsConstraints::fill_independent_columns(MatX& r, const MatX& m, const bool setZero) {
     assert(m.cols() == NUM_INDEPENDENT_JOINTS);
-    assert(r.cols() == modelPtr_->nq);
+    assert(r.cols() == modelPtr_->nv);
     assert(m.rows() == r.rows());
 
     if (setZero) r.setZero();
@@ -107,7 +107,7 @@ void DigitDynamicsConstraints::fill_independent_columns(MatX& r, const MatX& m, 
 
 void DigitDynamicsConstraints::fill_dependent_rows(MatX& r, const MatX& m, const bool setZero) {
     assert(m.rows() == NUM_DEPENDENT_JOINTS);
-    assert(r.rows() == modelPtr_->nq);
+    assert(r.rows() == modelPtr_->nv);
     assert(m.cols() == r.cols());
 
     if (setZero) r.setZero();
@@ -119,7 +119,7 @@ void DigitDynamicsConstraints::fill_dependent_rows(MatX& r, const MatX& m, const
 
 void DigitDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, const bool setZero) {
     assert(m.rows() == NUM_INDEPENDENT_JOINTS);
-    assert(r.rows() == modelPtr_->nq);
+    assert(r.rows() == modelPtr_->nv);
     assert(m.cols() == r.cols());
 
     if (setZero) r.setZero();
@@ -130,7 +130,7 @@ void DigitDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, con
 }
 
 Eigen::VectorXd DigitDynamicsConstraints::get_dependent_vector(const VecX& v) {
-    assert(v.size() == modelPtr_->nq);
+    assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_DEPENDENT_JOINTS);
 
@@ -142,7 +142,7 @@ Eigen::VectorXd DigitDynamicsConstraints::get_dependent_vector(const VecX& v) {
 }
 
 Eigen::VectorXd DigitDynamicsConstraints::get_independent_vector(const VecX& v) {
-    assert(v.size() == modelPtr_->nq);
+    assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_INDEPENDENT_JOINTS);
 
@@ -154,7 +154,7 @@ Eigen::VectorXd DigitDynamicsConstraints::get_independent_vector(const VecX& v) 
 }
 
 void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
-    assert(m.cols() == modelPtr_->nq);
+    assert(m.cols() == modelPtr_->nv);
     assert(r.cols() == NUM_DEPENDENT_JOINTS);
     assert(m.rows() == r.rows());
 
@@ -164,7 +164,7 @@ void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
-    assert(m.cols() == modelPtr_->nq);
+    assert(m.cols() == modelPtr_->nv);
     assert(r.cols() == NUM_INDEPENDENT_JOINTS);
     assert(m.rows() == r.rows());
 
@@ -174,7 +174,7 @@ void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
-    assert(m.rows() == modelPtr_->nq);
+    assert(m.rows() == modelPtr_->nv);
     assert(r.rows() == NUM_DEPENDENT_JOINTS);
     assert(m.cols() == r.cols());
 
@@ -184,7 +184,7 @@ void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
-    assert(m.rows() == modelPtr_->nq);
+    assert(m.rows() == modelPtr_->nv);
     assert(r.rows() == NUM_INDEPENDENT_JOINTS);
     assert(m.cols() == r.cols());
 
@@ -265,7 +265,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q) {
 
     // asin and acos might return nan values if input is not within a correct range
     // return error if nan value is found
-    for (int i = 0; i < modelPtr_->nq; i++) {
+    for (int i = 0; i < modelPtr_->nv; i++) {
         if (isnan(qcopy(i))) {
             throw std::runtime_error("nan values found in setupJointPositions!");
         }
@@ -319,7 +319,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q) {
 
     // gsl might be numerically unstable for some very edge cases
     // return error if found anything weird
-    for (int i = 0; i < modelPtr_->nq; i++) {
+    for (int i = 0; i < modelPtr_->nv; i++) {
         if (isnan(qcopy(i))) {
             // throw -1;
             // cout << "\tWarning: nan values found in datacomputation!\n";
@@ -535,7 +535,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
 
 void DigitDynamicsConstraints::get_J(const VecX& q) {
     assert(J.rows() == NUM_DEPENDENT_JOINTS);
-    assert(J.cols() == modelPtr_->nq);
+    assert(J.cols() == modelPtr_->nv);
 
     double t2 = cos(q(9));
     double t3 = cos(q(10));
@@ -690,7 +690,7 @@ void DigitDynamicsConstraints::get_J(const VecX& q) {
     double t145 = t60*t88;
     double t147 = t74*t88;
 
-    // assume J(NUM_DEPENDENT_JOINTS, modelPtr_->nq) has been allocated outside
+    // assume J(NUM_DEPENDENT_JOINTS, modelPtr_->nv) has been allocated outside
     J.setZero();
     J(0, 28) = t18*5.699060997402858E-2-t42*1.034589188110661E-3-t18*t44*1.26575449899492E-2+t42*t44*2.246221860400801E-3+t18*t19*t20*3.020283789547073E-3-t18*t20*t43*3.397508858570615E-1-t19*t20*t42*3.399783924207052E-1-t20*t42*t43*3.105990081579729E-3;
     J(0, 29) = t18*t19*t20*3.105990081579729E-3-t18*t20*t43*3.399783924207052E-1-t19*t20*t42*3.397508858570615E-1-t20*t42*t43*3.020283789547073E-3;
@@ -769,15 +769,15 @@ void DigitDynamicsConstraints::get_J(const VecX& q) {
 
     // fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
     fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    MatX J_contact(6, modelPtr_->nq);
+    MatX J_contact(6, modelPtr_->nv);
     fkhofPtr_->Transform2xyzrpyJacobian(J_contact, stance_foot_T, dTdq);
-    J.block(18, 0, 6, modelPtr_->nq) = J_contact;
+    J.block(18, 0, 6, modelPtr_->nv) = J_contact;
 }
 
 void DigitDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
-    assert(x.size() == modelPtr_->nq);
+    assert(x.size() == modelPtr_->nv);
     assert(Jx_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
-    assert(Jx_partial_dq.cols() == modelPtr_->nq);
+    assert(Jx_partial_dq.cols() == modelPtr_->nv);
 
     double x1 = x(0);
     double x2 = x(1);
@@ -1363,7 +1363,7 @@ void DigitDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
     
     Eigen::Array<MatX, 6, 1> H_contact;
     for (int i = 0; i < 6; i++) {
-        H_contact(i) = MatX::Zero(modelPtr_->nq, modelPtr_->nq);
+        H_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
     fkhofPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
 
@@ -1374,8 +1374,8 @@ void DigitDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
 
 void DigitDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const VecX& x) {
     assert(x.size() == NUM_DEPENDENT_JOINTS);
-    assert(JTx_partial_dq.rows() == modelPtr_->nq);
-    assert(JTx_partial_dq.cols() == modelPtr_->nq);
+    assert(JTx_partial_dq.rows() == modelPtr_->nv);
+    assert(JTx_partial_dq.cols() == modelPtr_->nv);
 
     double x1 = x(0);
     double x2 = x(1);
@@ -2011,7 +2011,7 @@ void DigitDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const VecX& x) 
     
     Eigen::Array<MatX, 6, 1> H_contact;
     for (int i = 0; i < 6; i++) {
-        H_contact(i) = MatX::Zero(modelPtr_->nq, modelPtr_->nq);
+        H_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
     fkhofPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
 
@@ -2021,10 +2021,10 @@ void DigitDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const VecX& x) 
 }
 
 void DigitDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) {
-    assert(x.size() == modelPtr_->nq);
-    assert(y.size() == modelPtr_->nq);
+    assert(x.size() == modelPtr_->nv);
+    assert(y.size() == modelPtr_->nv);
     assert(Jxy_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
-    assert(Jxy_partial_dq.cols() == modelPtr_->nq);
+    assert(Jxy_partial_dq.cols() == modelPtr_->nv);
 
     double x1 = x(0);
     double x2 = x(1);
@@ -2921,7 +2921,7 @@ void DigitDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const VecX& x, 
     
     Eigen::Array<MatX, 6, 1> TOx_contact;
     for (int i = 0; i < 6; i++) {
-        TOx_contact(i) = MatX::Zero(modelPtr_->nq, modelPtr_->nq);
+        TOx_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
     fkhofPtr_->Transform2xyzrpyThirdOrder(TOx_contact, x, stance_foot_T, dTdq, ddTddq, dddTdddq);
 

@@ -11,7 +11,7 @@ public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using MatX = MatX;
 
     // Constructor
     ConstrainedInverseDynamics() = default;
@@ -33,6 +33,10 @@ public:
     int numDependentJoints = 0;
     int numIndependentJoints = 0;
 
+        // declare a DynamicsConstraints instance outside of this class
+        // use a shared pointer here to avoid copying
+    std::unique_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
+
         // updated in compute()
     VecX tau_dep;
     VecX tau_indep;
@@ -45,9 +49,17 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pv;
     Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pa;
 
-        // declare a DynamicsConstraints instance outside of this class
-        // use a shared pointer here to avoid copying
-    std::unique_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
+        // temporary variables updated in compute()
+    MatX rnea_partial_dq_dep;
+    MatX rnea_partial_dq_indep;
+    MatX rnea_partial_dv_dep;
+    MatX rnea_partial_dv_indep;
+    MatX rnea_partial_da_dep;
+    MatX rnea_partial_da_indep;
+
+    MatX JTlambda_partial_dq;
+    MatX JTlambda_partial_dq_dep;
+    MatX JTlambda_partial_dq_indep;
 };
 
 }; // namespace IDTO

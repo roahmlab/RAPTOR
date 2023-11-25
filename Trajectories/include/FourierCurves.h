@@ -21,12 +21,19 @@ public:
 
     int degree = 0; // degree of the Fourier series
 
-    Eigen::VectorXd F;
-    Eigen::VectorXd dF;
-    Eigen::VectorXd ddF;
+    VecX F;
+    VecX dF;
+    VecX ddF;
 
-    Eigen::VectorXd F0;
-    Eigen::VectorXd dF0;
+    VecX F0;
+    VecX dF0;
+
+    VecX pF_pw;
+    VecX pdF_pw;
+    VecX pddF_pw;
+
+    VecX pF0_pw;
+    VecX pdF0_pw;
 };
 
 }; // namespace IDTO

@@ -5,6 +5,14 @@ cmake_minimum_required(VERSION 3.12)
 project(IDTO
     DESCRIPTION "Inverse Dynamics Trajectory Optimization")
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 14)
 
@@ -21,15 +29,20 @@ include(cmake/pinocchio_config.cmake)
 
 # Find urdf library
 find_package(Urdfdom REQUIRED COMPONENTS
-  urdf
+    urdf
 )
 include_directories(${URDFDOM_INCLUDE_DIRS})
 
 # Find Boost library
 find_package(Boost REQUIRED COMPONENTS
-  system
-  filesystem
+    system
+    filesystem
 )
+
+# Find Ipopt library
+set(IPOPT_LIBRARIES /usr/local/lib)
+set(IPOPT_INCLUDE_DIR /usr/local/include/coin-or)
+include_directories(${IPOPT_INCLUDE_DIR})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
@@ -61,9 +74,11 @@ target_compile_options(IDlib PUBLIC
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
-    Examples/Digit/src/DigitConstrainedInverseDynamics.cpp)
+    Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
+    Examples/Digit/src/DigitSingleStepOptimizer.cpp)
 
 target_link_libraries(Digitlib PRIVATE
+    trajlib
     IDlib
     ${GSL_LIBRARIES})
 
@@ -87,6 +102,8 @@ target_link_libraries(IDTO_example PRIVATE
     Digitlib
     ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${IPOPT_LIBRARIES}
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 

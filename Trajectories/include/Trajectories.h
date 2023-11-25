@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 namespace IDTO {
 
@@ -50,6 +51,11 @@ public:
     Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_pz;
     Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_d_pz;
     Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_dd_pz;
+
+        // temporary variables updated in compute()
+    std::vector<Eigen::Triplet<double>> pq_pz_tripletList;
+    std::vector<Eigen::Triplet<double>> pq_d_pz_tripletList;
+    std::vector<Eigen::Triplet<double>> pq_dd_pz_tripletList;
 };
 
 }; // namespace IDTO    
