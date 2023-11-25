@@ -4,13 +4,10 @@ namespace IDTO {
 
 ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input, 
                                                        int N_input, 
-                                                       int numDependentJoints_input,
-                                                       std::unique_ptr<DynamicsConstraints>& dynamics_constraints_input) : 
+                                                       int numDependentJoints_input) : 
     InverseDynamics(model_input, N_input),
     numDependentJoints(numDependentJoints_input) {
     numIndependentJoints = modelPtr_->nv - numDependentJoints;
-
-    dynamicsConstraintsPtr_ = std::move(dynamics_constraints_input);
 
     tau_dep = VecX::Zero(numDependentJoints);
     tau_indep = VecX::Zero(numIndependentJoints);

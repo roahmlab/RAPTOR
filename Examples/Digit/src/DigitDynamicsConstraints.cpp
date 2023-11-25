@@ -194,7 +194,7 @@ void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::setupJointPosition(VecX& q) {
-    VecX qcopy = q;
+    qcopy = q;
 
     // fill in dependent joint positions 
     // we first use approximation to give an initial guess for dependent joints
@@ -339,17 +339,10 @@ int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f) {
         constraintsData->qcopy(constraintsData->dependentJointIds[i]) = gsl_vector_get(x, i);
     }
 
-    // Matlab sxmbolic toolbox generates 1-index code
-    // so here we shift from 0-index to 1-index
-    for (int i = 1; i <= constraintsData->modelPtr_->nq; i++) {
-        constraintsData->cosq[i] = cos(constraintsData->qcopy(i-1));
-        constraintsData->sinq[i] = sin(constraintsData->qcopy(i-1));
-    }
-
-    Eigen::VectorXd c = constraintsData->get_c();
+    constraintsData->get_c(constraintsData->qcopy);
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        gsl_vector_set(f, i, c(i));
+        gsl_vector_set(f, i, constraintsData->c(i));
     }
 
     return GSL_SUCCESS;
@@ -362,19 +355,11 @@ int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J) {
         constraintsData->qcopy(constraintsData->dependentJointIds[i]) = gsl_vector_get(x, i);
     }
 
-    // Matlab sxmbolic toolbox generates 1-index code
-    // so here we shift from 0-index to 1-index
-    for (int i = 1; i <= constraintsData->modelPtr_->nq; i++) {
-        constraintsData->cosq[i] = cos(constraintsData->qcopy(i-1));
-        constraintsData->sinq[i] = sin(constraintsData->qcopy(i-1));
-    }
-
-    Eigen::MatrixXd Jfill(NUM_DEPENDENT_JOINTS, constraintsData->modelPtr_->nq);
-    constraintsData->get_J(Jfill);
+    constraintsData->get_J(constraintsData->qcopy);
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         for (int j = 0; j < NUM_DEPENDENT_JOINTS; j++) {
-            gsl_matrix_set(J, i, j, Jfill(i, constraintsData->dependentJointIds[j]));
+            gsl_matrix_set(J, i, j, constraintsData->J(i, constraintsData->dependentJointIds[j]));
         }
     }
 

@@ -161,8 +161,7 @@ public:
 
     Transform stance_foot_T_des;
 
-
-    Eigen::VectorXd qcopy;
+    VecX qcopy;
 };
 
 int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f);

@@ -1,13 +1,57 @@
 #include "FourierCurves.h"
-#include "ConstrainedInverseDynamics.h"
+#include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
 
+#include "pinocchio/parsers/urdf.hpp"
+#include "pinocchio/algorithm/joint-configuration.hpp"
+
 using namespace IDTO;
+using namespace Digit;
 
 using std::cout;
 using std::endl;
 
 int main() {
+    // define robot model
+    const std::string urdf_filename = "/home/roahm/Documents/SafeDigit/DigitModel/KinematicsInfo/urdf/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
+
+    model.gravity.linear()(2) = -9.806;
+
+    // manually define the joint axis of rotation
+    // 1 for Rx, 2 for Ry, 3 for Rz
+    // 4 for Px, 5 for Py, 6 for Pz
+    // not sure how to extract this from a pinocchio model so define outside here.
+    Eigen::VectorXi jtype(model.nq);
+    jtype << 4, 5, 6, 1, 2, 3, 
+             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
+             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
+    
+    // ignore friction for now
+    model.friction.setZero();
+
+    // manually import motor inertia 
+    model.rotorInertia(model.getJointId("left_hip_roll") - 1) = 0.173823936;
+    model.rotorInertia(model.getJointId("left_hip_yaw") - 1) = 0.067899975;
+    model.rotorInertia(model.getJointId("left_hip_pitch") - 1) = 0.1204731904;
+    model.rotorInertia(model.getJointId("left_knee") - 1) = 0.1204731904;
+    model.rotorInertia(model.getJointId("left_toe_A") - 1) = 0.036089475;
+    model.rotorInertia(model.getJointId("left_toe_B") - 1) = 0.036089475;
+    model.rotorInertia(model.getJointId("right_hip_roll") - 1) = 0.173823936;
+    model.rotorInertia(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
+    model.rotorInertia(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
+    model.rotorInertia(model.getJointId("right_knee") - 1) = 0.1204731904;
+    model.rotorInertia(model.getJointId("right_toe_A") - 1) = 0.036089475;
+    model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
+
+    pinocchio::Data data(model);
+
+    const char stanceLeg = 'L';
+
+    Transform stance_foot_T_des(3, -M_PI / 2);
+
     FourierCurves fc(0.4, 32, 12, Chebyshev, 6);
 
     Eigen::VectorXd z(252);
@@ -35,9 +79,22 @@ int main() {
 
     fc.compute(z);
 
-    // cout << fc.tspan.transpose() << endl << endl;
+    std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_ = 
+        std::make_unique<DigitConstrainedInverseDynamics>(model, 32, NUM_DEPENDENT_JOINTS, jtype, stanceLeg, stance_foot_T_des);
 
-    // cout << fc.q_d(10) << endl;
+    Eigen::VectorXd q(model.nq);
+    Eigen::VectorXd v(model.nv);
+    Eigen::VectorXd a(model.nv);
+
+    q << -0.12831249226154961551, -0.050885712343851141615, 1.0614679172132515106, 0.0073774793530243841858, 0.049058785586480094243, -1.5180708321333198363, 0.28570290714907209395, 0.028759399628236634316, 0.32966409584980715941, 0.42352716062122985896, 0.010051553145835194145, 0.42316561860981338761, -0.43505222618777200649, -0.19424091037798019155, 0.200940685855929696, -0.0078499378281531896617, 0.16417501673775528048, -0.16969648365280309843, 0.010576235977796055732, 0.18299183222973516849, -0.046924624298360015362, -0.42473891855683676422, -0.053625539377177657008, -0.34379976341406953688, -0.45331648806307678345, 0.011185829051532940673, -0.45294228797891228355, 0.46507379341545374007, 0.19160288170870407032, -0.19772511257401945151, -0.0091645982394020462924, -0.19289864539551346279, 0.19971255395880549433, 0.013727836742418328408, -0.19595631655339354471, -0.0018156818023019711487;
+    v << 0.17242940005505141832, 0.010323854783934315396, 0.015363536716767418541, 0.0016875165451371385711, 0.13928387903187136598, -0.081519107915707156309, 0.036597168645223672467, 0.022187841668372648707, -0.0025779041585519239799, -0.015428681474291973397, -0.00057348974303929388212, -0.015422772167966170009, 0.015544250315079525745, 0.069859111563775555531, -0.073864279138392760493, -0.0036463555474242747428, 0.061395593181150842632, -0.064981847526031297213, 0.0096457296336293404243, -0.0060443274305403815044, 0.20411866514815718565, 0.012390074028320707811, -0.0047267822450325069905, -0.020550156661977236894, -0.065026801059171635, 0.0025345632837798252532, -0.064996282360668899969, 0.065554079360251329978, 0.054011588378201969007, -0.057259602252950063395, 0.0031055653368949366622, 0.064017521495437490486, -0.067612919841840507518, -0.0096872609162264432942, 0.0047472090223608081477, 0.18260600496795736936;
+    a << 0.52613427196720141676, 0.082438547833338440829, -0.20409794912564185876, -2.0975324987270593802, -11.910245918022894784, -6.2671811083296828926, 12.781792334165430702, -5.5646383940662449419, 5.5838011524016533116, 2.6334915690024414126, 0.097902417893502846624, 2.6324822896332724653, -2.653222564058693056, -1.9306978421047935601, 1.9699514948644281098, -0.098943546785792410581, 2.5841396133729803708, -2.6709499351432350878, 0.17732227971750497142, 2.2864847391782059383, 1.0508423541001743473, 7.0112436648898981417, -5.041004981175826849, 47.178192546863705559, 69.338594020255584383, -2.7023708714141339016, 69.306065029707710323, -69.90074427257773948, -47.801117698051065474, 49.100084178332018325, 1.5548661250673021517, 43.911044309866767321, -45.169286170908051758, -2.2015987048788732139, 46.419454228868801238, -6.080739174089807797;
+
+    dcidPtr_->dynamicsConstraintsPtr_->setupJointPositionVelocityAcceleration(q, v, a, false);
+
+    cout << q.transpose() << endl;
+    cout << v.transpose() << endl;
+    cout << a.transpose() << endl;
 
     return 0;
 }

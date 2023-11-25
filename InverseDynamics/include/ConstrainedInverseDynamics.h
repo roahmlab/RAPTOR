@@ -19,8 +19,7 @@ public:
     // Constructor
     ConstrainedInverseDynamics(const Model& model_input, 
                                int N_input, 
-                               int numDependentJoints_input,
-                               std::unique_ptr<DynamicsConstraints>& dynamics_constraints_input);
+                               int numDependentJoints_input);
 
     // Destructor
     ~ConstrainedInverseDynamics() = default;
@@ -48,7 +47,7 @@ public:
 
         // declare a DynamicsConstraints instance outside of this class
         // use a shared pointer here to avoid copying
-    std::shared_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
+    std::unique_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
 };
 
 }; // namespace IDTO

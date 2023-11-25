@@ -10,6 +10,8 @@ namespace Digit {
 
 class DigitConstrainedInverseDynamics : public ConstrainedInverseDynamics {
 public:
+    using Model = pinocchio::Model;
+
     // Constructor
     DigitConstrainedInverseDynamics() = default;
 
@@ -17,7 +19,9 @@ public:
     DigitConstrainedInverseDynamics(const Model& model_input, 
                                     int N_input, 
                                     int numDependentJoints_input,
-                                    std::unique_ptr<DynamicsConstraints>& dynamics_constraints_input);
+                                    const Eigen::VectorXi& jtype_input, 
+                                    char stanceLeg, 
+                                    const Transform& stance_foot_T_des_input);
 
     // Destructor
     ~DigitConstrainedInverseDynamics() = default;

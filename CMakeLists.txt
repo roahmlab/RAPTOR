@@ -19,6 +19,23 @@ include_directories(${GSL_INCLUDE_DIRS})
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
 
+# Find urdf library
+find_package(Urdfdom REQUIRED COMPONENTS
+  urdf
+)
+include_directories(${URDFDOM_INCLUDE_DIRS})
+
+# Find Boost library
+find_package(Boost REQUIRED COMPONENTS
+  system
+  filesystem
+)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
+    pinocchio)
+include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
+
 ## Trajectories library
 add_library(trajlib SHARED
     Trajectories/src/FourierCurves.cpp 
@@ -69,7 +86,9 @@ target_link_libraries(IDTO_example PRIVATE
     IDlib
     Digitlib
     ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES})
+    ${GSL_LIBRARIES}
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_compile_options(IDTO_example PUBLIC
     ${PINOCCHIO_FLAGS})
