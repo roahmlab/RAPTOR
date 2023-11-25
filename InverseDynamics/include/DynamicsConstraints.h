@@ -16,7 +16,7 @@ public:
     DynamicsConstraints() = default;
 
     // Constructor
-    DynamicsConstraints(const Model& model_input, int numIndependentJoints);
+    DynamicsConstraints(const Model& model_input, int numDependentJoints);
 
     // Destructor
     ~DynamicsConstraints() = default;

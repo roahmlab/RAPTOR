@@ -20,7 +20,7 @@ public:
     // Constructor
     ConstrainedInverseDynamics(const Model& model_input, 
                                int N_input, 
-                               int numIndependentJoints_input,
+                               int numDependentJoints_input,
                                std::unique_ptr<DynamicsConstraints>& dynamics_constraints_input);
 
     // Destructor

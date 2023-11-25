@@ -31,12 +31,30 @@ target_include_directories(trajlib PUBLIC
 add_library(IDlib SHARED
     InverseDynamics/src/InverseDynamics.cpp
     InverseDynamics/src/DynamicsConstraints.cpp
-    InverseDynamics/src/ConstrainedInverseDynamics.cpp)
+    InverseDynamics/src/ConstrainedInverseDynamics.cpp
+    InverseDynamics/src/Transform.cpp
+    InverseDynamics/src/ForwardKinematics.cpp)
 
 target_include_directories(IDlib PUBLIC
     InverseDynamics/include)
 
 target_compile_options(IDlib PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+## Digit library
+add_library(Digitlib SHARED
+    Examples/Digit/src/DigitDynamicsConstraints.cpp
+    Examples/Digit/src/DigitConstrainedInverseDynamics.cpp)
+
+target_link_libraries(Digitlib PRIVATE
+    IDlib
+    ${GSL_LIBRARIES})
+
+target_include_directories(Digitlib PUBLIC
+    Examples/Digit/include
+    InverseDynamics/include)
+
+target_compile_options(Digitlib PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Example scripts
@@ -49,6 +67,7 @@ target_include_directories(IDTO_example PRIVATE
 target_link_libraries(IDTO_example PRIVATE
     trajlib 
     IDlib
+    Digitlib
     ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES})
 

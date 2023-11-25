@@ -1,5 +1,6 @@
 #include "FourierCurves.h"
-#include "InverseDynamics.h"
+#include "ConstrainedInverseDynamics.h"
+#include "DigitDynamicsConstraints.h"
 
 using namespace IDTO;
 
