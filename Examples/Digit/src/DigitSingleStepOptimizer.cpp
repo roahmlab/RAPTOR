@@ -17,9 +17,14 @@ namespace Digit {
 
 
 bool DigitSingleStepOptimizer::set_parameters(
+    const VecX& x0_input
  ) 
 {
-    
+    x0 = x0_input;
+
+    fcPtr_ = std::make_unique<FourierCurves>(0.4, 32, 12, Chebyshev, 6);
+
+    assert(x0.size() == fcPtr_->varLength);
 
     return true;
 }
@@ -34,12 +39,21 @@ bool DigitSingleStepOptimizer::get_nlp_info(
 )
 {
     // // The problem described NUM_FACTORS variables, x[NUM_FACTORS] through x[NUM_FACTORS] for each joint
-    // n = NUM_FACTORS;
+    n = fcPtr_->varLength;
 
     // // number of inequality constraint
-    // m = constraint_number;
+    m = fcPtr_->Nact * 3;
 
-    // nnz_jac_g = m * n;
+    VecX z0(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z0(i) = x0[i];
+    }
+
+    fcPtr_->compute(z0, true);
+
+    nnz_jac_g = fcPtr_->pq_pz(20).nonZeros() + 
+                fcPtr_->pq_d_pz(20).nonZeros() + 
+                fcPtr_->pq_dd_pz(20).nonZeros();
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -61,23 +75,22 @@ bool DigitSingleStepOptimizer::get_bounds_info(
 {
     // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
     // If desired, we could assert to make sure they are what we think they are.
-    // if(n != NUM_FACTORS){
-    //     WARNING_PRINT("*** Error wrong value of n in get_bounds_info!");
-    // }
-    // if(m != constraint_number){
-    //     WARNING_PRINT("*** Error wrong value of m in get_bounds_info!");
-    // }
+    if(n != fcPtr_->varLength){
+        throw std::runtime_error("*** Error wrong value of n in get_bounds_info!");
+    }
+    if(m != fcPtr_->Nact * 3){
+        throw std::runtime_error("*** Error wrong value of m in get_bounds_info!");
+    }
 
     // lower bounds
     for( Index i = 0; i < n; i++ ) {
-        x_l[i] = -1.0;
+        x_l[i] = -1e8;
     }
 
     // upper bounds  
     for( Index i = 0; i < n; i++ ) {
-        x_u[i] = 1.0;
+        x_u[i] = 1e8;
     }
-
 
     return true;
 }
@@ -104,13 +117,13 @@ bool DigitSingleStepOptimizer::get_starting_point(
         throw std::runtime_error("*** Error wrong value of init in get_starting_point!");
     }
 
-    // if(n != NUM_FACTORS){
-    //     WARNING_PRINT("*** Error wrong value of n in get_starting_point!");
-    // }
+    if(n != fcPtr_->varLength){
+        throw std::runtime_error("*** Error wrong value of n in get_starting_point!");
+    }
 
     for( Index i = 0; i < n; i++ ) {
         // initialize to zero
-        x[i] = 0.0;
+        x[i] = x0(i);
     }
 
     return true;
@@ -126,9 +139,11 @@ bool DigitSingleStepOptimizer::eval_f(
    Number&       obj_value
 )
 {
-    // if(n != NUM_FACTORS){
-    //    WARNING_PRINT("*** Error wrong value of n in eval_f!");
-    // }
+    if(n != fcPtr_->varLength){
+       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+    }
+
+    obj_value = 0;
 
     return true;
 }
@@ -143,9 +158,13 @@ bool DigitSingleStepOptimizer::eval_grad_f(
    Number*       grad_f
 )
 {
-    // if(n != NUM_FACTORS){
-    //     WARNING_PRINT("*** Error wrong value of n in eval_grad_f!");
-    // }
+    if(n != fcPtr_->varLength){
+       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+    }
+
+    for ( Index i = 0; i < n; i++ ) {
+        grad_f[i] = 0;
+    }
 
     return true;
 }
@@ -161,12 +180,27 @@ bool DigitSingleStepOptimizer::eval_g(
    Number*       g
 )
 {
-    // if(n != NUM_FACTORS){
-    //     WARNING_PRINT("*** Error wrong value of n in eval_g!");
-    // }
-    // if(m != constraint_number){
-    //     WARNING_PRINT("*** Error wrong value of m in eval_g!");
-    // }
+    if(n != fcPtr_->varLength){
+        throw std::runtime_error("*** Error wrong value of n in eval_g!");
+    }
+    if(m != fcPtr_->Nact * 3){
+        throw std::runtime_error("*** Error wrong value of m in eval_g!");
+    }
+
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    if (new_x) {
+        fcPtr_->compute(z, false);
+    }
+
+    for ( Index i = 0; i < fcPtr_->Nact; i++ ) {
+        g[i] = fcPtr_->q(20)(i);
+        g[i + fcPtr_->Nact] = fcPtr_->q_d(20)(i);
+        g[i + 2 * fcPtr_->Nact] = fcPtr_->q_dd(20)(i);
+    }
 
     return true;
 }
@@ -186,25 +220,121 @@ bool DigitSingleStepOptimizer::eval_jac_g(
    Number*       values
 )
 {
-    // if(n != NUM_FACTORS){
-    //     WARNING_PRINT("*** Error wrong value of n in eval_g!");
-    // }
-    // if(m != constraint_number){
-    //     WARNING_PRINT("*** Error wrong value of m in eval_g!");
-    // }
+    if(n != fcPtr_->varLength){
+        throw std::runtime_error("*** Error wrong value of n in eval_g!");
+    }
+    if(m != fcPtr_->Nact * 3){
+        throw std::runtime_error("*** Error wrong value of m in eval_g!");
+    }
+
+    printf("%ld\n", x);
+
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    fcPtr_->compute(z, true);
         
     if( values == NULL ) {
-       // return the structure of the Jacobian
-       // this particular Jacobian is dense
-        for(Index i = 0; i < m; i++){
-            for(Index j = 0; j < n; j++){
-                iRow[i * n + j] = i;
-                jCol[i * n + j] = j;
+        // return the structure of the Jacobian
+        Index iter = 0;
+
+        const SpaMatX& pq_pz = fcPtr_->pq_pz(20);
+        for (Index i = 0; i < pq_pz.outerSize(); i++) {
+            Index k_start = pq_pz.outerIndexPtr()[i];
+            Index k_end   = pq_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                Index j = pq_pz.innerIndexPtr()[k];
+                // double v = pq_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                iRow[iter] = j;
+                jCol[iter] = i;
+                iter++;
+            }
+        }
+
+        const SpaMatX& pq_d_pz = fcPtr_->pq_d_pz(20);
+        for (Index i = 0; i < pq_d_pz.outerSize(); i++) {
+            Index k_start = pq_d_pz.outerIndexPtr()[i];
+            Index k_end   = pq_d_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                Index j = pq_d_pz.innerIndexPtr()[k];
+                // double v = pq_d_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                iRow[iter] = j + fcPtr_->Nact;
+                jCol[iter] = i;
+                iter++;
+            }
+        }
+
+        const SpaMatX& pq_dd_pz = fcPtr_->pq_dd_pz(20);
+        for (Index i = 0; i < pq_dd_pz.outerSize(); i++) {
+            Index k_start = pq_dd_pz.outerIndexPtr()[i];
+            Index k_end   = pq_dd_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                Index j = pq_dd_pz.innerIndexPtr()[k];
+                // double v = pq_dd_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                iRow[iter] = j + 2 * fcPtr_->Nact;
+                jCol[iter] = i;
+                iter++;
             }
         }
     }
     else {
-       
+        Index iter = 0;
+
+        const SpaMatX& pq_pz = fcPtr_->pq_pz(20);
+        for (Index i = 0; i < pq_pz.outerSize(); i++) {
+            Index k_start = pq_pz.outerIndexPtr()[i];
+            Index k_end   = pq_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                // Index j = pq_pz.innerIndexPtr()[k];
+                double v = pq_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                values[iter] = v;
+                iter++;
+            }
+        }
+
+        const SpaMatX& pq_d_pz = fcPtr_->pq_d_pz(20);
+        for (Index i = 0; i < pq_d_pz.outerSize(); i++) {
+            Index k_start = pq_d_pz.outerIndexPtr()[i];
+            Index k_end   = pq_d_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                // Index j = pq_d_pz.innerIndexPtr()[k];
+                double v = pq_d_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                values[iter] = v;
+                iter++;
+            }
+        }
+
+        const SpaMatX& pq_dd_pz = fcPtr_->pq_dd_pz(20);
+        for (Index i = 0; i < pq_dd_pz.outerSize(); i++) {
+            Index k_start = pq_dd_pz.outerIndexPtr()[i];
+            Index k_end   = pq_dd_pz.outerIndexPtr()[i+1];
+
+            for (Index k = k_start; k < k_end; k++) {
+                // Index j = pq_dd_pz.innerIndexPtr()[k];
+                double v = pq_dd_pz.valuePtr()[k];
+                // v is value of the element at position (j,i)
+
+                values[iter] = v;
+                iter++;
+            }
+        }
     }
 
     return true;

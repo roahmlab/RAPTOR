@@ -43,6 +43,8 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
 }
 
 void Trajectories::compute(const VecX& z, bool compute_derivatives) {
+    assert(z.size() == varLength);
+
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
         q_d(i) = VecX::Zero(Nact);
@@ -51,9 +53,9 @@ void Trajectories::compute(const VecX& z, bool compute_derivatives) {
 
     if (compute_derivatives) {
         for (int i = 0; i < N; i++) {
-            pq_pz(i) = Eigen::SparseMatrix<double>(Nact, z.size());
-            pq_d_pz(i) = Eigen::SparseMatrix<double>(Nact, z.size());
-            pq_dd_pz(i) = Eigen::SparseMatrix<double>(Nact, z.size());
+            pq_pz(i).resize(Nact, varLength);
+            pq_d_pz(i).resize(Nact, varLength);
+            pq_dd_pz(i).resize(Nact, varLength);
         }
     }
 }

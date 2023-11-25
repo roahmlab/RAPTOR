@@ -40,9 +40,16 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 # Find Ipopt library
-set(IPOPT_LIBRARIES /usr/local/lib)
+set(IPOPT_LIBRARY_DIR /usr/local/lib)
 set(IPOPT_INCLUDE_DIR /usr/local/include/coin-or)
 include_directories(${IPOPT_INCLUDE_DIR})
+link_directories(${IPOPT_LIBRARY_DIR})
+
+# Find HSL library
+set(HSL_LIBRARY_DIR /usr/local/lib)
+set(HSL_INCLUDE_DIR /usr/local/include)
+include_directories(${HSL_INCLUDE_DIR})
+link_directories(${HSL_LIBRARY_DIR})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
@@ -80,7 +87,13 @@ add_library(Digitlib SHARED
 target_link_libraries(Digitlib PRIVATE
     trajlib
     IDlib
-    ${GSL_LIBRARIES})
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_include_directories(Digitlib PUBLIC
     Examples/Digit/include
@@ -97,13 +110,14 @@ target_include_directories(IDTO_example PRIVATE
     Trajectories/include)
 
 target_link_libraries(IDTO_example PRIVATE
+    Digitlib
     trajlib 
     IDlib
-    Digitlib
+    ipopt
+    coinhsl
     ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
-    ${IPOPT_LIBRARIES}
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
@@ -116,6 +130,10 @@ install(TARGETS trajlib
 )
 
 install(TARGETS IDlib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS Digitlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

@@ -15,6 +15,10 @@ using namespace Ipopt;
 
 class DigitSingleStepOptimizer : public TNLP {
 public:
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
+    using SpaMatX = Eigen::SparseMatrix<double>;
+
     /** Default constructor */
     DigitSingleStepOptimizer() = default;
 
@@ -23,6 +27,7 @@ public:
 
     // [set_parameters]
     bool set_parameters(
+        const VecX& x0_input
     );
 
     /**@name Overloaded from TNLP */
@@ -133,11 +138,6 @@ public:
     );
     //@}
 
-    // double solution[NUM_FACTORS];
-
-    // bool ifFeasible = true;
-
-private:
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -156,6 +156,11 @@ private:
     DigitSingleStepOptimizer& operator=(
        const DigitSingleStepOptimizer&
     );
+
+    std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
+    std::unique_ptr<FourierCurves> fcPtr_;
+
+    VecX x0;
 };
 
 }; // namespace Digit

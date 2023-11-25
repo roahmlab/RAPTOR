@@ -5,6 +5,8 @@ namespace IDTO {
 FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
+    varLength = (2 * degree + 4) * Nact;
+
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -23,15 +25,26 @@ FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree
 FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
     Trajectories(T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
+    varLength = (2 * degree + 4) * Nact;
+
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
 
     F0 = VecX::Zero(2 * degree + 1);
     dF0 = VecX::Zero(2 * degree + 1);
+
+    pF_pw = VecX::Zero(2 * degree + 1);
+    pdF_pw = VecX::Zero(2 * degree + 1);
+    pddF_pw = VecX::Zero(2 * degree + 1);
+
+    pF0_pw = VecX::Zero(2 * degree + 1);
+    pdF0_pw = VecX::Zero(2 * degree + 1);
 }
 
 void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
+    assert(z.size() == varLength);
+
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
     MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
     VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
@@ -172,13 +185,13 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
         }
 
         if (compute_derivatives) {
-            pq_pz(x).resize(Nact, z.size());
+            pq_pz(x).resize(Nact, varLength);
             pq_pz(x).setFromTriplets(pq_pz_tripletList.begin(), pq_pz_tripletList.end());
 
-            pq_d_pz(x).resize(Nact, z.size());
+            pq_d_pz(x).resize(Nact, varLength);
             pq_d_pz(x).setFromTriplets(pq_d_pz_tripletList.begin(), pq_d_pz_tripletList.end());
 
-            pq_dd_pz(x).resize(Nact, z.size());
+            pq_dd_pz(x).resize(Nact, varLength);
             pq_dd_pz(x).setFromTriplets(pq_dd_pz_tripletList.begin(), pq_dd_pz_tripletList.end());
         }
     }

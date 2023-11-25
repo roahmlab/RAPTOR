@@ -41,6 +41,7 @@ public:
     int N = 0;    // number of time instances in tspan
     int Nact = 0;   // number of actuated joints in the system
     VecX tspan;   // a column vector of discrete time instances to check constraint violation
+    int varLength = 0; // length of the decision variable vector
 
         // compute results are stored here
     Eigen::Array<VecX, 1, Eigen::Dynamic> q;
