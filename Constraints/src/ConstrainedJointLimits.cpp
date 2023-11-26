@@ -33,17 +33,35 @@ ConstrainedJointLimits::ConstrainedJointLimits(std::unique_ptr<Trajectories> tra
 }
 
 void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
+    if (compute_derivatives) {
+        pg_pz.setZero();
+    }
+
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * NB, 0, NB, 1) = trajPtr_->q(i);
-    }
+        VecX qfull(NB);
+        dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i));
+        dcPtr_->setupJointPosition(qfull, compute_derivatives);
+        g.block(i * NB, 0, NB, 1) = qfull;
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+        if (compute_derivatives) {
+            // fill in independent joints derivatives directly
+            for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
+                int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
+                pg_pz.row(i * NB + indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
+            }
 
-        for (int i = 0; i < trajPtr_->N; i++) {
-            // pg_pz.block(i * NB, 0, NB, varLength) = trajPtr_->pq_pz(i);
+            // quick sanity check
+            assert(dcPtr_->pq_unact_pq_act.cols() == dcPtr_->numIndependentJoints);
+            assert(dcPtr_->pq_unact_pq_act.rows() == dcPtr_->numDependentJoints);
+
+            // compute and fill in dependent joints derivatives
+            SpaMatX pq_unact_pz = dcPtr_->pq_unact_pq_act * trajPtr_->pq_pz(i);
+            for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
+                int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+                pg_pz.row(i * NB + denpendentJointIndex) = pq_unact_pz.row(j);
+            }
         }
     }
 }

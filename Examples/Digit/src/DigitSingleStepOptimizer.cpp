@@ -270,8 +270,8 @@ bool DigitSingleStepOptimizer::eval_jac_g(
                 // double v = pq_pz.valuePtr()[k];
                 // v is value of the element at position (j,i)
 
-                iRow[iter] = j;
-                jCol[iter] = i;
+                iRow[iter] = i;
+                jCol[iter] = j;
                 iter++;
             }
         }
@@ -286,8 +286,8 @@ bool DigitSingleStepOptimizer::eval_jac_g(
                 // double v = pq_d_pz.valuePtr()[k];
                 // v is value of the element at position (j,i)
 
-                iRow[iter] = j + fcPtr_->Nact;
-                jCol[iter] = i;
+                iRow[iter] = i + fcPtr_->Nact;
+                jCol[iter] = j;
                 iter++;
             }
         }
@@ -302,8 +302,8 @@ bool DigitSingleStepOptimizer::eval_jac_g(
                 // double v = pq_dd_pz.valuePtr()[k];
                 // v is value of the element at position (j,i)
 
-                iRow[iter] = j + 2 * fcPtr_->Nact;
-                jCol[iter] = i;
+                iRow[iter] = i + 2 * fcPtr_->Nact;
+                jCol[iter] = j;
                 iter++;
             }
         }

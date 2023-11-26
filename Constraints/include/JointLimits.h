@@ -12,7 +12,7 @@ class JointLimits : public Constraints {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMat = Eigen::SparseMatrix<double>;
+    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     // Constructor
     JointLimits() = default;
@@ -43,7 +43,7 @@ public:
 
         // compute results are stored here
     VecX g;
-    SpaMat pg_pz;
+    SpaMatX pg_pz;
 
     VecX g_lb;
     VecX g_ub;

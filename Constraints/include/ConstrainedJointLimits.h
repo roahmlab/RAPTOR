@@ -10,7 +10,7 @@ class ConstrainedJointLimits : public JointLimits {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMat = Eigen::SparseMatrix<double>;
+    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     // Constructor
     ConstrainedJointLimits() = default;

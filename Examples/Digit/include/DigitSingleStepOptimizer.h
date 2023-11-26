@@ -18,7 +18,7 @@ public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double>;
+    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     /** Default constructor */
     DigitSingleStepOptimizer() = default;

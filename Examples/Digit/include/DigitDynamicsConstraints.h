@@ -76,6 +76,13 @@ public:
     ~DigitDynamicsConstraints() = default;
 
     // class methods:
+        // return the index of id th dependent joint
+    int return_dependent_joint_index(const int id) override;
+
+        // return the index of id th independent joint
+    int return_independent_joint_index(const int id) override;
+
+        // fill in dependent indeces in a vector
     void fill_dependent_vector(VecX& r, const VecX& v, const bool setZero = false) override;
 
         // fill in independent indeces in a vector
@@ -115,7 +122,7 @@ public:
         // that satisfies the constraints
         // This usually involves solving inverse kinematics. 
         // You need to implement this method in your derived class!!!
-    void setupJointPosition(VecX& q) override;
+    void setupJointPosition(VecX& q, bool compute_derivatives = true) override;
 
         // constraint c(q)
     void get_c(const VecX& q) override;

@@ -25,20 +25,20 @@ JointLimits::JointLimits(std::unique_ptr<Trajectories> trajPtr_input,
 }
 
 void JointLimits::compute(const VecX& z, bool compute_derivatives) {
+    if (compute_derivatives) {
+        pg_pz.setZero();
+    }
+
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {
         g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q(i);
-    }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
-
-        for (int i = 0; i < trajPtr_->N; i++) {
+        if (compute_derivatives) {
             // block operation is not supported for sparse matrices
             // pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_pz(i);
             for (int j = 0; j < trajPtr_->Nact; j++) {
-                // pg_pz.row(i * trajPtr_->Nact + j) = trajPtr_->pq_pz(i).row(j);
+                pg_pz.row(i * trajPtr_->Nact + j) = trajPtr_->pq_pz(i).row(j);
             }
         }
     }

@@ -9,7 +9,7 @@ class FourierCurves : public Trajectories {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double>;
+    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     FourierCurves() = default;
 

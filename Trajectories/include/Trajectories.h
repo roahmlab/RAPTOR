@@ -19,7 +19,7 @@ enum TimeDiscretization {
 class Trajectories {
 public:
     using VecX = Eigen::VectorXd;
-    using SpaMatX = Eigen::SparseMatrix<double>;
+    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     // Constructor
     Trajectories() = default;

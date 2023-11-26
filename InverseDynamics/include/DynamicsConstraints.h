@@ -24,6 +24,12 @@ public:
 
     // class methods:
     // You need to implement all following methods in your derived class!!!
+    
+        // return the index of id th dependent joint
+    virtual int return_dependent_joint_index(const int id) = 0;
+
+        // return the index of id th independent joint
+    virtual int return_independent_joint_index(const int id) = 0;
 
         // fill in dependent indeces in a vector
     virtual void fill_dependent_vector(VecX& r, const VecX& v, const bool setZero = false) = 0;
@@ -66,7 +72,7 @@ public:
         // that satisfies the constraints
         // This usually involves solving inverse kinematics. 
         // You need to implement this method in your derived class!!!
-    virtual void setupJointPosition(VecX& q) = 0;
+    virtual void setupJointPosition(VecX& q, bool compute_derivatives = true) = 0;
 
         // fill in dependent joint positions and velocities in the full joint vector q and v
         // that satisfies the constraints

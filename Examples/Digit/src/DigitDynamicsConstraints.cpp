@@ -59,6 +59,16 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const Model& model_input,
     stance_foot_T_des = stance_foot_T_des_input;
 }
 
+int DigitDynamicsConstraints::return_dependent_joint_index(const int id) {
+    assert(0 <= id && id < NUM_DEPENDENT_JOINTS);
+    return dependentJointIds[id];
+}
+
+int DigitDynamicsConstraints::return_independent_joint_index(const int id) {
+    assert(0 <= id && id < NUM_INDEPENDENT_JOINTS);
+    return independentJointIds[id];
+}
+
 void DigitDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX& v, const bool setZero) {
     assert(r.size() == modelPtr_->nv);
     assert(v.size() == NUM_DEPENDENT_JOINTS);
@@ -193,7 +203,7 @@ void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
     }
 }
 
-void DigitDynamicsConstraints::setupJointPosition(VecX& q) {
+void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
     qcopy = q;
 
     // fill in dependent joint positions 
@@ -330,6 +340,25 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q) {
     gsl_vector_free(x);
 
     q = qcopy;
+
+    if (compute_derivatives) {
+        get_c(q);
+        get_J(q);
+
+        get_dependent_columns(J_dep, J);
+        get_independent_columns(J_indep, J);
+
+        J_dep_qr = QRSolver(J_dep);
+        J_dep_T_qr = QRSolver(J_dep.transpose());
+
+        // sanity check on uniqueness (these two arguments are actually equivalent)
+        assert(J_dep_qr.rank() == J_dep.rows() && J_dep_qr.rank() == J_dep.cols());
+        assert(J_dep_T_qr.rank() == J_dep.rows() && J_dep_T_qr.rank() == J_dep.cols());
+
+        P_dep = -J_dep_qr.solve(J_indep);
+
+        pq_unact_pq_act = P_dep;
+    }
 }
 
 int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f) {
