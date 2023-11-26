@@ -15,6 +15,7 @@ using namespace Ipopt;
 
 class DigitSingleStepOptimizer : public TNLP {
 public:
+    using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using SpaMatX = Eigen::SparseMatrix<double>;
@@ -27,7 +28,12 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        const VecX& x0_input
+        const VecX& x0_input,
+        const int N_input,
+        const Model& model_input, 
+        const Eigen::VectorXi& jtype_input,
+        char stanceLeg, 
+        const Transform& stance_foot_T_des_input
     );
 
     /**@name Overloaded from TNLP */
@@ -157,7 +163,7 @@ public:
        const DigitSingleStepOptimizer&
     );
 
-    // std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
+    std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
     std::unique_ptr<FourierCurves> fcPtr_;
 
     VecX x0;

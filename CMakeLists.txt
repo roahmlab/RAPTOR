@@ -78,6 +78,19 @@ target_include_directories(IDlib PUBLIC
 target_compile_options(IDlib PUBLIC
     ${PINOCCHIO_FLAGS})
 
+## Constraints library
+add_library(Conslib SHARED
+    Constraints/src/JointLimits.cpp
+    Constraints/src/ConstrainedJointLimits.cpp)
+
+target_include_directories(Conslib PUBLIC
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include)
+
+target_compile_options(Conslib PUBLIC
+    ${PINOCCHIO_FLAGS})    
+
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
@@ -97,7 +110,9 @@ target_link_libraries(Digitlib PRIVATE
 
 target_include_directories(Digitlib PUBLIC
     Examples/Digit/include
-    InverseDynamics/include)
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include)
 
 target_compile_options(Digitlib PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -107,12 +122,16 @@ add_executable(IDTO_example
     Examples/Digit/DigitSingleStep.cpp)
 
 target_include_directories(IDTO_example PRIVATE
-    Trajectories/include)
+    Examples/Digit/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include)
 
 target_link_libraries(IDTO_example PRIVATE
-    Digitlib
     trajlib 
     IDlib
+    Conslib
+    Digitlib
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
@@ -130,6 +149,10 @@ install(TARGETS trajlib
 )
 
 install(TARGETS IDlib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS Conslib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

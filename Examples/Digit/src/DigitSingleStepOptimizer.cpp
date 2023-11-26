@@ -19,12 +19,19 @@ using std::endl;
 
 
 bool DigitSingleStepOptimizer::set_parameters(
-    const VecX& x0_input
+    const VecX& x0_input,
+    const int N_input,
+    const Model& model_input, 
+    const Eigen::VectorXi& jtype_input,
+    char stanceLeg, 
+    const Transform& stance_foot_T_des_input
  ) 
 {
     x0 = x0_input;
 
-    fcPtr_ = std::make_unique<FourierCurves>(0.4, 32, NUM_INDEPENDENT_JOINTS, Chebyshev, 6);
+    fcPtr_ = std::make_unique<FourierCurves>(0.4, N_input, NUM_INDEPENDENT_JOINTS, Chebyshev, 6);
+
+    dcidPtr_ = std::make_unique<DigitConstrainedInverseDynamics>(model_input, N_input, NUM_DEPENDENT_JOINTS, jtype_input, stanceLeg, stance_foot_T_des_input);
 
     assert(x0.size() == fcPtr_->varLength);
 

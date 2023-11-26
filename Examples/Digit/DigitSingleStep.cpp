@@ -51,7 +51,9 @@ int main() {
 
     Transform stance_foot_T_des(3, -M_PI / 2);
 
-    FourierCurves fc(0.4, 32, 12, Chebyshev, 6);
+    const int N = 32;
+
+    FourierCurves fc(0.4, N, 12, Chebyshev, 6);
 
     Eigen::VectorXd z(252);
     z << -0.11109146887103597823, 0.84834384226477022040, -0.66541026041380646472, 0.58263811498498840891, 2.48714623151437175252, 0.19220565717908852377, 0.34687497932001681855, 0.16172991979402998042, -0.37635683762946570141, -0.11256661300020291694, 0.02717458499107647252, -0.02100945014581665979, 
@@ -79,7 +81,7 @@ int main() {
     // fc.compute(z);
 
     // std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_ = 
-    //     std::make_unique<DigitConstrainedInverseDynamics>(model, 32, NUM_DEPENDENT_JOINTS, jtype, stanceLeg, stance_foot_T_des);
+    //     std::make_unique<DigitConstrainedInverseDynamics>(model, N, NUM_DEPENDENT_JOINTS, jtype, stanceLeg, stance_foot_T_des);
 
     // Eigen::VectorXd q(model.nq);
     // Eigen::VectorXd v(model.nv);
@@ -95,10 +97,10 @@ int main() {
     // cout << v.transpose() << endl;
     // cout << a.transpose() << endl;
 
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> qq(32);
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> vv(32);
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> aa(32);
-    // for (int i = 0; i < 32; i++) {
+    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> qq(N);
+    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> vv(N);
+    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> aa(N);
+    // for (int i = 0; i < N; i++) {
     //     qq(i) = q;
     //     vv(i) = v;
     //     aa(i) = a;
@@ -109,7 +111,12 @@ int main() {
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
-	    mynlp->set_parameters(z.head(192));
+	    mynlp->set_parameters(z.head(192),
+                              N,
+                              model,
+                              jtype,
+                              stanceLeg,
+                              stance_foot_T_des);
     }
     catch (int errorCode) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
@@ -126,7 +133,7 @@ int main() {
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("derivative_test", "first-order");
     app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
