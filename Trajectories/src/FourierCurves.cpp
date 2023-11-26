@@ -149,7 +149,7 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
                 // derivative with respect to q_act_d0
                 pq_pz_tripletList.push_back(Eigen::Triplet<double>(i, 
                                                                    Nact * (2 * degree + 2) + Nact + i, 
-                                                                   1));   
+                                                                   tspan(x)));   
 
                 // pq_d_pz
                 // derivative with respect to a_i

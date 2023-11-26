@@ -157,7 +157,7 @@ public:
        const DigitSingleStepOptimizer&
     );
 
-    std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
+    // std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
     std::unique_ptr<FourierCurves> fcPtr_;
 
     VecX x0;

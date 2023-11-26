@@ -3,6 +3,9 @@
 namespace IDTO {
 namespace Digit {
 
+using std::cout;
+using std::endl;
+
 // // constructor
 // DigitSingleStepOptimizer::DigitSingleStepOptimizer()
 // {
@@ -12,7 +15,6 @@ namespace Digit {
 // // destructor
 // DigitSingleStepOptimizer::~DigitSingleStepOptimizer()
 // {
-//     delete[] g_copy;
 // }
 
 
@@ -22,7 +24,7 @@ bool DigitSingleStepOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    fcPtr_ = std::make_unique<FourierCurves>(0.4, 32, 12, Chebyshev, 6);
+    fcPtr_ = std::make_unique<FourierCurves>(0.4, 32, NUM_INDEPENDENT_JOINTS, Chebyshev, 6);
 
     assert(x0.size() == fcPtr_->varLength);
 
@@ -38,10 +40,10 @@ bool DigitSingleStepOptimizer::get_nlp_info(
    IndexStyleEnum& index_style
 )
 {
-    // // The problem described NUM_FACTORS variables, x[NUM_FACTORS] through x[NUM_FACTORS] for each joint
+    // number of decision variables
     n = fcPtr_->varLength;
 
-    // // number of inequality constraint
+    // number of inequality constraint
     m = fcPtr_->Nact * 3;
 
     VecX z0(n);
@@ -54,6 +56,11 @@ bool DigitSingleStepOptimizer::get_nlp_info(
     nnz_jac_g = fcPtr_->pq_pz(20).nonZeros() + 
                 fcPtr_->pq_d_pz(20).nonZeros() + 
                 fcPtr_->pq_dd_pz(20).nonZeros();
+
+    // printf("nnz_jac_g: %d\n", nnz_jac_g);
+    // printf("nnz_jac_g 1: %ld\n", fcPtr_->pq_pz(20).nonZeros());
+    // printf("nnz_jac_g 2: %ld\n", fcPtr_->pq_d_pz(20).nonZeros());
+    // printf("nnz_jac_g 3: %ld\n", fcPtr_->pq_dd_pz(20).nonZeros());
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -78,9 +85,9 @@ bool DigitSingleStepOptimizer::get_bounds_info(
     if(n != fcPtr_->varLength){
         throw std::runtime_error("*** Error wrong value of n in get_bounds_info!");
     }
-    if(m != fcPtr_->Nact * 3){
-        throw std::runtime_error("*** Error wrong value of m in get_bounds_info!");
-    }
+    // if(m != fcPtr_->Nact * 3){
+    //     throw std::runtime_error("*** Error wrong value of m in get_bounds_info!");
+    // }
 
     // lower bounds
     for( Index i = 0; i < n; i++ ) {
@@ -90,6 +97,11 @@ bool DigitSingleStepOptimizer::get_bounds_info(
     // upper bounds  
     for( Index i = 0; i < n; i++ ) {
         x_u[i] = 1e8;
+    }
+
+    for( Index i = 0; i < m; i++ ) {
+        g_l[i] = -1e8;
+        g_u[i] = 1e8;
     }
 
     return true;
@@ -190,17 +202,25 @@ bool DigitSingleStepOptimizer::eval_g(
     VecX z(n);
     for ( Index i = 0; i < n; i++ ) {
         z(i) = x[i];
-    }
 
-    if (new_x) {
-        fcPtr_->compute(z, false);
+        // cout << x[i] << endl;
     }
+    // cout << endl;
+
+    // if (new_x) {
+        fcPtr_->compute(z, false);
+    // }
 
     for ( Index i = 0; i < fcPtr_->Nact; i++ ) {
         g[i] = fcPtr_->q(20)(i);
         g[i + fcPtr_->Nact] = fcPtr_->q_d(20)(i);
         g[i + 2 * fcPtr_->Nact] = fcPtr_->q_dd(20)(i);
     }
+
+    // cout << fcPtr_->q(20).transpose() << endl;
+    // cout << fcPtr_->q_d(20).transpose() << endl;
+    // cout << fcPtr_->q_dd(20).transpose() << endl;
+    // cout << endl;
 
     return true;
 }
@@ -226,17 +246,10 @@ bool DigitSingleStepOptimizer::eval_jac_g(
     if(m != fcPtr_->Nact * 3){
         throw std::runtime_error("*** Error wrong value of m in eval_g!");
     }
-
-    printf("%ld\n", x);
-
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
-
-    fcPtr_->compute(z, true);
         
     if( values == NULL ) {
+        fcPtr_->compute(x0, true);
+
         // return the structure of the Jacobian
         Index iter = 0;
 
@@ -287,8 +300,21 @@ bool DigitSingleStepOptimizer::eval_jac_g(
                 iter++;
             }
         }
+
+        // cout << iter << endl;
+        // for (Index i = 0; i < iter; i++) {
+        //     cout << iRow[i] << " " << jCol[i] << endl;
+        // }
+        // cout << endl;
     }
     else {
+        VecX z(n);
+        for ( Index i = 0; i < n; i++ ) {
+            z(i) = x[i];
+        }
+
+        fcPtr_->compute(z, true);
+
         Index iter = 0;
 
         const SpaMatX& pq_pz = fcPtr_->pq_pz(20);
