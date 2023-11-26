@@ -11,13 +11,13 @@ Trajectory Optimization based on Inverse Dynamics
 
 ## Getting Started
 Run the following commands for Digit Example
-'''
+```
 mkdir build
 cd build
 cmake ..
 make
 ./IDTO_example
-'''
+```
 
 ## Credits
 Bohao Zhang (jimzhang@umich.edu)
