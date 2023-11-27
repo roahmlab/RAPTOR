@@ -2,12 +2,12 @@
 
 namespace IDTO {
 
-ConstrainedJointLimits::ConstrainedJointLimits(std::unique_ptr<Trajectories> trajPtr_input, 
-                                               std::unique_ptr<DynamicsConstraints> dcPtr_input, 
+ConstrainedJointLimits::ConstrainedJointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
+                                               std::shared_ptr<DynamicsConstraints>& dcPtr_input, 
                                                const VecX& lowerLimits_input, 
                                                const VecX& upperLimits_input) {
-    trajPtr_ = std::move(trajPtr_input);
-    dcPtr_ = std::move(dcPtr_input);
+    trajPtr_ = trajPtr_input;
+    dcPtr_ = dcPtr_input;
     lowerLimits = lowerLimits_input;
     upperLimits = upperLimits_input;
 
@@ -41,7 +41,8 @@ void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
 
     for (int i = 0; i < trajPtr_->N; i++) {
         VecX qfull(NB);
-        dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i));
+        dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i), true);
+
         dcPtr_->setupJointPosition(qfull, compute_derivatives);
         g.block(i * NB, 0, NB, 1) = qfull;
 
@@ -53,11 +54,15 @@ void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
             }
 
             // quick sanity check
-            assert(dcPtr_->pq_unact_pq_act.cols() == dcPtr_->numIndependentJoints);
-            assert(dcPtr_->pq_unact_pq_act.rows() == dcPtr_->numDependentJoints);
+            if (dcPtr_->pq_unact_pq_act.cols() != dcPtr_->numIndependentJoints) {
+                throw std::runtime_error("pq_unact_pq_act must have the same number of columns as the number of independent joints");
+            }
+            if (dcPtr_->pq_unact_pq_act.rows() != dcPtr_->numDependentJoints) {
+                throw std::runtime_error("pq_unact_pq_act must have the same number of rows as the number of dependent joints");
+            }
 
             // compute and fill in dependent joints derivatives
-            SpaMatX pq_unact_pz = dcPtr_->pq_unact_pq_act * trajPtr_->pq_pz(i);
+            MatX pq_unact_pz = dcPtr_->pq_unact_pq_act * trajPtr_->pq_pz(i);
             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
                 int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
                 pg_pz.row(i * NB + denpendentJointIndex) = pq_unact_pz.row(j);
@@ -66,14 +71,9 @@ void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
     }
 }
 
-void ConstrainedJointLimits::compute_lb() {
+void ConstrainedJointLimits::compute_bounds() {
     for (int i = 0; i < trajPtr_->N; i++) {
         g_lb.block(i * NB, 0, NB, 1) = lowerLimits;
-    }
-}
-
-void ConstrainedJointLimits::compute_ub() {
-    for (int i = 0; i < trajPtr_->N; i++) {
         g_ub.block(i * NB, 0, NB, 1) = upperLimits;
     }
 }

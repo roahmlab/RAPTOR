@@ -35,7 +35,7 @@ public:
 
         // declare a DynamicsConstraints instance outside of this class
         // use a shared pointer here to avoid copying
-    std::unique_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
+    std::shared_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
 
         // updated in compute()
     VecX tau_dep;

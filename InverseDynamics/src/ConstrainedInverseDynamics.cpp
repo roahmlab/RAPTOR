@@ -28,6 +28,9 @@ ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input,
     JTlambda_partial_dq = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     JTlambda_partial_dq_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
     JTlambda_partial_dq_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
+
+    // dynamicsConstraintsPtr_ is still empty at this moment!!!
+    // You need to define it in the constructor of your own derived class!!!
 }
 
 void ConstrainedInverseDynamics::compute(Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 

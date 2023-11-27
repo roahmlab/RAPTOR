@@ -58,9 +58,12 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
         q_dd(x) = VecX::Zero(Nact);
 
         if (compute_derivatives) {
-            pq_pz_tripletList.clear();
-            pq_d_pz_tripletList.clear();
-            pq_dd_pz_tripletList.clear();
+            pq_pz(x).resize(Nact, varLength);
+            pq_d_pz(x).resize(Nact, varLength);
+            pq_dd_pz(x).resize(Nact, varLength);
+            pq_pz(x).setZero();
+            pq_d_pz(x).setZero();
+            pq_dd_pz(x).setZero();
         }
 
         for (int i = 0; i < Nact; i++) {
@@ -131,68 +134,39 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
                 // pq_pz
                 // derivative with respect to a_i
                 for (int j = 0; j < 2 * degree + 1; j++) {
-                    pq_pz_tripletList.emplace_back(i, 
-                                                   i * (2 * degree + 2) + j, 
-                                                   F(j) - F0(j) - dF0(j) * tspan(x));
+                    pq_pz(x)(i, i * (2 * degree + 2) + j) = F(j) - F0(j) - dF0(j) * tspan(x);
                 }
 
                 // derivative with respect to w
-                pq_pz_tripletList.emplace_back(i, 
-                                               i * (2 * degree + 2) + (2 * degree + 1), 
-                                               kernel.dot(pF_pw - pF0_pw - pdF0_pw * tspan(x)));
+                pq_pz(x)(i, i * (2 * degree + 2) + (2 * degree + 1)) = kernel.dot(pF_pw - pF0_pw - pdF0_pw * tspan(x));
 
                 // derivative with respect to q_act0
-                pq_pz_tripletList.emplace_back(i, 
-                                               Nact * (2 * degree + 2) + i, 
-                                               1);            
+                pq_pz(x)(i, Nact * (2 * degree + 2) + i) = 1; 
 
                 // derivative with respect to q_act_d0
-                pq_pz_tripletList.emplace_back(i, 
-                                               Nact * (2 * degree + 2) + Nact + i, 
-                                               tspan(x));   
+                pq_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = tspan(x);   
 
                 // pq_d_pz
                 // derivative with respect to a_i
                 for (int j = 0; j < 2 * degree + 1; j++) {
-                    pq_d_pz_tripletList.emplace_back(i, 
-                                                     i * (2 * degree + 2) + j, 
-                                                     dF(j) - dF0(j));
+                    pq_d_pz(x)(i, i * (2 * degree + 2) + j) = dF(j) - dF0(j);
                 }
 
                 // derivative with respect to w
-                pq_d_pz_tripletList.emplace_back(i, 
-                                                 i * (2 * degree + 2) + (2 * degree + 1), 
-                                                 kernel.dot(pdF_pw - pdF0_pw));        
+                pq_d_pz(x)(i, i * (2 * degree + 2) + (2 * degree + 1)) = kernel.dot(pdF_pw - pdF0_pw);        
 
                 // derivative with respect to q_act_d0
-                pq_d_pz_tripletList.emplace_back(i, 
-                                                 Nact * (2 * degree + 2) + Nact + i, 
-                                                 1);  
+                pq_d_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = 1;  
 
                 // pq_dd_pz
                 // derivative with respect to a_i
                 for (int j = 0; j < 2 * degree + 1; j++) {
-                    pq_dd_pz_tripletList.emplace_back(i, 
-                                                      i * (2 * degree + 2) + j, 
-                                                      ddF(j));
+                    pq_dd_pz(x)(i, i * (2 * degree + 2) + j) = ddF(j);
                 }
 
                 // derivative with respect to w
-                pq_dd_pz_tripletList.emplace_back(i, 
-                                                  i * (2 * degree + 2) + (2 * degree + 1), 
-                                                  kernel.dot(pddF_pw));                                                                                                                                                                                            
+                pq_dd_pz(x)(i, i * (2 * degree + 2) + (2 * degree + 1)) = kernel.dot(pddF_pw);                                                                                                                                                                                            
             }
-        }
-
-        if (compute_derivatives) {
-            pq_pz(x).resize(Nact, varLength);
-            pq_pz(x).setFromTriplets(pq_pz_tripletList.begin(), pq_pz_tripletList.end());
-
-            pq_d_pz(x).resize(Nact, varLength);
-            pq_d_pz(x).setFromTriplets(pq_d_pz_tripletList.begin(), pq_d_pz_tripletList.end());
-
-            pq_dd_pz(x).resize(Nact, varLength);
-            pq_dd_pz(x).setFromTriplets(pq_dd_pz_tripletList.begin(), pq_dd_pz_tripletList.end());
         }
     }
 }

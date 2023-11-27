@@ -22,12 +22,14 @@ public:
 
     virtual int return_m() {return m;}
 
-    virtual void compute_lb() = 0;
-
-    virtual void compute_ub() = 0;
+    virtual void compute_bounds() = 0;
 
     // class members:
     int m = 0; // number of constraints
+
+    // scale factor for the constraints
+    // This would change the behavior of the optimization problem
+    double scale = 1.0; 
 
     // define the variables that stores the results here
 };

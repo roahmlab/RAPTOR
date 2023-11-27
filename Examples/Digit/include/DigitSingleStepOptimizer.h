@@ -7,6 +7,8 @@
 #include "FourierCurves.h"
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
+#include "ConstrainedJointLimits.h"
+#include "Utils.h"
 
 namespace IDTO {
 namespace Digit {
@@ -18,7 +20,6 @@ public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     /** Default constructor */
     DigitSingleStepOptimizer() = default;
@@ -29,7 +30,9 @@ public:
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
+        const double T_input,
         const int N_input,
+        const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
         char stanceLeg, 
@@ -163,8 +166,13 @@ public:
        const DigitSingleStepOptimizer&
     );
 
-    std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
-    std::unique_ptr<FourierCurves> fcPtr_;
+    std::shared_ptr<Trajectories> trajPtr_;
+    std::shared_ptr<FourierCurves> fcPtr_;
+
+    std::shared_ptr<DynamicsConstraints> dcPtr_;
+    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
+
+    std::unique_ptr<ConstrainedJointLimits> constraints_cjlPtr_;
 
     VecX x0;
 };

@@ -12,13 +12,12 @@ class JointLimits : public Constraints {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     // Constructor
     JointLimits() = default;
 
     // Constructor
-    JointLimits(std::unique_ptr<Trajectories> trajPtr_input, 
+    JointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
                 const VecX& lowerLimits_input, 
                 const VecX& upperLimits_input);
 
@@ -29,11 +28,8 @@ public:
         // compute constraints
     virtual void compute(const VecX& z, bool compute_derivatives = true) override;
 
-        // compute constraints lower bound
-    virtual void compute_lb() override;
-
-        // compute constraints upper bound
-    virtual void compute_ub() override;
+        // compute constraints lower bounds and upper bounds
+    virtual void compute_bounds() override;
 
     // class variables:
     std::shared_ptr<Trajectories> trajPtr_;
@@ -43,7 +39,7 @@ public:
 
         // compute results are stored here
     VecX g;
-    SpaMatX pg_pz;
+    MatX pg_pz;
 
     VecX g_lb;
     VecX g_ub;

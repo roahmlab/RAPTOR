@@ -13,6 +13,8 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
 
+message(${CMAKE_BUILD_TYPE})
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 14)
 
@@ -62,7 +64,8 @@ add_library(trajlib SHARED
     Trajectories/src/Trajectories.cpp)
 
 target_include_directories(trajlib PUBLIC
-    Trajectories/include)
+    Trajectories/include
+    Utils/include)
 
 ## Inverse dynamics library
 add_library(IDlib SHARED
@@ -73,7 +76,8 @@ add_library(IDlib SHARED
     InverseDynamics/src/ForwardKinematics.cpp)
 
 target_include_directories(IDlib PUBLIC
-    InverseDynamics/include)
+    InverseDynamics/include
+    Utils/include)
 
 target_compile_options(IDlib PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -86,7 +90,8 @@ add_library(Conslib SHARED
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include
     Trajectories/include
-    Constraints/include)
+    Constraints/include
+    Utils/include)
 
 target_compile_options(Conslib PUBLIC
     ${PINOCCHIO_FLAGS})    
@@ -112,7 +117,8 @@ target_include_directories(Digitlib PUBLIC
     Examples/Digit/include
     InverseDynamics/include
     Trajectories/include
-    Constraints/include)
+    Constraints/include
+    Utils/include)
 
 target_compile_options(Digitlib PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -125,7 +131,8 @@ target_include_directories(IDTO_example PRIVATE
     Examples/Digit/include
     InverseDynamics/include
     Trajectories/include
-    Constraints/include)
+    Constraints/include
+    Utils/include)
 
 target_link_libraries(IDTO_example PRIVATE
     trajlib 

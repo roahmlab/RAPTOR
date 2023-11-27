@@ -2,7 +2,6 @@
 #define TRAJECTORIES_H
 
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
@@ -19,7 +18,7 @@ enum TimeDiscretization {
 class Trajectories {
 public:
     using VecX = Eigen::VectorXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     Trajectories() = default;
@@ -49,14 +48,9 @@ public:
     Eigen::Array<VecX, 1, Eigen::Dynamic> q_dd;
 
         // compute results are stored here
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_pz;
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_d_pz;
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_dd_pz;
-
-        // temporary variables updated in compute()
-    std::vector<Eigen::Triplet<double>> pq_pz_tripletList;
-    std::vector<Eigen::Triplet<double>> pq_d_pz_tripletList;
-    std::vector<Eigen::Triplet<double>> pq_dd_pz_tripletList;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_d_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_dd_pz;
 };
 
 }; // namespace IDTO    

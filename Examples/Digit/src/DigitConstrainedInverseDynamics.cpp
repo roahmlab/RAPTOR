@@ -10,7 +10,7 @@ DigitConstrainedInverseDynamics::DigitConstrainedInverseDynamics(const Model& mo
                                                                  char stanceLeg_input, 
                                                                  const Transform& stance_foot_T_des_input) :
     ConstrainedInverseDynamics(model_input, N_input, NUM_DEPENDENT_JOINTS_input) {
-    dynamicsConstraintsPtr_ = std::make_unique<DigitDynamicsConstraints>(model_input, 
+    dynamicsConstraintsPtr_ = std::make_shared<DigitDynamicsConstraints>(model_input, 
                                                                          jtype_input, 
                                                                          stanceLeg_input,
                                                                          stance_foot_T_des_input);

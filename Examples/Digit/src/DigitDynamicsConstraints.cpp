@@ -312,6 +312,14 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
         iter++;
         status = gsl_multiroot_fdfsolver_iterate(s);
 
+        // double total_f = 0;
+        // printf("%ld ", iter);
+        // for (int i = 0; i < numDependentJoints; i++) {
+        //     total_f += abs(gsl_vector_get(s->f, i));    
+        //     printf("%e ", abs(gsl_vector_get(s->f, i)));
+        // }
+        // printf("\n");
+
         if (status) break;
 
         status = gsl_multiroot_test_residual(s->f, 1e-14);
@@ -320,9 +328,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
 
     // printf ("total iter = %ld, status = %s\n", iter, gsl_strerror(status));
 
-    // at this moment, qcopy, cosq, sinq have already saved 
     // the optimal solution found by gsl!
-
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         qcopy(dependentJointIds[i]) = gsl_vector_get(s->x, i);
     }

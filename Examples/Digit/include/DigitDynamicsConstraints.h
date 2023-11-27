@@ -8,13 +8,14 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multiroots.h>
 
+#include "DigitConstants.h"
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
 namespace IDTO {
 namespace Digit {
 
-constexpr int NUM_DEPENDENT_JOINTS = 24;
+
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
                                        {"Px",
                                         "Py",
@@ -40,8 +41,7 @@ const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
                                         "right_B2",
                                         "right_toe_pitch",
                                         "right_toe_roll"};
-
-const int NUM_INDEPENDENT_JOINTS = 12;
+                                        
 const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] =
                                        {"left_hip_roll",
                                         "left_hip_yaw",
