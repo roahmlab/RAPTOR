@@ -18,15 +18,14 @@ public:
 
     // Constructor
     ConstrainedInverseDynamics(const Model& model_input, 
+                               std::shared_ptr<Trajectories>& trajPtr_input,
                                int N_input, 
                                int numDependentJoints_input);
 
     // Destructor
     ~ConstrainedInverseDynamics() = default;
     
-    virtual void compute(Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 
-                         Eigen::Array<VecX, 1, Eigen::Dynamic>& v, 
-                         Eigen::Array<VecX, 1, Eigen::Dynamic>& a,
+    virtual void compute(const VecX& z,
                          bool compute_derivatives = true);
 
     // class members:
@@ -35,7 +34,7 @@ public:
 
         // declare a DynamicsConstraints instance outside of this class
         // use a shared pointer here to avoid copying
-    std::shared_ptr<DynamicsConstraints> dynamicsConstraintsPtr_;
+    std::shared_ptr<DynamicsConstraints> dcPtr_;
 
         // updated in compute()
     VecX tau_dep;
@@ -45,17 +44,23 @@ public:
     Eigen::Array<VecX, 1, Eigen::Dynamic> lambda;
 
         // compute results are stored here
-    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pq;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pv;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pa;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pz;
 
         // temporary variables updated in compute()
-    MatX rnea_partial_dq_dep;
-    MatX rnea_partial_dq_indep;
-    MatX rnea_partial_dv_dep;
-    MatX rnea_partial_dv_indep;
-    MatX rnea_partial_da_dep;
-    MatX rnea_partial_da_indep;
+    MatX pq_pz;
+    MatX pv_pz;
+    MatX pa_pz;
+
+    MatX prnea_pq_dep;
+    MatX prnea_pq_indep;
+    MatX prnea_pv_dep;
+    MatX prnea_pv_indep;
+    MatX prnea_pa_dep;
+    MatX prnea_pa_indep;
+
+    MatX plambda_pq;
+    MatX plambda_pv;
+    MatX plambda_pa;
 
     MatX JTlambda_partial_dq;
     MatX JTlambda_partial_dq_dep;

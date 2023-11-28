@@ -18,6 +18,7 @@ JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
     }
 
     m = trajPtr_->N * trajPtr_->Nact;
+    
     g = VecX::Zero(m);
     g_lb = VecX::Zero(m);
     g_ub = VecX::Zero(m);

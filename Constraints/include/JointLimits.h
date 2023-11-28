@@ -36,13 +36,6 @@ public:
 
     VecX lowerLimits;
     VecX upperLimits;
-
-        // compute results are stored here
-    VecX g;
-    MatX pg_pz;
-
-    VecX g_lb;
-    VecX g_ub;
 };
 
 }; // namespace IDTO

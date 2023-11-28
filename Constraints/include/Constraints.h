@@ -10,6 +10,7 @@ namespace IDTO {
 class Constraints {
 public:
     using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     Constraints() = default;
@@ -30,6 +31,13 @@ public:
     // scale factor for the constraints
     // This would change the behavior of the optimization problem
     double scale = 1.0; 
+
+    // compute results are stored here
+    VecX g;
+    MatX pg_pz;
+
+    VecX g_lb;
+    VecX g_ub;
 
     // define the variables that stores the results here
 };

@@ -363,7 +363,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
 
         P_dep = -J_dep_qr.solve(J_indep);
 
-        pq_unact_pq_act = P_dep;
+        pq_dep_pq_indep = P_dep;
     }
 }
 

@@ -37,17 +37,19 @@ bool DigitSingleStepOptimizer::set_parameters(
                                              Chebyshev, 
                                              degree_input);
 
+    // convert to their base class pointers
+    trajPtr_ = fcPtr_;
+
     dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
+                                                                 trajPtr_,
                                                                  N_input, 
                                                                  NUM_DEPENDENT_JOINTS, 
                                                                  jtype_input, 
                                                                  stanceLeg, 
                                                                  stance_foot_T_des_input);                                                          
 
-    // convert to their base class pointers
-    trajPtr_ = fcPtr_;
-    dcPtr_ = dcidPtr_->dynamicsConstraintsPtr_;
-
+    
+    // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_LOWER_VEC(i) = deg2rad(JOINT_LIMITS_LOWER[i]);
@@ -58,10 +60,31 @@ bool DigitSingleStepOptimizer::set_parameters(
         JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
-    constraints_cjlPtr_ = std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                   dcPtr_, 
-                                                                   JOINT_LIMITS_LOWER_VEC, 
-                                                                   JOINT_LIMITS_UPPER_VEC);
+    VecX TORQUE_LIMITS_LOWER_VEC(NUM_INDEPENDENT_JOINTS);
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
+    }
+
+    VecX TORQUE_LIMITS_UPPER_VEC(NUM_INDEPENDENT_JOINTS);
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
+    }
+
+    // Joint limits
+        // convert to their base class pointers
+    // dcPtr_ = dcidPtr_->dcPtr_;
+    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+    //                                                                       dcPtr_, 
+    //                                                                       JOINT_LIMITS_LOWER_VEC, 
+    //                                                                       JOINT_LIMITS_UPPER_VEC));
+
+    // Torque limits
+        // convert to their base class pointers
+    idPtr_ = dcidPtr_;
+    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
+                                                                idPtr_, 
+                                                                TORQUE_LIMITS_LOWER_VEC, 
+                                                                TORQUE_LIMITS_UPPER_VEC));                                                                                                                                    
 
     assert(x0.size() == trajPtr_->varLength);
 
@@ -81,7 +104,10 @@ bool DigitSingleStepOptimizer::get_nlp_info(
     n = trajPtr_->varLength;
 
     // number of inequality constraint
-    m = constraints_cjlPtr_->m;
+    m = 0;
+    for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
+        m += constraintsPtrVec_[i]->m;
+    }
 
     VecX z0(n);
     for ( Index i = 0; i < n; i++ ) {
@@ -113,7 +139,7 @@ bool DigitSingleStepOptimizer::get_bounds_info(
     if (n != trajPtr_->varLength) {
         throw std::runtime_error("*** Error wrong value of n in get_bounds_info!");
     }
-    // if (m != constraints_cjlPtr_->m) {
+    // if (m != constraintsPtrVec_[c]->m) {
     //     throw std::runtime_error("*** Error wrong value of m in get_bounds_info!");
     // }
 
@@ -128,14 +154,15 @@ bool DigitSingleStepOptimizer::get_bounds_info(
     }
 
     // compute bounds for all constraints
-    constraints_cjlPtr_->compute_bounds();
-
-    // fill in bounds for all constraints
     Index iter = 0;
-    for( Index i = 0; i < constraints_cjlPtr_->m; i++ ) {
-        g_l[iter] = constraints_cjlPtr_->g_lb(i);
-        g_u[iter] = constraints_cjlPtr_->g_ub(i);
-        iter++;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        constraintsPtrVec_[c]->compute_bounds();
+
+        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+            g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
+            g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
+            iter++;
+        }
     }
 
     return true;
@@ -228,9 +255,9 @@ bool DigitSingleStepOptimizer::eval_g(
     if (n != trajPtr_->varLength) {
         throw std::runtime_error("*** Error wrong value of n in eval_g!");
     }
-    if (m != constraints_cjlPtr_->m) {
-        throw std::runtime_error("*** Error wrong value of m in eval_g!");
-    }
+    // if (m != constraintsPtrVec_[c]->m) {
+    //     throw std::runtime_error("*** Error wrong value of m in eval_g!");
+    // }
 
     // fill in a Eigen Vector instance of decision variables
     VecX z(n);
@@ -238,20 +265,22 @@ bool DigitSingleStepOptimizer::eval_g(
         z(i) = x[i];
     }
 
-    // compute all constraints
-    try {
-        constraints_cjlPtr_->compute(z, false);
-    }
-    catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
-        throw std::runtime_error("*** Error in eval_g!");
-    }
-
-    // fill in all constraints
     Index iter = 0;
-    for ( Index i = 0; i < constraints_cjlPtr_->m; i++ ) {
-        g[iter] = constraints_cjlPtr_->g(i);
-        iter++;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        // compute constraints
+        try {
+            constraintsPtrVec_[c]->compute(z, false);
+        }
+        catch (std::exception& e) {
+            std::cout << e.what() << std::endl;
+            throw std::runtime_error("*** Error in eval_g!");
+        }
+
+        // fill in constraints
+        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+            g[iter] = constraintsPtrVec_[c]->g(i);
+            iter++;
+        }
     }
 
     return true;
@@ -275,9 +304,9 @@ bool DigitSingleStepOptimizer::eval_jac_g(
     if (n != trajPtr_->varLength) {
         throw std::runtime_error("*** Error wrong value of n in eval_g!");
     }
-    if (m != constraints_cjlPtr_->m) {
-        throw std::runtime_error("*** Error wrong value of m in eval_g!");
-    }
+    // if (m != constraintsPtrVec_[c]->m) {
+    //     throw std::runtime_error("*** Error wrong value of m in eval_g!");
+    // }
         
     if( values == NULL ) {
         // return the structure of the Jacobian
@@ -296,30 +325,23 @@ bool DigitSingleStepOptimizer::eval_jac_g(
             z(i) = x[i];
         }
 
-        // compute all constraints
-        try {
-            constraints_cjlPtr_->compute(z, true);
-        }
-        catch (std::exception& e) {
-            std::cout << e.what() << std::endl;
-            throw std::runtime_error("*** Error in eval_jac_g!");
-        }
-
-        // quick sanity check
-        if (constraints_cjlPtr_->pg_pz.rows() != constraints_cjlPtr_->m) {
-            throw std::runtime_error("Error wrong value of pg_pz.rows() in eval_jac_g!");
-        }
-        if (constraints_cjlPtr_->pg_pz.cols() != n) {
-            throw std::runtime_error("Error wrong value of pg_pz.cols() in eval_jac_g!");
-        }
-        
-        // fill in all constraints
         Index iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            // compute constraints
+            try {
+                constraintsPtrVec_[c]->compute(z, true);
+            }
+            catch (std::exception& e) {
+                std::cout << e.what() << std::endl;
+                throw std::runtime_error("*** Error in eval_jac_g!");
+            }
 
-        for ( Index i = 0; i < constraints_cjlPtr_->pg_pz.rows(); i++ ) {
-            for ( Index j = 0; j < constraints_cjlPtr_->pg_pz.cols(); j++ ) {
-                values[iter] = constraints_cjlPtr_->pg_pz(i, j);
-                iter++;
+            // fill in constraints
+            for ( Index i = 0; i < constraintsPtrVec_[c]->pg_pz.rows(); i++ ) {
+                for ( Index j = 0; j < constraintsPtrVec_[c]->pg_pz.cols(); j++ ) {
+                    values[iter] = constraintsPtrVec_[c]->pg_pz(i, j);
+                    iter++;
+                }
             }
         }
     }

@@ -7,8 +7,10 @@
 #include "FourierCurves.h"
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
-#include "ConstrainedJointLimits.h"
 #include "Utils.h"
+
+#include "ConstrainedJointLimits.h"
+#include "TorqueLimits.h"
 
 namespace IDTO {
 namespace Digit {
@@ -170,9 +172,11 @@ public:
     std::shared_ptr<FourierCurves> fcPtr_;
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
+    std::shared_ptr<InverseDynamics> idPtr_;
     std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 
-    std::unique_ptr<ConstrainedJointLimits> constraints_cjlPtr_;
+    // std::unique_ptr<ConstrainedJointLimits> constraints_cjlPtr_;
+    std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
 
     VecX x0;
 };

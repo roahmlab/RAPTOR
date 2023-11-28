@@ -113,12 +113,12 @@ public:
     MatX JTx_partial_dq;
     MatX Jxy_partial_dq;
 
-    MatX pq_unact_pq_act;
-    MatX pq_unact_d_pq;
-    MatX pq_unact_d_pq_act_d;
-    MatX pq_unact_dd_pq;
-    MatX pq_unact_dd_pq_d;
-    MatX pq_unact_dd_pq_act_dd;
+    MatX pq_dep_pq_indep;
+    MatX pv_dep_pq;
+    MatX pv_dep_pv_indep;
+    MatX pa_dep_pq;
+    MatX pa_dep_pv;
+    MatX pa_dep_pa_indep;
 
         // updated in setupJointPositionVelocityAcceleration()
     QRSolver J_dep_qr;
@@ -135,10 +135,6 @@ public:
     VecX temp2_1;
     MatX temp2;
     MatX temp3;
-
-    MatX v_dep_partial_dq;
-    MatX a_dep_partial_dq;
-    MatX a_dep_partial_dv;
 };
 
 }; // namespace IDTO

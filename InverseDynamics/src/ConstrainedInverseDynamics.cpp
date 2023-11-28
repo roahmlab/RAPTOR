@@ -3,9 +3,10 @@
 namespace IDTO {
 
 ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input, 
+                                                       std::shared_ptr<Trajectories>& trajPtr_input,
                                                        int N_input, 
                                                        int numDependentJoints_input) : 
-    InverseDynamics(model_input, N_input),
+    InverseDynamics(model_input, trajPtr_input, N_input),
     numDependentJoints(numDependentJoints_input) {
     numIndependentJoints = modelPtr_->nv - numDependentJoints;
 
@@ -13,98 +14,172 @@ ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input,
     tau_indep = VecX::Zero(numIndependentJoints);
 
     lambda.resize(1, N);
+    plambda_pz.resize(1, N);
 
-    plambda_pq.resize(1, N);
-    plambda_pv.resize(1, N);
-    plambda_pa.resize(1, N);
+    pq_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
+    pv_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
+    pa_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
 
-    rnea_partial_dq_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    rnea_partial_dq_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
-    rnea_partial_dv_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    rnea_partial_dv_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
-    rnea_partial_da_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    rnea_partial_da_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
+    prnea_pq_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    prnea_pq_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
+    prnea_pv_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    prnea_pv_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
+    prnea_pa_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    prnea_pa_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
+
+    plambda_pq = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    plambda_pv = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    plambda_pa = MatX::Zero(numDependentJoints, modelPtr_->nv);
 
     JTlambda_partial_dq = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     JTlambda_partial_dq_dep = MatX::Zero(numDependentJoints, modelPtr_->nv);
     JTlambda_partial_dq_indep = MatX::Zero(numIndependentJoints, modelPtr_->nv);
 
-    // dynamicsConstraintsPtr_ is still empty at this moment!!!
+    // dcPtr_ is still empty at this moment!!!
     // You need to define it in the constructor of your own derived class!!!
 }
 
-void ConstrainedInverseDynamics::compute(Eigen::Array<VecX, 1, Eigen::Dynamic>& q, 
-                                         Eigen::Array<VecX, 1, Eigen::Dynamic>& v, 
-                                         Eigen::Array<VecX, 1, Eigen::Dynamic>& a,
+void ConstrainedInverseDynamics::compute(const VecX& z,
                                          bool compute_derivatives) {
-    for (int i = 0; i < N; i++) {                     
-        // always call this first to update dynamicsConstraintsPtr_->J_dep and dynamicsConstraintsPtr_->J_indep!!!   
-        dynamicsConstraintsPtr_->setupJointPositionVelocityAcceleration(q(i), v(i), a(i), compute_derivatives);
+    if (trajPtr_ == nullptr) {
+        throw std::runtime_error("trajPtr_ is not defined yet!");
+    }
 
+    if (dcPtr_ == nullptr) {
+        throw std::runtime_error("dcPtr_ is not defined yet!");
+    }                                        
+
+    trajPtr_->compute(z, compute_derivatives);
+
+    for (int i = 0; i < N; i++) {  
+        // fill in independent indeces in a vector
+        VecX q(modelPtr_->nv);
+        VecX v(modelPtr_->nv);
+        VecX a(modelPtr_->nv);
+        dcPtr_->fill_independent_vector(q, trajPtr_->q(i));
+        dcPtr_->fill_independent_vector(v, trajPtr_->q_d(i));
+        dcPtr_->fill_independent_vector(a, trajPtr_->q_dd(i));
+                           
+        // always call this first to update dcPtr_->J_dep and dcPtr_->J_indep!!!   
+        dcPtr_->setupJointPositionVelocityAcceleration(q, v, a, compute_derivatives);
+
+        if (compute_derivatives) {
+            // fill in independent joints derivatives directly
+            for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
+                int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
+                pq_pz.row(indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
+                pv_pz.row(indenpendentJointIndex) = trajPtr_->pq_d_pz(i).row(j);
+                pa_pz.row(indenpendentJointIndex) = trajPtr_->pq_dd_pz(i).row(j);
+            }
+
+            // derivatives of unactuated joint positions
+            MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
+
+            for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
+                int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+                pq_pz.row(denpendentJointIndex) = pq_dep_pz.row(j);
+            }
+
+            // derivatives of unactuated joint velocities
+            MatX pv_dep_pz = dcPtr_->pv_dep_pq       * pq_pz +               // all joint positions  
+                             dcPtr_->pv_dep_pv_indep * trajPtr_->pq_d_pz(i); // actuated joint velocities
+
+            for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
+                int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+                pv_pz.row(denpendentJointIndex) = pv_dep_pz.row(j);
+            }
+
+            // derivatives of unactuated joint accelerations
+            MatX pa_dep_pz = dcPtr_->pa_dep_pq       * pq_pz +                // all joint positions  
+                             dcPtr_->pa_dep_pv       * pv_pz +                // all joint velocities  
+                             dcPtr_->pa_dep_pa_indep * trajPtr_->pq_dd_pz(i); // actuated joint accelerations
+
+            for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
+                int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+                pa_pz.row(denpendentJointIndex) = pa_dep_pz.row(j);
+            }
+        }
+
+        // compute unconstrained inverse dynamics
         if (!compute_derivatives) {
-            pinocchio::rnea(*modelPtr_, *dataPtr_, q(i), v(i), a(i));
+            pinocchio::rnea(*modelPtr_, *dataPtr_, q, v, a);
         }
         else {
-            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, q(i), v(i), a(i), 
-                                              rnea_partial_dq, rnea_partial_dv, rnea_partial_da);
+            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, q, v, a, 
+                                              prnea_pq, prnea_pv, prnea_pa);
         }
 
         // adjust with damping force and rotor inertia force
         tau(i) = dataPtr_->tau + 
-                 modelPtr_->damping.cwiseProduct(v(i)) + 
-                 modelPtr_->rotorInertia.cwiseProduct(a(i));
+                 modelPtr_->damping.cwiseProduct(v) + 
+                 modelPtr_->rotorInertia.cwiseProduct(a);
                 
         if (compute_derivatives) {
-            // rnea_partial_da is just the inertia matrix.
+            // prnea_pa is just the inertia matrix.
             // pinocchio only computes the upper triangle part of it.
-            for (int mi = 0; mi < rnea_partial_da.rows(); mi++) {
+            for (int mi = 0; mi < prnea_pa.rows(); mi++) {
                 for (int mj = 0; mj <= mi; mj++) {
                     if (mi == mj) {
-                        rnea_partial_da(mi, mj) += modelPtr_->rotorInertia(mi);
+                        prnea_pa(mi, mj) += modelPtr_->rotorInertia(mi);
                     }
                     else {
-                        rnea_partial_da(mi, mj) = rnea_partial_da(mj, mi);
+                        prnea_pa(mi, mj) = prnea_pa(mj, mi);
                     }
                 }
             }
 
             // pinocchio rnea does not take damping into account
-            for (int mi = 0; mi < rnea_partial_da.rows(); mi++) {
-                rnea_partial_dv(mi, mi) += modelPtr_->damping(mi);
+            for (int mi = 0; mi < prnea_pa.rows(); mi++) {
+                prnea_pv(mi, mi) += modelPtr_->damping(mi);
             }
         }
 
-        tau_dep = dynamicsConstraintsPtr_->get_dependent_vector(tau(i));
-        tau_indep = dynamicsConstraintsPtr_->get_independent_vector(tau(i));
+        tau_dep = dcPtr_->get_dependent_vector(tau(i));
+        tau_indep = dcPtr_->get_independent_vector(tau(i));
 
         // assume setupJointPositionVelocityAcceleration() has been called
-        lambda(i) = dynamicsConstraintsPtr_->J_dep_T_qr.solve(tau_dep);
+        // compute the reaction force to maintain constraints
+        lambda(i) = dcPtr_->J_dep_T_qr.solve(tau_dep);
 
         if (compute_derivatives) {
-            dynamicsConstraintsPtr_->get_dependent_rows(rnea_partial_dq_dep, rnea_partial_dq);
-            dynamicsConstraintsPtr_->get_independent_rows(rnea_partial_dq_indep, rnea_partial_dq);
-            dynamicsConstraintsPtr_->get_dependent_rows(rnea_partial_dv_dep, rnea_partial_dv);
-            dynamicsConstraintsPtr_->get_independent_rows(rnea_partial_dv_indep, rnea_partial_dv);
-            dynamicsConstraintsPtr_->get_dependent_rows(rnea_partial_da_dep, rnea_partial_da);
-            dynamicsConstraintsPtr_->get_independent_rows(rnea_partial_da_indep, rnea_partial_da);
+            dcPtr_->get_dependent_rows(prnea_pq_dep, prnea_pq);
+            dcPtr_->get_independent_rows(prnea_pq_indep, prnea_pq);
+            dcPtr_->get_dependent_rows(prnea_pv_dep, prnea_pv);
+            dcPtr_->get_independent_rows(prnea_pv_indep, prnea_pv);
+            dcPtr_->get_dependent_rows(prnea_pa_dep, prnea_pa);
+            dcPtr_->get_independent_rows(prnea_pa_indep, prnea_pa);
 
-            dynamicsConstraintsPtr_->get_JTx_partial_dq(q(i), lambda(i));
-            MatX JTlambda_partial_dq = dynamicsConstraintsPtr_->JTx_partial_dq;
-            dynamicsConstraintsPtr_->get_dependent_rows(JTlambda_partial_dq_dep, JTlambda_partial_dq);
-            dynamicsConstraintsPtr_->get_independent_rows(JTlambda_partial_dq_indep, JTlambda_partial_dq);
+            dcPtr_->get_JTx_partial_dq(q, lambda(i));
+            JTlambda_partial_dq = dcPtr_->JTx_partial_dq;
+            dcPtr_->get_dependent_rows(JTlambda_partial_dq_dep, JTlambda_partial_dq);
+            dcPtr_->get_independent_rows(JTlambda_partial_dq_indep, JTlambda_partial_dq);
 
-            plambda_pq(i) = dynamicsConstraintsPtr_->J_dep_T_qr.solve(rnea_partial_dq_dep - JTlambda_partial_dq_dep);
-            plambda_pv(i) = dynamicsConstraintsPtr_->J_dep_T_qr.solve(rnea_partial_dv_dep);
-            plambda_pa(i) = dynamicsConstraintsPtr_->J_dep_T_qr.solve(rnea_partial_da_dep);
+            plambda_pq = dcPtr_->J_dep_T_qr.solve(prnea_pq_dep - JTlambda_partial_dq_dep);
+            plambda_pv = dcPtr_->J_dep_T_qr.solve(prnea_pv_dep);
+            plambda_pa = dcPtr_->J_dep_T_qr.solve(prnea_pa_dep);
+
+            plambda_pz(i) = plambda_pq * pq_pz + 
+                            plambda_pv * pv_pz + 
+                            plambda_pa * pa_pz;
         }
 
         // assume setupJointPositionVelocityAcceleration() has been called
-        tau(i) = tau_indep - dynamicsConstraintsPtr_->J_indep.transpose() * lambda(i);
+        tau(i) = tau_indep - dcPtr_->J_indep.transpose() * lambda(i);
+
+        // tau(i) = a.head(12);
+        // tau(i) = dcPtr_->get_independent_vector(a);
 
         if (compute_derivatives) {
-            ptau_pq(i) = rnea_partial_dq_indep - dynamicsConstraintsPtr_->J_indep.transpose() * plambda_pq(i) - JTlambda_partial_dq_indep;
-            ptau_pv(i) = rnea_partial_dv_indep - dynamicsConstraintsPtr_->J_indep.transpose() * plambda_pv(i);
-            ptau_pa(i) = rnea_partial_da_indep - dynamicsConstraintsPtr_->J_indep.transpose() * plambda_pa(i);
+            MatX ptau_pq = prnea_pq_indep - dcPtr_->J_indep.transpose() * plambda_pq - JTlambda_partial_dq_indep;
+            MatX ptau_pv = prnea_pv_indep - dcPtr_->J_indep.transpose() * plambda_pv;
+            MatX ptau_pa = prnea_pa_indep - dcPtr_->J_indep.transpose() * plambda_pa;
+
+            ptau_pz(i) = ptau_pq * pq_pz + 
+                         ptau_pv * pv_pz + 
+                         ptau_pa * pa_pz;
+
+            // ptau_pz(i) = pa_pz.block(0, 0, 12, trajPtr_->varLength);
+            // dcPtr_->get_independent_rows(ptau_pz(i), pa_pz);
         }
     }
 }

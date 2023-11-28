@@ -5,13 +5,13 @@ cmake_minimum_required(VERSION 3.12)
 project(IDTO
     DESCRIPTION "Inverse Dynamics Trajectory Optimization")
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
+# if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE Release)
+# endif()
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
 
 message(${CMAKE_BUILD_TYPE})
 
@@ -77,6 +77,7 @@ add_library(IDlib SHARED
 
 target_include_directories(IDlib PUBLIC
     InverseDynamics/include
+    Trajectories/include
     Utils/include)
 
 target_compile_options(IDlib PUBLIC
@@ -85,7 +86,8 @@ target_compile_options(IDlib PUBLIC
 ## Constraints library
 add_library(Conslib SHARED
     Constraints/src/JointLimits.cpp
-    Constraints/src/ConstrainedJointLimits.cpp)
+    Constraints/src/ConstrainedJointLimits.cpp
+    Constraints/src/TorqueLimits.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include
@@ -105,6 +107,7 @@ add_library(Digitlib SHARED
 target_link_libraries(Digitlib PRIVATE
     trajlib
     IDlib
+    Conslib
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
