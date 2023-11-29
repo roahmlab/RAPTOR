@@ -2,7 +2,6 @@ namespace IDTO {
 namespace Digit {
 
 // constants related to digit-v3
-
 constexpr int NUM_JOINTS = 36;
 constexpr int NUM_DEPENDENT_JOINTS = 24;
 constexpr int NUM_INDEPENDENT_JOINTS = 12;

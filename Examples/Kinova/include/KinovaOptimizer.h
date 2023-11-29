@@ -1,34 +1,28 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef KINOVA_OPTIMIZER_H
+#define KINOVA_OPTIMIZER_H
+
+#include "KinovaCustomizedConstraints.h"
+#include "KinovaConstants.h"
+#include "InverseDynamics.h"
+#include "EndEffectorConstraints.h"
 
 #include "Optimizer.h"
-
 #include "FourierCurves.h"
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
-#include "Utils.h"
-
-#include "ConstrainedJointLimits.h"
-#include "TorqueLimits.h"
-#include "SurfaceContactConstraints.h"
-#include "DigitCustomizedConstraints.h"
 
 namespace IDTO {
-namespace Digit {
+namespace Kinova {
 
-using namespace Ipopt;
-
-class DigitSingleStepOptimizer : public Optimizer {
+class KinovaOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DigitSingleStepOptimizer() = default;
+    KinovaOptimizer() = default;
 
     /** Default destructor */
-    ~DigitSingleStepOptimizer() = default;
+    ~KinovaOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
@@ -37,8 +31,7 @@ public:
         const int N_input,
         const int degree_input,
         const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
-        const GaitParameters& gp_input
+        const Eigen::VectorXi& jtype_input
     );
 
     /**@name Overloaded from TNLP */
@@ -79,24 +72,19 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitSingleStepOptimizer(
-       const DigitSingleStepOptimizer&
+    KinovaOptimizer(
+       const KinovaOptimizer&
     );
 
-    DigitSingleStepOptimizer& operator=(
-       const DigitSingleStepOptimizer&
+    KinovaOptimizer& operator=(
+       const KinovaOptimizer&
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
     std::shared_ptr<FourierCurves> fcPtr_;
-
-    std::shared_ptr<DynamicsConstraints> dcPtr_;
-    std::shared_ptr<InverseDynamics> idPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
-    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 };
 
-}; // namespace Digit
+}; // namespace Kinova
 }; // namespace IDTO
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // KINOVA_OPTIMIZER_H

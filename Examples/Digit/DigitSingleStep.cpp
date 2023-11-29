@@ -12,7 +12,7 @@ using std::endl;
 
 int main() {
     // define robot model
-    const std::string urdf_filename = "/home/roahm/Documents/SafeDigit/DigitModel/KinematicsInfo/urdf/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    const std::string urdf_filename = "../Examples/Digit/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);

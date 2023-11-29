@@ -42,7 +42,7 @@ public:
         Index   m,
         Number* g_l,
         Number* g_u
-    ) = 0;
+    );
 
     /** Method to return the starting point for the algorithm */
     virtual bool get_starting_point(
@@ -55,7 +55,7 @@ public:
         Index   m,
         bool    init_lambda,
         Number* lambda
-    ) = 0;
+    );
 
     /** Method to return the objective value */
     virtual bool eval_f(
@@ -128,7 +128,7 @@ public:
         Number                     obj_value,
         const IpoptData*           ip_data,
         IpoptCalculatedQuantities* ip_cq
-    ) = 0;
+    );
     //@}
 
     /**@name Methods to block default compiler methods.
@@ -154,8 +154,12 @@ public:
     int numVars = 0; // number of variables
     int numCons = 0; // number of constraints
 
+    VecX x0; // stores the initial guess here
+
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<double> constraintsScale;
+
+    VecX solution; // stores the final solution here
 };
 
 }; // namespace IDTO
