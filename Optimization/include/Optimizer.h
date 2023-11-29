@@ -155,6 +155,7 @@ public:
     int numCons = 0; // number of constraints
 
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
+    std::vector<double> constraintsScale;
 };
 
 }; // namespace IDTO

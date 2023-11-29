@@ -11,7 +11,7 @@
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
 #include "SurfaceContactConstraints.h"
-#include "KinematicsConstraints.h"
+#include "DigitCustomizedConstraints.h"
 
 namespace IDTO {
 namespace Digit {
@@ -38,8 +38,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        char stanceLeg, 
-        const Transform& stance_foot_T_des_input
+        const GaitParameters& gp_input
     );
 
     /**@name Overloaded from TNLP */
@@ -136,6 +135,7 @@ public:
     std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 
     VecX x0;
+    VecX solution;
 };
 
 }; // namespace Digit

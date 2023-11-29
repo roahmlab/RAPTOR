@@ -25,8 +25,7 @@ bool DigitSingleStepOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    char stanceLeg, 
-    const Transform& stance_foot_T_des_input
+    const GaitParameters& gp_input
  ) 
 {
     x0 = x0_input;
@@ -37,15 +36,18 @@ bool DigitSingleStepOptimizer::set_parameters(
                                              Chebyshev, 
                                              degree_input);
 
-    // convert to their base class pointers
+        // convert to their base class pointers
     trajPtr_ = fcPtr_;
 
+    // stance foot is left foot by default
+    char stanceLeg = 'L';
+    Transform stance_foot_T_des(3, -M_PI / 2);
     dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
                                                                  jtype_input, 
                                                                  stanceLeg, 
-                                                                 stance_foot_T_des_input);                                                          
+                                                                 stance_foot_T_des);                                                          
 
     
     // convert joint limits from degree to radian
@@ -54,6 +56,7 @@ bool DigitSingleStepOptimizer::set_parameters(
         JOINT_LIMITS_LOWER_VEC(i) = deg2rad(JOINT_LIMITS_LOWER[i]);
     }
 
+    // convert joint limits from degree to radian   
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
@@ -76,6 +79,7 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                           dcPtr_, 
                                                                           JOINT_LIMITS_LOWER_VEC, 
                                                                           JOINT_LIMITS_UPPER_VEC));
+    constraintsScale.push_back(1.0);                                                                      
 
     // Torque limits
         // convert to their base class pointers
@@ -84,30 +88,26 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                 idPtr_, 
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));  
+    constraintsScale.push_back(1.0);                                                            
 
+    // Surface contact constraints
         // convert to their base class pointers
     cidPtr_ = dcidPtr_;
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                              MU, 
                                                                              GAMMA, 
                                                                              FOOT_WIDTH,
-                                                                             FOOT_LENGTH));  
+                                                                             FOOT_LENGTH));
+    constraintsScale.push_back(1.0);    
 
-    MatX AAA(6, trajPtr_->N);
-    MatX BBB(6, trajPtr_->N);
-    AAA.setConstant(-1e19); 
-    BBB.setConstant(1e19);
-    Transform endT;
-    
-    constraintsPtrVec_.push_back(std::make_unique<KinematicsConstraints>(model_input, 
-                                                                         jtype_input, 
-                                                                         trajPtr_, 
-                                                                         "right_toe_roll",
-                                                                         AAA,
-                                                                         BBB,
-                                                                         Transform(),
-                                                                         endT,
-                                                                         dcPtr_));                                                                                                                                                                                                                                                                        
+    // Other constraints for gait optimization
+        // convert to their base class pointers
+    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
+                                                                              jtype_input, 
+                                                                              trajPtr_, 
+                                                                              dcPtr_,
+                                                                              gp_input));
+    constraintsScale.push_back(1.0);                                                                                                                                                                                                                                                                                                                                                                                                       
 
     assert(x0.size() == trajPtr_->varLength);
 
@@ -286,11 +286,10 @@ void DigitSingleStepOptimizer::finalize_solution(
     // so we could use the solution.
 
     // store the solution
-    // for( Index i = 0; i < n; i++ ) {
-    //     solution[i] = (double)x[i];
-    // }
-
-    
+    solution.resize(n);
+    for( Index i = 0; i < n; i++ ) {
+        solution(i) = x[i];
+    }
 }
 // [TNLP_finalize_solution]
 

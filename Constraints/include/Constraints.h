@@ -28,10 +28,6 @@ public:
     // class members:
     int m = 0; // number of constraints
 
-    // scale factor for the constraints
-    // This would change the behavior of the optimization problem
-    double scale = 1.0; 
-
     // compute results are stored here
     VecX g;
     MatX pg_pz;

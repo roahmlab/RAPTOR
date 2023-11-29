@@ -113,7 +113,8 @@ target_include_directories(Optlib PUBLIC
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
-    Examples/Digit/src/DigitSingleStepOptimizer.cpp)
+    Examples/Digit/src/DigitSingleStepOptimizer.cpp
+    Examples/Digit/src/DigitCustomizedConstraints.cpp)
 
 target_link_libraries(Digitlib PRIVATE
     trajlib

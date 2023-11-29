@@ -277,7 +277,8 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // return error if nan value is found
     for (int i = 0; i < modelPtr_->nv; i++) {
         if (isnan(qcopy(i))) {
-            throw std::runtime_error("nan values found in setupJointPositions!");
+            // throw std::runtime_error("nan values found in setupJointPositions!");
+            qcopy(i) = 0;
         }
     }
 
@@ -312,14 +313,6 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
         iter++;
         status = gsl_multiroot_fdfsolver_iterate(s);
 
-        // double total_f = 0;
-        // printf("%ld ", iter);
-        // for (int i = 0; i < numDependentJoints; i++) {
-        //     total_f += abs(gsl_vector_get(s->f, i));    
-        //     printf("%e ", abs(gsl_vector_get(s->f, i)));
-        // }
-        // printf("\n");
-
         if (status) break;
 
         status = gsl_multiroot_test_residual(s->f, 1e-14);
@@ -337,8 +330,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // return error if found anything weird
     for (int i = 0; i < modelPtr_->nv; i++) {
         if (isnan(qcopy(i))) {
-            // throw -1;
-            // cout << "\tWarning: nan values found in datacomputation!\n";
+            throw std::runtime_error("nan values found in setupJointPositions!");
         }
     }
 
