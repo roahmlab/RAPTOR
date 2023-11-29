@@ -100,6 +100,15 @@ target_include_directories(Conslib PUBLIC
 target_compile_options(Conslib PUBLIC
     ${PINOCCHIO_FLAGS})    
 
+## Constraints library
+add_library(Optlib SHARED
+    Optimization/src/Optimizer.cpp)
+
+target_include_directories(Optlib PUBLIC
+    Optimization/include
+    Constraints/include
+    Utils/include)
+
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
@@ -110,6 +119,7 @@ target_link_libraries(Digitlib PRIVATE
     trajlib
     IDlib
     Conslib
+    Optlib
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
@@ -123,6 +133,7 @@ target_include_directories(Digitlib PUBLIC
     InverseDynamics/include
     Trajectories/include
     Constraints/include
+    Optimization/include
     Utils/include)
 
 target_compile_options(Digitlib PUBLIC
@@ -137,12 +148,14 @@ target_include_directories(IDTO_example PRIVATE
     InverseDynamics/include
     Trajectories/include
     Constraints/include
+    Optimization/include
     Utils/include)
 
 target_link_libraries(IDTO_example PRIVATE
     trajlib 
     IDlib
     Conslib
+    Optlib
     Digitlib
     ipopt
     coinhsl
@@ -165,6 +178,10 @@ install(TARGETS IDlib
 )
 
 install(TARGETS Conslib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS Optlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

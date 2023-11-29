@@ -1,70 +1,51 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef OPTIMIZER_H
+#define OPTIMIZER_H
 
-#include "Optimizer.h"
+#include "IpTNLP.hpp"
+#include "IpIpoptApplication.hpp"
 
-#include "FourierCurves.h"
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
-#include "Utils.h"
+#include <memory>
 
-#include "ConstrainedJointLimits.h"
-#include "TorqueLimits.h"
-#include "SurfaceContactConstraints.h"
-#include "KinematicsConstraints.h"
+#include "Constraints.h"
 
 namespace IDTO {
-namespace Digit {
 
 using namespace Ipopt;
 
-class DigitSingleStepOptimizer : public Optimizer {
+class Optimizer : public Ipopt::TNLP {
 public:
-    using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using MatX = Eigen::MatrixXd; 
 
     /** Default constructor */
-    DigitSingleStepOptimizer() = default;
+    Optimizer() = default;
 
     /** Default destructor */
-    ~DigitSingleStepOptimizer() = default;
-
-    // [set_parameters]
-    bool set_parameters(
-        const VecX& x0_input,
-        const double T_input,
-        const int N_input,
-        const int degree_input,
-        const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
-        char stanceLeg, 
-        const Transform& stance_foot_T_des_input
-    );
+    virtual ~Optimizer() = default;
 
     /**@name Overloaded from TNLP */
     //@{
     /** Method to return some info about the NLP */
-    bool get_nlp_info(
+    virtual bool get_nlp_info(
         Index&          n,
         Index&          m,
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
-    ) override;
+    ) = 0;
 
     /** Method to return the bounds for my problem */
-    bool get_bounds_info(
+    virtual bool get_bounds_info(
         Index   n,
         Number* x_l,
         Number* x_u,
         Index   m,
         Number* g_l,
         Number* g_u
-    ) override;
+    ) = 0;
 
     /** Method to return the starting point for the algorithm */
-    bool get_starting_point(
+    virtual bool get_starting_point(
         Index   n,
         bool    init_x,
         Number* x,
@@ -74,26 +55,68 @@ public:
         Index   m,
         bool    init_lambda,
         Number* lambda
-    ) override;
+    ) = 0;
 
     /** Method to return the objective value */
-    bool eval_f(
+    virtual bool eval_f(
         Index         n,
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) override;
+    ) = 0;
 
     /** Method to return the gradient of the objective */
-    bool eval_grad_f(
+    virtual bool eval_grad_f(
         Index         n,
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) override;
+    ) = 0;
+
+    /** Method to return the constraint residuals */
+    virtual bool eval_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Number*       g
+    );
+
+    /** Method to return:
+    *   1) The structure of the jacobian (if "values" is NULL)
+    *   2) The values of the jacobian (if "values" is not NULL)
+    */
+    virtual bool eval_jac_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Index         nele_jac,
+        Index*        iRow,
+        Index*        jCol,
+        Number*       values
+    );
+
+    /** Method to return:
+    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+    *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+    */
+    virtual bool eval_h(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Number        obj_factor,
+        Index         m,
+        const Number* lambda,
+        bool          new_lambda,
+        Index         nele_hess,
+        Index*        iRow,
+        Index*        jCol,
+        Number*       values
+    );
 
     /** This method is called when the algorithm is complete so the TNLP can store/write the solution */
-    void finalize_solution(
+    virtual void finalize_solution(
         SolverReturn               status,
         Index                      n,
         const Number*              x,
@@ -105,7 +128,7 @@ public:
         Number                     obj_value,
         const IpoptData*           ip_data,
         IpoptCalculatedQuantities* ip_cq
-    ) override;
+    ) = 0;
     //@}
 
     /**@name Methods to block default compiler methods.
@@ -119,26 +142,21 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitSingleStepOptimizer(
-       const DigitSingleStepOptimizer&
+    Optimizer(
+       const Optimizer&
     );
 
-    DigitSingleStepOptimizer& operator=(
-       const DigitSingleStepOptimizer&
+    Optimizer& operator=(
+       const Optimizer&
     );
 
-    std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<FourierCurves> fcPtr_;
+    // class variables:
+    int numVars = 0; // number of variables
+    int numCons = 0; // number of constraints
 
-    std::shared_ptr<DynamicsConstraints> dcPtr_;
-    std::shared_ptr<InverseDynamics> idPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
-    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
-
-    VecX x0;
+    std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
 };
 
-}; // namespace Digit
 }; // namespace IDTO
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // OPTIMIZER_H
