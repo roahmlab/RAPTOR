@@ -88,7 +88,8 @@ add_library(Conslib SHARED
     Constraints/src/JointLimits.cpp
     Constraints/src/ConstrainedJointLimits.cpp
     Constraints/src/TorqueLimits.cpp
-    Constraints/src/SurfaceContactConstraints.cpp)
+    Constraints/src/SurfaceContactConstraints.cpp
+    Constraints/src/KinematicsConstraints.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include

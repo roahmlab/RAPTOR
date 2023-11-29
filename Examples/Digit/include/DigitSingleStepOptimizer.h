@@ -12,6 +12,7 @@
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
 #include "SurfaceContactConstraints.h"
+#include "KinematicsConstraints.h"
 
 namespace IDTO {
 namespace Digit {

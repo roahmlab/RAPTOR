@@ -129,14 +129,14 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 0.001);
+	app->Options()->SetNumericValue("max_wall_time", 60);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma97");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 0);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);

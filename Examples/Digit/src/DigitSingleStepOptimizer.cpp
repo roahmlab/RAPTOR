@@ -71,11 +71,11 @@ bool DigitSingleStepOptimizer::set_parameters(
 
     // Joint limits
         // convert to their base class pointers
-    // dcPtr_ = dcidPtr_->dcPtr_;
-    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-    //                                                                       dcPtr_, 
-    //                                                                       JOINT_LIMITS_LOWER_VEC, 
-    //                                                                       JOINT_LIMITS_UPPER_VEC));
+    dcPtr_ = dcidPtr_->dcPtr_;
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));
 
     // Torque limits
         // convert to their base class pointers
@@ -91,7 +91,23 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                              MU, 
                                                                              GAMMA, 
                                                                              FOOT_WIDTH,
-                                                                             FOOT_LENGTH));                                                                                                                                                                                               
+                                                                             FOOT_LENGTH));  
+
+    MatX AAA(6, trajPtr_->N);
+    MatX BBB(6, trajPtr_->N);
+    AAA.setConstant(-1e19); 
+    BBB.setConstant(1e19);
+    Transform endT;
+    
+    constraintsPtrVec_.push_back(std::make_unique<KinematicsConstraints>(model_input, 
+                                                                         jtype_input, 
+                                                                         trajPtr_, 
+                                                                         "right_toe_roll",
+                                                                         AAA,
+                                                                         BBB,
+                                                                         Transform(),
+                                                                         endT,
+                                                                         dcPtr_));                                                                                                                                                                                                                                                                        
 
     assert(x0.size() == trajPtr_->varLength);
 
