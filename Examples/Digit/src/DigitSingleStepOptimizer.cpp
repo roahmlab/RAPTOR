@@ -42,7 +42,6 @@ bool DigitSingleStepOptimizer::set_parameters(
 
     dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
-                                                                 N_input, 
                                                                  NUM_DEPENDENT_JOINTS, 
                                                                  jtype_input, 
                                                                  stanceLeg, 
@@ -84,7 +83,15 @@ bool DigitSingleStepOptimizer::set_parameters(
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 idPtr_, 
                                                                 TORQUE_LIMITS_LOWER_VEC, 
-                                                                TORQUE_LIMITS_UPPER_VEC));                                                                                                                                    
+                                                                TORQUE_LIMITS_UPPER_VEC));  
+
+        // convert to their base class pointers
+    cidPtr_ = dcidPtr_;
+    constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
+                                                                             MU, 
+                                                                             GAMMA, 
+                                                                             FOOT_WIDTH,
+                                                                             FOOT_LENGTH));                                                                                                                                                                                               
 
     assert(x0.size() == trajPtr_->varLength);
 

@@ -89,6 +89,7 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     37       // right-toe-roll
 };
 
+// pulled out from digit-v3.xml
 constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -126.682,   // left-hip-roll
     -79.1765,   // left-hip-yaw
@@ -104,6 +105,7 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -41.9759,   // right-toe-B
 };
 
+// pulled out from digit-v3.xml
 constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     126.682,   // left-hip-roll
     79.1765,   // left-hip-yaw
@@ -118,6 +120,12 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     41.9759,   // right-toe-A
     41.9759,   // right-toe-B
 };
+
+// pulled out from digit-v3.xml
+constexpr double MU = 0.7;
+constexpr double GAMMA = 0.7;
+constexpr double FOOT_WIDTH = 0.04; // (m)
+constexpr double FOOT_LENGTH = 0.1175; // (m)
 
 }; // namespace Digit
 }; // namespace IDTO

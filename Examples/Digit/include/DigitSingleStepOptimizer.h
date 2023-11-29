@@ -11,6 +11,7 @@
 
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
+#include "SurfaceContactConstraints.h"
 
 namespace IDTO {
 namespace Digit {
@@ -173,6 +174,7 @@ public:
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;
+    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
     std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 
     // std::unique_ptr<ConstrainedJointLimits> constraints_cjlPtr_;

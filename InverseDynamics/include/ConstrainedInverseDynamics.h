@@ -19,7 +19,6 @@ public:
     // Constructor
     ConstrainedInverseDynamics(const Model& model_input, 
                                std::shared_ptr<Trajectories>& trajPtr_input,
-                               int N_input, 
                                int numDependentJoints_input);
 
     // Destructor

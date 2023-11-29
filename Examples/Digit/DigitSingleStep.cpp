@@ -52,7 +52,7 @@ int main() {
     Transform stance_foot_T_des(3, -M_PI / 2);
 
     const double T = 0.4;
-    const int N = 2;
+    const int N = 32;
     const int degree = 6;
 
     FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
@@ -137,11 +137,11 @@ int main() {
 
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("point_perturbation_radius", 0);
-    // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("point_perturbation_radius", 0);
+    // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-3);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

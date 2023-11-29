@@ -36,8 +36,7 @@ public:
 
     // Constructor
     InverseDynamics(const Model& model_input, 
-                    std::shared_ptr<Trajectories>& trajPtr_input, 
-                    int N_input);
+                    std::shared_ptr<Trajectories>& trajPtr_input);
 
     // Destructor
     ~InverseDynamics() = default;

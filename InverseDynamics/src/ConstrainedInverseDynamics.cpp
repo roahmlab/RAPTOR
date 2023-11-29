@@ -4,9 +4,8 @@ namespace IDTO {
 
 ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input, 
                                                        std::shared_ptr<Trajectories>& trajPtr_input,
-                                                       int N_input, 
                                                        int numDependentJoints_input) : 
-    InverseDynamics(model_input, trajPtr_input, N_input),
+    InverseDynamics(model_input, trajPtr_input),
     numDependentJoints(numDependentJoints_input) {
     numIndependentJoints = modelPtr_->nv - numDependentJoints;
 
