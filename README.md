@@ -1,6 +1,20 @@
 # IDTO
 Trajectory Optimization based on Inverse Dynamics
 
+We aim to solve a trajectory optimization problem formulated as below
+
+![ProblemFormulation](Assets/pic-ProblemFormulation.svg)
+
+where we assume that the trajectories are already parameterized and only treat the trajectory parameters as the decision variables.
+
+For example, you can define your trajectory to be a polynomial:
+
+![TrajectoryFormulation](Assets/pic-TrajectoryFormulation.svg)
+
+And based on that, you can add joint limit constraints, torque limit constraints, end effector constraints, or any other customized constraints to your optimization problem.
+
+Note that this formulation only works for fully-actuated systems.
+
 ## Requirements
 - Ubuntu >= 20.04
 - [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=3.4)
@@ -17,10 +31,11 @@ A more detailed instruction is provided in the `Installation/README.md` file.
  - InverseDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
  - Constraints/ : This folder contains implementation of multiple constriants that could be useful for trajectory optimization,
                   such as torque limits or collision avoidance.
- - Optimization/ : This folder contains a base class that provides interfaces to ipopt.                 
+ - Optimization/ : This folder contains a base class that provides interfaces to ipopt.  
+ - Examples/ : This folder contains two examples of trajectory optimization problem for Digit-v3 and Kinova-gen3.                
 
 ## Getting Started
-Run the following commands for a planar 3DOF robot example:
+Run the following commands for a Digit-v3 example:
 ```bash
 mkdir build
 cd build
@@ -32,4 +47,4 @@ make
 ## Credits
 Bohao Zhang (jimzhang@umich.edu)
 
-RoahmLab, University of Michigan, Ann Arbor
+[RoahmLab](http://www.roahmlab.com/), University of Michigan, Ann Arbor
