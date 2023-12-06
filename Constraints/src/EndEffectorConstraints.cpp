@@ -41,22 +41,11 @@ EndEffectorConstraints::EndEffectorConstraints(const Model& model_input,
 void EndEffectorConstraints::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
 
-    trajPtr_->q(trajPtr_->N - 1) << 0.66355394413269319642267873859964,
-        -0.87415841624880519233897757658269,
-        -1.2019178974645254864839216679684,
-        -0.63876158299486396341393401598907,
-        -0.56932475534071569356342479295563,
-        -0.23823715058101280206415140128229,
-        0.024687529361186122400795284193009;
-
     const VecX& q = trajPtr_->q(trajPtr_->N - 1);
 
     fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
 
     g = fkhofPtr_->Transform2xyzrpy(jointT);
-
-    std::cout << g.transpose() << std::endl;
-    std::cout << jointT.R << std::endl;
 
     if (compute_derivatives) {
         fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);

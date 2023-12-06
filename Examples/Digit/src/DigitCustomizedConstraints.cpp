@@ -16,7 +16,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
 
     if (modelPtr_->existJointName("right_toe_roll")) {
-        swingfoot_id = modelPtr_->getJointId("right_toe_roll") - 1;
+        swingfoot_id = modelPtr_->getJointId("right_toe_roll");
     }
     else {
         throw std::runtime_error("Can not find joint: right_toe_roll");
@@ -132,8 +132,6 @@ void DigitCustomizedConstraints::compute(const VecX& z, bool compute_derivatives
             pg_pz.row(iter++) = pq_pz(i).row(5);
         }
     }
-
-    std::cout << g.transpose() << std::endl;
 }
 
 void DigitCustomizedConstraints::compute_bounds() {
@@ -174,9 +172,6 @@ void DigitCustomizedConstraints::compute_bounds() {
 
     g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb;
     g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub;
-
-    std::cout << g_lb.transpose() << std::endl;
-    std::cout << g_ub.transpose() << std::endl;
 }
 
 }; // namespace Digit

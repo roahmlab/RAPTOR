@@ -156,7 +156,19 @@ bool DigitSingleStepOptimizer::eval_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    dcidPtr_->compute(z, false);
+
     obj_value = 0;
+    for ( Index i = 0; i < dcidPtr_->N; i++ ) {
+        obj_value += dcidPtr_->tau(i).dot(dcidPtr_->tau(i));
+    }
+
+    // obj_value *= 1e-3;
 
     return true;
 }
@@ -175,8 +187,23 @@ bool DigitSingleStepOptimizer::eval_grad_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    dcidPtr_->compute(z, true);
+
     for ( Index i = 0; i < n; i++ ) {
         grad_f[i] = 0;
+    }
+
+    for ( Index i = 0; i < dcidPtr_->N; i++ ) {
+        VecX v = 2 * dcidPtr_->ptau_pz(i).transpose() * dcidPtr_->tau(i);
+
+        for ( Index j = 0; j < n; j++ ) {
+            grad_f[j] += v(j);
+        }
     }
 
     return true;

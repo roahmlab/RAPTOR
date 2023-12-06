@@ -96,7 +96,8 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 0.01);
+	app->Options()->SetNumericValue("max_wall_time", 100);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma97");
