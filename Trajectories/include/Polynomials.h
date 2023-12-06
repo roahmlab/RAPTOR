@@ -18,7 +18,7 @@ public:
 
     void compute(const VecX& z, bool compute_derivatives = true) override;
 
-    int degree = 0; // degree of the Fourier series
+    int degree = 0; // degree of the polynomial
 
     VecX P;
     VecX dP;

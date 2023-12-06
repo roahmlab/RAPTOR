@@ -54,8 +54,7 @@ bool KinovaOptimizer::set_parameters(
     //                                                            JOINT_LIMITS_UPPER_VEC));
     // constraintsScale.push_back(1.0);     
 
-    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_));  
-    constraintsScale.push_back(1.0);            
+    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_));      
 
     Transform endT;
     VecX desiredEndEffectorPos(6);
@@ -66,8 +65,7 @@ bool KinovaOptimizer::set_parameters(
                                                                           endT,
                                                                           "joint_7",
                                                                           trajPtr_,
-                                                                          desiredEndEffectorPos));
-    constraintsScale.push_back(1.0);                                                                                                                         
+                                                                          desiredEndEffectorPos));                                                                                                                       
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
 

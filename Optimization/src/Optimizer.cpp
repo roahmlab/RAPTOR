@@ -34,12 +34,23 @@ bool Optimizer::get_bounds_info(
 
     // compute bounds for all constraints
     Index iter = 0;
-    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        constraintsPtrVec_[c]->compute_bounds();
+    // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+    //     constraintsPtrVec_[c]->compute_bounds();
 
-        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
-            g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
-            g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
+        // for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+        //     g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
+        //     g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
+        //     iter++;
+        // }
+    // }
+    for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
+        it != constraintsPtrVec_.end(); 
+        it++) {
+        it->second->compute_bounds();
+
+        for ( Index i = 0; i < it->second->m; i++ ) {
+            g_l[iter] = it->second->g_lb(i);
+            g_u[iter] = it->second->g_ub(i);
             iter++;
         }
     }
@@ -109,20 +120,37 @@ bool Optimizer::eval_g(
     }
 
     Index iter = 0;
-    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        // compute constraints
+    // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+    //     // compute constraints
+    //     try {
+    //         constraintsPtrVec_[c]->compute(z, false);
+    //     }
+    //     catch (std::exception& e) {
+    //         std::cout << e.what() << std::endl;
+    //         throw std::runtime_error("*** Error in eval_g!");
+    //     }
+
+    //     // fill in constraints
+    //     for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+    //         g[iter] = constraintsPtrVec_[c]->g(i);
+    //         iter++;
+    //     }
+    // }
+    for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
+        it != constraintsPtrVec_.end(); 
+        it++) {
+        // evaluate constraints
         try {
-            constraintsPtrVec_[c]->compute(z, false);
+            it->second->compute(z, false);
         }
         catch (std::exception& e) {
             std::cout << e.what() << std::endl;
-            throw std::runtime_error("*** Error in eval_g!");
+            throw std::runtime_error("*** Error in " + it->first + " in eval_g!");
         }
 
         // fill in constraints
-        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
-            g[iter] = constraintsPtrVec_[c]->g(i);
-            iter++;
+        for ( Index i = 0; i < it->second->m; i++ ) {
+            g[iter++] = it->second->g(i);
         }
     }
 
@@ -169,20 +197,40 @@ bool Optimizer::eval_jac_g(
         }
 
         Index iter = 0;
-        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-            // compute constraints
+        // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        //     // compute constraints
+        //     try {
+        //         constraintsPtrVec_[c]->compute(z, true);
+        //     }
+        //     catch (std::exception& e) {
+        //         std::cout << e.what() << std::endl;
+        //         throw std::runtime_error("*** Error in eval_jac_g!");
+        //     }
+
+        //     // fill in constraints
+        //     for ( Index i = 0; i < constraintsPtrVec_[c]->pg_pz.rows(); i++ ) {
+        //         for ( Index j = 0; j < constraintsPtrVec_[c]->pg_pz.cols(); j++ ) {
+        //             values[iter] = constraintsPtrVec_[c]->pg_pz(i, j);
+        //             iter++;
+        //         }
+        //     }
+        // }
+        for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
+            it != constraintsPtrVec_.end(); 
+            it++) {
+            // evaluate constraints
             try {
-                constraintsPtrVec_[c]->compute(z, true);
+                it->second->compute(z, false);
             }
             catch (std::exception& e) {
                 std::cout << e.what() << std::endl;
-                throw std::runtime_error("*** Error in eval_jac_g!");
+                throw std::runtime_error("*** Error in " + it->first + " in eval_jac_g!");
             }
 
             // fill in constraints
-            for ( Index i = 0; i < constraintsPtrVec_[c]->pg_pz.rows(); i++ ) {
-                for ( Index j = 0; j < constraintsPtrVec_[c]->pg_pz.cols(); j++ ) {
-                    values[iter] = constraintsPtrVec_[c]->pg_pz(i, j);
+            for ( Index i = 0; i < it->second->pg_pz.rows(); i++ ) {
+                for ( Index j = 0; j < it->second->pg_pz.cols(); j++ ) {
+                    values[iter] = it->second->pg_pz(i, j);
                     iter++;
                 }
             }

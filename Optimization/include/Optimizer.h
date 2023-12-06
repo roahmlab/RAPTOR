@@ -5,6 +5,8 @@
 #include "IpIpoptApplication.hpp"
 
 #include <memory>
+#include <map>
+#include <string>
 
 #include "Constraints.h"
 
@@ -156,8 +158,8 @@ public:
 
     VecX x0; // stores the initial guess here
 
-    std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
-    std::vector<double> constraintsScale;
+    // std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
+    std::map<std::string, std::unique_ptr<Constraints>> constraintsPtrVec_;
 
     VecX solution; // stores the final solution here
 };
