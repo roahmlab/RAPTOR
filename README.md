@@ -7,11 +7,16 @@ We aim to solve a trajectory optimization problem formulated as below
 
 where we assume that the trajectories are already parameterized and only treat the trajectory parameters as the decision variables.
 
-For example, you can define your trajectory to be a polynomial:
+For example, you can define your trajectory to be a polynomial (on a fixed interval [0,T]):
 
 ![TrajectoryFormulation](Assets/pic-TrajectoryFormulation.svg)
 
 And based on that, you can add joint limit constraints, torque limit constraints, end effector constraints, or any other customized constraints to your optimization problem.
+
+These constraints will then be evaluated on a sequence of discrete time instances t_i over [0,T], so that the trajectory respects all of the constraints over all time.
+
+Compared with the direct collocation method or the single/multiple shooting method, this method guarantees a **smooth** trajectory instead of a discrete representation.
+And this method could usually run faster since less decision variables are involved.
 
 Note that this formulation only works for fully-actuated systems.
 
