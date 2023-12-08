@@ -2,6 +2,10 @@
 
 namespace IDTO {
 
+void DynamicsConstraints::reinitialize() {
+
+}
+
 DynamicsConstraints::DynamicsConstraints(const Model& model_input, int numDependentJoints_input) :
     numDependentJoints(numDependentJoints_input) {
     modelPtr_ = std::make_unique<Model>(model_input);

@@ -11,7 +11,7 @@ set(CMAKE_BUILD_TYPE Release)
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 message(${CMAKE_BUILD_TYPE})
 
@@ -115,7 +115,8 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
-    Examples/Digit/src/DigitCustomizedConstraints.cpp)
+    Examples/Digit/src/DigitCustomizedConstraints.cpp
+    Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
 target_link_libraries(Digitlib PRIVATE
     trajlib

@@ -7,6 +7,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <chrono>
 
 #include "Constraints.h"
 
@@ -133,6 +134,13 @@ public:
     );
     //@}
 
+    /** This method summarizes constraint violation for each type of constraints */
+    virtual void summarize_constraints(
+        Index                      m,
+        const Number*              g
+    );
+    //@}
+
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -158,8 +166,8 @@ public:
 
     VecX x0; // stores the initial guess here
 
-    // std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
-    std::map<std::string, std::unique_ptr<Constraints>> constraintsPtrVec_;
+    std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
+    std::vector<std::string> constraintsNameVec_;
 
     VecX solution; // stores the final solution here
 };

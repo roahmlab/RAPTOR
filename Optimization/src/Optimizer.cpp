@@ -34,23 +34,12 @@ bool Optimizer::get_bounds_info(
 
     // compute bounds for all constraints
     Index iter = 0;
-    // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-    //     constraintsPtrVec_[c]->compute_bounds();
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        constraintsPtrVec_[c]->compute_bounds();
 
-        // for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
-        //     g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
-        //     g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
-        //     iter++;
-        // }
-    // }
-    for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
-        it != constraintsPtrVec_.end(); 
-        it++) {
-        it->second->compute_bounds();
-
-        for ( Index i = 0; i < it->second->m; i++ ) {
-            g_l[iter] = it->second->g_lb(i);
-            g_u[iter] = it->second->g_ub(i);
+        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+            g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
+            g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
             iter++;
         }
     }
@@ -119,40 +108,28 @@ bool Optimizer::eval_g(
         z(i) = x[i];
     }
 
-    Index iter = 0;
-    // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-    //     // compute constraints
-    //     try {
-    //         constraintsPtrVec_[c]->compute(z, false);
-    //     }
-    //     catch (std::exception& e) {
-    //         std::cout << e.what() << std::endl;
-    //         throw std::runtime_error("*** Error in eval_g!");
-    //     }
+    // auto start = std::chrono::high_resolution_clock::now();
 
-    //     // fill in constraints
-    //     for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
-    //         g[iter] = constraintsPtrVec_[c]->g(i);
-    //         iter++;
-    //     }
-    // }
-    for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
-        it != constraintsPtrVec_.end(); 
-        it++) {
-        // evaluate constraints
+    Index iter = 0;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        // compute constraints
         try {
-            it->second->compute(z, false);
+            constraintsPtrVec_[c]->compute(z, false);
         }
         catch (std::exception& e) {
             std::cout << e.what() << std::endl;
-            throw std::runtime_error("*** Error in " + it->first + " in eval_g!");
+            throw std::runtime_error("*** Error in eval_g!");
         }
 
         // fill in constraints
-        for ( Index i = 0; i < it->second->m; i++ ) {
-            g[iter++] = it->second->g(i);
+        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+            g[iter] = constraintsPtrVec_[c]->g(i);
+            iter++;
         }
     }
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::cout << "g time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds.\n";
 
     return true;
 }
@@ -173,10 +150,10 @@ bool Optimizer::eval_jac_g(
 )
 {
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in eval_g!");
+        throw std::runtime_error("*** Error wrong value of n in eval_jac_g!");
     }
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in eval_g!");
+        throw std::runtime_error("*** Error wrong value of m in eval_jac_g!");
     }
         
     if( values == NULL ) {
@@ -196,45 +173,30 @@ bool Optimizer::eval_jac_g(
             z(i) = x[i];
         }
 
-        Index iter = 0;
-        // for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        //     // compute constraints
-        //     try {
-        //         constraintsPtrVec_[c]->compute(z, true);
-        //     }
-        //     catch (std::exception& e) {
-        //         std::cout << e.what() << std::endl;
-        //         throw std::runtime_error("*** Error in eval_jac_g!");
-        //     }
+        // auto start = std::chrono::high_resolution_clock::now();
 
-        //     // fill in constraints
-        //     for ( Index i = 0; i < constraintsPtrVec_[c]->pg_pz.rows(); i++ ) {
-        //         for ( Index j = 0; j < constraintsPtrVec_[c]->pg_pz.cols(); j++ ) {
-        //             values[iter] = constraintsPtrVec_[c]->pg_pz(i, j);
-        //             iter++;
-        //         }
-        //     }
-        // }
-        for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
-            it != constraintsPtrVec_.end(); 
-            it++) {
-            // evaluate constraints
+        Index iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            // compute constraints
             try {
-                it->second->compute(z, false);
+                constraintsPtrVec_[c]->compute(z, true);
             }
             catch (std::exception& e) {
                 std::cout << e.what() << std::endl;
-                throw std::runtime_error("*** Error in " + it->first + " in eval_jac_g!");
+                throw std::runtime_error("*** Error in eval_jac_g!");
             }
 
             // fill in constraints
-            for ( Index i = 0; i < it->second->pg_pz.rows(); i++ ) {
-                for ( Index j = 0; j < it->second->pg_pz.cols(); j++ ) {
-                    values[iter] = it->second->pg_pz(i, j);
+            for ( Index i = 0; i < constraintsPtrVec_[c]->pg_pz.rows(); i++ ) {
+                for ( Index j = 0; j < constraintsPtrVec_[c]->pg_pz.cols(); j++ ) {
+                    values[iter] = constraintsPtrVec_[c]->pg_pz(i, j);
                     iter++;
                 }
             }
         }
+
+        // auto end = std::chrono::high_resolution_clock::now();
+        // std::cout << "jac_g time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds.\n";
     }
 
     return true;
@@ -277,6 +239,13 @@ void Optimizer::finalize_solution(
     IpoptCalculatedQuantities* ip_cq
 )
 {
+    if (n != numVars) {
+        throw std::runtime_error("*** Error wrong value of n in finalize_solution!");
+    }
+    if (m != numCons) {
+        throw std::runtime_error("*** Error wrong value of m in finalize_solution!");
+    }
+
     // here is where we would store the solution to variables, or write to a file, etc
     // so we could use the solution.
 
@@ -285,7 +254,51 @@ void Optimizer::finalize_solution(
     for( Index i = 0; i < n; i++ ) {
         solution(i) = x[i];
     }
+
+    summarize_constraints(m, g);
 }
 // [TNLP_finalize_solution]
+
+// [TNLP_summarize_constraints]
+void Optimizer::summarize_constraints(
+    Index                      m,
+    const Number*              g
+) 
+{
+    if (m != numCons) {
+        throw std::runtime_error("*** Error wrong value of m in summarize_constraints!");
+    }
+
+    std::cout << "Constraint violation report:" << std::endl;
+
+    Index iter = 0;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        // find where the maximum constraint violation is
+        Number max_constr_violation = 0;
+        Index max_constr_violation_id1 = 0;
+        Index max_constr_violation_id2 = 0;
+        for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
+            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb[i] - g[iter], g[iter] - constraintsPtrVec_[c]->g_ub[i]);
+           
+            if (constr_violation > max_constr_violation) {
+                max_constr_violation_id1 = i;
+                max_constr_violation_id2 = iter;
+                max_constr_violation = constr_violation;
+            }
+
+            iter++;
+        }
+
+        // report constraint violation
+        if (max_constr_violation > 0) {
+            std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
+            std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
+                                        << ", " 
+                                        << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
+                      << "], value: "   << g[max_constr_violation_id2] << std::endl;
+        }
+    }
+}
+// [TNLP_summarize_constraints]
 
 }; // namespace IDTO

@@ -76,6 +76,9 @@ public:
     ~DigitDynamicsConstraints() = default;
 
     // class methods:
+        // swap the stance leg for reset map constraint evaluation
+    void reinitialize() override;
+
         // return the index of id th dependent joint
     int return_dependent_joint_index(const int id) override;
 
@@ -162,6 +165,8 @@ public:
 
         // contact foot transforms
     Transform startT;
+
+    char stanceLeg = 'L';
 
     Transform stance_foot_T;
     Transform stance_foot_endT;

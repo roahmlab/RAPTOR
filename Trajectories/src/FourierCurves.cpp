@@ -67,7 +67,7 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
         }
 
         for (int i = 0; i < Nact; i++) {
-            VecX kernel = coefficients.block(0, i, 2 * degree + 1, 1);
+            const VecX& kernel = coefficients.block(0, i, 2 * degree + 1, 1);
             double w = coefficients(2 * degree + 1, i);
 
             ddF(0) = 1;

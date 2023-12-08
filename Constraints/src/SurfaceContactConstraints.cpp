@@ -32,7 +32,7 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
 
     // We assume that surface contact constraints always come after torque limits constraints for now
     // The following line has been called in TorqueLimits::compute() already
-    // So we directly puill out the lambda values from idPtr_
+    // So we directly pull out the lambda values from idPtr_
     // idPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < idPtr_->trajPtr_->N; i++) {

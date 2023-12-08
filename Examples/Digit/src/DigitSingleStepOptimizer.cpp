@@ -74,35 +74,39 @@ bool DigitSingleStepOptimizer::set_parameters(
     // Joint limits
         // convert to their base class pointers
     dcPtr_ = dcidPtr_->dcPtr_;
-    constraintsPtrVec_["joint limits"] = (std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
                                                                         dcPtr_, 
                                                                         JOINT_LIMITS_LOWER_VEC, 
-                                                                        JOINT_LIMITS_UPPER_VEC));                                                                    
+                                                                        JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits");                                                                                                                                  
 
     // Torque limits
         // convert to their base class pointers
     idPtr_ = dcidPtr_;
-    constraintsPtrVec_["torque limits"] = (std::make_unique<TorqueLimits>(trajPtr_, 
+    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                         idPtr_, 
                                                                         TORQUE_LIMITS_LOWER_VEC, 
-                                                                        TORQUE_LIMITS_UPPER_VEC));                                                             
+                                                                        TORQUE_LIMITS_UPPER_VEC));        
+    constraintsNameVec_.push_back("torque limits");                                                                                                                         
 
     // Surface contact constraints
         // convert to their base class pointers
     cidPtr_ = dcidPtr_;
-    constraintsPtrVec_["contact constraints"] = (std::make_unique<SurfaceContactConstraints>(cidPtr_, 
+    constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                         MU, 
                                                                         GAMMA, 
                                                                         FOOT_WIDTH,
                                                                         FOOT_LENGTH));
+    constraintsNameVec_.push_back("contact constraints");
 
     // Other constraints for gait optimization
         // convert to their base class pointers
-    constraintsPtrVec_["customized constraints"] = (std::make_unique<DigitCustomizedConstraints>(model_input, 
+    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
                                                                         jtype_input, 
                                                                         trajPtr_, 
                                                                         dcPtr_,
-                                                                        gp_input));                                                                                                                                                                                                                                                                                                                                                  
+                                                                        gp_input));    
+    constraintsNameVec_.push_back("customized constraints");                                                                                                                                                                                                                                                                                                                                                                                                                
 
     assert(x0.size() == trajPtr_->varLength);
 
@@ -125,13 +129,8 @@ bool DigitSingleStepOptimizer::get_nlp_info(
 
     // number of inequality constraint
     numCons = 0;
-    // for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
-    //     numCons += constraintsPtrVec_[i]->m;
-    // }
-    for (std::map<std::string, std::unique_ptr<Constraints>>::iterator it = constraintsPtrVec_.begin(); 
-        it != constraintsPtrVec_.end(); 
-        it++) {
-        numCons += it->second->m;
+    for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
+        numCons += constraintsPtrVec_[i]->m;
     }
     m = numCons;
 

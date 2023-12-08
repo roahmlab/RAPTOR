@@ -14,9 +14,9 @@ namespace Digit {
 typedef struct GaitParameters_ {
     double eps_torso_angle = 0.0524; // 3 degrees
     double swingfoot_midstep_z_des = 0.15; // meters
-    double swingfoot_begin_x_des = 0.22; // meters
+    double swingfoot_begin_x_des = -0.22; // meters
     double swingfoot_begin_y_des = 0.00; // meters
-    double swingfoot_end_x_des = 0.22; // meters
+    double swingfoot_end_x_des = -0.22; // meters
     double swingfoot_end_y_des = 0.00; // meters
 } GaitParameters;
 
