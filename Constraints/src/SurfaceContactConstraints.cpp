@@ -3,15 +3,9 @@
 namespace IDTO {
 
 SurfaceContactConstraints::SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& idPtr_input,
-                                                     const double friction_mu_input,
-                                                     const double friction_gamma_input, 
-                                                     const double Lx_input,
-                                                     const double Ly_input) : 
+                                                     const frictionParams& fp_input) : 
     idPtr_(idPtr_input), 
-    friction_mu(friction_mu_input),
-    friction_gamma(friction_gamma_input),
-    Lx(Lx_input),
-    Ly(Ly_input) {
+    fp(fp_input) {
     // (1)    positive contact force
     // (2)    translation friction cone
     // (3)    rotation friction cone
@@ -41,12 +35,12 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
 
         double contact_force         = lambda(2);
         double friction_force_sq     = pow(lambda(0), 2) + pow(lambda(1), 2);
-        double max_friction_force_sq = pow(friction_mu * contact_force, 2);
-        double max_moment_z_sq       = pow(friction_gamma * contact_force, 2);
-        double mx_lower_limit        = -Lx * contact_force;
-        double mx_upper_limit        = Lx * contact_force;
-        double my_lower_limit        = -Ly * contact_force;
-        double my_upper_limit        = Ly * contact_force;
+        double max_friction_force_sq = pow(fp.mu * contact_force, 2);
+        double max_moment_z_sq       = pow(fp.gamma * contact_force, 2);
+        double mx_lower_limit        = -fp.Lx * contact_force;
+        double mx_upper_limit        = fp.Lx * contact_force;
+        double my_lower_limit        = -fp.Ly * contact_force;
+        double my_upper_limit        = fp.Ly * contact_force;
 
         // (1) positive contact force
         g(i * 7 + 0) = contact_force;
@@ -75,19 +69,19 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
             // (2) translation friction cone
             pg_pz.row(i * 7 + 1) = 2 * lambda(0) * plambda_pz.row(0) + 
                                    2 * lambda(1) * plambda_pz.row(1) - 
-                                   2 * pow(friction_mu, 2) * contact_force * plambda_pz.row(2);
+                                   2 * pow(fp.mu, 2) * contact_force * plambda_pz.row(2);
 
             // (3) rotation friction cone
             pg_pz.row(i * 7 + 2) = 2 * lambda(5) * plambda_pz.row(5) - 
-                                   2 * pow(friction_gamma, 2) * contact_force * plambda_pz.row(2);; 
+                                   2 * pow(fp.gamma, 2) * contact_force * plambda_pz.row(2);; 
 
             // (4, 5) ZMP on one axis
-            pg_pz.row(i * 7 + 3) = plambda_pz.row(3) - Lx * plambda_pz.row(2);
-            pg_pz.row(i * 7 + 4) = -Lx * plambda_pz.row(2) - plambda_pz.row(3);
+            pg_pz.row(i * 7 + 3) = plambda_pz.row(3) - fp.Lx * plambda_pz.row(2);
+            pg_pz.row(i * 7 + 4) = -fp.Lx * plambda_pz.row(2) - plambda_pz.row(3);
 
             // (6, 7) ZMP on the other axis
-            pg_pz.row(i * 7 + 5) = plambda_pz.row(4) - Ly * plambda_pz.row(2);
-            pg_pz.row(i * 7 + 6) = -Ly * plambda_pz.row(2) - plambda_pz.row(4);
+            pg_pz.row(i * 7 + 5) = plambda_pz.row(4) - fp.Ly * plambda_pz.row(2);
+            pg_pz.row(i * 7 + 6) = -fp.Ly * plambda_pz.row(2) - plambda_pz.row(4);
         }
     }
 }

@@ -12,6 +12,7 @@
 #include "TorqueLimits.h"
 #include "SurfaceContactConstraints.h"
 #include "DigitCustomizedConstraints.h"
+#include "DigitSingleStepPeriodicityConstraints.h"
 
 namespace IDTO {
 namespace Digit {

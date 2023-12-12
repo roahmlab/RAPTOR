@@ -40,16 +40,21 @@ public:
     VecX tau_indep;
 
         // compute results are stored here
+    Eigen::Array<VecX, 1, Eigen::Dynamic> q;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> v;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> a;
+
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
+
+        // compute results are stored here
     Eigen::Array<VecX, 1, Eigen::Dynamic> lambda;
 
         // compute results are stored here
     Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pz;
 
         // temporary variables updated in compute()
-    MatX pq_pz;
-    MatX pv_pz;
-    MatX pa_pz;
-
     MatX prnea_pq_dep;
     MatX prnea_pq_indep;
     MatX prnea_pv_dep;

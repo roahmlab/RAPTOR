@@ -17,8 +17,6 @@ Plain::Plain(const int Nact_input) {
 }
 
 void Plain::compute(const VecX& z, bool compute_derivatives) {
-    assert(z.size() == varLength);
-
     for (int i = 0; i < N; i++) {
         q(i) = z;
         // q_d(i) = 0;

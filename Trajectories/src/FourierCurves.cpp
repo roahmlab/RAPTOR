@@ -43,8 +43,6 @@ FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDi
 }
 
 void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
-    assert(z.size() == varLength);
-
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
     MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
     VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);

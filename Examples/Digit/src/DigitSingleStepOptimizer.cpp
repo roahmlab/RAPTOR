@@ -34,6 +34,8 @@ bool DigitSingleStepOptimizer::set_parameters(
                                              NUM_INDEPENDENT_JOINTS, 
                                              Chebyshev, 
                                              degree_input);
+    // add v_reset and lambda_reset to the end of the decision variables                                         
+    fcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
 
         // convert to their base class pointers
     trajPtr_ = fcPtr_;
@@ -75,9 +77,9 @@ bool DigitSingleStepOptimizer::set_parameters(
         // convert to their base class pointers
     dcPtr_ = dcidPtr_->dcPtr_;
     constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                        dcPtr_, 
-                                                                        JOINT_LIMITS_LOWER_VEC, 
-                                                                        JOINT_LIMITS_UPPER_VEC));      
+                                                                          dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
     constraintsNameVec_.push_back("joint limits");                                                                                                                                  
 
     // Torque limits
@@ -92,23 +94,24 @@ bool DigitSingleStepOptimizer::set_parameters(
     // Surface contact constraints
         // convert to their base class pointers
     cidPtr_ = dcidPtr_;
+    const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
-                                                                        MU, 
-                                                                        GAMMA, 
-                                                                        FOOT_WIDTH,
-                                                                        FOOT_LENGTH));
+                                                                        FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
-    // Other constraints for gait optimization
-        // convert to their base class pointers
+    // kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
                                                                         jtype_input, 
                                                                         trajPtr_, 
                                                                         dcPtr_,
                                                                         gp_input));    
-    constraintsNameVec_.push_back("customized constraints");                                                                                                                                                                                                                                                                                                                                                                                                                
+    constraintsNameVec_.push_back("customized constraints");            
 
-    assert(x0.size() == trajPtr_->varLength);
+    // kinematics constraints
+    constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
+                                                                        dcidPtr_,
+                                                                        FRICTION_PARAMS));    
+    constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
 }

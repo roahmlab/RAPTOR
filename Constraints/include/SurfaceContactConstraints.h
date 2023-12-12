@@ -7,6 +7,22 @@
 
 namespace IDTO {
 
+typedef struct frictionParams_  {
+    double mu = 0.7;
+    double gamma = 0.7;
+    double Lx = 0;
+    double Ly = 0;
+
+    frictionParams_(double mu_input, 
+                    double gamma_input, 
+                    double Lx_input, 
+                    double Ly_input) :
+        mu(mu_input), 
+        gamma(gamma_input), 
+        Lx(Lx_input), 
+        Ly(Ly_input) {}
+} frictionParams;
+
 class SurfaceContactConstraints : public Constraints {
 public:
     // Constructor
@@ -14,10 +30,7 @@ public:
 
     // Constructor
     SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& idPtr_input,
-                              const double friction_mu_input,
-                              const double friction_gamma_input, 
-                              const double Lx_input,
-                              const double Ly_input);
+                              const frictionParams& fp_input);
 
     // Destructor
     ~SurfaceContactConstraints() = default;
@@ -32,11 +45,7 @@ public:
     // class variables:
     std::shared_ptr<ConstrainedInverseDynamics> idPtr_;
 
-    double friction_mu = 0;
-    double friction_gamma = 0;
-    double Lx = 0;
-    double Ly = 0;
-    
+    frictionParams fp;
 };
 
 }; // namespace IDTO

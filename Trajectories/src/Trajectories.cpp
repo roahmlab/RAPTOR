@@ -7,6 +7,8 @@ Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
     Nact(Nact_input){
     T = tspan.bottomLeftCorner<1,1>().value();
     N = tspan.size();
+
+    varLength = 1;
     
     q.resize(1, N);
     q_d.resize(1, N);
@@ -32,6 +34,8 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
         tspan(0) = 0;
         tspan(N - 1) = T;
     }
+
+    varLength = 1;
     
     q.resize(1, N);
     q_d.resize(1, N);
@@ -43,8 +47,6 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
 }
 
 void Trajectories::compute(const VecX& z, bool compute_derivatives) {
-    assert(z.size() == varLength);
-
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
         q_d(i) = VecX::Zero(Nact);

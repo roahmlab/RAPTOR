@@ -48,8 +48,12 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
     J_dep_T_qr = QRSolver(J_dep.transpose());
 
     // sanity check on uniqueness (these two arguments are actually equivalent)
-    assert(J_dep_qr.rank() == J_dep.rows() && J_dep_qr.rank() == J_dep.cols());
-    assert(J_dep_T_qr.rank() == J_dep.rows() && J_dep_T_qr.rank() == J_dep.cols());
+    if (J_dep_qr.rank()   != J_dep.rows() || 
+        J_dep_qr.rank()   != J_dep.cols() ||
+        J_dep_T_qr.rank() != J_dep.rows() || 
+        J_dep_T_qr.rank() != J_dep.cols()) {
+        throw std::runtime_error("constraint jacobian is not full rank!");
+    }
 
     P_dep = -J_dep_qr.solve(J_indep);
 

@@ -44,6 +44,16 @@ bool Optimizer::get_bounds_info(
         }
     }
 
+    // report constraints distribution
+    iter = 0;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        std::cout << constraintsNameVec_[c] << ": ";
+        std::cout << constraintsPtrVec_[c]->m << " [";
+        std::cout << iter << " ";
+        iter += constraintsPtrVec_[c]->m;
+        std::cout << iter << "]\n";
+    }
+
     return true;
 }
 // [TNLP_get_bounds_info]
