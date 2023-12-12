@@ -202,6 +202,12 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z, bool compute_
     // combine all constraints together
     g << g1, g2, g3, g4, g5;
 
+    // std::cout << g1.transpose() << std::endl;
+    // std::cout << g2.transpose() << std::endl;
+    // std::cout << g3.transpose() << std::endl;
+    // std::cout << g4.transpose() << std::endl;
+    // std::cout << g5.transpose() << std::endl;
+
     if (compute_derivatives) {
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
     }
