@@ -11,7 +11,7 @@ set(CMAKE_BUILD_TYPE Release)
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
 
 message(${CMAKE_BUILD_TYPE})
 
@@ -61,6 +61,8 @@ include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
 ## Trajectories library
 add_library(trajlib SHARED
     Trajectories/src/FourierCurves.cpp 
+    Trajectories/src/Polynomials.cpp 
+    Trajectories/src/Plain.cpp 
     Trajectories/src/Trajectories.cpp)
 
 target_include_directories(trajlib PUBLIC
@@ -142,34 +144,34 @@ target_include_directories(Digitlib PUBLIC
 target_compile_options(Digitlib PUBLIC
     ${PINOCCHIO_FLAGS})
 
-## Kinova library
-# add_library(Kinovalib SHARED
-#     Examples/Kinova/src/KinovaOptimizer.cpp
-#     Examples/Kinova/src/KinovaCustomizedConstraints.cpp)
+# Kinova library
+add_library(Kinovalib SHARED
+    Examples/Kinova/src/KinovaOptimizer.cpp
+    Examples/Kinova/src/KinovaCustomizedConstraints.cpp)
 
-# target_link_libraries(Kinovalib PRIVATE
-#     trajlib
-#     IDlib
-#     Conslib
-#     Optlib
-#     ipopt
-#     coinhsl
-#     ${EIGEN3_LIBRARIES} 
-#     ${GSL_LIBRARIES}
-#     ${BOOST_LIBRARIES} 
-#     ${URDFDOM_LIBRARIES}
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_link_libraries(Kinovalib PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_include_directories(Kinovalib PUBLIC
-#     Examples/Kinova/include
-#     InverseDynamics/include
-#     Trajectories/include
-#     Constraints/include
-#     Optimization/include
-#     Utils/include)
+target_include_directories(Kinovalib PUBLIC
+    Examples/Kinova/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
 
-# target_compile_options(Kinovalib PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_compile_options(Kinovalib PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 ## Example scripts
 add_executable(IDTO_example 
@@ -200,33 +202,33 @@ target_link_libraries(IDTO_example PRIVATE
 target_compile_options(IDTO_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-# add_executable(Kinova_example 
-#     Examples/Kinova/KinovaExample.cpp)
-#
-# target_include_directories(Kinova_example PRIVATE
-#     Examples/Kinova/include
-#     InverseDynamics/include
-#     Trajectories/include
-#     Constraints/include
-#     Optimization/include
-#     Utils/include)
+add_executable(Kinova_example 
+    Examples/Kinova/KinovaExample.cpp)
 
-# target_link_libraries(Kinova_example PRIVATE
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     Kinovalib
-#     ipopt
-#     coinhsl
-#     ${EIGEN3_LIBRARIES} 
-#     ${GSL_LIBRARIES}
-#     ${BOOST_LIBRARIES} 
-#     ${URDFDOM_LIBRARIES}
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_include_directories(Kinova_example PRIVATE
+    Examples/Kinova/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
 
-# target_compile_options(Kinova_example PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_link_libraries(Kinova_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(Kinova_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 ## Install
 install(TARGETS trajlib
@@ -249,14 +251,14 @@ install(TARGETS Digitlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-# install(TARGETS Kinovalib
-#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-# )
+install(TARGETS Kinovalib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 install(TARGETS IDTO_example
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# install(TARGETS Kinova_example
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
+install(TARGETS Kinova_example
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

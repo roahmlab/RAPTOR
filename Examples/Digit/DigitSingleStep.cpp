@@ -102,10 +102,11 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 10000);
+	app->Options()->SetNumericValue("max_wall_time", 1000);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-	app->Options()->SetIntegerValue("print_level", 5);
+    app->Options()->SetIntegerValue("max_iter", 200);
+	app->Options()->SetIntegerValue("print_level", 0);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma97");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
@@ -126,8 +127,13 @@ int main() {
     }
 
     try {
+        auto start = std::chrono::high_resolution_clock::now();
+
         // Ask Ipopt to solve the problem
         status = app->OptimizeTNLP(mynlp);
+
+        auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "g time: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");

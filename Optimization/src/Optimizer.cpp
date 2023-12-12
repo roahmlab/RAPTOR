@@ -32,6 +32,10 @@ bool Optimizer::get_bounds_info(
         x_u[i] = 1e8;
     }
 
+    if (constraintsPtrVec_.size() != constraintsNameVec_.size()) {
+        throw std::runtime_error("*** Error constraintsPtrVec_ and constraintsNameVec_ have different sizes!");
+    }
+
     // compute bounds for all constraints
     Index iter = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {

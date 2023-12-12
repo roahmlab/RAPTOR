@@ -30,9 +30,11 @@ int main() {
     const int N = 16;
     const int degree = 6;
 
-    Eigen::VectorXd z((2 * degree + 4) * model.nq);
-    z.setConstant(15);
+    // define initial guess
+    Eigen::VectorXd z((degree + 1) * model.nq);
+    z.setConstant(-1);
 
+    // initialize Kinova optimizer
     SmartPtr<KinovaOptimizer> mynlp = new KinovaOptimizer();
     try {
 	    mynlp->set_parameters(z,
@@ -49,7 +51,8 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 1e-3);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
+	app->Options()->SetNumericValue("max_wall_time", 10);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma97");

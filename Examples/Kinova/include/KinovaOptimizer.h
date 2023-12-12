@@ -4,10 +4,11 @@
 #include "KinovaCustomizedConstraints.h"
 #include "KinovaConstants.h"
 #include "InverseDynamics.h"
-#include "EndEffectorConstraints.h"
-
 #include "Optimizer.h"
-#include "FourierCurves.h"
+#include "Polynomials.h"
+#include "JointLimits.h"
+#include "EndEffectorConstraints.h"
+#include "TorqueLimits.h"
 
 namespace IDTO {
 namespace Kinova {
@@ -81,7 +82,9 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<FourierCurves> fcPtr_;
+    std::shared_ptr<Polynomials> plPtr_;
+
+    std::shared_ptr<InverseDynamics> idPtr_;
 };
 
 }; // namespace Kinova

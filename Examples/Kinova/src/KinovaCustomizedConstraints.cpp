@@ -26,9 +26,11 @@ void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivative
 }
 
 void KinovaCustomizedConstraints::compute_bounds() {
+    // initial position at -1
     g_lb.head(trajPtr_->Nact).setConstant(-1);
     g_ub.head(trajPtr_->Nact).setConstant(-1);
 
+    // end position at 1 (this is currently disabled)
     g_lb.tail(trajPtr_->Nact).setConstant(-1e19);
     g_ub.tail(trajPtr_->Nact).setConstant(1e19);
 }

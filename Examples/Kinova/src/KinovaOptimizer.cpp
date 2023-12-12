@@ -26,46 +26,69 @@ bool KinovaOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    fcPtr_ = std::make_shared<FourierCurves>(T_input, 
-                                             N_input, 
-                                             model_input.nq, 
-                                             Chebyshev, 
-                                             degree_input);
+    plPtr_ = std::make_shared<Polynomials>(T_input, 
+                                           N_input, 
+                                           model_input.nq, 
+                                           Chebyshev, 
+                                           degree_input);
 
         // convert to their base class pointers
-    trajPtr_ = fcPtr_;
+    trajPtr_ = plPtr_;
+
+    idPtr_ = std::make_shared<InverseDynamics>(model_input,
+                                               trajPtr_);
     
-    // // convert joint limits from degree to radian
-    // VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
-    // for (int i = 0; i < NUM_JOINTS; i++) {
-    //     JOINT_LIMITS_LOWER_VEC(i) = deg2rad(JOINT_LIMITS_LOWER[i]);
-    // }
+    // read joint limits from KinovaConstants.h
+    VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        JOINT_LIMITS_LOWER_VEC(i) = JOINT_LIMITS_LOWER[i];
+    }
 
-    // // convert joint limits from degree to radian   
-    // VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
-    // for (int i = 0; i < NUM_JOINTS; i++) {
-    //     JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
-    // }
+    VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        JOINT_LIMITS_UPPER_VEC(i) = JOINT_LIMITS_UPPER[i];
+    }
 
-    // // Joint limits
-    //     // convert to their base class pointers
-    // constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
-    //                                                            JOINT_LIMITS_LOWER_VEC, 
-    //                                                            JOINT_LIMITS_UPPER_VEC));
-    // constraintsScale.push_back(1.0);     
+    // read torque limits from KinovaConstants.h
+    VecX TORQUE_LIMITS_LOWER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
+    }
 
-    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_));      
+    VecX TORQUE_LIMITS_UPPER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
+    }
 
+    // Joint limits
+        // convert to their base class pointers
+    constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
+                                                               JOINT_LIMITS_LOWER_VEC, 
+                                                               JOINT_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("joint limits");     
+
+    // Torque limits
+    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
+                                                                idPtr_,
+                                                                TORQUE_LIMITS_LOWER_VEC, 
+                                                                TORQUE_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("torque limits");                                                            
+
+    // Customized constraints (all joints start at -1)
+    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_));   
+    constraintsNameVec_.push_back("customized constraints");       
+
+    // End effector stops at a desired position at the end
     Transform endT;
     VecX desiredEndEffectorPos(6);
-    desiredEndEffectorPos << -0.6507, 0.1673, 0.7073, -2.5521, 1.1871, -1.9560;
-
+    desiredEndEffectorPos << -0.6507, 0.1673, 0.7073, -2.5521, 1.1871, -1.9560; // xyz and rpy
     constraintsPtrVec_.push_back(std::make_unique<EndEffectorConstraints>(model_input,
                                                                           jtype_input,
                                                                           endT,
                                                                           "joint_7",
                                                                           trajPtr_,
-                                                                          desiredEndEffectorPos));                                                                                                                       
+                                                                          desiredEndEffectorPos));    
+    constraintsNameVec_.push_back("end effector constraints");                                                                                                                                                                                         
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
 
@@ -119,9 +142,12 @@ bool KinovaOptimizer::eval_f(
         z(i) = x[i];
     }
 
-    trajPtr_->compute(z, false);
+    idPtr_->compute(z, false);
 
-    obj_value = trajPtr_->q_dd(trajPtr_->N / 2).dot(trajPtr_->q_dd(trajPtr_->N / 2));
+    obj_value = 0;
+    for ( Index i = 0; i < idPtr_->N; i++ ) {
+        obj_value += idPtr_->tau(i).dot(idPtr_->tau(i));
+    }
 
     return true;
 }
@@ -145,12 +171,18 @@ bool KinovaOptimizer::eval_grad_f(
         z(i) = x[i];
     }
 
-    trajPtr_->compute(z, true);
-
-    VecX temp = 2 * trajPtr_->pq_dd_pz(trajPtr_->N / 2).transpose() * trajPtr_->q_dd(trajPtr_->N / 2);
+    idPtr_->compute(z, true);
 
     for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] = temp(i);
+        grad_f[i] = 0;
+    }
+
+    for ( Index i = 0; i < idPtr_->N; i++ ) {
+        VecX v = 2 * idPtr_->ptau_pz(i).transpose() * idPtr_->tau(i);
+
+        for ( Index j = 0; j < n; j++ ) {
+            grad_f[j] += v(j);
+        }
     }
 
     return true;

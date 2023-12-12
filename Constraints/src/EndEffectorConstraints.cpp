@@ -41,6 +41,7 @@ EndEffectorConstraints::EndEffectorConstraints(const Model& model_input,
 void EndEffectorConstraints::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
 
+    // choose the end of the trajectory
     const VecX& q = trajPtr_->q(trajPtr_->N - 1);
 
     fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
