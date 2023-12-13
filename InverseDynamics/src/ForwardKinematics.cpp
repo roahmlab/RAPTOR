@@ -141,8 +141,8 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
         
         for (auto j : chain) {
             for (auto k : chain) {
-                ddTddq[j][k] *= model.jointPlacements[i + 1];
                 if (k >= j) {
+                    ddTddq[j][k] *= model.jointPlacements[i + 1];
                     if (j == i && k == i) {
                         ddTddq[j][k] *= ddTjddq;
                     } 
@@ -225,17 +225,31 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
         for (auto j : chain) {
             for (auto k : chain) {
                 for (auto h : chain) {
-                    dddTdddq[j][k][h] *= model.jointPlacements[i + 1];
-                    if (j == i && k == i && h == i) {
-                        dddTdddq[j][k][h] *= dddTjdddq;
-                    } else if ((j == i && k == i) || (j == i && h == i) || (k == i && h == i)) {
-                        dddTdddq[j][k][h] *= ddTjddq;
-                    } 
-                    else if (j == i || k == i || h == i) {
-                        dddTdddq[j][k][h] *= dTjdq;
+                    if (h >= k && k >= j) {
+                        dddTdddq[j][k][h] *= model.jointPlacements[i + 1];
+                        if (j == i && k == i && h == i) {
+                            dddTdddq[j][k][h] *= dddTjdddq;
+                        } 
+                        else if ((j == i && k == i) || (j == i && h == i) || (k == i && h == i)) {
+                            dddTdddq[j][k][h] *= ddTjddq;
+                        } 
+                        else if (j == i || k == i || h == i) {
+                            dddTdddq[j][k][h] *= dTjdq;
+                        }
+                        else {
+                            dddTdddq[j][k][h] *= Tj;
+                        }
                     }
                     else {
-                        dddTdddq[j][k][h] *= Tj;
+                        if (h < k) {
+                            dddTdddq[j][k][h] = dddTdddq[j][h][k];
+                        }
+                        else if (k < j) {
+                            dddTdddq[j][k][h] = dddTdddq[k][j][h];
+                        }
+                        else {
+                            dddTdddq[j][k][h] = dddTdddq[h][k][j];
+                        }
                     }
                 }
             }

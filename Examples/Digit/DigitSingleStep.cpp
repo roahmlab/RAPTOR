@@ -52,7 +52,7 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 32;
+    const int N = 4;
     const int degree = 6;
 
     GaitParameters gp;
@@ -105,8 +105,8 @@ int main() {
 	app->Options()->SetNumericValue("max_wall_time", 1000);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 200);
-	app->Options()->SetIntegerValue("print_level", 0);
+    app->Options()->SetIntegerValue("max_iter", 5000);
+	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma97");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
@@ -116,8 +116,8 @@ int main() {
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-3);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -133,7 +133,7 @@ int main() {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "g time: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds.\n";
+        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
@@ -164,7 +164,7 @@ int main() {
     // mynlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
     // Number g[mynlp->numCons];
     // Number values[mynlp->numCons * mynlp->numVars];
-    // mynlp->eval_g(mynlp->numVars, x, false, mynlp->numCons, g);
+    // // mynlp->eval_g(mynlp->numVars, x, false, mynlp->numCons, g);
     // mynlp->eval_jac_g(mynlp->numVars, x, false, mynlp->numCons, 0, NULL, NULL, values);
 
     std::ofstream solution("solution.txt");
