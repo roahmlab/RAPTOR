@@ -316,8 +316,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // return error if nan value is found
     for (int i = 0; i < modelPtr_->nv; i++) {
         if (isnan(qcopy(i))) {
-            // throw std::runtime_error("nan values found in setupJointPositions!");
-            qcopy(i) = 0;
+            throw std::runtime_error("nan values found in setupJointPositions!");
         }
     }
 

@@ -52,7 +52,7 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 4;
+    const int N = 32;
     const int degree = 6;
 
     GaitParameters gp;
@@ -102,7 +102,7 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 1000);
+	app->Options()->SetNumericValue("max_wall_time", 100);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
     app->Options()->SetIntegerValue("max_iter", 5000);
@@ -114,7 +114,7 @@ int main() {
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
+    // app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
