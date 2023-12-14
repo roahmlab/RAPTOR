@@ -48,7 +48,7 @@ int main() {
     gp.swingfoot_begin_y_des = 0.00;
     gp.swingfoot_end_y_des = -0.00;
 
-    FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
+    FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Uniform, degree);
 
     Eigen::VectorXd z(222);
     z << 0.44001300673447579781, 0.90150841199927378433, -1.36896462498458881818, 1.17514427366831353261, 1.49127770819168103955, 2.12381489742914641994, -0.82759129050768542868, 0.53137207451734613795, -1.67995230143878249152, -0.18866375650903835504, -0.15893353665649906370, 10.17378464326555764785, 
@@ -132,6 +132,29 @@ int main() {
     for (int i = 0; i < mynlp->numVars; i++) {
         solution << mynlp->solution[i] << std::endl;
     }
+    solution.close();
+
+    std::ofstream trajectory("trajectory-digit-modified.txt");
+    trajectory << std::setprecision(20);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        for (int j = 0; j < N; j++) {
+            trajectory << mynlp->dcidPtr_->q(j)(i) << ' ';
+        }
+        trajectory << std::endl;
+    }
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        for (int j = 0; j < N; j++) {
+            trajectory << mynlp->dcidPtr_->v(j)(i) << ' ';
+        }
+        trajectory << std::endl;
+    }
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        for (int j = 0; j < N; j++) {
+            trajectory << mynlp->dcidPtr_->a(j)(i) << ' ';
+        }
+        trajectory << std::endl;
+    }
+    trajectory.close();
 
     // Number x[222] = {0.44001300673447579781, 0.90150841199927378433, -1.36896462498458881818, 1.17514427366831353261, 1.49127770819168103955, 2.12381489742914641994, -0.82759129050768542868, 0.53137207451734613795, -1.67995230143878249152, -0.18866375650903835504, -0.15893353665649906370, 10.17378464326555764785, 
     //                 0.24906378256190339626, 1.13372571890367868086, -1.17876565189164517200, 0.32230045632300652336, 0.91608278315458502306, 0.67928722900229043802, 0.31490334064012565074, -0.63447245508795857560, -0.54140814640940027047, 0.65895200145184085194, -0.75282951196229741520, 11.50359973237056721018, 
