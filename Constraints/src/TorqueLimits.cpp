@@ -20,6 +20,10 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
 }
 
 void TorqueLimits::compute(const VecX& z, bool compute_derivatives) {
+    if (is_computed(z, compute_derivatives)) {
+        return;
+    }
+
     if (compute_derivatives) {
         pg_pz.setZero();
     }

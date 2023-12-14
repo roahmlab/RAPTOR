@@ -1,11 +1,11 @@
-#include "DigitSingleStepPeriodicityConstraints.h"
+#include "DigitModifiedSingleStepPeriodicityConstraints.h"
 
 namespace IDTO {
-namespace Digit {
+namespace DigitModified {
 
-DigitSingleStepPeriodicityConstraints::DigitSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                                                             std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
-                                                                             const frictionParams& fp_input) : 
+DigitModifiedSingleStepPeriodicityConstraints::DigitModifiedSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                                                                                             std::shared_ptr<DigitModifiedConstrainedInverseDynamics> dcidPtr_input,
+                                                                                             const frictionParams& fp_input) : 
     trajPtr_(trajPtr_input),
     dcidPtr_(dcidPtr_input),
     fp(fp_input) {
@@ -54,7 +54,7 @@ DigitSingleStepPeriodicityConstraints::DigitSingleStepPeriodicityConstraints(std
     }
 }
 
-void DigitSingleStepPeriodicityConstraints::compute(const VecX& z, bool compute_derivatives) {
+void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z, bool compute_derivatives) {
     // We assume that surface contact constraints always come after torque limits constraints for now
     // The following line has been called in TorqueLimits::compute() already
     // So we directly pull out the lambda values from idPtr_
@@ -213,7 +213,7 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z, bool compute_
     }
 }
 
-void DigitSingleStepPeriodicityConstraints::compute_bounds() {
+void DigitModifiedSingleStepPeriodicityConstraints::compute_bounds() {
     // everything before this are equality constraints, so just zeros
 
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
@@ -223,5 +223,5 @@ void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
 }
 
-}; // namespace Digit
+}; // namespace DigitModified
 }; // namespace IDTO

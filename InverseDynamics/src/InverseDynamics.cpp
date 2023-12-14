@@ -25,6 +25,10 @@ void InverseDynamics::compute(const VecX& z,
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }   
 
+    if (is_computed(z, compute_derivatives)) {
+        return;
+    }
+
     trajPtr_->compute(z, compute_derivatives);                            
 
     for (int i = 0; i < N; i++) {

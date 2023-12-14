@@ -25,8 +25,40 @@ public:
 
     virtual void compute_bounds() = 0;
 
+        // determine if the constraints are computed before and save the current decision variable
+    bool is_computed(const VecX& z, bool compute_derivatives) {
+        if (z.size() != current_z.size()) {
+            current_z = z;
+            if_compute_derivatives = compute_derivatives;
+            return false;
+        }
+
+        if (compute_derivatives != if_compute_derivatives) {
+            current_z = z;
+            if_compute_derivatives = compute_derivatives;
+            return false;
+        }
+
+        bool isSame = true;
+
+        for (int i = 0; i < z.size(); i++) {
+            if (z(i) != current_z(i)) {
+                isSame = false;
+                break;
+            }
+        }
+
+        current_z = z;  
+        if_compute_derivatives = compute_derivatives;
+        return isSame;
+    }
+
     // class members:
     int m = 0; // number of constraints
+
+    // the decision variable that was evaluated last time
+    VecX current_z;
+    bool if_compute_derivatives = false;
 
     // compute results are stored here
     VecX g;

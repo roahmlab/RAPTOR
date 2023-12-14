@@ -39,6 +39,14 @@ EndEffectorConstraints::EndEffectorConstraints(const Model& model_input,
 }
 
 void EndEffectorConstraints::compute(const VecX& z, bool compute_derivatives) {
+    if (is_computed(z, compute_derivatives)) {
+        return;
+    }
+
+    if (compute_derivatives) {
+        pg_pz.setZero();
+    }
+
     trajPtr_->compute(z, compute_derivatives);
 
     // choose the end of the trajectory

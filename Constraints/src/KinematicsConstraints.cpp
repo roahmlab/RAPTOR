@@ -55,6 +55,14 @@ KinematicsConstraints::KinematicsConstraints(const Model& model_input,
 }
 
 void KinematicsConstraints::compute(const VecX& z, bool compute_derivatives) {
+    if (is_computed(z, compute_derivatives)) {
+        return;
+    }
+
+    if (compute_derivatives) {
+        pg_pz.setZero();
+    }
+
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {

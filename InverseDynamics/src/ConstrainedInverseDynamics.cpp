@@ -50,7 +50,11 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
 
     if (dcPtr_ == nullptr) {
         throw std::runtime_error("dcPtr_ is not defined yet!");
-    }                          
+    }                 
+
+    if (is_computed(z, compute_derivatives)) {
+        return;
+    }         
 
     trajPtr_->compute(z, compute_derivatives);
 
@@ -172,6 +176,7 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
 
         // assume setupJointPositionVelocityAcceleration() has been called
         tau(i) = tau_indep - dcPtr_->J_indep.transpose() * lambda(i);
+        // tau(i).topRows(6) = lambda(i);
 
         if (compute_derivatives) {
             MatX ptau_pq = prnea_pq_indep - dcPtr_->J_indep.transpose() * plambda_pq - JTlambda_partial_dq_indep;
@@ -181,6 +186,11 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
             ptau_pz(i) = ptau_pq * pq_pz(i) + 
                          ptau_pv * pv_pz(i) + 
                          ptau_pa * pa_pz(i);
+
+            // MatX AA = (dcPtr_->J_indep.transpose() * plambda_pq - JTlambda_partial_dq_indep) * pq_pz(i) +
+            //                   dcPtr_->J_indep.transpose() * plambda_pv * pv_pz(i) + 
+            //                   dcPtr_->J_indep.transpose() * plambda_pa * pa_pz(i);
+            // ptau_pz(i).topRows(6) = AA;
         }
     }
 }

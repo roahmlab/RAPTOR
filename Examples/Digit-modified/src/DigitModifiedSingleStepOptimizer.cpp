@@ -1,23 +1,23 @@
-#include "DigitSingleStepOptimizer.h"
+#include "DigitModifiedSingleStepOptimizer.h"
 
 namespace IDTO {
-namespace Digit {
+namespace DigitModified {
 
 using std::cout;
 using std::endl;
 
 // // constructor
-// DigitSingleStepOptimizer::DigitSingleStepOptimizer()
+// DigitModifiedSingleStepOptimizer::DigitModifiedSingleStepOptimizer()
 // {
 // }
 
 
 // // destructor
-// DigitSingleStepOptimizer::~DigitSingleStepOptimizer()
+// DigitModifiedSingleStepOptimizer::~DigitModifiedSingleStepOptimizer()
 // {
 // }
 
-bool DigitSingleStepOptimizer::set_parameters(
+bool DigitModifiedSingleStepOptimizer::set_parameters(
     const VecX& x0_input,
     const double T_input,
     const int N_input,
@@ -43,13 +43,15 @@ bool DigitSingleStepOptimizer::set_parameters(
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
+    dcidPtr_ = std::make_shared<DigitModifiedConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
                                                                  jtype_input, 
                                                                  stanceLeg, 
                                                                  stance_foot_T_des);                                                          
 
+    // convert to their base class pointers
+    idPtr_ = dcidPtr_;  
     
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
@@ -63,16 +65,6 @@ bool DigitSingleStepOptimizer::set_parameters(
         JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
-    VecX TORQUE_LIMITS_LOWER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
-    }
-
-    VecX TORQUE_LIMITS_UPPER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
-    }
-
     // Joint limits
         // convert to their base class pointers
     dcPtr_ = dcidPtr_->dcPtr_;
@@ -82,35 +74,26 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                           JOINT_LIMITS_UPPER_VEC));      
     constraintsNameVec_.push_back("joint limits");                                                                                                                                  
 
-    // Torque limits
-        // convert to their base class pointers
-    idPtr_ = dcidPtr_;
-    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-                                                                        idPtr_, 
-                                                                        TORQUE_LIMITS_LOWER_VEC, 
-                                                                        TORQUE_LIMITS_UPPER_VEC));        
-    constraintsNameVec_.push_back("torque limits");                                                                                                                         
-
     // Surface contact constraints
         // convert to their base class pointers
     cidPtr_ = dcidPtr_;
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
-                                                                        FRICTION_PARAMS));
+                                                                             FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
     // kinematics constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
-                                                                        jtype_input, 
-                                                                        trajPtr_, 
-                                                                        dcPtr_,
-                                                                        gp_input));    
+    constraintsPtrVec_.push_back(std::make_unique<DigitModifiedCustomizedConstraints>(model_input, 
+                                                                                      jtype_input, 
+                                                                                      trajPtr_, 
+                                                                                      dcPtr_,
+                                                                                      gp_input));    
     constraintsNameVec_.push_back("customized constraints");            
 
     // periodic reset map constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                        dcidPtr_,
-                                                                        FRICTION_PARAMS));    
+    constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
+                                                                                                 dcidPtr_,
+                                                                                                 FRICTION_PARAMS));    
     constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
@@ -118,7 +101,7 @@ bool DigitSingleStepOptimizer::set_parameters(
 // [TNLP_set_parameters]
 
 // [TNLP_get_nlp_info]
-bool DigitSingleStepOptimizer::get_nlp_info(
+bool DigitModifiedSingleStepOptimizer::get_nlp_info(
    Index&          n,
    Index&          m,
    Index&          nnz_jac_g,
@@ -148,7 +131,7 @@ bool DigitSingleStepOptimizer::get_nlp_info(
 
 // [TNLP_eval_f]
 // returns the value of the objective function
-bool DigitSingleStepOptimizer::eval_f(
+bool DigitModifiedSingleStepOptimizer::eval_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -171,15 +154,13 @@ bool DigitSingleStepOptimizer::eval_f(
         obj_value += dcidPtr_->tau(i).dot(dcidPtr_->tau(i));
     }
 
-    // obj_value *= 1e-3;
-
     return true;
 }
 // [TNLP_eval_f]
 
 // [TNLP_eval_grad_f]
 // return the gradient of the objective function grad_{x} f(x)
-bool DigitSingleStepOptimizer::eval_grad_f(
+bool DigitModifiedSingleStepOptimizer::eval_grad_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -213,5 +194,5 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 }
 // [TNLP_eval_grad_f]
 
-}; // namespace Digit
+}; // namespace DigitModified
 }; // namespace IDTO

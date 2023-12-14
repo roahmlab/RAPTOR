@@ -144,6 +144,38 @@ target_include_directories(Digitlib PUBLIC
 target_compile_options(Digitlib PUBLIC
     ${PINOCCHIO_FLAGS})
 
+## Digit-modified library
+add_library(DigitModifiedlib SHARED
+    Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
+    Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
+    Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
+    Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
+    Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
+
+target_link_libraries(DigitModifiedlib PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_include_directories(DigitModifiedlib PUBLIC
+    Examples/Digit-modified/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_compile_options(DigitModifiedlib PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 # Kinova library
 add_library(Kinovalib SHARED
     Examples/Kinova/src/KinovaOptimizer.cpp
@@ -174,10 +206,10 @@ target_compile_options(Kinovalib PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Example scripts
-add_executable(IDTO_example 
+add_executable(Digit_example 
     Examples/Digit/DigitSingleStep.cpp)
 
-target_include_directories(IDTO_example PRIVATE
+target_include_directories(Digit_example PRIVATE
     Examples/Digit/include
     InverseDynamics/include
     Trajectories/include
@@ -185,7 +217,7 @@ target_include_directories(IDTO_example PRIVATE
     Optimization/include
     Utils/include)
 
-target_link_libraries(IDTO_example PRIVATE
+target_link_libraries(Digit_example PRIVATE
     trajlib 
     IDlib
     Conslib
@@ -199,7 +231,35 @@ target_link_libraries(IDTO_example PRIVATE
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_compile_options(IDTO_example PUBLIC
+target_compile_options(Digit_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(DigitModified_example 
+    Examples/Digit-modified/DigitModifiedSingleStep.cpp)
+
+target_include_directories(DigitModified_example PRIVATE
+    Examples/Digit-modified/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(DigitModified_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    DigitModifiedlib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(DigitModified_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Kinova_example 
@@ -255,7 +315,11 @@ install(TARGETS Kinovalib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(TARGETS IDTO_example
+install(TARGETS Digit_example
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(TARGETS DigitModified_example
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

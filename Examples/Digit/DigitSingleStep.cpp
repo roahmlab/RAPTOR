@@ -56,9 +56,9 @@ int main() {
     const int degree = 6;
 
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.30;
-    gp.swingfoot_begin_y_des = 0.40;
-    gp.swingfoot_end_y_des = -0.40;
+    gp.swingfoot_midstep_z_des = 0.15;
+    gp.swingfoot_begin_y_des = 0.04;
+    gp.swingfoot_end_y_des = -0.04;
 
     FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
 
@@ -167,7 +167,7 @@ int main() {
     // // mynlp->eval_g(mynlp->numVars, x, false, mynlp->numCons, g);
     // mynlp->eval_jac_g(mynlp->numVars, x, false, mynlp->numCons, 0, NULL, NULL, values);
 
-    std::ofstream solution("solution.txt");
+    std::ofstream solution("solution-digit.txt");
     solution << std::setprecision(20);
     for (int i = 0; i < mynlp->numVars; i++) {
         solution << mynlp->solution[i] << std::endl;
