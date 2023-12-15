@@ -38,7 +38,7 @@ DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const Model& 
             throw std::runtime_error("Can not find joint: left_toe_roll");
         }
 
-        stance_foot_endT.R << 0,            1, 0,
+        stance_foot_endT.R << 0,             1, 0,
                               -0.5,          0, sin(M_PI / 3),
                               sin(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, 0, 0;

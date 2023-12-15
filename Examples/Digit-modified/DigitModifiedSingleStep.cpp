@@ -44,13 +44,13 @@ int main() {
     const int degree = 5;
 
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.15;
+    gp.swingfoot_midstep_z_des = 0.12;
     gp.swingfoot_begin_x_des = -0.25;
-    gp.swingfoot_begin_y_des = 0.00;
+    gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
-    gp.swingfoot_end_y_des = -0.00;
+    gp.swingfoot_end_y_des = -0.40;
     
-    FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Uniform, degree);
+    FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
 
     std::ifstream initial_guess("initial-digit-modified.txt");
 
@@ -98,14 +98,16 @@ int main() {
 	app->Options()->SetNumericValue("max_wall_time", 400);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetIntegerValue("max_iter", 1000);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma86");
+    app->Options()->SetStringValue("linear_solver", "ma27");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
+    app->Options()->SetStringValue("nlp_scaling_method", "gradient-based");
+
     // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
@@ -158,6 +160,18 @@ int main() {
     for (int i = 0; i < NUM_JOINTS; i++) {
         for (int j = 0; j < N; j++) {
             trajectory << mynlp->dcidPtr_->a(j)(i) << ' ';
+        }
+        trajectory << std::endl;
+    }
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        for (int j = 0; j < N; j++) {
+            trajectory << mynlp->dcidPtr_->tau(j)(i) << ' ';
+        }
+        trajectory << std::endl;
+    }
+    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        for (int j = 0; j < N; j++) {
+            trajectory << mynlp->dcidPtr_->lambda(j)(i) << ' ';
         }
         trajectory << std::endl;
     }
