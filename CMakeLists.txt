@@ -160,7 +160,6 @@ target_link_libraries(DigitModifiedlib PRIVATE
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
@@ -189,7 +188,6 @@ target_link_libraries(Kinovalib PRIVATE
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
@@ -254,7 +252,6 @@ target_link_libraries(DigitModified_example PRIVATE
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
@@ -282,7 +279,6 @@ target_link_libraries(Kinova_example PRIVATE
     ipopt
     coinhsl
     ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})

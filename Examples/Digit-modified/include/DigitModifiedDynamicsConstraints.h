@@ -5,9 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_multiroots.h>
-
 #include "DigitModifiedConstants.h"
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
@@ -158,12 +155,6 @@ public:
 
     VecX qcopy;
 };
-
-int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f);
-
-int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J);
-
-int fillDependent_fdf(const gsl_vector* x, void *params, gsl_vector* f, gsl_matrix* J);
 
 }; // namespace DigitModified
 }; // namespace IDTO

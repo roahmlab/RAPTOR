@@ -243,68 +243,10 @@ void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX&
 }
 
 void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
-    qcopy = q;
-
     // fill in dependent joint positions 
-    // we first use approximation to give an initial guess for dependent joints
-    // then we use gsl multidimensional root-finding to provide a more accurate solution
-
-    fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, modelPtr_->getJointId("Rz"), qcopy, stance_foot_endT, startT);
+    fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, modelPtr_->getJointId("Rz"), q, stance_foot_endT, startT);
     Transform torso_T = stance_foot_T_des * stance_foot_T.inverse();
-    qcopy.block(0, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(torso_T);
-
-    // gsl multidimensional root-finding
-    const gsl_multiroot_fdfsolver_type *T;
-    gsl_multiroot_fdfsolver *s;
-
-    int status;
-    size_t i, iter = 0;
-
-    const size_t n = NUM_DEPENDENT_JOINTS;
-    gsl_multiroot_function_fdf f = {&fillDependent_f,
-                                    &fillDependent_df,
-                                    &fillDependent_fdf,
-                                    n, this};
-
-    gsl_vector *x = gsl_vector_alloc(n);
-
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        gsl_vector_set(x, i, qcopy(dependentJointIds[i]));
-    }
-
-    T = gsl_multiroot_fdfsolver_hybridsj;
-    s = gsl_multiroot_fdfsolver_alloc(T, n);
-    gsl_multiroot_fdfsolver_set(s, &f, x);
-
-    do {
-        iter++;
-        status = gsl_multiroot_fdfsolver_iterate(s);
-
-        if (status) break;
-
-        status = gsl_multiroot_test_residual(s->f, 1e-14);
-    }
-    while (status == GSL_CONTINUE && iter < 1000);
-
-    // printf ("total iter = %ld, status = %s\n", iter, gsl_strerror(status));
-
-    // the optimal solution found by gsl!
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        qcopy(dependentJointIds[i]) = gsl_vector_get(s->x, i);
-    }
-
-    // gsl might be numerically unstable for some very edge cases
-    // return error if found anything weird
-    for (int i = 0; i < modelPtr_->nv; i++) {
-        if (isnan(qcopy(i))) {
-            throw std::runtime_error("nan values found in setupJointPositions!");
-        }
-    }
-
-    gsl_multiroot_fdfsolver_free(s);
-    gsl_vector_free(x);
-
-    q = qcopy;
+    q.block(0, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(torso_T);
 
     if (compute_derivatives) {
         get_c(q);
@@ -328,47 +270,6 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
 
         pq_dep_pq_indep = P_dep;
     }
-}
-
-int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f) {
-    DigitModifiedDynamicsConstraints* constraintsData = (DigitModifiedDynamicsConstraints*)params;
-
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        constraintsData->qcopy(constraintsData->dependentJointIds[i]) = gsl_vector_get(x, i);
-    }
-
-    constraintsData->get_c(constraintsData->qcopy);
-
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        gsl_vector_set(f, i, constraintsData->c(i));
-    }
-
-    return GSL_SUCCESS;
-}
-
-int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J) {
-    DigitModifiedDynamicsConstraints* constraintsData = (DigitModifiedDynamicsConstraints*)params;
-
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        constraintsData->qcopy(constraintsData->dependentJointIds[i]) = gsl_vector_get(x, i);
-    }
-
-    constraintsData->get_J(constraintsData->qcopy);
-
-    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        for (int j = 0; j < NUM_DEPENDENT_JOINTS; j++) {
-            gsl_matrix_set(J, i, j, constraintsData->J(i, constraintsData->dependentJointIds[j]));
-        }
-    }
-
-    return GSL_SUCCESS;
-}
-
-int fillDependent_fdf(const gsl_vector* x, void *params, gsl_vector* f, gsl_matrix* J) {
-    fillDependent_f(x, params, f);
-    fillDependent_df(x, params, J);
-
-    return GSL_SUCCESS;
 }
 
 void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
