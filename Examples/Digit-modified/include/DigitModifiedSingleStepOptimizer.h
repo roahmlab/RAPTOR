@@ -4,6 +4,7 @@
 #include "Optimizer.h"
 
 #include "FourierCurves.h"
+#include "BezierCurves.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
@@ -89,7 +90,8 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_; 
-    std::shared_ptr<FourierCurves> fcPtr_;
+    // std::shared_ptr<FourierCurves> fcPtr_;
+    std::shared_ptr<BezierCurves> bcPtr_;
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;

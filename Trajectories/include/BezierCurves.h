@@ -18,6 +18,8 @@ public:
 
     BezierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input);
 
+    void setInitialTerminalCondition();
+
     void compute(const VecX& z, bool compute_derivatives = true) override;
 
     int degree = 0; // degree of the Bezier curve
@@ -25,6 +27,8 @@ public:
     VecX B;
     VecX dB;
     VecX ddB;
+
+    VecX Bionomials;
 };
 
 }; // namespace IDTO

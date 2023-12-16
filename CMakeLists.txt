@@ -61,6 +61,7 @@ include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
 ## Trajectories library
 add_library(trajlib SHARED
     Trajectories/src/FourierCurves.cpp 
+    Trajectories/src/BezierCurves.cpp 
     Trajectories/src/Polynomials.cpp 
     Trajectories/src/Plain.cpp 
     Trajectories/src/Trajectories.cpp)

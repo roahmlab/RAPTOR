@@ -12,6 +12,12 @@ BezierCurves::BezierCurves(const VecX& tspan_input, int Nact_input, int degree_i
     B = VecX::Zero(degree + 1);
     dB = VecX::Zero(degree + 1);
     ddB = VecX::Zero(degree + 1);
+
+    Bionomials = VecX::Ones(degree + 1);
+    for (int j = 1; j <= degree / 2; j++) {
+        Bionomials(j) = Bionomials(j - 1) * (degree + 1 - j) / j;
+        Bionomials(degree - j) = Bionomials(j);
+    }
 }
 
 BezierCurves::BezierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
@@ -22,13 +28,23 @@ BezierCurves::BezierCurves(double T_input, int N_input, int Nact_input, TimeDisc
     B = VecX::Zero(degree + 1);
     dB = VecX::Zero(degree + 1);
     ddB = VecX::Zero(degree + 1);
+
+    Bionomials = VecX::Ones(degree + 1);
+    for (int j = 1; j <= degree / 2; j++) {
+        Bionomials(j) = Bionomials(j - 1) * (degree + 1 - j) / j;
+        Bionomials(degree - j) = Bionomials(j);
+    }
+}
+
+void BezierCurves::setInitialTerminalCondition() {
+
 }
 
 void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
-    MatX coefficients = z.reshaped(degree + 1, Nact);
+    MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
-        double t = tspan(x);
+        double t = tspan(x) / T;
 
         q(x) = VecX::Zero(Nact);
         q_d(x) = VecX::Zero(Nact);
@@ -40,28 +56,41 @@ void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
             pq_dd_pz(x) = MatX::Zero(Nact, varLength);
         }
 
-        B(0) = 1;
-        dB(0) = 0;
-        ddB(0) = 0;
+        // Compute tA(i, j) = t(i)^j, tB(i, j) = (1-t(i))^(degree-j)
+        VecX tA = VecX::Ones(degree + 1);
+        VecX tB = VecX::Ones(degree + 1);
+        VecX dtA = VecX::Zero(degree + 1);
+        VecX dtB = VecX::Zero(degree + 1);
+        VecX ddtA = VecX::Zero(degree + 1);
+        VecX ddtB = VecX::Zero(degree + 1);
 
-        B(1) = t;
-        dB(1) = 1;
-        ddB(1) = 0;
+        // Loop to compute tA and tB
+        for (int j = 1; j <= degree; j++) {
+            tA(j) = t * tA(j - 1);
+            tB(degree - j) = (1 - t) * tB(degree - j + 1);
 
-        for (int i = 2; i <= degree; i++) {
-            B(i) = pow(t, i) / (i * (i-1));
-            dB(i) = pow(t, i-1) / (i-1);
-            ddB(i) = pow(t, i-2);
+            dtA(j) = j * tA(j - 1);
+            dtB(degree - j) = -j * tB(degree - j + 1);
+
+            ddtA(j) = j * dtA(j - 1);
+            ddtB(degree - j) = -j * dtB(degree - j + 1);
         }
 
-        q(x) = coefficients.transpose() * B;
-        q_d(x) = coefficients.transpose() * dB;
+        B = Bionomials.array() * tA.array() * tB.array();
+        dB = Bionomials.array() * (dtA.array() * tB.array() +  
+                                   tA.array() * dtB.array()) / T;
+        ddB = Bionomials.array() * (ddtA.array() * tB.array() + 
+                                    2 * dtA.array() * dtB.array() + 
+                                    tA.array() * ddtB.array()) / (T * T);
+
+        q(x)    = coefficients.transpose() * B;
+        q_d(x)  = coefficients.transpose() * dB;
         q_dd(x) = coefficients.transpose() * ddB;
 
         if (compute_derivatives) {
             for (int i = 0; i < Nact; i++) {
-                pq_pz(x).block(i, i * (degree + 1), 1, degree + 1) = B.transpose();
-                pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1) = dB.transpose();
+                pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = B.transpose();
+                pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dB.transpose();
                 pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddB.transpose();
             }
         }

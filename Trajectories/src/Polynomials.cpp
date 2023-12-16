@@ -23,7 +23,7 @@ Polynomials::Polynomials(double T_input, int N_input, int Nact_input, TimeDiscre
 }
 
 void Polynomials::compute(const VecX& z, bool compute_derivatives) {
-    MatX coefficients = z.reshaped(degree + 1, Nact);
+    MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x);
@@ -38,28 +38,30 @@ void Polynomials::compute(const VecX& z, bool compute_derivatives) {
             pq_dd_pz(x) = MatX::Zero(Nact, varLength);
         }
 
-        P(0) = 1;
-        dP(0) = 0;
+        P(0)   = 1;
+        dP(0)  = 0;
         ddP(0) = 0;
 
-        P(1) = t;
-        dP(1) = 1;
+        P(1)   = t;
+        dP(1)  = 1;
         ddP(1) = 0;
 
+        double powt = 1;
         for (int i = 2; i <= degree; i++) {
-            P(i) = pow(t, i) / (i * (i-1));
-            dP(i) = pow(t, i-1) / (i-1);
-            ddP(i) = pow(t, i-2);
+            ddP(i) = powt;
+            dP(i)  = t * ddP(i) / (i-1);
+            P(i)   = t * dP(i) / i;
+            powt *= t;
         }
 
-        q(x) = coefficients.transpose() * P;
-        q_d(x) = coefficients.transpose() * dP;
+        q(x)    = coefficients.transpose() * P;
+        q_d(x)  = coefficients.transpose() * dP;
         q_dd(x) = coefficients.transpose() * ddP;
 
         if (compute_derivatives) {
             for (int i = 0; i < Nact; i++) {
-                pq_pz(x).block(i, i * (degree + 1), 1, degree + 1) = P.transpose();
-                pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1) = dP.transpose();
+                pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = P.transpose();
+                pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dP.transpose();
                 pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddP.transpose();
             }
         }
