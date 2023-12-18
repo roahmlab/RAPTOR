@@ -29,11 +29,16 @@ bool DigitSingleStepOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    trajPtr_ = std::make_shared<FourierCurves>(T_input, 
-                                               N_input, 
-                                               NUM_INDEPENDENT_JOINTS, 
-                                               Chebyshev, 
-                                               degree_input);
+    // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
+    //                                            N_input, 
+    //                                            NUM_INDEPENDENT_JOINTS, 
+    //                                            Chebyshev, 
+    //                                            degree_input);
+    trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
+                                                             N_input, 
+                                                             NUM_INDEPENDENT_JOINTS, 
+                                                             Chebyshev, 
+                                                             degree_input);                                           
     // trajPtr_ = std::make_shared<BezierCurves>(T_input, 
     //                                           N_input, 
     //                                           NUM_INDEPENDENT_JOINTS, 

@@ -53,7 +53,7 @@ int main() {
 
     const double T = 0.4;
     const int N = 32;
-    const int degree = 6;
+    const int degree = 5;
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.30;
@@ -62,13 +62,14 @@ int main() {
 
     FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
 
-    std::ifstream initial_guess("initial-digit.txt");
+    std::ifstream initial_guess("initial-digit-test.txt");
 
-    Eigen::VectorXd z(252);
-    for (int i = 0; i < 252; i++) {
+    Eigen::VectorXd z(216);
+    for (int i = 0; i < 216; i++) {
         initial_guess >> z(i);
     }
     initial_guess.close();
+  
     // z << 0.29224492320581330063, 0.84522753120149440864, -0.53472035519430305417, 2.67516301546460333327, -0.44634944057612102597, -0.76557708099529064860, -0.87947584624992791724, 1.18856119611949040404, 0.67883259766877379615, 1.03747494847933618978, -1.54471213745385416161, -0.28709462548397673975, 
     //     -0.22619963156456529552, 8.32970255735735598535, 0.11305008784314241055, 0.60920762849420551088, -0.69267911761540668092, 1.56258951342091512160, 0.56788975731392854485, 0.04509102232474253985, -0.51504998170545313041, -0.26225866224635269175, 0.60807085247185110877, -0.31384258952058263770, 
     //     -0.50575334876664701511, 0.65948586832083855302, -0.69864503520547860393, 9.60939323797039257613, 0.39340895915250284620, 2.11979974666413184536, -2.94739786631211853063, -0.55759087450089106497, 1.63810229809724683392, 0.27065783608553611872, 2.30217582696675737708, 0.54400235272765629091, 
@@ -109,9 +110,9 @@ int main() {
 
     app->Options()->SetNumericValue("tol", 1e-4);
 	app->Options()->SetNumericValue("max_wall_time", 500);
-    app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 1000);
+    app->Options()->SetIntegerValue("max_iter", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -156,14 +157,14 @@ int main() {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-digit.txt");
+        std::ofstream solution("solution-digit-test.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        std::ofstream trajectory("trajectory-digit.txt");
+        std::ofstream trajectory("trajectory-digit-test.txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {

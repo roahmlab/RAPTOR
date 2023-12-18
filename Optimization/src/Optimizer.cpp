@@ -88,7 +88,8 @@ bool Optimizer::get_starting_point(
     }
 
     if (x0.size() != numVars) {
-        throw std::runtime_error("You haven't specified an initial guess (x0) yet!");
+        std::cout << "*** Error x0.size() != numVars in get_starting_point!" << std::endl;
+        throw std::runtime_error("x0.size() != numVars in get_starting_point!");
     }
 
     for ( Index i = 0; i < n; i++ ) {
@@ -270,6 +271,8 @@ void Optimizer::finalize_solution(
     }
 
     summarize_constraints(m, g);
+
+    std::cout << "Objective value: " << obj_value << std::endl;
 }
 // [TNLP_finalize_solution]
 
@@ -285,6 +288,7 @@ void Optimizer::summarize_constraints(
 
     std::cout << "Constraint violation report:" << std::endl;
 
+    Number max_max_constr_violation = 0;
     Index iter = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // find where the maximum constraint violation is
@@ -300,6 +304,10 @@ void Optimizer::summarize_constraints(
                 max_constr_violation = constr_violation;
             }
 
+            if (constr_violation > max_max_constr_violation) {
+                max_max_constr_violation = constr_violation;
+            }
+
             iter++;
         }
 
@@ -312,6 +320,8 @@ void Optimizer::summarize_constraints(
                       << "], value: "   << g[max_constr_violation_id2] << std::endl;
         }
     }
+
+    std::cout << "Total constraint violation: " << max_max_constr_violation << std::endl;
 }
 // [TNLP_summarize_constraints]
 
