@@ -81,5 +81,43 @@ int main() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
+    // Print the solution
+    if (mynlp->solution.size() == mynlp->numVars) {
+        std::ofstream solution("solution-kinova.txt");
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
+
+        std::ofstream trajectory("trajectory-kinova.txt");
+        trajectory << std::setprecision(20);
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        trajectory.close();
+    }
+
     return 0;
 }

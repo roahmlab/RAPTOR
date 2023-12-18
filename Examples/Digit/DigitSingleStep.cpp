@@ -141,7 +141,7 @@ int main() {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds.\n";
+        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0 << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");

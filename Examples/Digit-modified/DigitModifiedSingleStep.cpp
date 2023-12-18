@@ -40,7 +40,7 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 32;
+    const int N = 14;
     const int degree = 5;
 
     GaitParameters gp;
@@ -50,10 +50,10 @@ int main() {
     gp.swingfoot_end_x_des = -0.25;
     gp.swingfoot_end_y_des = -0.40;                                  
 
-    std::ifstream initial_guess("initial-digit-modified.txt");
+    std::ifstream initial_guess("initial-digit-modified-Bezier.txt");
 
-    Eigen::VectorXd z(222);
-    for (int i = 0; i < 222; i++) {
+    Eigen::VectorXd z(110);
+    for (int i = 0; i < 110; i++) {
         initial_guess >> z(i);
     }
     initial_guess.close();
@@ -97,10 +97,10 @@ int main() {
 	app->Options()->SetNumericValue("max_wall_time", 300);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 1000);
+    app->Options()->SetIntegerValue("max_iter", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
-    app->Options()->SetStringValue("linear_solver", "ma86");
+    app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     app->Options()->SetStringValue("nlp_scaling_method", "none");
@@ -128,7 +128,7 @@ int main() {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds.\n";
+        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0 << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
@@ -136,14 +136,14 @@ int main() {
     
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-digit-modified.txt");
+        std::ofstream solution("solution-digit-modified-Bezier.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        std::ofstream trajectory("trajectory-digit-modified.txt");
+        std::ofstream trajectory("trajectory-digit-modified-Bezier.txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
