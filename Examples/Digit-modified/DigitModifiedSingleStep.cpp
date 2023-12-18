@@ -40,7 +40,7 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 16;
+    const int N = 32;
     const int degree = 5;
 
     GaitParameters gp;
@@ -50,12 +50,13 @@ int main() {
     gp.swingfoot_end_x_des = -0.25;
     gp.swingfoot_end_y_des = -0.40;                                  
 
-    std::ifstream initial_guess("initial-digit-modified-Bezier.txt");
+    std::ifstream initial_guess("initial-digit-modified.txt");
 
-    Eigen::VectorXd z(110);
-    for (int i = 0; i < 110; i++) {
+    Eigen::VectorXd z(222);
+    for (int i = 0; i < 222; i++) {
         initial_guess >> z(i);
     }
+    initial_guess.close();
     // z << 0.44001300673447579781, 0.90150841199927378433, -1.36896462498458881818, 1.17514427366831353261, 1.49127770819168103955, 2.12381489742914641994, -0.82759129050768542868, 0.53137207451734613795, -1.67995230143878249152, -0.18866375650903835504, -0.15893353665649906370, 10.17378464326555764785, 
     //     0.24906378256190339626, 1.13372571890367868086, -1.17876565189164517200, 0.32230045632300652336, 0.91608278315458502306, 0.67928722900229043802, 0.31490334064012565074, -0.63447245508795857560, -0.54140814640940027047, 0.65895200145184085194, -0.75282951196229741520, 11.50359973237056721018, 
     //     0.22939257155599229732, 1.85268430597661759585, -2.74652666636462416960, -0.59901875070369114962, 1.94036815765457304472, 0.41091855900525037226, 2.50613343617640138561, 0.73729295561515439950, 2.61055552506960308889, 0.40808039640519155888, 1.03271893957363380956, 12.08773903143128869431, 
@@ -93,7 +94,7 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-4);
-	app->Options()->SetNumericValue("max_wall_time", 30);
+	app->Options()->SetNumericValue("max_wall_time", 300);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
     app->Options()->SetIntegerValue("max_iter", 1000);
@@ -135,14 +136,14 @@ int main() {
     
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-digit-modified-Bezier.txt");
+        std::ofstream solution("solution-digit-modified.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        std::ofstream trajectory("trajectory-digit-modified-Bezier.txt");
+        std::ofstream trajectory("trajectory-digit-modified.txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {

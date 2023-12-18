@@ -90,8 +90,8 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_; 
-    // std::shared_ptr<FourierCurves> fcPtr_;
-    std::shared_ptr<BezierCurves> bcPtr_;
+    std::shared_ptr<FourierCurves> fcPtr_;
+    // std::shared_ptr<BezierCurves> bcPtr_;
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;

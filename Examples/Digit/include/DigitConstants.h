@@ -20,12 +20,12 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -60,      // left-hip-pitch
     -180,     // left-achilles-rod
     -10,      // left-ach2
-    -80,      // left-knee
+    -16.5480 - 15, // -80,      // left-knee
     -50.3,    // left-tarsus
-    -46.2755, // left-toe-A
+    -26.8765 - 15, // left-toe-A
     -180,     // left-toe-A-rod
     -10,      // left-A2
-    -45.8918, // left-toe-B
+    -1.1295 - 15, // left-toe-B
     -180,     // left-toe-B-rod
     -10,      // left-B2
     -44,      // left-toe-pitch
@@ -35,12 +35,12 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -90,      // right-hip-pitch
     -180,     // right-achilles-rod
     -10,      // right-ach2
-    -58.4,    // right-knee
+    -46.2821 - 15, // 58.4   // right-knee
     -71.6,    // right-tarsus
-    -44.9815, // right-toe-A
+    -18.2531 - 15, // -44.9815, // right-toe-A
     -180,     // right-toe-A-rod
     -10,      // right-A2
-    -45.5476, // right-toe-B
+    -26.2724 - 15, // -45.5476, // right-toe-B
     -180,     // right-toe-B-rod
     -10,      // right-B2
     -34,      // right-toe-pitch
@@ -61,12 +61,12 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     90,      // left-hip-pitch
     180,     // left-achilles-rod
     10,      // left-ach2
-    58.4,    // left-knee
+    46.2821 + 15, // 58.4,    // left-knee
     71.6,    // left-tarsus
-    44.9815, // left-toe-A
+    0.4032 + 15, // 44.9815, // left-toe-A
     180,     // left-toe-A-rod
     10,      // left-A2
-    45.5476, // left-toe-B
+    26.2183 + 15, // 45.5476, // left-toe-B
     180,     // left-toe-B-rod
     10,      // left-B2
     34,      // left-toe-pitch
@@ -76,12 +76,12 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     60,      // right-hip-pitch
     180,     // right-achilles-rod
     10,      // right-ach2
-    80,      // right-knee
+    30.7455 + 15, // 80,      // right-knee
     50.3,    // right-tarsus
-    46.2755, // right-toe-A
+    27.0323 + 15, // 46.2755, // right-toe-A
     180,     // right-toe-A-rod
     10,      // right-A2
-    45.8918, // right-toe-B
+    14.6109 + 15, // 45.8918, // right-toe-B
     180,     // right-toe-B-rod
     10,      // right-B2
     44,      // right-toe-pitch

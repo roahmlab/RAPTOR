@@ -8,6 +8,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multiroots.h>
 
+#include "Utils.h"
 #include "DigitConstants.h"
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"

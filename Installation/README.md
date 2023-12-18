@@ -6,6 +6,16 @@ You might need to edit your ~/.basrc so that the environment variable PATH inclu
 LD_LIBRARY_PATH includes /usr/local/lib.
 Be careful if you are using a shared server.
 
+### GSL
+```
+sudo apt-get install libgsl-dev
+```
+
+### Boost
+```
+sudo apt-get install libboost-dev
+```
+
 ### urdfdom
 ```
 sudo apt-get install liburdfdom-dev

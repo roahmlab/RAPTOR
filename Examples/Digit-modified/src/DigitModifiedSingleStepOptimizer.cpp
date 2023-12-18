@@ -29,23 +29,23 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    // fcPtr_ = std::make_shared<FourierCurves>(T_input, 
-    //                                          N_input, 
-    //                                          NUM_INDEPENDENT_JOINTS, 
-    //                                          Chebyshev, 
-    //                                          degree_input);
-    bcPtr_ = std::make_shared<BezierCurves>(T_input, 
-                                            N_input, 
-                                            NUM_INDEPENDENT_JOINTS, 
-                                            Chebyshev, 
-                                            degree_input);                                        
+    fcPtr_ = std::make_shared<FourierCurves>(T_input, 
+                                             N_input, 
+                                             NUM_INDEPENDENT_JOINTS, 
+                                             Chebyshev, 
+                                             degree_input);
+    // bcPtr_ = std::make_shared<BezierCurves>(T_input, 
+    //                                         N_input, 
+    //                                         NUM_INDEPENDENT_JOINTS, 
+    //                                         Chebyshev, 
+    //                                         degree_input);                                        
     // add v_reset and lambda_reset to the end of the decision variables                                         
-    // fcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
-    bcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    fcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    // bcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
 
         // convert to their base class pointers
-    // trajPtr_ = fcPtr_;
-    trajPtr_ = bcPtr_;
+    trajPtr_ = fcPtr_;
+    // trajPtr_ = bcPtr_;
 
     // stance foot is left foot by default
     char stanceLeg = 'L';
