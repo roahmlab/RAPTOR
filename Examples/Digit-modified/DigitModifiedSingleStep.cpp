@@ -147,31 +147,31 @@ int main() {
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->q(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->v(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->a(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->tau(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->lambda(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
             }
             trajectory << std::endl;
         }

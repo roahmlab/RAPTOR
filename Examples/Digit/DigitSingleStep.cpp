@@ -52,7 +52,7 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 48;
+    const int N = 32;
     const int degree = 6;
 
     GaitParameters gp;
@@ -111,7 +111,7 @@ int main() {
 	app->Options()->SetNumericValue("max_wall_time", 500);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-5);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 200);
+    app->Options()->SetIntegerValue("max_iter", 1000);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -167,31 +167,31 @@ int main() {
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->q(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->v(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->a(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->tau(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
-                trajectory << mynlp->dcidPtr_->lambda(j)(i) << ' ';
+                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
             }
             trajectory << std::endl;
         }

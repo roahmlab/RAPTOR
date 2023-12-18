@@ -4,7 +4,7 @@ namespace IDTO {
 namespace Digit {
 
 DigitSingleStepPeriodicityConstraints::DigitSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                                                             std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
+                                                                             std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_input,
                                                                              const frictionParams& fp_input) : 
     trajPtr_(trajPtr_input),
     dcidPtr_(dcidPtr_input),

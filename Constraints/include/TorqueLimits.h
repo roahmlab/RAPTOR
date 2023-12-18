@@ -14,7 +14,7 @@ public:
 
     // Constructor
     TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
-                 std::shared_ptr<InverseDynamics>& idPtr_input,
+                 std::shared_ptr<InverseDynamics> idPtr_input,
                  const VecX& lowerLimits_input, 
                  const VecX& upperLimits_input);
 

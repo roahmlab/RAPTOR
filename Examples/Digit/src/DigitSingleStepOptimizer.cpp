@@ -29,28 +29,24 @@ bool DigitSingleStepOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    fcPtr_ = std::make_shared<FourierCurves>(T_input, 
-                                             N_input, 
-                                             NUM_INDEPENDENT_JOINTS, 
-                                             Chebyshev, 
-                                             degree_input);
-    // bcPtr_ = std::make_shared<BezierCurves>(T_input, 
-    //                                         N_input, 
-    //                                         NUM_INDEPENDENT_JOINTS, 
-    //                                         Chebyshev, 
-    //                                         degree_input);                                   
+    trajPtr_ = std::make_shared<FourierCurves>(T_input, 
+                                               N_input, 
+                                               NUM_INDEPENDENT_JOINTS, 
+                                               Chebyshev, 
+                                               degree_input);
+    // trajPtr_ = std::make_shared<BezierCurves>(T_input, 
+    //                                           N_input, 
+    //                                           NUM_INDEPENDENT_JOINTS, 
+    //                                           Uniform, 
+    //                                           degree_input);                                   
+    
     // add v_reset and lambda_reset to the end of the decision variables                                         
-    fcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
-    // bcPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
-
-        // convert to their base class pointers
-    trajPtr_ = fcPtr_;
-    // trajPtr_ = bcPtr_;
-
+    trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
+    cidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
                                                                  jtype_input, 
@@ -82,41 +78,38 @@ bool DigitSingleStepOptimizer::set_parameters(
 
     // Joint limits
         // convert to their base class pointers
-    dcPtr_ = dcidPtr_->dcPtr_;
     constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          dcPtr_, 
+                                                                          cidPtr_->dcPtr_, 
                                                                           JOINT_LIMITS_LOWER_VEC, 
                                                                           JOINT_LIMITS_UPPER_VEC));      
     constraintsNameVec_.push_back("joint limits");                                                                                                                                  
 
     // Torque limits
         // convert to their base class pointers
-    idPtr_ = dcidPtr_;
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-                                                                        idPtr_, 
-                                                                        TORQUE_LIMITS_LOWER_VEC, 
-                                                                        TORQUE_LIMITS_UPPER_VEC));        
+                                                                cidPtr_, 
+                                                                TORQUE_LIMITS_LOWER_VEC, 
+                                                                TORQUE_LIMITS_UPPER_VEC));        
     constraintsNameVec_.push_back("torque limits");                                                                                                                         
 
     // Surface contact constraints
         // convert to their base class pointers
-    cidPtr_ = dcidPtr_;
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
-                                                                        FRICTION_PARAMS));
+                                                                             FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
     // kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
-                                                                        jtype_input, 
-                                                                        trajPtr_, 
-                                                                        dcPtr_,
-                                                                        gp_input));    
+                                                                              jtype_input, 
+                                                                              trajPtr_, 
+                                                                              cidPtr_->dcPtr_,
+                                                                              gp_input));    
     constraintsNameVec_.push_back("customized constraints");            
 
     // periodic reset map constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                        dcidPtr_,
+                                                                        cidPtr_,
                                                                         FRICTION_PARAMS));    
     constraintsNameVec_.push_back("reset map constraints");     
 
@@ -171,14 +164,14 @@ bool DigitSingleStepOptimizer::eval_f(
         z(i) = x[i];
     }
 
-    dcidPtr_->compute(z, false);
+    cidPtr_->compute(z, false);
 
     obj_value = 0;
-    for ( Index i = 0; i < dcidPtr_->N; i++ ) {
-        obj_value += dcidPtr_->tau(i).dot(dcidPtr_->tau(i));
+    for ( Index i = 0; i < cidPtr_->N; i++ ) {
+        obj_value += cidPtr_->tau(i).dot(cidPtr_->tau(i));
     }
 
-    // obj_value *= 1e-3;
+    obj_value /= cidPtr_->N;
 
     return true;
 }
@@ -202,18 +195,22 @@ bool DigitSingleStepOptimizer::eval_grad_f(
         z(i) = x[i];
     }
 
-    dcidPtr_->compute(z, true);
+    cidPtr_->compute(z, true);
 
     for ( Index i = 0; i < n; i++ ) {
         grad_f[i] = 0;
     }
 
-    for ( Index i = 0; i < dcidPtr_->N; i++ ) {
-        VecX v = 2 * dcidPtr_->ptau_pz(i).transpose() * dcidPtr_->tau(i);
+    for ( Index i = 0; i < cidPtr_->N; i++ ) {
+        VecX v = 2 * cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
 
         for ( Index j = 0; j < n; j++ ) {
             grad_f[j] += v(j);
         }
+    }
+
+    for ( Index i = 0; i < n; i++ ) {
+        grad_f[i] /= cidPtr_->N;
     }
 
     return true;
