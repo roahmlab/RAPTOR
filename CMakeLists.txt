@@ -26,6 +26,10 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+# Find Qhull library
+find_package(Qhull REQUIRED)
+include_directories(${QHULL_INCLUDE_DIRS})
+
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
 
@@ -94,13 +98,15 @@ add_library(Conslib SHARED
     Constraints/src/TorqueLimits.cpp
     Constraints/src/SurfaceContactConstraints.cpp
     Constraints/src/KinematicsConstraints.cpp
-    Constraints/src/EndEffectorConstraints.cpp)
+    Constraints/src/EndEffectorConstraints.cpp
+    Constraints/src/ZonotopeCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include
     Trajectories/include
     Constraints/include
-    Utils/include)
+    Utils/include
+    /usr/local/include/libqhullcpp)
 
 target_compile_options(Conslib PUBLIC
     ${PINOCCHIO_FLAGS})    
@@ -192,7 +198,8 @@ target_link_libraries(Kinovalib PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES}
+    ${QHULL_LIBRARIES})
 
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova/include

@@ -43,6 +43,10 @@ Specifically, run the following command
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PYTHON_INTERFACE=OFF
 ```
 
+### Qhull
+Please refer to this [link](http://www.qhull.org/download/)
+Build from source in the downloaded folder so that the libraries are installed in /usr/local/
+
 ### Ipopt
 Please refer to this [link](https://coin-or.github.io/Ipopt/INSTALL.html).
 

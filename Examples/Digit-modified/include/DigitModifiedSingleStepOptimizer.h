@@ -4,6 +4,7 @@
 #include "Optimizer.h"
 
 #include "FourierCurves.h"
+#include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"

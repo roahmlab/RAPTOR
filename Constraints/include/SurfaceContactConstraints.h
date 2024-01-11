@@ -4,6 +4,7 @@
 #include "Constraints.h"
 #include "Trajectories.h"
 #include "ConstrainedInverseDynamics.h"
+#include "Utils.h"
 
 namespace IDTO {
 

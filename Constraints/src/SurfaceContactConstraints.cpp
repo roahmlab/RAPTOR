@@ -34,23 +34,23 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
         // assume the contact wrench is always located at the end
         VecX lambda = idPtr_->lambda(i).tail(6);
 
-        double contact_force         = lambda(2);
-        double friction_force_sq     = pow(lambda(0), 2) + pow(lambda(1), 2);
-        double max_friction_force_sq = pow(fp.mu * contact_force, 2);
-        double max_moment_z_sq       = pow(fp.gamma * contact_force, 2);
-        double mx_lower_limit        = -fp.Lx * contact_force;
-        double mx_upper_limit        = fp.Lx * contact_force;
-        double my_lower_limit        = -fp.Ly * contact_force;
-        double my_upper_limit        = fp.Ly * contact_force;
+        double contact_force      = lambda(2);
+        double friction_force     = sqrt(pow(lambda(0), 2) + pow(lambda(1), 2));
+        double max_friction_force = fp.mu * contact_force;
+        double max_moment_z       = fp.gamma * contact_force;
+        double mx_lower_limit     = -fp.Lx * contact_force;
+        double mx_upper_limit     = fp.Lx * contact_force;
+        double my_lower_limit     = -fp.Ly * contact_force;
+        double my_upper_limit     = fp.Ly * contact_force;
 
         // (1) positive contact force
         g(i * 7 + 0) = contact_force;
 
         // (2) translation friction cone
-        g(i * 7 + 1) = friction_force_sq - max_friction_force_sq;
+        g(i * 7 + 1) = friction_force - max_friction_force;
 
         // (3) rotation friction cone
-        g(i * 7 + 2) = pow(lambda(5), 2) - max_moment_z_sq; 
+        g(i * 7 + 2) = abs(lambda(5)) - max_moment_z; 
 
         // (4, 5) ZMP on one axis
         g(i * 7 + 3) = lambda(3) - mx_upper_limit;
@@ -68,13 +68,13 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
             pg_pz.row(i * 7 + 0) = plambda_pz.row(2);
 
             // (2) translation friction cone
-            pg_pz.row(i * 7 + 1) = 2 * lambda(0) * plambda_pz.row(0) + 
-                                   2 * lambda(1) * plambda_pz.row(1) - 
-                                   2 * pow(fp.mu, 2) * contact_force * plambda_pz.row(2);
+            pg_pz.row(i * 7 + 1) = (lambda(0) * plambda_pz.row(0) + 
+                                    lambda(1) * plambda_pz.row(1)) / friction_force - 
+                                   fp.mu * plambda_pz.row(2);
 
             // (3) rotation friction cone
-            pg_pz.row(i * 7 + 2) = 2 * lambda(5) * plambda_pz.row(5) - 
-                                   2 * pow(fp.gamma, 2) * contact_force * plambda_pz.row(2);; 
+            pg_pz.row(i * 7 + 2) = sign(lambda(5)) * plambda_pz.row(5) - 
+                                   fp.gamma * plambda_pz.row(2);
 
             // (4, 5) ZMP on one axis
             pg_pz.row(i * 7 + 3) = plambda_pz.row(3) - fp.Lx * plambda_pz.row(2);

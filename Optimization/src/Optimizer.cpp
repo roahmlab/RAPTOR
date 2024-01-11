@@ -272,7 +272,7 @@ void Optimizer::finalize_solution(
 
     summarize_constraints(m, g);
 
-    std::cout << "Objective value: " << obj_value << std::endl;
+    std::cout << "Objective value: " << sqrt(obj_value) << std::endl;
 }
 // [TNLP_finalize_solution]
 

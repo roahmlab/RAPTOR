@@ -21,6 +21,11 @@ inline double safeasin(double a) {
     }
 }
 
+template <typename T>
+int sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 }; // namespace IDTO
 
 #endif // UTILS_H

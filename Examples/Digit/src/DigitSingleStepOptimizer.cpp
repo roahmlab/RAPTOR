@@ -34,16 +34,16 @@ bool DigitSingleStepOptimizer::set_parameters(
     //                                            NUM_INDEPENDENT_JOINTS, 
     //                                            Chebyshev, 
     //                                            degree_input);
-    trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-                                                             N_input, 
-                                                             NUM_INDEPENDENT_JOINTS, 
-                                                             Chebyshev, 
-                                                             degree_input);                                           
-    // trajPtr_ = std::make_shared<BezierCurves>(T_input, 
-    //                                           N_input, 
-    //                                           NUM_INDEPENDENT_JOINTS, 
-    //                                           Uniform, 
-    //                                           degree_input);                                   
+    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
+    //                                                          N_input, 
+    //                                                          NUM_INDEPENDENT_JOINTS, 
+    //                                                          Chebyshev, 
+    //                                                          degree_input);                                           
+    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
+                                              N_input, 
+                                              NUM_INDEPENDENT_JOINTS, 
+                                              Chebyshev, 
+                                              degree_input);                                   
     
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
@@ -52,11 +52,11 @@ bool DigitSingleStepOptimizer::set_parameters(
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
     cidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
-                                                                 trajPtr_,
-                                                                 NUM_DEPENDENT_JOINTS, 
-                                                                 jtype_input, 
-                                                                 stanceLeg, 
-                                                                 stance_foot_T_des);                                                          
+                                                                trajPtr_,
+                                                                NUM_DEPENDENT_JOINTS, 
+                                                                jtype_input, 
+                                                                stanceLeg, 
+                                                                    stance_foot_T_des);                                                          
 
     
     // convert joint limits from degree to radian

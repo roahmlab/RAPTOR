@@ -149,6 +149,8 @@ bool KinovaOptimizer::eval_f(
         obj_value += idPtr_->tau(i).dot(idPtr_->tau(i));
     }
 
+    obj_value /= idPtr_->N;
+
     return true;
 }
 // [TNLP_eval_f]
@@ -183,6 +185,10 @@ bool KinovaOptimizer::eval_grad_f(
         for ( Index j = 0; j < n; j++ ) {
             grad_f[j] += v(j);
         }
+    }
+
+    for ( Index i = 0; i < n; i++ ) {
+        grad_f[i] /= idPtr_->N;
     }
 
     return true;

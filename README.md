@@ -25,6 +25,7 @@ Note that this formulation only works for fully-actuated systems.
 - [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=3.4)
 - [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html)
 - [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html)
+- [Qhull](http://www.qhull.org)
 - PkgConfig (`pkg-config`)
 - `urdfdom` (`liburdfdom-dev`)
 - [DRD](https://github.com/Cfather/DRD)

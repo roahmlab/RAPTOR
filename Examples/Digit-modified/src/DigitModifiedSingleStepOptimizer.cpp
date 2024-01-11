@@ -32,8 +32,13 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
     //                                            N_input, 
     //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            Chebyshev, 
+    //                                            Uniform, 
     //                                            degree_input);
+    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
+    //                                                          N_input, 
+    //                                                          NUM_INDEPENDENT_JOINTS, 
+    //                                                          Chebyshev, 
+    //                                                          degree_input);
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
