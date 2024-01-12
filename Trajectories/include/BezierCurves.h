@@ -18,7 +18,19 @@ public:
 
     BezierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input);
 
-    void setInitialTerminalCondition();
+    void fixConditionsCheck();
+
+    void fixInitialPosition(const VecX& q0_input);
+
+    void fixInitialVelocity(const VecX& q_d0_input);
+
+    void fixInitialAcceleration(const VecX& q_dd0_input);
+
+    void fixTerminalPosition(const VecX& qf_input);
+
+    void fixTerminalVelocity(const VecX& q_df_input);
+
+    void fixTerminalAcceleration(const VecX& q_ddf_input);
 
     void compute(const VecX& z, bool compute_derivatives = true) override;
 
@@ -29,6 +41,25 @@ public:
     VecX ddB;
 
     VecX Bionomials;
+
+    // You can use the following variables to fix the initial and terminal conditions
+    // so that these conditions are automatically satisfied and there are less decision variables
+    VecX q0;
+    VecX q_d0;
+    VecX q_dd0;
+    VecX qf;
+    VecX q_df;
+    VecX q_ddf;
+
+    bool setInitialPositionFlag = false;
+    bool setInitialVelocityFlag = false;
+    bool setInitialAccelerationFlag = false;
+    bool setTerminalPositionFlag = false;
+    bool setTerminalVelocityFlag = false;
+    bool setTerminalAccelerationFlag = false;
+
+    int start_idx = 0;
+    int end_idx = 0;
 };
 
 }; // namespace IDTO

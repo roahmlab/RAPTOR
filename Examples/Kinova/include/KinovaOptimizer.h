@@ -5,7 +5,7 @@
 #include "KinovaConstants.h"
 #include "InverseDynamics.h"
 #include "Optimizer.h"
-#include "Polynomials.h"
+#include "BezierCurves.h"
 #include "JointLimits.h"
 #include "TorqueLimits.h"
 // #include "EndEffectorConstraints.h"

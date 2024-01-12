@@ -28,11 +28,11 @@ bool KinovaOptimizer::set_parameters(
 {
     x0 = x0_input;
 
-    trajPtr_ = std::make_shared<Polynomials>(T_input, 
-                                             N_input, 
-                                             model_input.nq, 
-                                             Chebyshev, 
-                                             degree_input);
+    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
+                                              N_input, 
+                                              model_input.nq, 
+                                              Chebyshev, 
+                                              degree_input);
 
     idPtr_ = std::make_shared<InverseDynamics>(model_input,
                                                trajPtr_);

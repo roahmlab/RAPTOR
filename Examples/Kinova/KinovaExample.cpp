@@ -32,7 +32,7 @@ int main() {
     Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
 
     for (int i = 0; i < num_obstacles; i++) {
-        zonotopeCenters(i) = 2 * Eigen::Vector3d::Ones();
+        zonotopeCenters(i) = 0.4 * Eigen::Vector3d::Ones();
         zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
     }
 
@@ -62,11 +62,12 @@ int main() {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-6);
+    app->Options()->SetNumericValue("tol", 1e-4);
+    app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 10);
+	app->Options()->SetNumericValue("max_wall_time", 0.2);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
@@ -95,9 +96,8 @@ int main() {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        // solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
-        std::cout << "Total solve time: " << solve_time << " seconds.\n";
+        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
