@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 8;
+    const int N = 16;
     const int degree = 5;
 
     GaitParameters gp;
@@ -65,7 +65,13 @@ int main(int argc, char* argv[]) {
 
     // add disturbance to initial guess
     Eigen::VectorXd disturbance(z_array.size());
-    std::srand((unsigned int) std::time(0));
+    if (argc > 1) {
+        char* end = nullptr;
+        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    }
+    else {
+        std::srand(0);
+    }
     disturbance.setRandom();
     disturbance = disturbance * (0.5 * z.norm()) / disturbance.norm();
 

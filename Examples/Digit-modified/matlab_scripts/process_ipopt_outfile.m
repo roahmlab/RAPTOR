@@ -12,7 +12,7 @@ data3 = zeros(num_trails,2001);
 
 %%
 for i = 1:num_trails
-    ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d.out', i);
+    ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d-N8.out', i);
     
     fid = fopen(ipopt_filename, 'r');
     
@@ -55,7 +55,7 @@ for i = 1:num_trails
     data3(i,1:len) = constrViolation;
 end
 
-%%
+%
 figure; hold on;
 for i = 1:num_trails
     plot(1:2001, log(data2(i,:)) / log(10), 'b');
