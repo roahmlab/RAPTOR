@@ -56,7 +56,7 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                 NUM_DEPENDENT_JOINTS, 
                                                                 jtype_input, 
                                                                 stanceLeg, 
-                                                                    stance_foot_T_des);                                                          
+                                                                stance_foot_T_des);                                                          
 
     
     // convert joint limits from degree to radian

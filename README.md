@@ -23,9 +23,10 @@ Note that this formulation only works for fully-actuated systems.
 ## Requirements
 - Ubuntu >= 20.04
 - [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=3.4)
-- [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html)
-- [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html)
-- [Qhull](http://www.qhull.org)
+- [GSL](https://www.gnu.org/software/gsl/): solve close-loop kinematics
+- [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html): compute inverse dynamics and its gradient
+- [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html): for nonlinear optimization
+- [Qhull](http://www.qhull.org): to compute vertices representation of zonotopes for collision checking
 - PkgConfig (`pkg-config`)
 - `urdfdom` (`liburdfdom-dev`)
 - [DRD](https://github.com/Cfather/DRD)

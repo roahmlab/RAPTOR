@@ -33,6 +33,7 @@ void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivative
         const VecX& q = trajPtr_->q(i);
 
         for (int j = 0; j < NUM_SPHERES; j++) {
+            // define the transform matrix of the sphere center with respect to the joint
             endT = Transform(sphere_offset_axis[j], sphere_offset[j]);
 
             fkhofPtr_->fk(jointT, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);

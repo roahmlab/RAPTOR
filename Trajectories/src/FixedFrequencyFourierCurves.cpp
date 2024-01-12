@@ -39,6 +39,10 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
 }
 
 void FixedFrequencyFourierCurves::compute(const VecX& z, bool compute_derivatives) {
+    if (z.size() < varLength) {
+        throw std::invalid_argument("FixedFrequencyFourierCurves: decision variable vector has wrong size");
+    }
+
     Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
     MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
     VecX q_act0       = z.block((2 * degree + 1) * Nact, 0, Nact, 1);

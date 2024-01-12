@@ -2,8 +2,6 @@
 
 namespace IDTO {
 
-// UN FINISHED
-
 BezierCurves::BezierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
@@ -36,72 +34,11 @@ BezierCurves::BezierCurves(double T_input, int N_input, int Nact_input, TimeDisc
     }
 }
 
-void BezierCurves::fixConditionsCheck() {
-    // if (setInitialVelocityFlag && !setInitialPositionFlag) {
-    //     throw std::invalid_argument("You must fix the initial position before fixing the initial velocity");
-    // }
-
-    // if (setInitialAccelerationFlag && !setInitialVelocityFlag) {
-    //     throw std::invalid_argument("You must fix the initial velocity before fixing the initial acceleration");
-    // }
-
-    // if (setTerminalVelocityFlag && !setTerminalPositionFlag) {
-    //     throw std::invalid_argument("You must fix the terminal position before fixing the terminal velocity");
-    // }
-
-    // if (setTerminalAccelerationFlag && !setTerminalVelocityFlag) {
-    //     throw std::invalid_argument("You must fix the terminal velocity before fixing the terminal acceleration");
-    // }
-
-    int totalDegreeRequired = (int)setInitialPositionFlag + 
-                              (int)setInitialVelocityFlag + 
-                              (int)setInitialAccelerationFlag + 
-                              (int)setTerminalPositionFlag + 
-                              (int)setTerminalVelocityFlag + 
-                              (int)setTerminalAccelerationFlag;
-
-    if (totalDegreeRequired >= degree) {
-        throw std::invalid_argument("You must fix less conditions to satisfy the degree of the Bezier curve");
-    }
-}
-
-void BezierCurves::fixInitialPosition(const VecX& q0_input) {
-    setInitialPositionFlag = true;
-    fixConditionsCheck();
-    q0 = q0_input;
-}
-
-void BezierCurves::fixInitialVelocity(const VecX& q_d0_input) {
-    setInitialVelocityFlag = true;
-    fixConditionsCheck();
-    q_d = q_d0_input;
-}
-
-void BezierCurves::fixInitialAcceleration(const VecX& q_dd0_input) {
-    setInitialAccelerationFlag = true;
-    fixConditionsCheck();
-    q_dd0 = q_dd0_input;
-}
-
-void BezierCurves::fixTerminalPosition(const VecX& qf_input) {
-    setTerminalPositionFlag = true;
-    fixConditionsCheck();
-    qf = qf_input;
-}
-
-void BezierCurves::fixTerminalVelocity(const VecX& q_df_input) {
-    setTerminalVelocityFlag = true;
-    fixConditionsCheck();
-    q_df = q_df_input;
-}
-
-void BezierCurves::fixTerminalAcceleration(const VecX& q_ddf_input) {
-    setTerminalAccelerationFlag = true;
-    fixConditionsCheck();
-    q_ddf = q_ddf_input;
-}
-
 void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
+    if (z.size() < varLength) {
+        throw std::invalid_argument("BezierCurves: decision variable vector has wrong size");
+    }
+
     MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
@@ -117,7 +54,8 @@ void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
             pq_dd_pz(x) = MatX::Zero(Nact, varLength);
         }
 
-        // Compute tA(i, j) = t(i)^j, tB(i, j) = (1-t(i))^(degree-j)
+        // Compute tA(i, j) = t(i)^j, 
+        //         tB(i, j) = (1-t(i))^(degree-j)
         VecX tA = VecX::Ones(degree + 1);
         VecX tB = VecX::Ones(degree + 1);
         VecX dtA = VecX::Zero(degree + 1);

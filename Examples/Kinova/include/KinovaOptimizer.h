@@ -5,10 +5,9 @@
 #include "KinovaConstants.h"
 #include "InverseDynamics.h"
 #include "Optimizer.h"
-#include "BezierCurves.h"
+#include "ArmourBezierCurves.h"
 #include "JointLimits.h"
 #include "TorqueLimits.h"
-// #include "EndEffectorConstraints.h"
 
 namespace IDTO {
 namespace Kinova {
@@ -34,8 +33,11 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
+        const ArmourTrajectoryParameters& atp_input,
         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input
+        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
+        const VecX& qdes_input,
+        const int tplan_n_input
     );
 
     /**@name Overloaded from TNLP */
@@ -87,6 +89,9 @@ public:
     std::shared_ptr<Trajectories> trajPtr_;
 
     std::shared_ptr<InverseDynamics> idPtr_;
+
+    VecX qdes;
+    int tplan_n = 0;
 };
 
 }; // namespace Kinova

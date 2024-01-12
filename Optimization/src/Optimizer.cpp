@@ -49,6 +49,7 @@ bool Optimizer::get_bounds_info(
     }
 
     // report constraints distribution
+    std::cout << "Dimension of each constraints and their locations: \n";
     iter = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         std::cout << constraintsNameVec_[c] << ": ";

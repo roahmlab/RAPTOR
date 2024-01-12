@@ -23,6 +23,10 @@ Polynomials::Polynomials(double T_input, int N_input, int Nact_input, TimeDiscre
 }
 
 void Polynomials::compute(const VecX& z, bool compute_derivatives) {
+    if (z.size() < varLength) {
+        throw std::invalid_argument("Polynomials: decision variable vector has wrong size");
+    }
+
     MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {

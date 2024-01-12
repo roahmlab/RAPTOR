@@ -22,17 +22,22 @@ bool KinovaOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
+    const ArmourTrajectoryParameters& atp_input,
     const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input
+    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
+    const VecX& qdes_input,
+    const int tplan_n_input
  ) 
 {
     x0 = x0_input;
+    qdes = qdes_input;
+    tplan_n = tplan_n_input;
 
-    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
-                                              N_input, 
-                                              model_input.nq, 
-                                              Chebyshev, 
-                                              degree_input);
+    trajPtr_ = std::make_shared<ArmourBezierCurves>(T_input, 
+                                                    N_input, 
+                                                    model_input.nq, 
+                                                    Chebyshev, 
+                                                    atp_input);
 
     idPtr_ = std::make_shared<InverseDynamics>(model_input,
                                                trajPtr_);
@@ -60,7 +65,6 @@ bool KinovaOptimizer::set_parameters(
     }
 
     // Joint limits
-        // convert to their base class pointers
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
                                                                JOINT_LIMITS_LOWER_VEC, 
                                                                JOINT_LIMITS_UPPER_VEC));
@@ -82,6 +86,8 @@ bool KinovaOptimizer::set_parameters(
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
+    assert(qdes.size() == trajPtr_->Nact);
+    assert(tplan_n >= 0 && tplan_n < trajPtr_->N);
 
     return true;
 }
@@ -133,14 +139,17 @@ bool KinovaOptimizer::eval_f(
         z(i) = x[i];
     }
 
-    idPtr_->compute(z, false);
+    trajPtr_->compute(z, false);
 
-    obj_value = 0;
-    for ( Index i = 0; i < idPtr_->N; i++ ) {
-        obj_value += idPtr_->tau(i).dot(idPtr_->tau(i));
-    }
+    const VecX& qplan = trajPtr_->q(tplan_n);
 
-    obj_value /= idPtr_->N;
+    obj_value = pow(wrapToPi(qplan[0] - qdes[0]), 2) + // These are continuous joints
+                pow(wrapToPi(qplan[2] - qdes[2]), 2) + 
+                pow(wrapToPi(qplan[4] - qdes[4]), 2) + 
+                pow(wrapToPi(qplan[6] - qdes[6]), 2) + 
+                pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
+                pow(qplan[3] - qdes[3], 2) + 
+                pow(qplan[5] - qdes[5], 2);
 
     return true;
 }
@@ -164,22 +173,18 @@ bool KinovaOptimizer::eval_grad_f(
         z(i) = x[i];
     }
 
-    idPtr_->compute(z, true);
+    trajPtr_->compute(z, true);
 
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] = 0;
-    }
+    const VecX& qplan = trajPtr_->q(tplan_n);
+    const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);
 
-    for ( Index i = 0; i < idPtr_->N; i++ ) {
-        VecX v = 2 * idPtr_->ptau_pz(i).transpose() * idPtr_->tau(i);
-
-        for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j);
+    for(Index i = 0; i < n; i++){
+        if (i % 2 == 0) {
+            grad_f[i] = (2 * wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
         }
-    }
-
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] /= idPtr_->N;
+        else {
+            grad_f[i] = (2 * (qplan[i] - qdes[i]) * pqplan_pz(i, i));
+        }
     }
 
     return true;

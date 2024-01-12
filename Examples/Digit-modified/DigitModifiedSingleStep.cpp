@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 16;
+    const int N = 8;
     const int degree = 5;
 
     GaitParameters gp;
