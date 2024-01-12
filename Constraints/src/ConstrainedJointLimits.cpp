@@ -49,7 +49,7 @@ void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
         dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i), true);
 
         dcPtr_->setupJointPosition(qfull, compute_derivatives);
-        g.block(i * NB, 0, NB, 1) = qfull;
+        g.block(i * NB, 0, NB, 1) = wrapToPi(qfull);
 
         if (compute_derivatives) {
             // fill in independent joints derivatives directly

@@ -19,14 +19,21 @@ class Transform {
 public:
     using SE3 = pinocchio::SE3Tpl<double>;
     using VecX = Eigen::VectorXd;
+    using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;
 
     // Constructor
     Transform();
 
     // Constructor
-    Transform(const MatX& R_in, const MatX& p_in, const bool i_in = false) : 
+    Transform(const MatX& R_in, const VecX& p_in, const bool i_in = false) : 
         R(R_in) , p(p_in), ifDerivative(i_in) {}
+
+    // Constructor
+    Transform(const Vec3& p_in) : 
+        p(p_in) {
+        R.setIdentity();
+    }
 
     // Constructor
     Transform(const int jtype, const double theta, const int order = 0);

@@ -31,11 +31,11 @@ public:
     virtual void computeDistance(const Vec3& point, const MatX& ppoint_pz) = 0;
 
     // class members:
-    int num_obstacles = 0;
+    int numObstacles = 0;
 
     // compute results are stored here
-    VecX g;
-    MatX pg_pz;
+    VecX distances;
+    MatX pdistances_pz;
 };
 
 }; // namespace IDTO

@@ -7,8 +7,8 @@
 #include "Optimizer.h"
 #include "Polynomials.h"
 #include "JointLimits.h"
-#include "EndEffectorConstraints.h"
 #include "TorqueLimits.h"
+// #include "EndEffectorConstraints.h"
 
 namespace IDTO {
 namespace Kinova {
@@ -17,6 +17,7 @@ class KinovaOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
+    using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
@@ -32,7 +33,9 @@ public:
         const int N_input,
         const int degree_input,
         const Model& model_input, 
-        const Eigen::VectorXi& jtype_input
+        const Eigen::VectorXi& jtype_input,
+        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input
     );
 
     /**@name Overloaded from TNLP */
@@ -82,7 +85,6 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<Polynomials> plPtr_;
 
     std::shared_ptr<InverseDynamics> idPtr_;
 };

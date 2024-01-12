@@ -8,6 +8,7 @@ namespace IDTO {
 class ForwardKinematicsHighOrderDerivative {
 public:
     using Model = pinocchio::Model;
+	using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
 
     // Constructor
@@ -53,7 +54,13 @@ public:
 					   const Transform& endT, 
 					   const Transform& startT);
 
+	Vec3 Transform2xyz(const Transform& T);
+
 	VecX Transform2xyzrpy(const Transform& T);
+
+	void Transform2xyzJacobian(Eigen::MatrixXd& J, 
+							   const Transform& T, 
+							   const std::vector<Transform>& dTdq);
 
 	void Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
 								  const Transform& T, 

@@ -65,47 +65,47 @@ void KinematicsConstraints::compute(const VecX& z, bool compute_derivatives) {
 
     trajPtr_->compute(z, compute_derivatives);
 
-    for (int i = 0; i < trajPtr_->N; i++) {
-        VecX q;
+    // for (int i = 0; i < trajPtr_->N; i++) {
+    //     VecX q;
         
-        if (dcPtr_ == nullptr) { // unconstrained case
-            q = trajPtr_->q(i);
-        }
-        else { // constrained case
-            q = VecX::Zero(modelPtr_->nq);
-            dcPtr_->fill_independent_vector(q, trajPtr_->q(i));
-            dcPtr_->setupJointPosition(q, compute_derivatives);
-        }
+    //     if (dcPtr_ == nullptr) { // unconstrained case
+    //         q = trajPtr_->q(i);
+    //     }
+    //     else { // constrained case
+    //         q = VecX::Zero(modelPtr_->nq);
+    //         dcPtr_->fill_independent_vector(q, trajPtr_->q(i));
+    //         dcPtr_->setupJointPosition(q, compute_derivatives);
+    //     }
 
-        fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+    //     fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
 
-        g.block(i * 6, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(jointT);
+    //     g.block(i * 6, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(jointT);
 
-        if (compute_derivatives) {
-            fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
-            fkhofPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
+    //     if (compute_derivatives) {
+    //         fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+    //         fkhofPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
 
-            if (dcPtr_ == nullptr) { // unconstrained case
-                pq_pz = trajPtr_->pq_pz(i);
-            }
-            else { // constrained case
-                // fill in independent joints derivatives directly
-                for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
-                    int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
-                    pq_pz.row(indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
-                }
+    //         if (dcPtr_ == nullptr) { // unconstrained case
+    //             pq_pz = trajPtr_->pq_pz(i);
+    //         }
+    //         else { // constrained case
+    //             // fill in independent joints derivatives directly
+    //             for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
+    //                 int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
+    //                 pq_pz.row(indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
+    //             }
 
-                // compute and fill in dependent joints derivatives
-                MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
-                for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
-                    int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
-                    pq_pz.row(denpendentJointIndex) = pq_dep_pz.row(j);
-                }
-            }
+    //             // compute and fill in dependent joints derivatives
+    //             MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
+    //             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
+    //                 int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+    //                 pq_pz.row(denpendentJointIndex) = pq_dep_pz.row(j);
+    //             }
+    //         }
 
-            pg_pz.block(i * 6, 0, 6, trajPtr_->varLength) = jointTJ * pq_pz;
-        }
-    }
+    //         pg_pz.block(i * 6, 0, 6, trajPtr_->varLength) = jointTJ * pq_pz;
+    //     }
+    // }
 }
 
 void KinematicsConstraints::compute_bounds() {

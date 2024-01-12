@@ -42,8 +42,8 @@ public:
     double b[MAX_OBSTACLE_NUM * HYPERPLANE_NUM] = {0.0};
 
         // vertices representation
-    uint v_start_idx[MAX_OBSTACLE_NUM] = {0};
-    uint v_size[MAX_OBSTACLE_NUM] = {0};
+    int v_start_idx[MAX_OBSTACLE_NUM] = {0};
+    int v_size[MAX_OBSTACLE_NUM] = {0};
     double v[MAX_OBSTACLE_NUM * VERTICES_NUM * 3] = {0.0};
 };
 

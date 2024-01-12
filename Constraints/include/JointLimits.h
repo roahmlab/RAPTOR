@@ -5,6 +5,7 @@
 
 #include "Constraints.h"
 #include "Trajectories.h"
+#include "Utils.h"
 
 namespace IDTO {
 

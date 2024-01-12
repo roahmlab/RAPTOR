@@ -3,13 +3,13 @@
 namespace IDTO {
 
 void ForwardKinematicsHighOrderDerivative::fk(Transform& T, 
-        const Model& model, 
-        const Eigen::VectorXi& jtype,
-        const int end, 
-        const int start, 
-        const Eigen::VectorXd& q, 
-        const Transform& endT, 
-        const Transform& startT) {
+                                              const Model& model, 
+                                              const Eigen::VectorXi& jtype,
+                                              const int end, 
+                                              const int start, 
+                                              const VecX& q, 
+                                              const Transform& endT, 
+                                              const Transform& startT) {
     int numJoints = model.nq;
 
     // find the kinematics chain
@@ -39,13 +39,13 @@ void ForwardKinematicsHighOrderDerivative::fk(Transform& T,
 }
 
 void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& dTdq, 
-                 const Model& model,
-                 const Eigen::VectorXi& jtype,
-                 const int end, 
-                 const int start, 
-                 const Eigen::VectorXd& q, 
-                 const Transform& endT, 
-                 const Transform& startT) {
+                                                       const Model& model,
+                                                       const Eigen::VectorXi& jtype,
+                                                       const int end, 
+                                                       const int start, 
+                                                       const VecX& q, 
+                                                       const Transform& endT, 
+                                                       const Transform& startT) {
     int numJoints = model.nq;
 
     // find the kinematics chain
@@ -93,13 +93,13 @@ void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& d
 }
 
 void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Transform>>& ddTddq, 
-                const Model& model, 
-                const Eigen::VectorXi& jtype,
-                const int end,
-                const int start, 
-                const Eigen::VectorXd& q, 
-                const Transform& endT, 
-                const Transform& startT) {
+                                                      const Model& model, 
+                                                      const Eigen::VectorXi& jtype,
+                                                      const int end,
+                                                      const int start, 
+                                                      const VecX& q, 
+                                                      const Transform& endT, 
+                                                      const Transform& startT) {
     int numJoints = model.nq;
 
     // find the kinematics chain
@@ -168,13 +168,13 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
 }
 
 void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector<std::vector<Transform>>>& dddTdddq, 
-                   const Model& model, 
-                   const Eigen::VectorXi& jtype,
-                   const int end,
-                   const int start, 
-                   const Eigen::VectorXd& q, 
-                   const Transform& endT, 
-                   const Transform& startT) {
+                                                         const Model& model, 
+                                                         const Eigen::VectorXi& jtype,
+                                                         const int end,
+                                                         const int start, 
+                                                         const VecX& q, 
+                                                         const Transform& endT, 
+                                                         const Transform& startT) {
     int numJoints = model.nq;
 
     // find the kinematics chain
@@ -267,7 +267,7 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
 
 Eigen::VectorXd ForwardKinematicsHighOrderDerivative::Transform2xyzrpy(const Transform& T) {
     const Eigen::MatrixXd& R = T.R;
-    Eigen::VectorXd x(6);
+    VecX x(6);
 
     x(0) = T.p(0); // x
     x(1) = T.p(1); // y
@@ -280,13 +280,24 @@ Eigen::VectorXd ForwardKinematicsHighOrderDerivative::Transform2xyzrpy(const Tra
     return x;
 }
 
+Eigen::Vector3d ForwardKinematicsHighOrderDerivative::Transform2xyz(const Transform& T) {
+    const Eigen::MatrixXd& R = T.R;
+    Vec3 x;
+
+    x(0) = T.p(0); // x
+    x(1) = T.p(1); // y
+    x(2) = T.p(2); // z
+
+    return x;
+}
+
 void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
-                              const Transform& T, 
-                              const std::vector<Transform>& dTdq) {
+                                                                    const Transform& T, 
+                                                                    const std::vector<Transform>& dTdq) {
     const Eigen::MatrixXd& R = T.R;
     
     // chain declared as class public variable. 
-    // always assume that fk_hessian called after fk
+    // always assume that fk_jacobian called after fk
 
     // result container has been allocated outside the function
     J.setZero();
@@ -311,10 +322,28 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
     }
 }
 
+void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd& J, 
+                                                                 const Transform& T, 
+                                                                 const std::vector<Transform>& dTdq) {
+    const Eigen::MatrixXd& R = T.R;
+    
+    // chain declared as class public variable. 
+    // always assume that fk_hessian called after fk
+
+    // result container has been allocated outside the function
+    J.setZero();
+
+    for (auto i : chain) {
+        J(0, i) = dTdq[i].p(0);
+        J(1, i) = dTdq[i].p(1);
+        J(2, i) = dTdq[i].p(2);
+    }
+}
+
 void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<Eigen::MatrixXd, 6, 1>& H,
-                             const Transform& T, 
-                             const std::vector<Transform>& dTdq,
-                             const std::vector<std::vector<Transform>>& ddTddq) {
+                                                                   const Transform& T, 
+                                                                   const std::vector<Transform>& dTdq,
+                                                                   const std::vector<std::vector<Transform>>& ddTddq) {
     const Eigen::MatrixXd& R = T.R;
 
     // chain declared as class public variable. 
@@ -352,11 +381,11 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<
 }
 
 void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyThirdOrder(Eigen::Array<Eigen::MatrixXd, 6, 1>& TOx,
-                                const Eigen::VectorXd& x,
-                                const Transform& T, 
-                                const std::vector<Transform>& dTdq,
-                                const std::vector<std::vector<Transform>>& ddTddq,
-                                const std::vector<std::vector<std::vector<Transform>>>& dddTdddq) {
+                                                                      const VecX& x,
+                                                                      const Transform& T, 
+                                                                      const std::vector<Transform>& dTdq,
+                                                                      const std::vector<std::vector<Transform>>& ddTddq,
+                                                                      const std::vector<std::vector<std::vector<Transform>>>& dddTdddq) {
     assert(x.size() == TOx(0).cols());
 
     const Eigen::MatrixXd& R = T.R;

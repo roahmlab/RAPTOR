@@ -37,7 +37,7 @@ void JointLimits::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q(i);
+        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = wrapToPi(trajPtr_->q(i));
 
         if (compute_derivatives) {
             pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_pz(i);

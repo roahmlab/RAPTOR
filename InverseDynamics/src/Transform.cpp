@@ -31,33 +31,33 @@ Transform::Transform(const int jtype, const double theta, const int order) {
     if (order == 0) { // original transformation
         if (jtype == 1) {
             R << 1, 0, 0,
-                    0, cos(theta), -sin(theta),
-                    0, sin(theta), cos(theta);
+                 0, cos(theta), -sin(theta),
+                 0, sin(theta), cos(theta);
         }
         else if (jtype == -1) {
             R << 1, 0, 0,
-                    0, cos(theta), sin(theta),
-                    0, -sin(theta), cos(theta);
+                 0, cos(theta), sin(theta),
+                 0, -sin(theta), cos(theta);
         }
         else if (jtype == 2) {
             R << cos(theta), 0, sin(theta),
-                    0, 1, 0,
-                    -sin(theta), 0, cos(theta);
+                 0, 1, 0,
+                 -sin(theta), 0, cos(theta);
         }
         else if (jtype == -2) {
             R << cos(theta), 0, -sin(theta),
-                    0, 1, 0,
-                    sin(theta), 0, cos(theta);
+                 0, 1, 0,
+                 sin(theta), 0, cos(theta);
         }
         else if (jtype == 3) {
             R << cos(theta), -sin(theta), 0,
-                    sin(theta), cos(theta), 0,
-                0, 0, 1;
+                 sin(theta), cos(theta), 0,
+                 0, 0, 1;
         }
         else if (jtype == -3) {
             R << cos(theta), sin(theta), 0,
-                    -sin(theta), cos(theta), 0,
-                    0, 0, 1;
+                 -sin(theta), cos(theta), 0,
+                 0, 0, 1;
         }
         else if (jtype == 4) {
             p << theta, 0, 0;
@@ -75,33 +75,33 @@ Transform::Transform(const int jtype, const double theta, const int order) {
     else if (order == 1) { // first order derivative
         if (jtype == 1) {
             R << 0, 0, 0,
-                    0, -sin(theta), -cos(theta),
-                    0, cos(theta), -sin(theta);
+                 0, -sin(theta), -cos(theta),
+                 0, cos(theta), -sin(theta);
         }
         else if (jtype == -1) {
             R << 0, 0, 0,
-                    0, -sin(theta), cos(theta),
-                    0, -cos(theta), -sin(theta);
+                 0, -sin(theta), cos(theta),
+                 0, -cos(theta), -sin(theta);
         }
         else if (jtype == 2) {
             R << -sin(theta), 0, cos(theta),
-                    0, 0, 0,
-                    -cos(theta), 0, -sin(theta);
+                 0, 0, 0,
+                 -cos(theta), 0, -sin(theta);
         }
         else if (jtype == -2) {
             R << -sin(theta), 0, -cos(theta),
-                    0, 0, 0,
-                    cos(theta), 0, -sin(theta);
+                 0, 0, 0,
+                 cos(theta), 0, -sin(theta);
         }
         else if (jtype == 3) {
             R << -sin(theta), -cos(theta), 0,
-                    cos(theta), -sin(theta), 0,
-                    0, 0, 0;
+                 cos(theta), -sin(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == -3) {
             R << -sin(theta), cos(theta), 0,
-                    -cos(theta), -sin(theta), 0,
-                    0, 0, 0;
+                 -cos(theta), -sin(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == 4) {
             p << 1, 0, 0;
@@ -119,33 +119,33 @@ Transform::Transform(const int jtype, const double theta, const int order) {
     else if (order == 2) { // Second order derivative
         if (jtype == 1) {
             R << 0, 0, 0,
-                    0, -cos(theta), sin(theta),
-                    0, -sin(theta), -cos(theta);
+                 0, -cos(theta), sin(theta),
+                 0, -sin(theta), -cos(theta);
         }
         else if (jtype == -1) {
             R << 0, 0, 0,
-                    0, -cos(theta), -sin(theta),
-                    0, sin(theta), -cos(theta);
+                 0, -cos(theta), -sin(theta),
+                 0, sin(theta), -cos(theta);
         }
         else if (jtype == 2) {
             R << -cos(theta), 0, -sin(theta),
-                    0, 0, 0,
-                    sin(theta), 0, -cos(theta);
+                 0, 0, 0,
+                 sin(theta), 0, -cos(theta);
         }
         else if (jtype == -2) {
             R << -cos(theta), 0, sin(theta),
-                    0, 0, 0,
-                    -sin(theta), 0, -cos(theta);
+                 0, 0, 0,
+                 -sin(theta), 0, -cos(theta);
         }
         else if (jtype == 3) {
             R << -cos(theta), sin(theta), 0,
-                    -sin(theta), -cos(theta), 0,
-                    0, 0, 0;
+                 -sin(theta), -cos(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == -3) {
             R << -cos(theta), -sin(theta), 0,
-                    sin(theta), -cos(theta), 0,
-                    0, 0, 0;
+                 sin(theta), -cos(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == 4) {
             p << 0, 0, 0;
@@ -163,33 +163,33 @@ Transform::Transform(const int jtype, const double theta, const int order) {
     else if (order == 3) { // Third order derivative
         if (jtype == 1) {
             R << 0, 0, 0,
-                    0, sin(theta), cos(theta),
-                    0, -cos(theta), sin(theta);
+                 0, sin(theta), cos(theta),
+                 0, -cos(theta), sin(theta);
         }
         else if (jtype == -1) {
             R << 0, 0, 0,
-                    0, sin(theta), -cos(theta),
-                    0, cos(theta), sin(theta);
+                 0, sin(theta), -cos(theta),
+                 0, cos(theta), sin(theta);
         }
         else if (jtype == 2) {
             R << sin(theta), 0, -cos(theta),
-                    0, 0, 0,
-                    cos(theta), 0, sin(theta);
+                 0, 0, 0,
+                 cos(theta), 0, sin(theta);
         }
         else if (jtype == -2) {
             R << sin(theta), 0, cos(theta),
-                    0, 0, 0,
-                    -cos(theta), 0, sin(theta);
+                 0, 0, 0,
+                 -cos(theta), 0, sin(theta);
         }
         else if (jtype == 3) {
             R << sin(theta), cos(theta), 0,
-                    -cos(theta), sin(theta), 0,
-                    0, 0, 0;
+                 -cos(theta), sin(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == -3) {
             R << sin(theta), -cos(theta), 0,
-                    cos(theta), sin(theta), 0,
-                    0, 0, 0;
+                 cos(theta), sin(theta), 0,
+                 0, 0, 0;
         }
         else if (jtype == 4) {
             p << 0, 0, 0;

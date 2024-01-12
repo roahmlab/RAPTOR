@@ -26,6 +26,16 @@ int main() {
     Eigen::VectorXi jtype(model.nq);
     jtype << 3, 3, 3, 3, 3, 3, 3;
 
+    // define obstacles
+    const int num_obstacles = 5;
+    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> zonotopeCenters;
+    Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
+
+    for (int i = 0; i < num_obstacles; i++) {
+        zonotopeCenters(i) = 2 * Eigen::Vector3d::Ones();
+        zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
+    }
+
     const double T = 2;
     const int N = 16;
     const int degree = 6;
@@ -42,7 +52,9 @@ int main() {
                               N,
                               degree,
                               model,
-                              jtype);
+                              jtype,
+                              zonotopeCenters,
+                              zonotopeGenerators);
     }
     catch (int errorCode) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
@@ -54,8 +66,9 @@ int main() {
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
 	app->Options()->SetNumericValue("max_wall_time", 10);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma97");
+    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // For gradient checking
@@ -73,9 +86,18 @@ int main() {
 		throw std::runtime_error("Error during initialization of optimization!");
     }
 
+    // Run ipopt to solve the optimization problem
+    double solve_time = 0;
     try {
+        auto start = std::chrono::high_resolution_clock::now();
+
         // Ask Ipopt to solve the problem
         status = app->OptimizeTNLP(mynlp);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        // solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+        std::cout << "Total solve time: " << solve_time << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");

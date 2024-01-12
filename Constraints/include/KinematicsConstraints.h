@@ -43,7 +43,6 @@ public:
     std::shared_ptr<Trajectories> trajPtr_;
     std::shared_ptr<DynamicsConstraints> dcPtr_;
 
-    // class members:
     std::unique_ptr<Model> modelPtr_;
 
     std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;

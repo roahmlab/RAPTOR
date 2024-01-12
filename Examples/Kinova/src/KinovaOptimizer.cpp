@@ -21,19 +21,18 @@ bool KinovaOptimizer::set_parameters(
     const int N_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input
+    const Eigen::VectorXi& jtype_input,
+    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input
  ) 
 {
     x0 = x0_input;
 
-    plPtr_ = std::make_shared<Polynomials>(T_input, 
-                                           N_input, 
-                                           model_input.nq, 
-                                           Chebyshev, 
-                                           degree_input);
-
-        // convert to their base class pointers
-    trajPtr_ = plPtr_;
+    trajPtr_ = std::make_shared<Polynomials>(T_input, 
+                                             N_input, 
+                                             model_input.nq, 
+                                             Chebyshev, 
+                                             degree_input);
 
     idPtr_ = std::make_shared<InverseDynamics>(model_input,
                                                trajPtr_);
@@ -74,21 +73,13 @@ bool KinovaOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits");                                                            
 
-    // Customized constraints (all joints start at -1)
-    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_));   
-    constraintsNameVec_.push_back("customized constraints");       
-
-    // End effector stops at a desired position at the end
-    Transform endT;
-    VecX desiredEndEffectorPos(6);
-    desiredEndEffectorPos << -0.6507, 0.1673, 0.7073, -2.5521, 1.1871, -1.9560; // xyz and rpy
-    constraintsPtrVec_.push_back(std::make_unique<EndEffectorConstraints>(model_input,
-                                                                          jtype_input,
-                                                                          endT,
-                                                                          "joint_7",
-                                                                          trajPtr_,
-                                                                          desiredEndEffectorPos));    
-    constraintsNameVec_.push_back("end effector constraints");                                                                                                                                                                                         
+    // Customized constraints (collision avoidance with obstacles)
+    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
+                                                                               model_input,
+                                                                               jtype_input,
+                                                                               zonotopeCenters_input,
+                                                                               zonotopeGenerators_input));   
+    constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
 

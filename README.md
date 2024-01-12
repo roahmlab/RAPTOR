@@ -47,7 +47,7 @@ mkdir build
 cd build
 cmake ..
 make
-./IDTO_example
+./Digit_example
 ```
 
 ## Credits
