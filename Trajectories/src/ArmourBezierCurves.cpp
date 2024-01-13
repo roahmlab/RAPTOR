@@ -49,9 +49,9 @@ ArmourBezierCurves::ArmourBezierCurves(double T_input,
 
     coefficients.resize(degree + 1, Nact);
     coefficients.row(0) = atp.q0.transpose();
-    coefficients.row(1) = coefficients.row(0) + 
+    coefficients.row(1) = atp.q0.transpose() + 
                           (T * atp.q_d0.transpose()) / 5.0;
-    coefficients.row(2) = coefficients.row(0) + 
+    coefficients.row(2) = atp.q0.transpose() + 
                           (2.0 * T * atp.q_d0.transpose()) / 5.0 + 
                           (T * T * atp.q_dd0.transpose()) / 20.0;
 }
@@ -62,8 +62,8 @@ void ArmourBezierCurves::compute(const VecX& z, bool compute_derivatives) {
     }
 
     coefficients.row(5) = z.transpose();
-    coefficients.row(4) = coefficients.row(5);
-    coefficients.row(3) = coefficients.row(5);
+    coefficients.row(4) = z.transpose();
+    coefficients.row(3) = z.transpose();
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x) / T;

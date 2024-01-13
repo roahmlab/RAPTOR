@@ -37,7 +37,9 @@ public:
         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
         const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
         const VecX& qdes_input,
-        const int tplan_n_input
+        const int tplan_n_input,
+        const VecX& joint_limits_buffer_input,
+        const VecX& torque_limits_buffer_input
     );
 
     /**@name Overloaded from TNLP */

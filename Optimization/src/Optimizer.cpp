@@ -289,8 +289,9 @@ void Optimizer::summarize_constraints(
 
     std::cout << "Constraint violation report:" << std::endl;
 
-    Number max_max_constr_violation = 0;
+    Number final_constr_violation = 0;
     Index iter = 0;
+    ifFeasible = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // find where the maximum constraint violation is
         Number max_constr_violation = 0;
@@ -305,8 +306,8 @@ void Optimizer::summarize_constraints(
                 max_constr_violation = constr_violation;
             }
 
-            if (constr_violation > max_max_constr_violation) {
-                max_max_constr_violation = constr_violation;
+            if (constr_violation > final_constr_violation) {
+                final_constr_violation = constr_violation;
             }
 
             iter++;
@@ -319,10 +320,11 @@ void Optimizer::summarize_constraints(
                                         << ", " 
                                         << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
                       << "], value: "   << g[max_constr_violation_id2] << std::endl;
+            ifFeasible = false;
         }
     }
 
-    std::cout << "Total constraint violation: " << max_max_constr_violation << std::endl;
+    std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
 }
 // [TNLP_summarize_constraints]
 

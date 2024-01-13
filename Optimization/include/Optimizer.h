@@ -170,6 +170,8 @@ public:
     std::vector<std::string> constraintsNameVec_;
 
     VecX solution; // stores the final solution here
+
+    bool ifFeasible = true;
 };
 
 }; // namespace IDTO

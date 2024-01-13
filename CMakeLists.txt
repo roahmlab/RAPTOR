@@ -18,6 +18,13 @@ message(${CMAKE_BUILD_TYPE})
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 14)
 
+# Define the MATLAB root directory
+set(MATLAB_ROOT "/usr/local/MATLAB/R2022b")
+
+# Define the MEX extension
+find_package(Matlab)
+execute_process(COMMAND "${MATLAB_ROOT}/bin/mexext" OUTPUT_VARIABLE MEX_EXT OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 # Find Eigen library
 find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -294,6 +301,33 @@ target_link_libraries(Kinova_example PRIVATE
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_compile_options(Kinova_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(Kinova_example_mex 
+    Examples/Kinova/KinovaExample_mex.cpp)
+
+target_include_directories(Kinova_example_mex PRIVATE
+    Examples/Kinova/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(Kinova_example_mex PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(Kinova_example_mex PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Install

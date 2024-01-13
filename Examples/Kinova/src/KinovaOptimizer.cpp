@@ -26,7 +26,9 @@ bool KinovaOptimizer::set_parameters(
     const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
     const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
     const VecX& qdes_input,
-    const int tplan_n_input
+    const int tplan_n_input,
+    const VecX& joint_limits_buffer_input,
+    const VecX& torque_limits_buffer_input
  ) 
 {
     x0 = x0_input;
@@ -47,22 +49,26 @@ bool KinovaOptimizer::set_parameters(
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_LOWER_VEC(i) = JOINT_LIMITS_LOWER[i];
     }
+    JOINT_LIMITS_LOWER_VEC = JOINT_LIMITS_LOWER_VEC + joint_limits_buffer_input;
 
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_UPPER_VEC(i) = JOINT_LIMITS_UPPER[i];
     }
+    JOINT_LIMITS_UPPER_VEC = JOINT_LIMITS_UPPER_VEC - joint_limits_buffer_input;
 
     // read torque limits from KinovaConstants.h
     VecX TORQUE_LIMITS_LOWER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
     }
+    TORQUE_LIMITS_LOWER_VEC = TORQUE_LIMITS_LOWER_VEC + torque_limits_buffer_input;
 
     VecX TORQUE_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
     }
+    TORQUE_LIMITS_UPPER_VEC = TORQUE_LIMITS_UPPER_VEC - torque_limits_buffer_input;
 
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 

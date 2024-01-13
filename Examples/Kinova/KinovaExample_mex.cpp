@@ -12,7 +12,7 @@ using std::endl;
 
 int main() {
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/kinova.urdf";
+    const std::string urdf_filename = "/home/roahmlab/Documents/IDTO/Examples/Kinova/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -27,14 +27,7 @@ int main() {
     jtype << 3, 3, 3, 3, 3, 3, 3;
 
     // Define obstacles
-    const int num_obstacles = 0;
-    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> zonotopeCenters;
-    Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
-
-    for (int i = 0; i < num_obstacles; i++) {
-        zonotopeCenters(i) << 0, 0, 0.3 * i;
-        zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
-    }
+    int num_obstacles = 0;
 
     // Define trajectories
     ArmourTrajectoryParameters atp;
@@ -42,13 +35,12 @@ int main() {
     atp.q_d0 = Eigen::VectorXd::Zero(model.nq);
     atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
 
-    const double T = 1;
-    const int N = 16;
+    double T = 1;
+    int N = 16;
     const int degree = 5;
 
     // Define target
     Eigen::VectorXd qdes(model.nq);
-    qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
@@ -57,9 +49,53 @@ int main() {
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
-    joint_limits_buffer.setConstant(0.0);
     Eigen::VectorXd torque_limits_buffer(model.nq);
-    torque_limits_buffer.setConstant(0.0);
+
+    std::ifstream inputstream("/home/roahmlab/Documents/IDTO/build/oracle_input_buffer.txt");
+    if (!inputstream.is_open()) {
+        throw std::runtime_error("Error reading input files!");
+    }
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> atp.q0[i];
+    }
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> atp.q_d0[i];
+    }
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> atp.q_dd0[i];
+    }
+    inputstream >> T;
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> z[i];
+    }
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> qdes[i];
+    }
+    inputstream >> num_obstacles;
+
+    Eigen::Array<Eigen::Vector3d, 1, Eigen::Dynamic> zonotopeCenters(num_obstacles);
+    Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic> zonotopeGenerators(num_obstacles);
+
+    for (int i = 0; i < num_obstacles; i++) {
+        for (int j = 0; j < 3; j++) {
+            inputstream >> zonotopeCenters(i)(j);
+        }
+        zonotopeGenerators(i) = Eigen::MatrixXd::Zero(3, MAX_OBSTACLE_GENERATOR_NUM);
+        for (int j = 0; j < MAX_OBSTACLE_GENERATOR_NUM; j++) {
+            for (int k = 0; k < 3; k++) {
+                inputstream >> zonotopeGenerators(i)(k, j);
+            }
+        }
+    }
+
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> joint_limits_buffer[i];
+    }
+    for (int i = 0; i < model.nq; i++) {
+        inputstream >> torque_limits_buffer[i];
+    }
+    
+    inputstream.close();
 
     // Initialize Kinova optimizer
     SmartPtr<KinovaOptimizer> mynlp = new KinovaOptimizer();
@@ -124,42 +160,45 @@ int main() {
     }
 
     // Print the solution
-    if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-kinova.txt");
+    std::ofstream solution("solution-kinova.txt");
+    if (mynlp->solution.size() == mynlp->numVars && mynlp->ifFeasible) {
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
-        solution.close();
 
-        std::ofstream trajectory("trajectory-kinova.txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
+        // std::ofstream trajectory("trajectory-kinova.txt");
+        // trajectory << std::setprecision(20);
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // trajectory.close();
     }
+    else {
+        solution << -1 << std::endl;
+    }
+    solution.close();
 
     return 0;
 }
