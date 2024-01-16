@@ -47,6 +47,8 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
         throw std::invalid_argument("FourierCurves: decision variable vector has wrong size");
     }
 
+    if (if_computed(z, compute_derivatives)) return;
+
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
     MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
     VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);

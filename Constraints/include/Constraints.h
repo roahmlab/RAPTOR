@@ -3,6 +3,7 @@
 #define CONSTRAINTS_H
 
 #include <Eigen/Dense>
+#include "Utils.h"
 
 namespace IDTO {
 
@@ -27,7 +28,7 @@ public:
 
         // determine if the constraints are computed before and save the current decision variable
     bool is_computed(const VecX& z, bool compute_derivatives) {
-        if (z.size() != current_z.size()) {
+        if (!ifTwoVectorEqual(current_z, z, 0)) {
             current_z = z;
             if_compute_derivatives = compute_derivatives;
             return false;
@@ -39,18 +40,9 @@ public:
             return false;
         }
 
-        bool isSame = true;
-
-        for (int i = 0; i < z.size(); i++) {
-            if (z(i) != current_z(i)) {
-                isSame = false;
-                break;
-            }
-        }
-
-        current_z = z;  
+        // current_z = z;  
         if_compute_derivatives = compute_derivatives;
-        return isSame;
+        return true;
     }
 
     // class members:

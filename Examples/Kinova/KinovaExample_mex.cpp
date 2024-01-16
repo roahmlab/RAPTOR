@@ -49,6 +49,7 @@ int main() {
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
+    Eigen::VectorXd velocity_limits_buffer(model.nq);
     Eigen::VectorXd torque_limits_buffer(model.nq);
 
     std::ifstream inputstream("/home/roahmlab/Documents/IDTO/build/oracle_input_buffer.txt");
@@ -92,6 +93,9 @@ int main() {
         inputstream >> joint_limits_buffer[i];
     }
     for (int i = 0; i < model.nq; i++) {
+        inputstream >> velocity_limits_buffer[i];
+    }
+    for (int i = 0; i < model.nq; i++) {
         inputstream >> torque_limits_buffer[i];
     }
     
@@ -112,6 +116,7 @@ int main() {
                               qdes,
                               tplan_n,
                               joint_limits_buffer,
+                              velocity_limits_buffer,
                               torque_limits_buffer);
     }
     catch (int errorCode) {

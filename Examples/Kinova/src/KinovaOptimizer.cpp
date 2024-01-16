@@ -28,6 +28,7 @@ bool KinovaOptimizer::set_parameters(
     const VecX& qdes_input,
     const int tplan_n_input,
     const VecX& joint_limits_buffer_input,
+    const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input
  ) 
 {
@@ -57,6 +58,19 @@ bool KinovaOptimizer::set_parameters(
     }
     JOINT_LIMITS_UPPER_VEC = JOINT_LIMITS_UPPER_VEC - joint_limits_buffer_input;
 
+    // read velocity limits from KinovaConstants.h
+    VecX VELOCITY_LIMITS_LOWER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        VELOCITY_LIMITS_LOWER_VEC(i) = VELOCITY_LIMITS_LOWER[i];
+    }
+    VELOCITY_LIMITS_LOWER_VEC = VELOCITY_LIMITS_LOWER_VEC + velocity_limits_buffer_input;
+
+    VecX VELOCITY_LIMITS_UPPER_VEC(NUM_JOINTS);
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        VELOCITY_LIMITS_UPPER_VEC(i) = VELOCITY_LIMITS_UPPER[i];
+    }
+    VELOCITY_LIMITS_UPPER_VEC = VELOCITY_LIMITS_UPPER_VEC - velocity_limits_buffer_input;
+
     // read torque limits from KinovaConstants.h
     VecX TORQUE_LIMITS_LOWER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
@@ -74,7 +88,13 @@ bool KinovaOptimizer::set_parameters(
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
                                                                JOINT_LIMITS_LOWER_VEC, 
                                                                JOINT_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("joint limits");     
+    constraintsNameVec_.push_back("joint limits");
+
+    // Velocity limits
+    constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
+                                                                  VELOCITY_LIMITS_LOWER_VEC, 
+                                                                  VELOCITY_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("velocity limits");        
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 

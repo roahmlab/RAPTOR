@@ -61,6 +61,8 @@ void ArmourBezierCurves::compute(const VecX& z, bool compute_derivatives) {
         throw std::invalid_argument("ArmourBezierCurves: decision variable vector has wrong size");
     }
 
+    if (if_computed(z, compute_derivatives)) return;
+
     coefficients.row(5) = z.transpose();
     coefficients.row(4) = z.transpose();
     coefficients.row(3) = z.transpose();

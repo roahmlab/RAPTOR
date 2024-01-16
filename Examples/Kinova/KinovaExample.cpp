@@ -58,6 +58,8 @@ int main() {
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
     joint_limits_buffer.setConstant(0.0);
+    Eigen::VectorXd velocity_limits_buffer(model.nq);
+    velocity_limits_buffer.setConstant(0.0);
     Eigen::VectorXd torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.0);
 
@@ -76,6 +78,7 @@ int main() {
                               qdes,
                               tplan_n,
                               joint_limits_buffer,
+                              velocity_limits_buffer,
                               torque_limits_buffer);
     }
     catch (int errorCode) {

@@ -17,6 +17,8 @@ Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
     pq_pz.resize(1, N);
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
+
+    current_z.resize(1);
 }
 
 Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization) :
@@ -46,7 +48,27 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
     pq_dd_pz.resize(1, N);
 }
 
+bool Trajectories::if_computed(const VecX& z, bool compute_derivatives) {
+    if (!ifTwoVectorEqual(current_z, z, 0)) {
+            current_z = z;
+            if_compute_derivatives = compute_derivatives;
+            return false;
+        }
+
+        if (compute_derivatives != if_compute_derivatives) {
+            current_z = z;
+            if_compute_derivatives = compute_derivatives;
+            return false;
+        }
+
+        // current_z = z;  
+        if_compute_derivatives = compute_derivatives;
+        return true;
+}
+
 void Trajectories::compute(const VecX& z, bool compute_derivatives) {
+    if (if_computed(z, compute_derivatives)) return;
+
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
         q_d(i) = VecX::Zero(Nact);

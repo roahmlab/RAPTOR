@@ -21,6 +21,8 @@ void Plain::compute(const VecX& z, bool compute_derivatives) {
         throw std::invalid_argument("Plain: decision variable vector has wrong size");
     }
 
+    if (if_computed(z, compute_derivatives)) return;
+
     for (int i = 0; i < N; i++) {
         q(i) = z;
         // q_d(i) = 0;

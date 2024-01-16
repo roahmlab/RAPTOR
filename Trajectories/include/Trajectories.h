@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include <Utils.h>
 
 namespace IDTO {
 
@@ -35,6 +36,8 @@ public:
     // class methods:
     virtual void compute(const VecX& z, bool compute_derivatives = true);
 
+    bool if_computed(const VecX& z, bool compute_derivatives);
+
     // class members:
     double T = 0; // total time of the trajectory
     int N = 0;    // number of time instances in tspan
@@ -51,6 +54,11 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_d_pz;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_dd_pz;
+
+        // trajectory class is frequently used in the optimization problem
+        // so we store the computed results here to avoid recomputation
+    VecX current_z;
+    bool if_compute_derivatives = false;
 };
 
 }; // namespace IDTO    

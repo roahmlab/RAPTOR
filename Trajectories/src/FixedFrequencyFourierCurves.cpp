@@ -43,6 +43,8 @@ void FixedFrequencyFourierCurves::compute(const VecX& z, bool compute_derivative
         throw std::invalid_argument("FixedFrequencyFourierCurves: decision variable vector has wrong size");
     }
 
+    if (if_computed(z, compute_derivatives)) return;
+
     Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
     MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
     VecX q_act0       = z.block((2 * degree + 1) * Nact, 0, Nact, 1);

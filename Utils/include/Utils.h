@@ -46,6 +46,18 @@ int sign(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, const Eigen::VectorXd& b, double tol = 1e-10) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (int i = 0; i < a.size(); i++) {
+        if (fabs(a(i) - b(i)) > tol) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }; // namespace IDTO
 
 #endif // UTILS_H

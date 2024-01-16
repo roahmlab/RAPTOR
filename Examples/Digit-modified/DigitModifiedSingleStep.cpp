@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 16;
+    const int N = 8;
     const int degree = 5;
 
     GaitParameters gp;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1);
+    app->Options()->SetNumericValue("tol", 1e-3);
 	app->Options()->SetNumericValue("max_wall_time", 500);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     // app->Options()->SetNumericValue("constr_viol_tol", 1e-4);

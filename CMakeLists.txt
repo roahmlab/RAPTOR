@@ -71,13 +71,13 @@ include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
 
 ## Trajectories library
 add_library(trajlib SHARED
+    Trajectories/src/Trajectories.cpp
     Trajectories/src/FourierCurves.cpp 
     Trajectories/src/FixedFrequencyFourierCurves.cpp
     Trajectories/src/BezierCurves.cpp 
     Trajectories/src/ArmourBezierCurves.cpp
     Trajectories/src/Polynomials.cpp 
-    Trajectories/src/Plain.cpp 
-    Trajectories/src/Trajectories.cpp)
+    Trajectories/src/Plain.cpp)
 
 target_include_directories(trajlib PUBLIC
     Trajectories/include
@@ -102,6 +102,7 @@ target_compile_options(IDlib PUBLIC
 ## Constraints library
 add_library(Conslib SHARED
     Constraints/src/JointLimits.cpp
+    Constraints/src/VelocityLimits.cpp
     Constraints/src/ConstrainedJointLimits.cpp
     Constraints/src/TorqueLimits.cpp
     Constraints/src/SurfaceContactConstraints.cpp

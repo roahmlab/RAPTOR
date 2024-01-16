@@ -9,6 +9,7 @@ q_des = ones(7,1);
 obstacles{1} = zonotope(zeros(3,1), 0.1 * eye(3));
 obstacles{2} = zonotope([0;0;1.8], 0.1 * eye(3));
 joint_limits_buffer = 0.01 * ones(7,1);
+velocity_limits_buffer = 0.1 * ones(7,1);
 torque_limits_buffer = 10 * ones(7,1);
 
 cpp_input_file = fopen('../../build/oracle_input_buffer.txt', 'w');
@@ -44,6 +45,10 @@ for obs_ind = 1:length(obstacles)
 end
 for ind = 1:length(joint_limits_buffer)
     fprintf(cpp_input_file, '%.10f ', joint_limits_buffer(ind));
+end
+fprintf(cpp_input_file, '\n');
+for ind = 1:length(velocity_limits_buffer)
+    fprintf(cpp_input_file, '%.10f ', velocity_limits_buffer(ind));
 end
 fprintf(cpp_input_file, '\n');
 for ind = 1:length(torque_limits_buffer)
