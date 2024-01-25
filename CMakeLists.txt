@@ -337,11 +337,11 @@ target_compile_options(Kinova_example PUBLIC
 # target_compile_options(Kinova_example_mex PUBLIC
 #     ${PINOCCHIO_FLAGS})
 
-pybind11_add_module(Kinova_example_pybind SHARED
+pybind11_add_module(oracle_pybind SHARED
     Examples/Kinova/KinovaPybind.cpp
     Examples/Kinova/src/KinovaPybindWrapper.cpp)
 
-target_include_directories(Kinova_example_pybind PRIVATE
+target_include_directories(oracle_pybind PRIVATE
     Examples/Kinova/include
     InverseDynamics/include
     Trajectories/include
@@ -349,7 +349,7 @@ target_include_directories(Kinova_example_pybind PRIVATE
     Optimization/include
     Utils/include)
 
-target_link_libraries(Kinova_example_pybind PRIVATE
+target_link_libraries(oracle_pybind PRIVATE
     trajlib 
     IDlib
     Conslib
@@ -363,7 +363,7 @@ target_link_libraries(Kinova_example_pybind PRIVATE
     ${PKG_PIN_CONFIG_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
-target_compile_options(Kinova_example_pybind PUBLIC
+target_compile_options(oracle_pybind PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Install

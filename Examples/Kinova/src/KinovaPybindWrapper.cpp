@@ -3,10 +3,8 @@
 namespace IDTO {
 namespace Kinova {
 
-KinovaPybindWrapper::KinovaPybindWrapper() {
+KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename) {
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/kinova.urdf";
-    
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = -9.81;
@@ -22,6 +20,8 @@ KinovaPybindWrapper::KinovaPybindWrapper() {
 
     mynlp = new KinovaOptimizer();
     app = IpoptApplicationFactory();
+
+    app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     joint_limits_buffer = VecX::Zero(model.nv);
     velocity_limits_buffer = VecX::Zero(model.nv);
@@ -116,6 +116,10 @@ void KinovaPybindWrapper::set_trajectory_parameters(const py::array_t<double> q0
     const double *qd0_ptr = (const double*)qd0_buf.ptr;
     const double *qdd0_ptr = (const double*)qdd0_buf.ptr;
     
+    atp.q0.resize(model.nv);
+    atp.q_d0.resize(model.nv);
+    atp.q_dd0.resize(model.nv);
+
     for (int i = 0; i < model.nv; i++) {
         atp.q0(i) = q0_ptr[i];
         atp.q_d0(i) = qd0_ptr[i];

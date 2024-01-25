@@ -12,7 +12,7 @@ PYBIND11_MODULE(oracle_pybind, m) {
     m.doc() = "pybind11 oracle_pybind plugin";
 
     py::class_<KinovaPybindWrapper>(m, "KinovaPybindWrapper")
-        .def(py::init<>())
+        .def(py::init<const std::string>())
         .def("set_obstacles", &KinovaPybindWrapper::set_obstacles)
         .def("set_ipopt_parameters", &KinovaPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &KinovaPybindWrapper::set_trajectory_parameters)

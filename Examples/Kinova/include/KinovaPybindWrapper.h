@@ -22,7 +22,9 @@ public:
     using MatX = Eigen::MatrixXd;
 
     // Constructor
-    KinovaPybindWrapper();
+    KinovaPybindWrapper() = default;
+
+    KinovaPybindWrapper(const std::string urdf_filename);
 
     // Destructor
     ~KinovaPybindWrapper() = default;
