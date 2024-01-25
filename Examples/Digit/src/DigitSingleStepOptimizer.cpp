@@ -21,6 +21,7 @@ bool DigitSingleStepOptimizer::set_parameters(
     const VecX& x0_input,
     const double T_input,
     const int N_input,
+    const TimeDiscretization time_discretization_input,
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
@@ -42,7 +43,7 @@ bool DigitSingleStepOptimizer::set_parameters(
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
-                                              Chebyshev, 
+                                              time_discretization_input, 
                                               degree_input);                                   
     
     // add v_reset and lambda_reset to the end of the decision variables                                         
@@ -81,6 +82,7 @@ bool DigitSingleStepOptimizer::set_parameters(
         TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
     }
 
+    constraintsPtrVec_.clear();
     // Joint limits
         // convert to their base class pointers
     constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
@@ -114,8 +116,8 @@ bool DigitSingleStepOptimizer::set_parameters(
 
     // periodic reset map constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                        cidPtr_,
-                                                                        FRICTION_PARAMS));    
+                                                                                         cidPtr_,
+                                                                                         FRICTION_PARAMS));    
     constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
@@ -173,7 +175,7 @@ bool DigitSingleStepOptimizer::eval_f(
 
     obj_value = 0;
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        obj_value += cidPtr_->tau(i).dot(cidPtr_->tau(i));
+        obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
     }
 
     obj_value /= cidPtr_->N;
@@ -207,10 +209,11 @@ bool DigitSingleStepOptimizer::eval_grad_f(
     }
 
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        VecX v = 2 * cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
+        VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
+        double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
 
         for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j);
+            grad_f[j] += v(j) / norm;
         }
     }
 

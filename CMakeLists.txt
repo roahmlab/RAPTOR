@@ -1,5 +1,5 @@
 # Minimum required CMake version
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 # Project name
 project(IDTO
@@ -19,7 +19,7 @@ message(${CMAKE_BUILD_TYPE})
 set(CMAKE_CXX_STANDARD 14)
 
 # Define the MATLAB root directory
-set(MATLAB_ROOT "/usr/local/MATLAB/R2022b")
+# set(MATLAB_ROOT "/usr/local/MATLAB/R2022b")
 
 # Define the MEX extension
 find_package(Matlab)
@@ -39,6 +39,12 @@ include_directories(${QHULL_INCLUDE_DIRS})
 
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
+
+# Find Python library
+find_package(PythonInterp 3.7 REQUIRED)
+find_package(PythonLibs 3.7 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+add_subdirectory(extern/pybind)
 
 # Find urdf library
 #find_package(Urdfdom REQUIRED COMPONENTS
@@ -304,10 +310,38 @@ target_link_libraries(Kinova_example PRIVATE
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-add_executable(Kinova_example_mex 
-    Examples/Kinova/KinovaExample_mex.cpp)
+# add_executable(Kinova_example_mex 
+#     Examples/Kinova/KinovaExample_mex.cpp)
 
-target_include_directories(Kinova_example_mex PRIVATE
+# target_include_directories(Kinova_example_mex PRIVATE
+#     Examples/Kinova/include
+#     InverseDynamics/include
+#     Trajectories/include
+#     Constraints/include
+#     Optimization/include
+#     Utils/include)
+
+# target_link_libraries(Kinova_example_mex PRIVATE
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     Kinovalib
+#     ipopt
+#     coinhsl
+#     ${EIGEN3_LIBRARIES} 
+#     ${BOOST_LIBRARIES} 
+#     ${URDFDOM_LIBRARIES}
+#     ${PKG_PIN_CONFIG_LIBRARIES})
+
+# target_compile_options(Kinova_example_mex PUBLIC
+#     ${PINOCCHIO_FLAGS})
+
+pybind11_add_module(Kinova_example_pybind SHARED
+    Examples/Kinova/KinovaPybind.cpp
+    Examples/Kinova/src/KinovaPybindWrapper.cpp)
+
+target_include_directories(Kinova_example_pybind PRIVATE
     Examples/Kinova/include
     InverseDynamics/include
     Trajectories/include
@@ -315,7 +349,7 @@ target_include_directories(Kinova_example_mex PRIVATE
     Optimization/include
     Utils/include)
 
-target_link_libraries(Kinova_example_mex PRIVATE
+target_link_libraries(Kinova_example_pybind PRIVATE
     trajlib 
     IDlib
     Conslib
@@ -326,9 +360,10 @@ target_link_libraries(Kinova_example_mex PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES}
+    ${PYTHON_LIBRARIES})
 
-target_compile_options(Kinova_example_mex PUBLIC
+target_compile_options(Kinova_example_pybind PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Install

@@ -21,6 +21,7 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     const VecX& x0_input,
     const double T_input,
     const int N_input,
+    const TimeDiscretization time_discretization_input,         
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
@@ -32,18 +33,18 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
     //                                            N_input, 
     //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            Uniform, 
+    //                                            time_discretization_input, 
     //                                            degree_input);
     // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
     //                                                          N_input, 
     //                                                          NUM_INDEPENDENT_JOINTS, 
-    //                                                          Chebyshev, 
+    //                                                          time_discretization_input, 
     //                                                          degree_input);
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
-                                              Chebyshev, 
-                                              degree_input);                                        
+                                              time_discretization_input, 
+                                              degree_input);                                   
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
     
@@ -153,7 +154,7 @@ bool DigitModifiedSingleStepOptimizer::eval_f(
 
     obj_value = 0;
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        obj_value += cidPtr_->tau(i).dot(cidPtr_->tau(i));
+        obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
     }
 
     obj_value /= cidPtr_->N;
@@ -187,10 +188,11 @@ bool DigitModifiedSingleStepOptimizer::eval_grad_f(
     }
 
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        VecX v = 2 * cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
+        VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
+        double norm_tau = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
 
         for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j);
+            grad_f[j] += v(j) / norm_tau;
         }
     }
 

@@ -107,16 +107,6 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z, bool compute_der
     VecX g8 = q.row(4).transpose(); // torso pitch
     VecX g9 = q.row(5).transpose().array() + M_PI / 2; // torso yaw
 
-    // std::cout << g1.transpose() << std::endl;
-    // std::cout << g2.transpose() << std::endl;
-    // std::cout << g3.transpose() << std::endl;
-    // std::cout << g4.transpose() << std::endl;
-    // std::cout << g5.transpose() << std::endl;
-    // std::cout << g6.transpose() << std::endl;
-    // std::cout << g7.transpose() << std::endl;
-    // std::cout << g8.transpose() << std::endl;
-    // std::cout << g9.transpose() << std::endl;
-
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 
     if (compute_derivatives) {

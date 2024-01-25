@@ -273,7 +273,7 @@ void Optimizer::finalize_solution(
 
     summarize_constraints(m, g);
 
-    std::cout << "Objective value: " << sqrt(obj_value) << std::endl;
+    std::cout << "Objective value: " << obj_value << std::endl;
 }
 // [TNLP_finalize_solution]
 
@@ -298,7 +298,8 @@ void Optimizer::summarize_constraints(
         Index max_constr_violation_id1 = 0;
         Index max_constr_violation_id2 = 0;
         for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
-            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb[i] - g[iter], g[iter] - constraintsPtrVec_[c]->g_ub[i]);
+            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb[i] - g[iter], 
+                                               g[iter] - constraintsPtrVec_[c]->g_ub[i]);
            
             if (constr_violation > max_constr_violation) {
                 max_constr_violation_id1 = i;

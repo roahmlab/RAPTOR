@@ -40,17 +40,20 @@ int main(int argc, char* argv[]) {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 8;
+    const int N = 16;
+    const TimeDiscretization time_discretization = Uniform;
     const int degree = 5;
+    // const std::string output_name = "Chebyshev-N16";
 
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.22;
+    gp.swingfoot_midstep_z_des = 0.27;
     gp.swingfoot_begin_x_des = -0.25;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
     gp.swingfoot_end_y_des = -0.40;                                  
 
     std::ifstream initial_guess("initial-digit-modified-Bezier.txt");
+    // std::ifstream initial_guess("solution-digit-modified-Bezier-" + output_name + ".txt");
 
     double temp = 0;
     std::vector<double> z_array;
@@ -68,12 +71,12 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+        disturbance.setRandom();
+        disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
     }
     else {
-        std::srand(0);
+        disturbance.setZero();
     }
-    disturbance.setRandom();
-    disturbance = disturbance * (0.5 * z.norm()) / disturbance.norm();
 
     z = z + disturbance;
     
@@ -82,6 +85,7 @@ int main(int argc, char* argv[]) {
 	    mynlp->set_parameters(z,
                               T,
                               N,
+                              time_discretization,
                               degree,
                               model,
                               jtype,
@@ -114,7 +118,7 @@ int main(int argc, char* argv[]) {
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
 
     // Initialize the IpoptApplication and process the options
@@ -142,64 +146,86 @@ int main(int argc, char* argv[]) {
     }
     
     // Print the solution
-    if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-digit-modified-Bezier.txt");
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+    // if (mynlp->solution.size() == mynlp->numVars) {
+    //     std::ofstream solution("solution-digit-modified-Bezier-" + output_name + ".txt");
+    //     solution << std::setprecision(20);
+    //     for (int i = 0; i < mynlp->numVars; i++) {
+    //         solution << mynlp->solution[i] << std::endl;
+    //     }
+    //     solution.close();
 
-        std::ofstream trajectory("trajectory-digit-modified-Bezier.txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
-    }
-
-    // Number x[z.size()];
-    // for (int i = 0; i < z.size(); i++) {
-    //     x[i] = z(i);
+    //     std::ofstream trajectory("trajectory-digit-modified-Bezier-" + output_name + ".txt");
+    //     trajectory << std::setprecision(20);
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     trajectory.close();
     // }
-    // Index n, m, nnz_jac_g, nnz_h_lag;
-    // TNLP::IndexStyleEnum index_style;
-    // mynlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-    // Number f;
-    // Number grad_f[mynlp->numVars];
-    // mynlp->eval_f(mynlp->numVars, x, false, f);
-    // mynlp->eval_grad_f(mynlp->numVars, x, false, grad_f);
-    // Number g[mynlp->numCons];
-    // Number values[mynlp->numCons * mynlp->numVars];
-    // mynlp->eval_g(mynlp->numVars, x, false, mynlp->numCons, g);
-    // mynlp->eval_jac_g(mynlp->numVars, x, false, mynlp->numCons, 0, NULL, NULL, values);
+
+    // try {
+	//     Number ztry[mynlp->numVars];
+    //     Number g[mynlp->numCons];
+    //     Number obj_value = 0;
+    //     for (int i = 0; i < mynlp->numVars; i++) {
+    //         ztry[i] = z[i];
+    //     }
+    //     mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
+    //     mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
+    //     std::cout << "Objective function value: " << obj_value << std::endl;
+    //     mynlp->summarize_constraints(mynlp->numCons, g);
+    // }
+    // catch (int errorCode) {
+    //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
+    // }
+
+    SmartPtr<DigitModifiedSingleStepOptimizer> testnlp = new DigitModifiedSingleStepOptimizer();
+    testnlp->set_parameters(mynlp->solution,
+                            T,
+                            2000,
+                            Uniform,
+                            degree,
+                            model,
+                            jtype,
+                            gp);
+    status = app->Initialize();
+    status = app->OptimizeTNLP(testnlp);
+    Number ztry[testnlp->numVars];
+    Number g[testnlp->numCons];
+    Number obj_value = 0;
+    for (int i = 0; i < testnlp->numVars; i++) {
+        ztry[i] = mynlp->solution[i];
+    }
+    testnlp->eval_f(testnlp->numVars, ztry, false, obj_value);
+    testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+    std::cout << "Objective function value: " << obj_value << std::endl;
+    testnlp->summarize_constraints(testnlp->numCons, g);
 
     return 0;
 }

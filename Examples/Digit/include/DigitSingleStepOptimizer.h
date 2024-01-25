@@ -38,6 +38,7 @@ public:
         const VecX& x0_input,
         const double T_input,
         const int N_input,
+        const TimeDiscretization time_discretization_input,
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,

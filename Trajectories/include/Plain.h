@@ -14,6 +14,9 @@ public:
     // Constructor
     Plain(const int Nact_input);
 
+    // Constructor
+    Plain(const int N_input, const int Nact_input);
+
     // Destructor
     ~Plain() = default;
     

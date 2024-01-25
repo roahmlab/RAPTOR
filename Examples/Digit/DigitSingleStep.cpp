@@ -52,29 +52,35 @@ int main() {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 14;
+    const TimeDiscretization time_discretization = Uniform;
+    const int N = 2000;
     const int degree = 5;
+    const std::string output_name = "Chebyshev-N11";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.30;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_y_des = -0.40;
 
-    FourierCurves fc(T, N, NUM_INDEPENDENT_JOINTS, Chebyshev, degree);
-
-    std::ifstream initial_guess("initial-digit-Bezier.txt");
-
-    Eigen::VectorXd z(132);
-    for (int i = 0; i < 132; i++) {
-        initial_guess >> z(i);
+    // std::ifstream initial_guess("initial-digit-Bezier.txt");
+    std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
+    double temp = 0;
+    std::vector<double> z_array;
+    while (initial_guess >> temp) {
+        z_array.push_back(temp);
     }
     initial_guess.close();
+    Eigen::VectorXd z(z_array.size());
+    for (int i = 0; i < z_array.size(); i++) {
+        z(i) = z_array[i];
+    }
   
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
 	    mynlp->set_parameters(z,
                               T,
                               N,
+                              time_discretization,
                               degree,
                               model,
                               jtype,
@@ -86,7 +92,7 @@ int main() {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-4);
+    app->Options()->SetNumericValue("tol", 1e-3);
 	app->Options()->SetNumericValue("max_wall_time", 500);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
@@ -124,58 +130,67 @@ int main() {
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
-    
-    // Index n, m, nnz_jac_g, nnz_h_lag;
-    // TNLP::IndexStyleEnum index_style;
-    // mynlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-    // Number g[mynlp->numCons];
-    // Number values[mynlp->numCons * mynlp->numVars];
-    // // mynlp->eval_g(mynlp->numVars, x, false, mynlp->numCons, g);
-    // mynlp->eval_jac_g(mynlp->numVars, x, false, mynlp->numCons, 0, NULL, NULL, values);
 
     // Print the solution
-    if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-digit-Bezier.txt");
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+    // if (mynlp->solution.size() == mynlp->numVars) {
+    //     std::ofstream solution("solution-digit-Bezier-" + output_name + ".txt");
+    //     solution << std::setprecision(20);
+    //     for (int i = 0; i < mynlp->numVars; i++) {
+    //         solution << mynlp->solution[i] << std::endl;
+    //     }
+    //     solution.close();
 
-        std::ofstream trajectory("trajectory-digit-Bezier.txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
+    //     std::ofstream trajectory("trajectory-digit-Bezier-" + output_name + ".txt");
+    //     trajectory << std::setprecision(20);
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     trajectory.close();
+    // }
+
+    try {
+	    Number ztry[mynlp->numVars];
+        Number g[mynlp->numCons];
+        Number obj_value = 0;
+        for (int i = 0; i < mynlp->numVars; i++) {
+            ztry[i] = z[i];
         }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
+        mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
+        mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
+        std::cout << "Objective function value: " << obj_value << std::endl;
+        mynlp->summarize_constraints(mynlp->numCons, g);
     }
+    catch (int errorCode) {
+        throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
+    }
+    
 
     return 0;
 }

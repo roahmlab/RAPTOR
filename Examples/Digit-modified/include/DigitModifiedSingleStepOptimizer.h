@@ -6,6 +6,7 @@
 #include "FourierCurves.h"
 #include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
+#include "Plain.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
@@ -38,6 +39,7 @@ public:
         const VecX& x0_input,
         const double T_input,
         const int N_input,
+        const TimeDiscretization time_discretization_input,
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
