@@ -3,13 +3,14 @@
 namespace IDTO {
 namespace Digit {
 
-DigitDynamicsConstraints::DigitDynamicsConstraints(const Model& model_input, 
+DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
                                                    const Eigen::VectorXi& jtype_input,
                                                    char stanceLeg_input, 
                                                    const Transform& stance_foot_T_des_input) :
-    DynamicsConstraints(model_input, NUM_DEPENDENT_JOINTS),
+    modelPtr_(modelPtr_input),
     jtype(jtype_input),
-    stanceLeg(stanceLeg_input) {
+    stanceLeg(stanceLeg_input),
+    DynamicsConstraints(modelPtr_input->nv, NUM_DEPENDENT_JOINTS) {
     fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {

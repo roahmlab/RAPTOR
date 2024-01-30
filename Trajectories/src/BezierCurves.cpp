@@ -41,7 +41,8 @@ void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
 
     if (if_computed(z, compute_derivatives)) return;
 
-    MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
+    // MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
+    MatX coefficients = reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x) / T;

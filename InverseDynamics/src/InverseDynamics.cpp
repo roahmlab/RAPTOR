@@ -7,8 +7,8 @@ InverseDynamics::InverseDynamics(const Model& model_input,
     trajPtr_(trajPtr_input) {   
     N = trajPtr_->N;
 
-    modelPtr_ = std::make_unique<Model>(model_input);
-    dataPtr_ = std::make_unique<Data>(model_input);
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
 
     tau.resize(1, N);
 

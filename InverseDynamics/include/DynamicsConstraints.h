@@ -7,8 +7,6 @@ namespace IDTO {
 
 class DynamicsConstraints {
 public:
-    using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using QRSolver = Eigen::ColPivHouseholderQR<MatX>;
@@ -17,7 +15,7 @@ public:
     DynamicsConstraints() = default;
 
     // Constructor
-    DynamicsConstraints(const Model& model_input, int numDependentJoints_input);
+    DynamicsConstraints(const int numJoints_input, int numDependentJoints_input);
 
     // Destructor
     ~DynamicsConstraints() = default;
@@ -102,8 +100,7 @@ public:
     virtual void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) = 0;
 
     // class members:
-    std::unique_ptr<Model> modelPtr_;
-
+    int numJoints = 0;
     int numDependentJoints = 0;
     int numIndependentJoints = 0;
 

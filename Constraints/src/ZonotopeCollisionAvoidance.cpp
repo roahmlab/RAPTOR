@@ -6,7 +6,8 @@ ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const Eigen::Array<Vec3, 
                                                        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input) :
     zonotopeCenters(zonotopeCenters_input), 
     zonotopeGenerators(zonotopeGenerators_input) {
-	for (auto it : zonotopeGenerators) {
+	for (int i = 0; i < zonotopeGenerators.size(); i++) {
+		auto it = zonotopeGenerators[i];
 		if (it.rows() != 3 || it.cols() != MAX_OBSTACLE_GENERATOR_NUM) {
 			throw std::invalid_argument("Zonotope generator matrix should be 3 x " + std::to_string(MAX_OBSTACLE_GENERATOR_NUM));
 		}

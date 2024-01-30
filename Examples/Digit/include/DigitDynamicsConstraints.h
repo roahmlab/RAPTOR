@@ -68,7 +68,7 @@ public:
     DigitDynamicsConstraints() = default;
 
     // Constructor
-    DigitDynamicsConstraints(const Model& model_input,
+    DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
                              const Eigen::VectorXi& jtype_input, 
                              char stanceLeg, 
                              const Transform& stance_foot_T_des_input);
@@ -147,7 +147,9 @@ public:
     void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) override;
 
     // class members:
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
+    std::shared_ptr<Model> modelPtr_ = nullptr;
+
+    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_ = nullptr;
 
         // dep/indep joint indeces
     int dependentJointIds[NUM_DEPENDENT_JOINTS] = {0};

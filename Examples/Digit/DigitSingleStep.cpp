@@ -53,17 +53,17 @@ int main() {
 
     const double T = 0.4;
     const TimeDiscretization time_discretization = Uniform;
-    const int N = 2000;
+    const int N = 14;
     const int degree = 5;
-    const std::string output_name = "Chebyshev-N11";
+    // const std::string output_name = "Chebyshev-N11";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.30;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_y_des = -0.40;
 
-    // std::ifstream initial_guess("initial-digit-Bezier.txt");
-    std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
+    std::ifstream initial_guess("initial-digit-Bezier.txt");
+    // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
     double temp = 0;
     std::vector<double> z_array;
     while (initial_guess >> temp) {
@@ -175,21 +175,21 @@ int main() {
     //     trajectory.close();
     // }
 
-    try {
-	    Number ztry[mynlp->numVars];
-        Number g[mynlp->numCons];
-        Number obj_value = 0;
-        for (int i = 0; i < mynlp->numVars; i++) {
-            ztry[i] = z[i];
-        }
-        mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
-        mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
-        std::cout << "Objective function value: " << obj_value << std::endl;
-        mynlp->summarize_constraints(mynlp->numCons, g);
-    }
-    catch (int errorCode) {
-        throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
-    }
+    // try {
+	//     Number ztry[mynlp->numVars];
+    //     Number g[mynlp->numCons];
+    //     Number obj_value = 0;
+    //     for (int i = 0; i < mynlp->numVars; i++) {
+    //         ztry[i] = z[i];
+    //     }
+    //     mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
+    //     mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
+    //     std::cout << "Objective function value: " << obj_value << std::endl;
+    //     mynlp->summarize_constraints(mynlp->numCons, g);
+    // }
+    // catch (int errorCode) {
+    //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
+    // }
     
 
     return 0;

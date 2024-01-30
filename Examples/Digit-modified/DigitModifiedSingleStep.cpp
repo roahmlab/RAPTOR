@@ -205,27 +205,27 @@ int main(int argc, char* argv[]) {
     //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     // }
 
-    SmartPtr<DigitModifiedSingleStepOptimizer> testnlp = new DigitModifiedSingleStepOptimizer();
-    testnlp->set_parameters(mynlp->solution,
-                            T,
-                            2000,
-                            Uniform,
-                            degree,
-                            model,
-                            jtype,
-                            gp);
-    status = app->Initialize();
-    status = app->OptimizeTNLP(testnlp);
-    Number ztry[testnlp->numVars];
-    Number g[testnlp->numCons];
-    Number obj_value = 0;
-    for (int i = 0; i < testnlp->numVars; i++) {
-        ztry[i] = mynlp->solution[i];
-    }
-    testnlp->eval_f(testnlp->numVars, ztry, false, obj_value);
-    testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-    std::cout << "Objective function value: " << obj_value << std::endl;
-    testnlp->summarize_constraints(testnlp->numCons, g);
+    // SmartPtr<DigitModifiedSingleStepOptimizer> testnlp = new DigitModifiedSingleStepOptimizer();
+    // testnlp->set_parameters(mynlp->solution,
+    //                         T,
+    //                         2000,
+    //                         Uniform,
+    //                         degree,
+    //                         model,
+    //                         jtype,
+    //                         gp);
+    // status = app->Initialize();
+    // status = app->OptimizeTNLP(testnlp);
+    // Number ztry[testnlp->numVars];
+    // Number g[testnlp->numCons];
+    // Number obj_value = 0;
+    // for (int i = 0; i < testnlp->numVars; i++) {
+    //     ztry[i] = mynlp->solution[i];
+    // }
+    // testnlp->eval_f(testnlp->numVars, ztry, false, obj_value);
+    // testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+    // std::cout << "Objective function value: " << obj_value << std::endl;
+    // testnlp->summarize_constraints(testnlp->numCons, g);
 
     return 0;
 }

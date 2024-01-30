@@ -74,8 +74,8 @@ public:
     }                     
 
     // class members:
-    std::unique_ptr<Model> modelPtr_;
-    std::unique_ptr<Data> dataPtr_;
+    std::shared_ptr<Model> modelPtr_;
+    std::shared_ptr<Data> dataPtr_;
 
     std::shared_ptr<Trajectories> trajPtr_;
 

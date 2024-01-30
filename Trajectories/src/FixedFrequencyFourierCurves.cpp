@@ -46,7 +46,8 @@ void FixedFrequencyFourierCurves::compute(const VecX& z, bool compute_derivative
     if (if_computed(z, compute_derivatives)) return;
 
     Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
-    MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
+    // MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
+    MatX coefficients = reshape(temp, 2 * degree + 1, Nact);
     VecX q_act0       = z.block((2 * degree + 1) * Nact, 0, Nact, 1);
     VecX q_act_d0     = z.block((2 * degree + 1) * Nact + Nact, 0, Nact, 1);
 

@@ -58,6 +58,10 @@ inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, const Eigen::VectorXd& b,
     return true;
 }
 
+inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, int rows, int cols) {
+    return Eigen::Map<const Eigen::MatrixXd>(vec.data(), rows, cols);
+}
+
 }; // namespace IDTO
 
 #endif // UTILS_H

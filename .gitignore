@@ -38,3 +38,5 @@
 .vscode/
 build/
 data/
+
+test_oracle.py

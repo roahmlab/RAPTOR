@@ -6,33 +6,33 @@ void DynamicsConstraints::reinitialize() {
 
 }
 
-DynamicsConstraints::DynamicsConstraints(const Model& model_input, int numDependentJoints_input) :
+DynamicsConstraints::DynamicsConstraints(const int numJoints_input, int numDependentJoints_input) :
+    numJoints(numJoints_input),
     numDependentJoints(numDependentJoints_input) {
-    modelPtr_ = std::make_unique<Model>(model_input);
-    numIndependentJoints = modelPtr_->nv - numDependentJoints;
+    numIndependentJoints = numJoints - numDependentJoints;
 
-    c = VecX::Zero(modelPtr_->nv);
-    J = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    Jx_partial_dq = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    JTx_partial_dq = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
-    Jxy_partial_dq = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    c = VecX::Zero(numJoints);
+    J = MatX::Zero(numDependentJoints, numJoints);
+    Jx_partial_dq = MatX::Zero(numDependentJoints, numJoints);
+    JTx_partial_dq = MatX::Zero(numJoints, numJoints);
+    Jxy_partial_dq = MatX::Zero(numDependentJoints, numJoints);
 
     pq_dep_pq_indep = MatX::Zero(numDependentJoints, numIndependentJoints);
-    pv_dep_pq = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    pv_dep_pq = MatX::Zero(numDependentJoints, numJoints);
     pv_dep_pv_indep = MatX::Zero(numDependentJoints, numIndependentJoints);
-    pa_dep_pq = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    pa_dep_pv = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    pa_dep_pq = MatX::Zero(numDependentJoints, numJoints);
+    pa_dep_pv = MatX::Zero(numDependentJoints, numJoints);
     pa_dep_pa_indep = MatX::Zero(numDependentJoints, numIndependentJoints);
 
     J_dep = MatX::Zero(numDependentJoints, numDependentJoints);
-    J_indep = MatX::Zero(numDependentJoints, modelPtr_->nv - numDependentJoints);
+    J_indep = MatX::Zero(numDependentJoints, numJoints - numDependentJoints);
 
     P_dep = MatX::Zero(numDependentJoints, numIndependentJoints);
-    Pa_indep = VecX::Zero(modelPtr_->nv);
-    temp1 = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    temp2_1 = VecX::Zero(modelPtr_->nv);
-    temp2 = MatX::Zero(numDependentJoints, modelPtr_->nv);
-    temp3 = MatX::Zero(numDependentJoints, modelPtr_->nv);
+    Pa_indep = VecX::Zero(numJoints);
+    temp1 = MatX::Zero(numDependentJoints, numJoints);
+    temp2_1 = VecX::Zero(numJoints);
+    temp2 = MatX::Zero(numDependentJoints, numJoints);
+    temp3 = MatX::Zero(numDependentJoints, numJoints);
 }
 
 void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& v, VecX& a, bool compute_derivatives) {

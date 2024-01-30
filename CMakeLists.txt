@@ -26,7 +26,7 @@ find_package(Matlab)
 execute_process(COMMAND "${MATLAB_ROOT}/bin/mexext" OUTPUT_VARIABLE MEX_EXT OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # Find Eigen library
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Find GSL library

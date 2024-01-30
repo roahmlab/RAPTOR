@@ -50,7 +50,8 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
     if (if_computed(z, compute_derivatives)) return;
 
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
-    MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
+    // MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
+    MatX coefficients = reshape(temp, 2 * degree + 2, Nact);
     VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
     VecX q_act_d0     = z.block((2 * degree + 2) * Nact + Nact, 0, Nact, 1);
 
