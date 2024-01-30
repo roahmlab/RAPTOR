@@ -399,6 +399,38 @@ target_compile_options(oracle_pybind PUBLIC
 
 set_property(TARGET oracle_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+pybind11_add_module(oracle_waitr_pybind SHARED
+    Examples/Kinova/KinovaWaitrPybind.cpp
+    Examples/Kinova/src/KinovaWaitrPybindWrapper.cpp)
+
+target_include_directories(oracle_waitr_pybind PRIVATE
+    Examples/Kinova/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(oracle_waitr_pybind PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES}
+    ${PYTHON_LIBRARIES})
+
+target_compile_options(oracle_waitr_pybind PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
 ## Install
 install(TARGETS trajlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
