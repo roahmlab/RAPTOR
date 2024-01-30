@@ -37,7 +37,7 @@ void VelocityLimits::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q_d(i);
+        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q_d(i).head(trajPtr_->Nact);
 
         if (compute_derivatives) {
             pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_d_pz(i);

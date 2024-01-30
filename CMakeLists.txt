@@ -82,6 +82,7 @@ add_library(trajlib SHARED
     Trajectories/src/FixedFrequencyFourierCurves.cpp
     Trajectories/src/BezierCurves.cpp 
     Trajectories/src/ArmourBezierCurves.cpp
+    Trajectories/src/WaitrBezierCurves.cpp
     Trajectories/src/Polynomials.cpp 
     Trajectories/src/Plain.cpp)
 
@@ -94,6 +95,7 @@ add_library(IDlib SHARED
     InverseDynamics/src/InverseDynamics.cpp
     InverseDynamics/src/DynamicsConstraints.cpp
     InverseDynamics/src/ConstrainedInverseDynamics.cpp
+    InverseDynamics/src/InverseDynamicsWithFixedJoints.cpp
     InverseDynamics/src/Transform.cpp
     InverseDynamics/src/ForwardKinematics.cpp)
 
@@ -112,6 +114,7 @@ add_library(Conslib SHARED
     Constraints/src/ConstrainedJointLimits.cpp
     Constraints/src/TorqueLimits.cpp
     Constraints/src/SurfaceContactConstraints.cpp
+    Constraints/src/WaitrContactConstraints.cpp
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/EndEffectorConstraints.cpp
     Constraints/src/ZonotopeCollisionAvoidance.cpp)
@@ -201,6 +204,7 @@ target_compile_options(DigitModifiedlib PUBLIC
 # Kinova library
 add_library(Kinovalib SHARED
     Examples/Kinova/src/KinovaOptimizer.cpp
+    Examples/Kinova/src/KinovaWaitrOptimizer.cpp
     Examples/Kinova/src/KinovaCustomizedConstraints.cpp)
 
 target_link_libraries(Kinovalib PRIVATE
@@ -310,6 +314,33 @@ target_link_libraries(Kinova_example PRIVATE
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(KinovaWaitr_example 
+    Examples/Kinova/KinovaWaitrExample.cpp)
+
+target_include_directories(KinovaWaitr_example PRIVATE
+    Examples/Kinova/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(KinovaWaitr_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(KinovaWaitr_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 # add_executable(Kinova_example_mex 
 #     Examples/Kinova/KinovaExample_mex.cpp)
 
@@ -365,6 +396,8 @@ target_link_libraries(oracle_pybind PRIVATE
 
 target_compile_options(oracle_pybind PUBLIC
     ${PINOCCHIO_FLAGS})
+
+set_property(TARGET oracle_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 ## Install
 install(TARGETS trajlib

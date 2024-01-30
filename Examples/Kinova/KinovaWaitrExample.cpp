@@ -1,4 +1,4 @@
-#include "KinovaOptimizer.h"
+#include "KinovaWaitrOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -12,10 +12,12 @@ using std::endl;
 
 int main() {
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/kinova.urdf";
+    const std::string urdf_filename = "../Examples/Kinova/kinova_grasp.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
+
+    const int actual_model_nq = model.nq - 1;
 
     model.gravity.linear()(2) = -9.81;
 
@@ -24,10 +26,11 @@ int main() {
     // 4 for Px, 5 for Py, 6 for Pz
     // not sure how to extract this from a pinocchio model so define outside here.
     Eigen::VectorXi jtype(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3;
+    jtype << 3, 3, 3, 3, 3, 3, 3, 
+             3;
 
     // Define obstacles
-    const int num_obstacles = 0;
+    const int num_obstacles = 2;
     Eigen::Array<Eigen::Vector3d, 1, num_obstacles> zonotopeCenters;
     Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
 
@@ -37,34 +40,38 @@ int main() {
     }
 
     // Define trajectories
-    ArmourTrajectoryParameters atp;
-    atp.q0 = Eigen::VectorXd::Zero(model.nq);
-    atp.q_d0 = Eigen::VectorXd::Zero(model.nq);
-    atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
+    WaitrTrajectoryParameters atp;
+    atp.q0 = Eigen::VectorXd::Zero(actual_model_nq);
+    atp.q_d0 = Eigen::VectorXd::Zero(actual_model_nq);
+    atp.q_dd0 = Eigen::VectorXd::Zero(actual_model_nq);
 
     const double T = 1;
     const int N = 16;
-    const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
+    const int degree = WAITR_BEZIER_CURVE_DEGREE;
+
+    // Define contact surface parameters
+    contactSurfaceParams csp;
+    // TODO: define contact surface parameters
 
     // Define target
-    Eigen::VectorXd qdes(model.nq);
+    Eigen::VectorXd qdes(actual_model_nq);
     qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
-    Eigen::VectorXd z(model.nq);
+    Eigen::VectorXd z(actual_model_nq);
     z.setZero();
 
     // Define limits buffer
-    Eigen::VectorXd joint_limits_buffer(model.nq);
+    Eigen::VectorXd joint_limits_buffer(actual_model_nq);
     joint_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd velocity_limits_buffer(model.nq);
+    Eigen::VectorXd velocity_limits_buffer(actual_model_nq);
     velocity_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd torque_limits_buffer(model.nq);
+    Eigen::VectorXd torque_limits_buffer(actual_model_nq);
     torque_limits_buffer.setConstant(0.0);
 
     // Initialize Kinova optimizer
-    SmartPtr<KinovaOptimizer> mynlp = new KinovaOptimizer();
+    SmartPtr<KinovaWaitrOptimizer> mynlp = new KinovaWaitrOptimizer();
     try {
 	    mynlp->set_parameters(z,
                               T,
@@ -73,6 +80,7 @@ int main() {
                               model,
                               jtype,
                               atp,
+                              csp,
                               zonotopeCenters,
                               zonotopeGenerators,
                               qdes,
@@ -100,7 +108,7 @@ int main() {
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
     // Initialize the IpoptApplication and process the options
@@ -128,14 +136,14 @@ int main() {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-kinova.txt");
+        std::ofstream solution("solution-kinova-waitr.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        std::ofstream trajectory("trajectory-kinova.txt");
+        std::ofstream trajectory("trajectory-kinova-waitr.txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {

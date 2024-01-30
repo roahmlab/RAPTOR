@@ -17,8 +17,7 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
 
     m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
 
-    jointTJ = MatX::Zero(3, modelPtr_->nv);
-    pq_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
+    jointTJ = MatX::Zero(3, trajPtr_->Nact);
 
     g = VecX::Zero(m);
     g_lb = VecX::Zero(m);
@@ -30,7 +29,7 @@ void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivative
     trajPtr_->compute(z, compute_derivatives);
     
     for (int i = 0; i < trajPtr_->N; i++) {
-        const VecX& q = trajPtr_->q(i);
+        const VecX& q = trajPtr_->q(i).head(trajPtr_->Nact);
 
         for (int j = 0; j < NUM_SPHERES; j++) {
             // define the transform matrix of the sphere center with respect to the joint

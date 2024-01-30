@@ -15,14 +15,15 @@ running_time = zeros(num_trails, 1);
 
 %%
 for i = 1:num_trails
-    ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d-N16-50-Chebyshev.out', i);
-%     ipopt_filename = sprintf('/home/roahmlab/Documents/TROPIC/examples/digit-modified/data/ipopt-%d-d20.out', i);
+%     ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d-N16-20-Chebyshev.out', i);
+    ipopt_filename = sprintf('/home/roahmlab/Documents/TROPIC/examples/digit-modified/data/ipopt-%d-d20.out', i);
 
     fid = fopen(ipopt_filename, 'r');
     
     iterations = [];
     constrViolation = [];
     objValue = [];
+    energy = 0;
     
     while ~feof(fid)
         line = fgetl(fid);

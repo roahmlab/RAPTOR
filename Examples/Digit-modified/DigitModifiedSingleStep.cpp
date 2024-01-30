@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 
     const double T = 0.4;
     const int N = 16;
-    const TimeDiscretization time_discretization = Uniform;
+    const TimeDiscretization time_discretization = Chebyshev;
     const int degree = 5;
     // const std::string output_name = "Chebyshev-N16";
 
