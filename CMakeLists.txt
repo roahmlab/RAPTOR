@@ -143,7 +143,9 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
+    Examples/Digit/src/DigitSingleStepOptimizerWithObstacles.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
+    Examples/Digit/src/DigitCustomizedConstraintsWithObstacles.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
 target_link_libraries(Digitlib PRIVATE
@@ -258,6 +260,34 @@ target_link_libraries(Digit_example PRIVATE
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_compile_options(Digit_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(DigitWithObstacles_example 
+    Examples/Digit/DigitSingleStepWithObstacles.cpp)
+
+target_include_directories(DigitWithObstacles_example PRIVATE
+    Examples/Digit/include
+    InverseDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(DigitWithObstacles_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Digitlib
+    ipopt
+    coinhsl
+    ${EIGEN3_LIBRARIES} 
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${URDFDOM_LIBRARIES}
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(DigitWithObstacles_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
@@ -457,6 +487,10 @@ install(TARGETS Kinovalib
 )
 
 install(TARGETS Digit_example
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(TARGETS DigitWithObstacles_example
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

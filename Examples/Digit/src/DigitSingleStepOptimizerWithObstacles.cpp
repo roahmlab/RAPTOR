@@ -1,4 +1,4 @@
-#include "DigitSingleStepOptimizer.h"
+#include "DigitSingleStepOptimizerWithObstacles.h"
 
 namespace IDTO {
 namespace Digit {
@@ -7,17 +7,17 @@ using std::cout;
 using std::endl;
 
 // // constructor
-// DigitSingleStepOptimizer::DigitSingleStepOptimizer()
+// DigitSingleStepOptimizerWithObstacles::DigitSingleStepOptimizerWithObstacles()
 // {
 // }
 
 
 // // destructor
-// DigitSingleStepOptimizer::~DigitSingleStepOptimizer()
+// DigitSingleStepOptimizerWithObstacles::~DigitSingleStepOptimizerWithObstacles()
 // {
 // }
 
-bool DigitSingleStepOptimizer::set_parameters(
+bool DigitSingleStepOptimizerWithObstacles::set_parameters(
     const VecX& x0_input,
     const double T_input,
     const int N_input,
@@ -25,7 +25,10 @@ bool DigitSingleStepOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const GaitParameters& gp_input
+    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
+    const VecX& q_act0_input,
+    const VecX& q_act_d0_input
  ) 
 {
     x0 = x0_input;
@@ -106,26 +109,23 @@ bool DigitSingleStepOptimizer::set_parameters(
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
-    // kinematics constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
-                                                                              jtype_input, 
-                                                                              trajPtr_, 
-                                                                              cidPtr_->dcPtr_,
-                                                                              gp_input));    
-    constraintsNameVec_.push_back("customized constraints");            
-
-    // periodic reset map constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                         cidPtr_,
-                                                                                         FRICTION_PARAMS));    
-    constraintsNameVec_.push_back("reset map constraints");     
+    // kinematics constraints and obstacle avoidance constraints
+    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraintsWithObstacles>(model_input, 
+                                                                                           jtype_input, 
+                                                                                           trajPtr_, 
+                                                                                           cidPtr_->dcPtr_,
+                                                                                           zonotopeCenters_input,
+                                                                                           zonotopeGenerators_input,
+                                                                                           q_act0_input,
+                                                                                           q_act_d0_input));    
+    constraintsNameVec_.push_back("customized constraints");          
 
     return true;
 }
 // [TNLP_set_parameters]
 
 // [TNLP_get_nlp_info]
-bool DigitSingleStepOptimizer::get_nlp_info(
+bool DigitSingleStepOptimizerWithObstacles::get_nlp_info(
    Index&          n,
    Index&          m,
    Index&          nnz_jac_g,
@@ -155,7 +155,7 @@ bool DigitSingleStepOptimizer::get_nlp_info(
 
 // [TNLP_eval_f]
 // returns the value of the objective function
-bool DigitSingleStepOptimizer::eval_f(
+bool DigitSingleStepOptimizerWithObstacles::eval_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -195,7 +195,7 @@ bool DigitSingleStepOptimizer::eval_f(
 
 // [TNLP_eval_grad_f]
 // return the gradient of the objective function grad_{x} f(x)
-bool DigitSingleStepOptimizer::eval_grad_f(
+bool DigitSingleStepOptimizerWithObstacles::eval_grad_f(
    Index         n,
    const Number* x,
    bool          new_x,

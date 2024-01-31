@@ -1,4 +1,4 @@
-#include "DigitSingleStepOptimizer.h"
+#include "DigitSingleStepOptimizerWithObstacles.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -55,18 +55,22 @@ int main(int argc, char* argv[]) {
     const TimeDiscretization time_discretization = Uniform;
     const int N = 14;
     const int degree = 5;
-    const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
 
-    GaitParameters gp;
-    // gp.swingfoot_midstep_z_des = 0.30;
-    // gp.swingfoot_begin_y_des = 0.40;
-    // gp.swingfoot_end_y_des = -0.40;
-    gp.swingfoot_midstep_z_des = std::atof(argv[2]);
-    gp.swingfoot_begin_y_des = std::atof(argv[1]);
-    gp.swingfoot_end_y_des = - std::atof(argv[1]);
+    const int num_obstacles = 1;
+    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> zonotopeCenters;
+    Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
+
+    for (int i = 0; i < num_obstacles; i++) {
+        zonotopeCenters(i) << 0, 0, 0;
+        zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
+    }
+
+    Eigen::VectorXd q_act0(NUM_INDEPENDENT_JOINTS);
+    Eigen::VectorXd q_act_d0(NUM_INDEPENDENT_JOINTS);
+    q_act0 << -0.055006, -0.14424, 0.48841, 0.84331, -0.53871, 0.19699, 0.067928, 0.41611, -0.49578, -0.85886, 0.39913, -0.0887;
+    q_act_d0 << 0.0063512, 0.033545, -0.021454, -0.0065737, 0.15027, 0.24112, -0.053465, -0.0014915, -0.010528, 0.0045807, 0.14383, 0.20103;
 
     std::ifstream initial_guess("initial-digit-Bezier.txt");
-    // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
     double temp = 0;
     std::vector<double> z_array;
     while (initial_guess >> temp) {
@@ -78,7 +82,7 @@ int main(int argc, char* argv[]) {
         z(i) = z_array[i];
     }
   
-    SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
+    SmartPtr<DigitSingleStepOptimizerWithObstacles> mynlp = new DigitSingleStepOptimizerWithObstacles();
     try {
 	    mynlp->set_parameters(z,
                               T,
@@ -87,7 +91,10 @@ int main(int argc, char* argv[]) {
                               degree,
                               model,
                               jtype,
-                              gp);
+                              zonotopeCenters,
+                              zonotopeGenerators,
+                              q_act0,
+                              q_act_d0);
     }
     catch (int errorCode) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
@@ -95,11 +102,11 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-5);
+    app->Options()->SetNumericValue("tol", 1e-3);
 	app->Options()->SetNumericValue("max_wall_time", 500);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetIntegerValue("max_iter", 500);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -136,14 +143,14 @@ int main(int argc, char* argv[]) {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("../data/Digit/solution-digit-Bezier-" + output_name + ".txt");
+        std::ofstream solution("solution-digit-with-obstacles.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        // std::ofstream trajectory("../data/Digit/trajectory-digit-Bezier-" + output_name + ".txt");
+        // std::ofstream trajectory("../data/Digit/trajectory-digit-with-obstacles.txt");
         // trajectory << std::setprecision(20);
         // for (int i = 0; i < NUM_JOINTS; i++) {
         //     for (int j = 0; j < N; j++) {
