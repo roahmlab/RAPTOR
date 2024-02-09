@@ -36,7 +36,7 @@ public:
 
     // Constructor
     InverseDynamics(const Model& model_input, 
-                    std::shared_ptr<Trajectories>& trajPtr_input);
+                    const std::shared_ptr<Trajectories>& trajPtr_input);
 
     // Destructor
     ~InverseDynamics() = default;
@@ -74,10 +74,10 @@ public:
     }                     
 
     // class members:
-    std::shared_ptr<Model> modelPtr_;
-    std::shared_ptr<Data> dataPtr_;
+    std::shared_ptr<Model> modelPtr_ = nullptr;
+    std::shared_ptr<Data> dataPtr_ = nullptr;
 
-    std::shared_ptr<Trajectories> trajPtr_;
+    std::shared_ptr<Trajectories> trajPtr_ = nullptr;
 
     int N = 0; // number of time instances in tspan
 

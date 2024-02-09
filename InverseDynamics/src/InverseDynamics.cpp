@@ -3,7 +3,7 @@
 namespace IDTO {
 
 InverseDynamics::InverseDynamics(const Model& model_input, 
-                                 std::shared_ptr<Trajectories>& trajPtr_input) :
+                                 const std::shared_ptr<Trajectories>& trajPtr_input) :
     trajPtr_(trajPtr_input) {   
     N = trajPtr_->N;
 

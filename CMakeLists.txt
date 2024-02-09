@@ -93,10 +93,12 @@ target_include_directories(trajlib PUBLIC
 ## Inverse dynamics library
 add_library(IDlib SHARED
     InverseDynamics/src/InverseDynamics.cpp
+    InverseDynamics/src/CustomizedInverseDynamics.cpp
     InverseDynamics/src/DynamicsConstraints.cpp
     InverseDynamics/src/ConstrainedInverseDynamics.cpp
     InverseDynamics/src/InverseDynamicsWithFixedJoints.cpp
     InverseDynamics/src/Transform.cpp
+    InverseDynamics/src/Spatial.cpp
     InverseDynamics/src/ForwardKinematics.cpp)
 
 target_include_directories(IDlib PUBLIC
