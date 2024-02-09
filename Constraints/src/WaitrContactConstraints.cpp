@@ -35,14 +35,14 @@ void WaitrContactConstraints::compute(const VecX& z, bool compute_derivatives) {
         // which should be the contact wrench between the end effector and the object
         const Vec6& lambda = idPtr_->lambda(i);
 
-        const Vec3& translation_force = lambda.tail(3); // This is a 3D vector
         const Vec3& rotation_torque = lambda.head(3); // This is a 3D vector
+        const Vec3& translation_force = lambda.tail(3); // This is a 3D vector
 
         // TODO: edit the contact constraints here for each time instance, 
         // based on translation_force and rotation_torque
         // You can refer to SurfaceContactConstraints.cpp, which should be very similar
-        g.block(6 * i, 0, 3, 1) = translation_force;
-        g.block(6 * i + 3, 0, 3, 1) = rotation_torque;
+        g.block(6 * i, 0, 3, 1) = rotation_torque;
+        g.block(6 * i + 3, 0, 3, 1) = translation_force;
 
         if (compute_derivatives) {
             const MatX& plambda_pz = idPtr_->plambda_pz(i);
