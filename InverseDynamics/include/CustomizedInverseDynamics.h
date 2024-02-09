@@ -63,8 +63,8 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pf_pz;
 
         // compute results are stored here
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> contactForce;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pcontactForce_pz;
+    Eigen::Array<Vec6, 1, Eigen::Dynamic> lambda;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pz;
 };
 
 }; // namespace IDTO

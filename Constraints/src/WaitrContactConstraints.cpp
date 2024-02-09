@@ -2,7 +2,7 @@
 
 namespace IDTO {
 
-WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<InverseDynamicsWithFixedJoints>& idPtr_input,
+WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
                                                  const contactSurfaceParams& csp_input) :
     idPtr_(idPtr_input),
     fp(csp_input) {
@@ -33,10 +33,10 @@ void WaitrContactConstraints::compute(const VecX& z, bool compute_derivatives) {
     for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
         // access the last contact wrench, 
         // which should be the contact wrench between the end effector and the object
-        const Force& lambda = idPtr_->lambda(i);
+        const Vec6& lambda = idPtr_->lambda(i);
 
-        const VecX& translation_force = lambda.linear(); // This is a 3D vector
-        const VecX& rotation_torque = lambda.angular(); // This is a 3D vector
+        const Vec3& translation_force = lambda.tail(3); // This is a 3D vector
+        const Vec3& rotation_torque = lambda.head(3); // This is a 3D vector
 
         // TODO: edit the contact constraints here for each time instance, 
         // based on translation_force and rotation_torque

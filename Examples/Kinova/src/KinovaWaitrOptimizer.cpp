@@ -43,8 +43,11 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                    Chebyshev, 
                                                    atp_input);
 
-    idPtr_ = std::make_shared<InverseDynamicsWithFixedJoints>(model_input,
-                                                              trajPtr_);
+    // idPtr_ = std::make_shared<InverseDynamicsWithFixedJoints>(model_input,
+    //                                                           trajPtr_);
+    idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
+                                                         jtype_input,
+                                                         trajPtr_);
     
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);

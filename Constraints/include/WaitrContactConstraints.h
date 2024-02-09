@@ -3,7 +3,7 @@
 
 #include "Constraints.h"
 #include "Trajectories.h"
-#include "InverseDynamicsWithFixedJoints.h"
+#include "CustomizedInverseDynamics.h"
 #include "Utils.h"
 
 namespace IDTO {
@@ -28,6 +28,8 @@ typedef struct contactSurfaceParams_  {
 class WaitrContactConstraints : public Constraints {
 public:
     using Force = pinocchio::Data::Force;
+    using Vec3 = Eigen::Vector3d;
+    using Vec6 = Vector6d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -35,7 +37,7 @@ public:
     WaitrContactConstraints() = default;
 
     // Constructor
-    WaitrContactConstraints(std::shared_ptr<InverseDynamicsWithFixedJoints>& idPtr_input,
+    WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
                             const contactSurfaceParams& csp_input);
 
     // Destructor
@@ -49,7 +51,7 @@ public:
     void compute_bounds() override;
 
     // class variables:
-    std::shared_ptr<InverseDynamicsWithFixedJoints> idPtr_;
+    std::shared_ptr<CustomizedInverseDynamics> idPtr_;
 
     contactSurfaceParams fp;
 };

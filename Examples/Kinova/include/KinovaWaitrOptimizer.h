@@ -4,6 +4,7 @@
 #include "KinovaCustomizedConstraints.h"
 #include "KinovaConstants.h"
 #include "InverseDynamicsWithFixedJoints.h"
+#include "CustomizedInverseDynamics.h"
 #include "Optimizer.h"
 #include "WaitrBezierCurves.h"
 #include "JointLimits.h"
@@ -94,7 +95,7 @@ public:
 
     std::shared_ptr<Trajectories> trajPtr_;
 
-    std::shared_ptr<InverseDynamicsWithFixedJoints> idPtr_;
+    std::shared_ptr<CustomizedInverseDynamics> idPtr_;
 
     VecX qdes;
     int tplan_n = 0;

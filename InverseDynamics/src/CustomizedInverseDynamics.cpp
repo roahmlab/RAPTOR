@@ -46,8 +46,8 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
     tau.resize(1, N);
     ptau_pz.resize(1, N);
     
-    contactForce.resize(1, N);  
-    pcontactForce_pz.resize(1, N);
+    lambda.resize(1, N);  
+    plambda_pz.resize(1, N);
 }
 
 void CustomizedInverseDynamics::compute(const VecX& z,
@@ -62,7 +62,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
     trajPtr_->compute(z, compute_derivatives);                            
 
-    for (int i = 0; i < N - 6; i++) {
+    for (int i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
         const VecX& q_d = trajPtr_->q_d(i);
         const VecX& q_dd = trajPtr_->q_dd(i);
@@ -72,6 +72,11 @@ void CustomizedInverseDynamics::compute(const VecX& z,
         const MatX& pq_dd_pz = trajPtr_->pq_dd_pz(i);
 
         tau(i) = VecX::Zero(trajPtr_->Nact);
+
+        if (compute_derivatives) {
+            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, z.size());
+            plambda_pz(i) = MatX::Zero(6, z.size());
+        }
 
         // below is the original Roy Featherstone's inverse dynamics algorithm
         // refer to https://royfeatherstone.org/spatial/v2/index.html#ID
@@ -124,15 +129,15 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                     // compute pa_pz
                     pa_pz(j) = Xup(j) * pa_pz(parent_id);
 
+                    // deal with crm_v_j * vJ;
+                    pa_pz(j).row(0) += vJ(2) * pv_pz(j).row(1) - vJ(1) * pv_pz(j).row(2);
+                    pa_pz(j).row(1) += vJ(0) * pv_pz(j).row(2) - vJ(2) * pv_pz(j).row(0);
+                    pa_pz(j).row(2) += vJ(1) * pv_pz(j).row(0) - vJ(0) * pv_pz(j).row(1);
+                    pa_pz(j).row(3) += vJ(2) * pv_pz(j).row(4) - vJ(1) * pv_pz(j).row(5) - vJ(4) * pv_pz(j).row(2) + vJ(5) * pv_pz(j).row(1);
+                    pa_pz(j).row(4) += vJ(0) * pv_pz(j).row(5) - vJ(2) * pv_pz(j).row(3) + vJ(3) * pv_pz(j).row(2) - vJ(5) * pv_pz(j).row(0);
+                    pa_pz(j).row(5) += vJ(1) * pv_pz(j).row(3) - vJ(0) * pv_pz(j).row(4) - vJ(3) * pv_pz(j).row(1) + vJ(4) * pv_pz(j).row(0);
+
                     if (j < trajPtr_->Nact) {
-                        // deal with crm_v_j * vJ;
-                        pa_pz(j).row(0) += vJ(2) * pv_pz(j).row(1) - vJ(1) * pv_pz(j).row(2);
-                        pa_pz(j).row(1) += vJ(0) * pv_pz(j).row(2) - vJ(2) * pv_pz(j).row(0);
-                        pa_pz(j).row(2) += vJ(1) * pv_pz(j).row(0) - vJ(0) * pv_pz(j).row(1);
-                        pa_pz(j).row(3) += vJ(2) * pv_pz(j).row(4) - vJ(1) * pv_pz(j).row(5) - vJ(4) * pv_pz(j).row(2) + vJ(5) * pv_pz(j).row(1);
-                        pa_pz(j).row(4) += vJ(0) * pv_pz(j).row(5) - vJ(2) * pv_pz(j).row(3) + vJ(3) * pv_pz(j).row(2) - vJ(5) * pv_pz(j).row(0);
-                        pa_pz(j).row(5) += vJ(1) * pv_pz(j).row(3) - vJ(0) * pv_pz(j).row(4) - vJ(3) * pv_pz(j).row(1) + vJ(4) * pv_pz(j).row(0);
-                        
                         Vec6 crm_v_j_S_j = crm_v_j * S(j);
                         for (int k = 0; k < 6; k++) {
                             pa_pz(j).row(k) += crm_v_j_S_j(k) * pq_d_pz.row(j);
@@ -187,7 +192,22 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                 }
             }
 
-            f(j) = I(j) * a(j) + crf(v(j)) * I(j) * v(j);
+            Mat6 crf_v_j = crf(v(j));
+            Vec6 I_j_v_j = I(j) * v(j);
+            f(j) = I(j) * a(j) + crf_v_j * I_j_v_j;
+
+            if (compute_derivatives) {
+                // compute pf_pz
+                pf_pz(j) = I(j) * pa_pz(j) + crf_v_j * I(j) * pv_pz(j);
+
+                // deal with d(crf_v_j) * I(j) * v(j)
+                pf_pz(j).row(0) += I_j_v_j(2) * pv_pz(j).row(1) - I_j_v_j(1) * pv_pz(j).row(2) - I_j_v_j(4) * pv_pz(j).row(5) + I_j_v_j(5) * pv_pz(j).row(4);
+                pf_pz(j).row(1) += I_j_v_j(0) * pv_pz(j).row(2) - I_j_v_j(2) * pv_pz(j).row(0) + I_j_v_j(3) * pv_pz(j).row(5) - I_j_v_j(5) * pv_pz(j).row(3);
+                pf_pz(j).row(2) += I_j_v_j(1) * pv_pz(j).row(0) - I_j_v_j(0) * pv_pz(j).row(1) - I_j_v_j(3) * pv_pz(j).row(4) + I_j_v_j(4) * pv_pz(j).row(3);
+                pf_pz(j).row(3) += I_j_v_j(5) * pv_pz(j).row(1) - I_j_v_j(4) * pv_pz(j).row(2);
+                pf_pz(j).row(4) += I_j_v_j(3) * pv_pz(j).row(2) - I_j_v_j(5) * pv_pz(j).row(0);
+                pf_pz(j).row(5) += I_j_v_j(4) * pv_pz(j).row(0) - I_j_v_j(3) * pv_pz(j).row(1);
+            }
         }
 
         // backward pass
@@ -200,13 +220,35 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                             modelPtr_->rotorInertia(j) * q_dd(j) +
                             modelPtr_->damping(j) * q_d(j) +
                             modelPtr_->friction(j) * sign(q_d(j));
+
+                if (compute_derivatives) {
+                    ptau_pz(i).row(j) = S(j).transpose() * pf_pz(j) + 
+                                        modelPtr_->rotorInertia(j) * pq_dd_pz.row(j) +
+                                        modelPtr_->damping(j) * pq_d_pz.row(j);
+                }
             }
             else {
-                contactForce(i) = f(j); // record the contact force at the last joint
+                lambda(i) = f(j); // record the contact force at the last joint
+
+                if (compute_derivatives) {
+                    plambda_pz(i) = pf_pz(j);
+                }
             }
 
             if (parent_id > -1) {
                 f(parent_id) += Xup(j).transpose() * f(j);
+
+                if (compute_derivatives) {
+                    pf_pz(parent_id) += Xup(j).transpose() * pf_pz(j);
+
+                    // deal with Xup(j).transpose() * f(j)
+                    if (j < trajPtr_->Nact) {
+                        Vec6 dXupdq_T_f_j = dXupdq(j).transpose() * f(j);
+                        for (int k = 0; k < 6; k++) {
+                            pf_pz(parent_id).row(k) += dXupdq_T_f_j(k) * pq_pz.row(j);
+                        }
+                    }
+                }
             }
         }
     }
