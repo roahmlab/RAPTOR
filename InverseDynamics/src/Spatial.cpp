@@ -23,6 +23,9 @@ void jcalc(Matrix6d& Xj,
 
     switch (jtyp)
     {
+        case 0: // fixed joint
+            // do nothing, results already set
+            break;
         case 1: // revolute X axis 'Rx'
             Xj(1,1) = c;
             Xj(1,2) = s;
@@ -126,6 +129,9 @@ void jcalc(Matrix6d& Xj,
 
     switch (jtyp)
     {
+        case 0: // fixed joint
+            // do nothing, results already set
+            break;
         case 1: // revolute X axis 'Rx'
             Xj(1,1) = c;
             Xj(1,2) = s;
@@ -267,6 +273,9 @@ void jcalc(Matrix6d& Xj,
 
     switch (jtyp)
     {
+        case 0: // fixed joint
+            // do nothing, results already set
+            break;
         case 1: // revolute X axis 'Rx'
             Xj(1,1) = c;
             Xj(1,2) = s;

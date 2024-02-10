@@ -5,12 +5,11 @@ namespace IDTO {
 WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
                                                  const contactSurfaceParams& csp_input) :
     idPtr_(idPtr_input),
-    fp(csp_input) {
+    csp(csp_input) {
     // (1)    positive contact force
     // (2)    translation friction cone
-    // (3)    rotation friction cone
-    // (4, 5) ZMP on one axis
-    // (6, 7) ZMP on the other axis
+    // (3, 4) ZMP on one axis
+    // (5, 6) ZMP on the other axis
     m = idPtr_->trajPtr_->N * 6; // TODO: this is the number of constraints for all time instances
 
     g = VecX::Zero(m);
@@ -35,33 +34,79 @@ void WaitrContactConstraints::compute(const VecX& z, bool compute_derivatives) {
         // which should be the contact wrench between the end effector and the object
         const Vec6& lambda = idPtr_->lambda(i);
 
-        const Vec3& rotation_torque = lambda.head(3); // This is a 3D vector
-        const Vec3& translation_force = lambda.tail(3); // This is a 3D vector
+        const Vec3& rotation_torque = lambda.head(3);
+        const Vec3& translation_force = lambda.tail(3);
 
-        // TODO: edit the contact constraints here for each time instance, 
-        // based on translation_force and rotation_torque
-        // You can refer to SurfaceContactConstraints.cpp, which should be very similar
-        g.block(6 * i, 0, 3, 1) = rotation_torque;
-        g.block(6 * i + 3, 0, 3, 1) = translation_force;
+        double contact_force      = translation_force(2) + csp.maxSuctionForce;
+        double friction_force     = sqrt(pow(translation_force(0), 2) + pow(translation_force(1), 2));
+        double max_friction_force = csp.mu * contact_force;
+        double mx_lower_limit     = -csp.Lx * contact_force;
+        double mx_upper_limit     = csp.Lx * contact_force;
+        double my_lower_limit     = -csp.Ly * contact_force;
+        double my_upper_limit     = csp.Ly * contact_force;
+
+        // (1) positive contact force
+        g(i * 6 + 0) = contact_force;
+
+        // (2) translation friction cone
+        g(i * 6 + 1) = friction_force - max_friction_force;
+
+        // (3, 4) ZMP on one axis
+        g(i * 6 + 2) = rotation_torque(0) - mx_upper_limit;
+        g(i * 6 + 3) = mx_lower_limit - rotation_torque(0);
+
+        // (5, 6) ZMP on the other axis
+        g(i * 6 + 4) = rotation_torque(1) - my_upper_limit;
+        g(i * 6 + 5) = my_lower_limit - rotation_torque(1);
 
         if (compute_derivatives) {
-            const MatX& plambda_pz = idPtr_->plambda_pz(i);
+            // assume the contact wrench is always located at the end
+            const MatX& protation_torque_pz = idPtr_->plambda_pz(i).topRows(3);
+            const MatX& ptranslation_force_pz = idPtr_->plambda_pz(i).bottomRows(3);
 
-            // TODO: edit the gradient
-            // plambda_pz.topRows(3) will be the gradient of the translation force w.r.t z
-            // plambda_pz.bottomRows(3) will be the gradient of the rotation torque w.r.t z
-            pg_pz.block(6 * i, 0, 6, idPtr_->trajPtr_->varLength) = plambda_pz;
+            // (1) positive contact force
+            pg_pz.row(i * 6 + 0) = ptranslation_force_pz.row(2);
+
+            // (2) translation friction cone
+            pg_pz.row(i * 6 + 1) = (translation_force(0) * ptranslation_force_pz.row(0) + 
+                                    translation_force(1) * ptranslation_force_pz.row(1)) / friction_force - 
+                                   csp.mu * ptranslation_force_pz.row(2);
+
+            // // (3, 4) ZMP on one axis
+            pg_pz.row(i * 6 + 2) = protation_torque_pz.row(0) - csp.Lx * ptranslation_force_pz.row(2);
+            pg_pz.row(i * 6 + 3) = -csp.Lx * ptranslation_force_pz.row(2) - protation_torque_pz.row(0);
+
+            // (5, 6) ZMP on the other axis
+            pg_pz.row(i * 6 + 4) = protation_torque_pz.row(1) - csp.Ly * ptranslation_force_pz.row(2);
+            pg_pz.row(i * 6 + 5) = -csp.Ly * ptranslation_force_pz.row(2) - protation_torque_pz.row(1);
         }
     }
 }
 
 void WaitrContactConstraints::compute_bounds() {
-    // TODO: fill in the lower and upper bounds for the constraints
-    // This is consistent with what ipopt is looking for
-    // g_lb and g_ub should be filled in here
-    // they all have size m
-    g_lb.setConstant(-1);
-    g_ub.setConstant(1);
+    for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
+        // (1) positive contact force
+        g_lb(i * 6 + 0) = 0;
+        g_ub(i * 6 + 0) = 1e19;
+
+        // (2) translation friction cone
+        g_lb(i * 6 + 1) = -1e19;
+        g_ub(i * 6 + 1) = 0;
+
+        // (3, 4) ZMP on one axis
+        g_lb(i * 6 + 2) = -1e19; 
+        g_ub(i * 6 + 2) = 0;
+
+        g_lb(i * 6 + 3) = -1e19; 
+        g_ub(i * 6 + 3) = 0;
+
+        // (5, 6) ZMP on the other axis
+        g_lb(i * 6 + 4) = -1e19; 
+        g_ub(i * 6 + 4) = 0;
+
+        g_lb(i * 6 + 5) = -1e19; 
+        g_ub(i * 6 + 5) = 0;
+    }
 }
 
 }; // namespace IDTO

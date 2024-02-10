@@ -9,20 +9,21 @@
 namespace IDTO {
 
 typedef struct contactSurfaceParams_  {
-    // TODO: define the contact parameters here, like friction coefficient, etc.
-    // double mu = 0.7;
-    // double gamma = 0.7;
-    // double Lx = 0;
-    // double Ly = 0;
+    double mu = 0.7;
+    double Lx = 0.1;
+    double Ly = 0.1;
+    double maxSuctionForce = 100;
 
-    // contactSurfaceParams_(double mu_input, 
-    //                 double gamma_input, 
-    //                 double Lx_input, 
-    //                 double Ly_input) :
-    //     mu(mu_input), 
-    //     gamma(gamma_input), 
-    //     Lx(Lx_input), 
-    //     Ly(Ly_input) {}
+    contactSurfaceParams_() = default;
+
+    contactSurfaceParams_(double mu_input, 
+                          double Lx_input, 
+                          double Ly_input,
+                          double maxSuctionForce_input) :
+        mu(mu_input), 
+        Lx(Lx_input), 
+        Ly(Ly_input),
+        maxSuctionForce(maxSuctionForce_input) {}
 } contactSurfaceParams;
 
 class WaitrContactConstraints : public Constraints {
@@ -53,7 +54,7 @@ public:
     // class variables:
     std::shared_ptr<CustomizedInverseDynamics> idPtr_;
 
-    contactSurfaceParams fp;
+    contactSurfaceParams csp;
 };
 
 }; // namespace IDTO

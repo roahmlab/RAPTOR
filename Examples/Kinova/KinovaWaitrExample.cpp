@@ -3,6 +3,8 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
+#include "CustomizedInverseDynamics.h"
+
 using namespace IDTO;
 using namespace Kinova;
 using namespace Ipopt;
@@ -20,6 +22,9 @@ int main() {
     const int actual_model_nq = model.nq - 1;
 
     model.gravity.linear()(2) = -9.81;
+    model.rotorInertia.setZero();
+    model.damping.setZero();
+    model.friction.setZero();
 
     // manually define the joint axis of rotation
     // 1 for Rx, 2 for Ry, 3 for Rz
@@ -27,7 +32,7 @@ int main() {
     // not sure how to extract this from a pinocchio model so define outside here.
     Eigen::VectorXi jtype(model.nq);
     jtype << 3, 3, 3, 3, 3, 3, 3, 
-             3;
+             0; // the last joint is a fixed joint
 
     // Define obstacles
     const int num_obstacles = 2;
@@ -35,7 +40,7 @@ int main() {
     Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
 
     for (int i = 0; i < num_obstacles; i++) {
-        zonotopeCenters(i) << 0, 0, 0.3 * i;
+        zonotopeCenters(i) << 1, 0, 0.3 * i;
         zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
     }
 
@@ -69,6 +74,42 @@ int main() {
     velocity_limits_buffer.setConstant(0.0);
     Eigen::VectorXd torque_limits_buffer(actual_model_nq);
     torque_limits_buffer.setConstant(0.0);
+
+    // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<WaitrBezierCurves>(T, 
+    //                                                N, 
+    //                                                actual_model_nq, 
+    //                                                Chebyshev, 
+    //                                                atp);
+    // CustomizedInverseDynamics id(model, jtype, trajPtr_);
+
+    // Eigen::VectorXd x = -5 * Eigen::VectorXd::Ones(actual_model_nq);
+    // auto start = std::chrono::high_resolution_clock::now();
+    // id.compute(x, true);
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::cout << "Total compute time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+    // const Eigen::MatrixXd& pv_pz = id.ptau_pz(10);
+    // Eigen::MatrixXd pv_pz_ref = Eigen::MatrixXd::Zero(pv_pz.rows(), pv_pz.cols());
+    // for (int i = 0; i < actual_model_nq; i++) {
+    //     Eigen::VectorXd x_plus = x;
+    //     x_plus(i) += 1e-8;
+    //     id.compute(x_plus, false);
+    //     const Eigen::VectorXd v_plus = id.tau(10);
+    //     Eigen::VectorXd x_minus = x;
+    //     x_minus(i) -= 1e-8;
+    //     id.compute(x_minus, false);
+    //     const Eigen::VectorXd v_minus = id.tau(10);
+    //     pv_pz_ref.col(i) = (v_plus - v_minus) / 2e-8;
+    // }
+    // // std::cout << "pv_pz: " << pv_pz << std::endl;
+    // // std::cout << std::endl;
+    // // std::cout << "pv_pz_ref: " << pv_pz_ref << std::endl;
+    // std::cout << pv_pz - pv_pz_ref << std::endl;
+
+    // std::cout << std::setprecision(20);
+    // for (int i = 0; i < N; i++) {
+    //     std::cout << "tau(" << i << ") = " << id.tau(i).transpose() << std::endl;
+    // }
+    // return 0;
 
     // Initialize Kinova optimizer
     SmartPtr<KinovaWaitrOptimizer> mynlp = new KinovaWaitrOptimizer();
