@@ -68,9 +68,14 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
             pg_pz.row(i * 7 + 0) = plambda_pz.row(2);
 
             // (2) translation friction cone
-            pg_pz.row(i * 7 + 1) = (lambda(0) * plambda_pz.row(0) + 
-                                    lambda(1) * plambda_pz.row(1)) / friction_force - 
-                                   fp.mu * plambda_pz.row(2);
+            if (friction_force <= 1e-3) {
+                pg_pz.row(i * 7 + 1) = fp.mu * plambda_pz.row(2);
+            }
+            else {
+                pg_pz.row(i * 7 + 1) = (lambda(0) * plambda_pz.row(0) + 
+                                        lambda(1) * plambda_pz.row(1)) / friction_force - 
+                                       fp.mu * plambda_pz.row(2);
+            }
 
             // (3) rotation friction cone
             pg_pz.row(i * 7 + 2) = sign(lambda(5)) * plambda_pz.row(5) - 

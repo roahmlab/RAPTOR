@@ -68,9 +68,14 @@ void WaitrContactConstraints::compute(const VecX& z, bool compute_derivatives) {
             pg_pz.row(i * 6 + 0) = ptranslation_force_pz.row(2);
 
             // (2) translation friction cone
-            pg_pz.row(i * 6 + 1) = (translation_force(0) * ptranslation_force_pz.row(0) + 
-                                    translation_force(1) * ptranslation_force_pz.row(1)) / friction_force - 
-                                   csp.mu * ptranslation_force_pz.row(2);
+            if (friction_force <= 1e-3) { // avoid singularity when friction_force is close to 0
+                pg_pz.row(i * 6 + 1) = csp.mu * ptranslation_force_pz.row(2);
+            }
+            else {
+                pg_pz.row(i * 6 + 1) = (translation_force(0) * ptranslation_force_pz.row(0) + 
+                                        translation_force(1) * ptranslation_force_pz.row(1)) / friction_force - 
+                                       csp.mu * ptranslation_force_pz.row(2);
+            }
 
             // // (3, 4) ZMP on one axis
             pg_pz.row(i * 6 + 2) = protation_torque_pz.row(0) - csp.Lx * ptranslation_force_pz.row(2);
