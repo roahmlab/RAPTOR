@@ -16,7 +16,11 @@ void ForwardKinematicsHighOrderDerivative::fk(Transform& T,
                                               const Transform& startT) {
     int numJoints = model.nq;
 
-    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 0) {
+    if (q_copy.size() == q.size() && 
+        (q - q_copy).isZero() && 
+        end_copy == end &&
+        start_copy == start &&
+        current_order >= 0) {
         T = T_copy;
     }
     else {
@@ -44,6 +48,8 @@ void ForwardKinematicsHighOrderDerivative::fk(Transform& T,
         }
 
         current_order = 0;
+        end_copy = end;
+        start_copy = start;
         q_copy = q;
         T_copy = T;
     }
@@ -61,7 +67,11 @@ void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& d
                                                        const Transform& startT) {
     int numJoints = model.nq;
     
-    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 1) {
+    if (q_copy.size() == q.size() && 
+        (q - q_copy).isZero() && 
+        end_copy == end &&
+        start_copy == start &&
+        current_order >= 1) {
         dTdq = dTdq_copy;
     }
     else {
@@ -105,6 +115,8 @@ void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& d
         }
 
         current_order = 1;
+        end_copy = end;
+        start_copy = start;
         q_copy = q;
         dTdq_copy = dTdq;
     }
@@ -124,7 +136,11 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
                                                       const Transform& startT) {
     int numJoints = model.nq;
 
-    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 2) {
+    if (q_copy.size() == q.size() && 
+        (q - q_copy).isZero() && 
+        end_copy == end &&
+        start_copy == start &&
+        current_order >= 2) {
         ddTddq = ddTddq_copy;
     }
     else {
@@ -187,6 +203,8 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
         }
 
         current_order = 2;
+        end_copy = end;
+        start_copy = start;
         q_copy = q;
         ddTddq_copy = ddTddq;
     }
@@ -208,7 +226,11 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
                                                          const Transform& startT) {
     int numJoints = model.nq;
 
-    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 3) {
+    if (q_copy.size() == q.size() && 
+        (q - q_copy).isZero() && 
+        end_copy == end &&
+        start_copy == start &&
+        current_order >= 3) {
         dddTdddq = dddTdddq_copy;
     }
     else {
@@ -292,6 +314,8 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
         }
 
         current_order = 3;
+        end_copy = end;
+        start_copy = start;
         q_copy = q;
         dddTdddq_copy = dddTdddq;
     }

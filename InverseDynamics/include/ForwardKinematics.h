@@ -86,6 +86,8 @@ public:
 
 	// internal copies
 	int current_order = -1;
+	int end_copy = -1;
+	int start_copy = -1;
 	VecX q_copy;
 	Transform T_copy;
 	std::vector<Transform> dTdq_copy;
