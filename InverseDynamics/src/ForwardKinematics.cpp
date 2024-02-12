@@ -2,6 +2,10 @@
 
 namespace IDTO {
 
+ForwardKinematicsHighOrderDerivative::ForwardKinematicsHighOrderDerivative() {
+    q_copy = VecX::Zero(0);
+}
+
 void ForwardKinematicsHighOrderDerivative::fk(Transform& T, 
                                               const Model& model, 
                                               const Eigen::VectorXi& jtype,
@@ -12,27 +16,36 @@ void ForwardKinematicsHighOrderDerivative::fk(Transform& T,
                                               const Transform& startT) {
     int numJoints = model.nq;
 
-    // find the kinematics chain
-    chain.clear();
-    int search_id = end;
-    while (search_id != start) {
-        chain.push_back(search_id - 1);
+    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 0) {
+        T = T_copy;
+    }
+    else {
+        // find the kinematics chain
+        chain.clear();
+        int search_id = end;
+        while (search_id != start) {
+            chain.push_back(search_id - 1);
 
-        if (search_id < 0 || search_id > numJoints) {
-            throw std::runtime_error("forwardkinematics.cpp: fk(): Can not find end properly!");
+            if (search_id < 0 || search_id > numJoints) {
+                throw std::runtime_error("forwardkinematics.cpp: fk(): Can not find end properly!");
+            }
+
+            search_id = model.parents[search_id];
+        }
+        std::reverse(chain.begin(), chain.end());
+
+        T = startT;
+
+        for (auto i : chain) {
+            T *= model.jointPlacements[i + 1];
+
+            Transform Tj(jtype[i], q[i]);
+            T *= Tj;
         }
 
-        search_id = model.parents[search_id];
-    }
-    std::reverse(chain.begin(), chain.end());
-
-    T = startT;
-
-    for (auto i : chain) {
-        T *= model.jointPlacements[i + 1];
-
-        Transform Tj(jtype[i], q[i]);
-        T *= Tj;
+        current_order = 0;
+        q_copy = q;
+        T_copy = T;
     }
 
     T *= endT;
@@ -47,44 +60,53 @@ void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& d
                                                        const Transform& endT, 
                                                        const Transform& startT) {
     int numJoints = model.nq;
-
-    // find the kinematics chain
-    // chain declared as class public variable. 
-    // always assume that fk_jacobian called after fk
     
-    // std::vector<int> chain;
-    // int search_id = end;
-    // while (search_id != start) {
-    //     chain.push_back(search_id - 1);
-
-    //     if (search_id < 0 || search_id >= numJoints) {
-    //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-    //         throw -1;
-    //     }
-
-    //     search_id = model.parents[search_id];
-    // }
-    // std::reverse(chain.begin(), chain.end());
-
-    dTdq.resize(numJoints);
-    for (auto i : chain) {
-        dTdq[i] = startT;
+    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 1) {
+        dTdq = dTdq_copy;
     }
+    else {
+        // find the kinematics chain
+        // chain declared as class public variable. 
+        // always assume that fk_jacobian called after fk
+        
+        // std::vector<int> chain;
+        // int search_id = end;
+        // while (search_id != start) {
+        //     chain.push_back(search_id - 1);
 
-    Transform temp;
-    for (auto i : chain) {
-        Transform Tj(jtype[i], q[i]);
-        Transform dTjdq(jtype[i], q[i], 1);
+        //     if (search_id < 0 || search_id >= numJoints) {
+        //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
+        //         throw -1;
+        //     }
 
-        for (auto j : chain) {
-            dTdq[j] *= model.jointPlacements[i + 1];
-            if (j == i) {
-                dTdq[j] *= dTjdq;
-            }
-            else {
-                dTdq[j] *= Tj;
+        //     search_id = model.parents[search_id];
+        // }
+        // std::reverse(chain.begin(), chain.end());
+
+        dTdq.resize(numJoints);
+        for (auto i : chain) {
+            dTdq[i] = startT;
+        }
+
+        Transform temp;
+        for (auto i : chain) {
+            Transform Tj(jtype[i], q[i]);
+            Transform dTjdq(jtype[i], q[i], 1);
+
+            for (auto j : chain) {
+                dTdq[j] *= model.jointPlacements[i + 1];
+                if (j == i) {
+                    dTdq[j] *= dTjdq;
+                }
+                else {
+                    dTdq[j] *= Tj;
+                }
             }
         }
+
+        current_order = 1;
+        q_copy = q;
+        dTdq_copy = dTdq;
     }
 
     for (auto i : chain) {
@@ -102,62 +124,71 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
                                                       const Transform& startT) {
     int numJoints = model.nq;
 
-    // find the kinematics chain
-    // chain declared as class public variable. 
-    // always assume that fk_hessian called after fk
-
-    // std::vector<int> chain;
-    // int search_id = end;
-    // while (search_id != start) {
-    //     chain.push_back(search_id - 1);
-
-    //     if (search_id < 0 || search_id >= numJoints) {
-    //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-    //         throw -1;
-    //     }
-
-    //     search_id = model.parents[search_id];
-    // }
-    // std::reverse(chain.begin(), chain.end());
-
-    if (ddTddq.size() != numJoints) {
-        ddTddq.resize(numJoints);
+    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 2) {
+        ddTddq = ddTddq_copy;
     }
-    for (int i = 0; i < numJoints; i++) {
-        ddTddq[i].resize(numJoints);
-    }
+    else {
+        // find the kinematics chain
+        // chain declared as class public variable. 
+        // always assume that fk_hessian called after fk
 
-    for (auto i : chain) {
-        for (auto j : chain) {
-            ddTddq[i][j] = startT;
+        // std::vector<int> chain;
+        // int search_id = end;
+        // while (search_id != start) {
+        //     chain.push_back(search_id - 1);
+
+        //     if (search_id < 0 || search_id >= numJoints) {
+        //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
+        //         throw -1;
+        //     }
+
+        //     search_id = model.parents[search_id];
+        // }
+        // std::reverse(chain.begin(), chain.end());
+
+        if (ddTddq.size() != numJoints) {
+            ddTddq.resize(numJoints);
         }
-    }
+        for (int i = 0; i < numJoints; i++) {
+            ddTddq[i].resize(numJoints);
+        }
 
-    Transform temp;
-    for (auto i : chain) {
-        Transform Tj(jtype[i], q[i]);
-        Transform dTjdq(jtype[i], q[i], 1);
-        Transform ddTjddq(jtype[i], q[i], 2);
-        
-        for (auto j : chain) {
-            for (auto k : chain) {
-                if (k >= j) {
-                    ddTddq[j][k] *= model.jointPlacements[i + 1];
-                    if (j == i && k == i) {
-                        ddTddq[j][k] *= ddTjddq;
-                    } 
-                    else if (j == i || k == i) {
-                        ddTddq[j][k] *= dTjdq;
+        for (auto i : chain) {
+            for (auto j : chain) {
+                ddTddq[i][j] = startT;
+            }
+        }
+
+        Transform temp;
+        for (auto i : chain) {
+            Transform Tj(jtype[i], q[i]);
+            Transform dTjdq(jtype[i], q[i], 1);
+            Transform ddTjddq(jtype[i], q[i], 2);
+            
+            for (auto j : chain) {
+                for (auto k : chain) {
+                    if (k >= j) {
+                        ddTddq[j][k] *= model.jointPlacements[i + 1];
+                        if (j == i && k == i) {
+                            ddTddq[j][k] *= ddTjddq;
+                        } 
+                        else if (j == i || k == i) {
+                            ddTddq[j][k] *= dTjdq;
+                        } 
+                        else {
+                            ddTddq[j][k] *= Tj;
+                        }
                     } 
                     else {
-                        ddTddq[j][k] *= Tj;
+                        ddTddq[j][k] = ddTddq[k][j];
                     }
-                } 
-                else {
-                    ddTddq[j][k] = ddTddq[k][j];
                 }
             }
         }
+
+        current_order = 2;
+        q_copy = q;
+        ddTddq_copy = ddTddq;
     }
 
     for (auto i : chain) {
@@ -177,83 +208,92 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
                                                          const Transform& startT) {
     int numJoints = model.nq;
 
-    // find the kinematics chain
-    // chain declared as class public variable. 
-    // always assume that fk_hessian called after fk
-
-    // std::vector<int> chain;
-    // int search_id = end;
-    // while (search_id != start) {
-    //     chain.push_back(search_id - 1);
-
-    //     if (search_id < 0 || search_id >= numJoints) {
-    //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-    //         throw -1;
-    //     }
-
-    //     search_id = model.parents[search_id];
-    // }
-    // std::reverse(chain.begin(), chain.end());
-
-    if (dddTdddq.size() != numJoints) {
-        dddTdddq.resize(numJoints);
+    if (q_copy.size() == q.size() && (q - q_copy).isZero() && current_order >= 3) {
+        dddTdddq = dddTdddq_copy;
     }
-    for (int i = 0; i < numJoints; i++) {
-        if (dddTdddq[i].size() != numJoints) {
-            dddTdddq[i].resize(numJoints);
-        }
-        for (int j = 0; j < numJoints; j++) {
-            dddTdddq[i][j].resize(numJoints);
-        }
-    }
+    else {
+        // find the kinematics chain
+        // chain declared as class public variable. 
+        // always assume that fk_hessian called after fk
 
-    for (auto i : chain) {
-        for (auto j : chain) {
-            for (auto k : chain) {
-                dddTdddq[i][j][k] = startT;
+        // std::vector<int> chain;
+        // int search_id = end;
+        // while (search_id != start) {
+        //     chain.push_back(search_id - 1);
+
+        //     if (search_id < 0 || search_id >= numJoints) {
+        //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
+        //         throw -1;
+        //     }
+
+        //     search_id = model.parents[search_id];
+        // }
+        // std::reverse(chain.begin(), chain.end());
+
+        if (dddTdddq.size() != numJoints) {
+            dddTdddq.resize(numJoints);
+        }
+        for (int i = 0; i < numJoints; i++) {
+            if (dddTdddq[i].size() != numJoints) {
+                dddTdddq[i].resize(numJoints);
+            }
+            for (int j = 0; j < numJoints; j++) {
+                dddTdddq[i][j].resize(numJoints);
             }
         }
-    }
 
-    Transform temp;
-    for (auto i : chain) {
-        Transform Tj(jtype[i], q[i]);
-        Transform dTjdq(jtype[i], q[i], 1);
-        Transform ddTjddq(jtype[i], q[i], 2);
-        Transform dddTjdddq(jtype[i], q[i], 3);
-        
-        for (auto j : chain) {
-            for (auto k : chain) {
-                for (auto h : chain) {
-                    if (h >= k && k >= j) {
-                        dddTdddq[j][k][h] *= model.jointPlacements[i + 1];
-                        if (j == i && k == i && h == i) {
-                            dddTdddq[j][k][h] *= dddTjdddq;
-                        } 
-                        else if ((j == i && k == i) || (j == i && h == i) || (k == i && h == i)) {
-                            dddTdddq[j][k][h] *= ddTjddq;
-                        } 
-                        else if (j == i || k == i || h == i) {
-                            dddTdddq[j][k][h] *= dTjdq;
+        for (auto i : chain) {
+            for (auto j : chain) {
+                for (auto k : chain) {
+                    dddTdddq[i][j][k] = startT;
+                }
+            }
+        }
+
+        Transform temp;
+        for (auto i : chain) {
+            Transform Tj(jtype[i], q[i]);
+            Transform dTjdq(jtype[i], q[i], 1);
+            Transform ddTjddq(jtype[i], q[i], 2);
+            Transform dddTjdddq(jtype[i], q[i], 3);
+            
+            for (auto j : chain) {
+                for (auto k : chain) {
+                    for (auto h : chain) {
+                        if (h >= k && k >= j) {
+                            dddTdddq[j][k][h] *= model.jointPlacements[i + 1];
+                            if (j == i && k == i && h == i) {
+                                dddTdddq[j][k][h] *= dddTjdddq;
+                            } 
+                            else if ((j == i && k == i) || (j == i && h == i) || (k == i && h == i)) {
+                                dddTdddq[j][k][h] *= ddTjddq;
+                            } 
+                            else if (j == i || k == i || h == i) {
+                                dddTdddq[j][k][h] *= dTjdq;
+                            }
+                            else {
+                                dddTdddq[j][k][h] *= Tj;
+                            }
                         }
                         else {
-                            dddTdddq[j][k][h] *= Tj;
-                        }
-                    }
-                    else {
-                        if (h < k) {
-                            dddTdddq[j][k][h] = dddTdddq[j][h][k];
-                        }
-                        else if (k < j) {
-                            dddTdddq[j][k][h] = dddTdddq[k][j][h];
-                        }
-                        else {
-                            dddTdddq[j][k][h] = dddTdddq[h][k][j];
+                            if (h < k) {
+                                dddTdddq[j][k][h] = dddTdddq[j][h][k];
+                            }
+                            else if (k < j) {
+                                dddTdddq[j][k][h] = dddTdddq[k][j][h];
+                            }
+                            else {
+                                dddTdddq[j][k][h] = dddTdddq[h][k][j];
+                            }
                         }
                     }
                 }
             }
         }
+
+        current_order = 3;
+        q_copy = q;
+        dddTdddq_copy = dddTdddq;
     }
 
     for (auto i : chain) {

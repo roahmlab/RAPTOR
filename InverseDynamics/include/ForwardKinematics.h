@@ -12,7 +12,7 @@ public:
     using VecX = Eigen::VectorXd;
 
     // Constructor
-	ForwardKinematicsHighOrderDerivative() = default;
+	ForwardKinematicsHighOrderDerivative();
 
     // Destructor
 	~ForwardKinematicsHighOrderDerivative() = default;
@@ -83,6 +83,14 @@ public:
 	// shared by fk, fk_jacobian, fk_hessian
 	// shared by forwardkinematics.cpp and Digit_model_floating.cpp
 	std::vector<int> chain;  
+
+	// internal copies
+	int current_order = -1;
+	VecX q_copy;
+	Transform T_copy;
+	std::vector<Transform> dTdq_copy;
+	std::vector<std::vector<Transform>> ddTddq_copy;
+	std::vector<std::vector<std::vector<Transform>>> dddTdddq_copy;
 };
 
 }  // namespace IDTO
