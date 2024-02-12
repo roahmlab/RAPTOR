@@ -125,6 +125,7 @@ void jcalc(Matrix6d& Xj,
     if (jtyp < 0) { // reversed direction
         // c = cos(-q) = cos(q)
         s = -s; // s = sin(-q) = -sin(q)
+        dsdq = -dsdq;
     }
 
     switch (jtyp)
@@ -269,6 +270,7 @@ void jcalc(Matrix6d& Xj,
     if (jtyp < 0) { // reversed direction
         // c = cos(-q) = cos(q)
         s = -s; // s = sin(-q) = -sin(q)
+        dsdt = -dsdt;
     }
 
     switch (jtyp)
