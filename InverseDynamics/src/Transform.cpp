@@ -3,28 +3,28 @@
 namespace IDTO {
 
 Transform::Transform() {
-    R = MatX::Identity(3, 3);
-    p = VecX::Zero(3);
+    R = Mat3::Identity();
+    p = Vec3::Zero(3);
     ifDerivative = false;
 } 
 
 Transform::Transform(const int jtype, const double theta, const int order) {
     if (order == 0) { // Transform of rotation matrix
-        R = MatX::Identity(3, 3);
+        R = Mat3::Identity();
     }
     else if (order == 1) { // First order derivative of transform of rotation matrix
-        R = MatX::Zero(3, 3);
+        R = Mat3::Zero();
     }
     else if (order == 2) { // Second order derivative of transform of rotation matrix
-        R = MatX::Zero(3, 3);
+        R = Mat3::Zero();
     }
     else if (order == 3) { // Third order derivative of transform of rotation matrix
-        R = MatX::Zero(3, 3);
+        R = Mat3::Zero();
     }
     else {
         throw std::runtime_error("spatial.cpp: Transform(): Unsupported differentiate order!");
     }
-    p = VecX::Zero(3); // translation vector
+    p = Vec3::Zero(3); // translation vector
     
     ifDerivative = (order > 0);
 

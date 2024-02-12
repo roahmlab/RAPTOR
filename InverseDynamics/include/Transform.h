@@ -18,15 +18,14 @@ namespace IDTO {
 class Transform {
 public:
     using SE3 = pinocchio::SE3Tpl<double>;
-    using VecX = Eigen::VectorXd;
     using Vec3 = Eigen::Vector3d;
-    using MatX = Eigen::MatrixXd;
+    using Mat3 = Eigen::Matrix3d;
 
     // Constructor
     Transform();
 
     // Constructor
-    Transform(const MatX& R_in, const VecX& p_in, const bool i_in = false) : 
+    Transform(const Mat3& R_in, const Vec3& p_in, const bool i_in = false) : 
         R(R_in) , p(p_in), ifDerivative(i_in) {}
 
     // Constructor
@@ -55,8 +54,8 @@ public:
     Transform inverse() const;
 
     // class members:
-    MatX R; // rotation matrix
-    VecX p; // translation vector
+    Mat3 R; // rotation matrix
+    Vec3 p; // translation vector
 
     // this is like the right bottom entry of a 4x4 transformation matrix.
     // usually it should be 1, but for derivatives, it should be 0.
