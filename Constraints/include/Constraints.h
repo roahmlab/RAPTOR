@@ -26,6 +26,8 @@ public:
 
     virtual void compute_bounds() = 0;
 
+    virtual void print_violation_info() {}
+
         // determine if the constraints are computed before and save the current decision variable
     bool is_computed(const VecX& z, bool compute_derivatives) {
         if (!ifTwoVectorEqual(current_z, z, 0)) {

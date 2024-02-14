@@ -52,4 +52,23 @@ void JointLimits::compute_bounds() {
     }
 }
 
+void JointLimits::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < trajPtr_->Nact; j++) {
+            if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
+                std::cout << "        JointLimits.cpp: Actuator " 
+                          << j << " at time instance " 
+                          << i << " is violating the lower position limit" 
+                          << std::endl;
+            } 
+            else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
+                std::cout << "        JointLimits.cpp: Actuator " 
+                          << j << " at time instance " 
+                          << i << " is violating the upper position limit" 
+                          << std::endl;
+            }
+        }
+    }
+}
+
 }; // namespace IDTO

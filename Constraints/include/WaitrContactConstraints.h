@@ -51,6 +51,9 @@ public:
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
+        // print violation information
+    void print_violation_info() override;
+
     // class variables:
     std::shared_ptr<CustomizedInverseDynamics> idPtr_;
 

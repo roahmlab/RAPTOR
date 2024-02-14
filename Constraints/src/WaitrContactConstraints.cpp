@@ -114,5 +114,40 @@ void WaitrContactConstraints::compute_bounds() {
     }
 }
 
+void WaitrContactConstraints::print_violation_info() {
+    for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
+        if (g(i * 6 + 0) <= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Negative contact force at time instance "
+                      << i
+                      << std::endl;
+        }
+        if (g(i * 6 + 1) >= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Translational friction out of friction cone at time instance "
+                      << i
+                      << std::endl;
+        }
+        if (g(i * 6 + 2) >= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Object peel off over x dimension at time instance "
+                      << i
+                      << std::endl;
+        }
+        if (g(i * 6 + 3) >= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Object peel off over x dimension at time instance "
+                      << i
+                      << std::endl;
+        }
+        if (g(i * 6 + 4) >= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Object peel off over y dimension at time instance "
+                      << i
+                      << std::endl;
+        }
+        if (g(i * 6 + 5) >= 0) {
+            std::cout << "        WaitrContactConstraints.cpp: Object peel off over y dimension at time instance "
+                      << i
+                      << std::endl;
+        }
+    }
+}
+
 }; // namespace IDTO
 

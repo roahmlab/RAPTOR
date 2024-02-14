@@ -48,4 +48,23 @@ void TorqueLimits::compute_bounds() {
     }
 }
 
+void TorqueLimits::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < trajPtr_->Nact; j++) {
+            if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
+                std::cout << "        TorqueLimits.cpp: Actuator " 
+                          << j << " at time instance " 
+                          << i << " is violating the lower torque limit" 
+                          << std::endl;
+            } 
+            else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
+                std::cout << "        TorqueLimits.cpp: Actuator " 
+                          << j << " at time instance " 
+                          << i << " is violating the upper torque limit" 
+                          << std::endl;
+            }
+        }
+    }
+}
+
 }; // namespace IDTO

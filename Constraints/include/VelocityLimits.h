@@ -32,6 +32,9 @@ public:
         // compute constraints lower bounds and upper bounds
     virtual void compute_bounds() override;
 
+        // print violation information
+    virtual void print_violation_info() override;
+
     // class variables:
     std::shared_ptr<Trajectories> trajPtr_;
 

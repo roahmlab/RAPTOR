@@ -71,5 +71,25 @@ void KinovaCustomizedConstraints::compute_bounds() {
     g_ub.setConstant(1e19);
 }
 
+void KinovaCustomizedConstraints::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < NUM_SPHERES; j++) {
+            for (int k = 0; k < collisionAvoidancePtr_->numObstacles; k++) {
+                if (g((i * NUM_SPHERES + j) * collisionAvoidancePtr_->numObstacles + k) <= 0) {
+                    std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " 
+                              << j 
+                              << " corresponding to link "
+                              << sphere_joint_id[j]
+                              << " at time instance " 
+                              << i 
+                              << " is in collision with obstacle " 
+                              << k
+                              << std::endl;
+                }
+            }
+        }
+    }
+}
+
 }; // namespace Kinova
 }; // namespace IDTO
