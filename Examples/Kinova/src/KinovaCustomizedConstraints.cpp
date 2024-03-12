@@ -6,16 +6,19 @@ namespace Kinova {
 KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                                          const Model& model_input,
                                                          const Eigen::VectorXi& jtype_input,
-                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-                                                         const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input) :
+                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
+                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
+                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input) :
     trajPtr_(trajPtr_input),
     jtype(jtype_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
     fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
-    collisionAvoidancePtr_ = std::make_shared<ZonotopeCollisionAvoidance>(zonotopeCenters_input, 
-                                                                          zonotopeGenerators_input);
+    collisionAvoidancePtr_ = std::make_shared<BoxCollisionAvoidance>(boxCenters_input, 
+                                                                     boxOrientation_input,
+                                                                     boxSize_input);
 
-    m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
+    // m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
+    m = trajPtr_->N * NUM_SPHERES;
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);
 
@@ -28,6 +31,12 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
 void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
     
+    const int numObstacles = collisionAvoidancePtr_->numObstacles;
+
+    if (numObstacles == 0) {
+        return;
+    }
+
     for (int i = 0; i < trajPtr_->N; i++) {
         const VecX& q = trajPtr_->q(i).head(trajPtr_->Nact);
 
@@ -50,16 +59,24 @@ void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivative
                 collisionAvoidancePtr_->computeDistance(sphereCenters, psphereCenters_pz);
             }
 
-            g.block((i * NUM_SPHERES + j) * collisionAvoidancePtr_->numObstacles, 
-                    0, 
-                    collisionAvoidancePtr_->numObstacles, 
-                    1) = collisionAvoidancePtr_->distances.array() - sphere_radius[j];
+            // g.block((i * NUM_SPHERES + j) * numObstacles, 
+            //         0, 
+            //         numObstacles, 
+            //         1) = collisionAvoidancePtr_->distances.array() - sphere_radius[j];
+
+            // if (compute_derivatives) {
+            //     pg_pz.block((i * NUM_SPHERES + j) * numObstacles, 
+            //                 0, 
+            //                 numObstacles, 
+            //                 trajPtr_->varLength) = collisionAvoidancePtr_->pdistances_pz;
+            // }
+            Eigen::VectorXd::Index minIndex;
+            collisionAvoidancePtr_->distances.minCoeff(&minIndex);
+            double distance = collisionAvoidancePtr_->distances(minIndex) - sphere_radius[j];
+            g(i * NUM_SPHERES + j) = distance;
 
             if (compute_derivatives) {
-                pg_pz.block((i * NUM_SPHERES + j) * collisionAvoidancePtr_->numObstacles, 
-                            0, 
-                            collisionAvoidancePtr_->numObstacles, 
-                            trajPtr_->varLength) = collisionAvoidancePtr_->pdistances_pz;
+                pg_pz.row(i * NUM_SPHERES + j) = collisionAvoidancePtr_->pdistances_pz.row(minIndex);
             }
         }
     }
@@ -72,20 +89,28 @@ void KinovaCustomizedConstraints::compute_bounds() {
 }
 
 void KinovaCustomizedConstraints::print_violation_info() {
+    const int numObstacles = collisionAvoidancePtr_->numObstacles;
+    // for (int i = 0; i < trajPtr_->N; i++) {
+    //     for (int j = 0; j < NUM_SPHERES; j++) {
+    //         for (int k = 0; k < numObstacles; k++) {
+    //             if (g((i * NUM_SPHERES + j) * numObstacles + k) <= 0) {
+    //                 std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " << j 
+    //                           << " corresponding to link " << sphere_joint_id[j]
+    //                           << " at time instance " << i 
+    //                           << " is in collision with obstacle " << k
+    //                           << std::endl;
+    //             }
+    //         }
+    //     }
+    // }
     for (int i = 0; i < trajPtr_->N; i++) {
         for (int j = 0; j < NUM_SPHERES; j++) {
-            for (int k = 0; k < collisionAvoidancePtr_->numObstacles; k++) {
-                if (g((i * NUM_SPHERES + j) * collisionAvoidancePtr_->numObstacles + k) <= 0) {
-                    std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " 
-                              << j 
-                              << " corresponding to link "
-                              << sphere_joint_id[j]
-                              << " at time instance " 
-                              << i 
-                              << " is in collision with obstacle " 
-                              << k
-                              << std::endl;
-                }
+            if (g(i * NUM_SPHERES + j) <= 0) {
+                std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " << j 
+                          << " corresponding to link " << sphere_joint_id[j]
+                          << " at time instance " << i 
+                          << " is in collision with the environment"
+                          << std::endl;
             }
         }
     }

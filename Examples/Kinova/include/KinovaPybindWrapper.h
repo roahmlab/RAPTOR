@@ -62,8 +62,9 @@ public:
 
     // obstacle information
     int num_obstacles = 0;
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> zonotopeCenters;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> zonotopeGenerators;
+    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxCenters;
+    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxOrientation;
+    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxSize;
 
     // trajectory information
     ArmourTrajectoryParameters atp;

@@ -1,5 +1,36 @@
 #include "ZonotopeCollisionAvoidance.h"
 
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+
 namespace IDTO {
 
 ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
@@ -20,6 +51,13 @@ ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const Eigen::Array<Vec3, 
 }
 
 void ZonotopeCollisionAvoidance::initialize() {
+	// allocate memory for A, b, v
+	A = new double[numObstacles * HYPERPLANE_NUM * 3];
+	b = new double[numObstacles * HYPERPLANE_NUM];
+	v_start_idx = new int[numObstacles];
+	v_size = new int[numObstacles];
+	v = new double[numObstacles * VERTICES_NUM * 3];
+
     // combination index
 	int combA[COMB_NUM], combB[COMB_NUM];
 	int a_id = 0, b_id = 1;
@@ -107,17 +145,17 @@ void ZonotopeCollisionAvoidance::initialize() {
 			if (i >= dim) {
 				vertices_new.clear();
 				try {
-					orgQhull::Qhull qhull("", dim, vertices.size() / 3, vertices.data(), "");
-					for(const orgQhull::QhullVertex &v: qhull.vertexList()) {
-						const orgQhull::QhullPoint &qhullPt = v.point();
-						auto coords = qhullPt.coordinates();
-						vertices_new.push_back(coords[0]);
-						vertices_new.push_back(coords[1]);
-						vertices_new.push_back(coords[2]);
-					}
+					// orgQhull::Qhull qhull("", dim, vertices.size() / 3, vertices.data(), "");
+					// for(const orgQhull::QhullVertex &v: qhull.vertexList()) {
+					// 	const orgQhull::QhullPoint &qhullPt = v.point();
+					// 	auto coords = qhullPt.coordinates();
+					// 	vertices_new.push_back(coords[0]);
+					// 	vertices_new.push_back(coords[1]);
+					// 	vertices_new.push_back(coords[2]);
+					// }
 				} 
 				catch (...) {
-					std::cerr << "Qhull failed !" << std::endl;
+					std::cerr << "Qhull failed!" << std::endl;
 					vertices_new = vertices;
 				}
 				vertices = vertices_new;

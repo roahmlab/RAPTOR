@@ -24,8 +24,9 @@ bool KinovaWaitrOptimizer::set_parameters(
     const Eigen::VectorXi& jtype_input,
     const WaitrTrajectoryParameters& atp_input,
     const contactSurfaceParams& csp_input,
-    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
+    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
+    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
+    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input,
     const VecX& qdes_input,
     const int tplan_n_input,
     const VecX& joint_limits_buffer_input,
@@ -116,8 +117,9 @@ bool KinovaWaitrOptimizer::set_parameters(
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
                                                                                jtype_input,
-                                                                               zonotopeCenters_input,
-                                                                               zonotopeGenerators_input));   
+                                                                               boxCenters_input,
+                                                                               boxOrientation_input,
+                                                                               boxSize_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);

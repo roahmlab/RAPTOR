@@ -34,16 +34,13 @@ find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
 # Find Qhull library
-find_package(Qhull REQUIRED)
-include_directories(${QHULL_INCLUDE_DIRS})
+# find_package(Qhull REQUIRED)
+# include_directories(${QHULL_INCLUDE_DIRS})
 
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
 
 # Find Python library
-find_package(PythonInterp 3.7 REQUIRED)
-find_package(PythonLibs 3.7 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
 add_subdirectory(extern/pybind)
 
 # Find urdf library
@@ -119,7 +116,8 @@ add_library(Conslib SHARED
     Constraints/src/WaitrContactConstraints.cpp
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/EndEffectorConstraints.cpp
-    Constraints/src/ZonotopeCollisionAvoidance.cpp)
+    Constraints/src/ZonotopeCollisionAvoidance.cpp
+    Constraints/src/BoxCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include

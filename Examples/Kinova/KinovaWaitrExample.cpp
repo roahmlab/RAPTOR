@@ -36,12 +36,14 @@ int main() {
 
     // Define obstacles
     const int num_obstacles = 2;
-    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> zonotopeCenters;
-    Eigen::Array<Eigen::MatrixXd, 1, num_obstacles> zonotopeGenerators;
+    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxCenters;
+    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxOrientation;
+    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxSize;
 
     for (int i = 0; i < num_obstacles; i++) {
-        zonotopeCenters(i) << 1, 0, 0.3 * i;
-        zonotopeGenerators(i) = 0.1 * Eigen::MatrixXd::Identity(3, 3);
+        boxCenters(i) << 10, 0, 0.3 * i;
+        boxOrientation(i) << 0, 0, 0;
+        boxSize(i) << 0.1, 0.1, 0.1;
     }
 
     // Define trajectories
@@ -122,8 +124,9 @@ int main() {
                               jtype,
                               atp,
                               csp,
-                              zonotopeCenters,
-                              zonotopeGenerators,
+                              boxCenters,
+                              boxOrientation,
+                              boxSize,
                               qdes,
                               tplan_n,
                               joint_limits_buffer,

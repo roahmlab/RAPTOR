@@ -20,7 +20,8 @@ public:
     // Constructor
     JointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
                 const VecX& lowerLimits_input, 
-                const VecX& upperLimits_input);
+                const VecX& upperLimits_input,
+                const bool wrapToPiOrNot_input = false);
 
     // Destructor
     ~JointLimits() = default;
@@ -40,6 +41,8 @@ public:
 
     VecX lowerLimits;
     VecX upperLimits;
+    
+    bool wrapToPiOrNot = false;
 };
 
 }; // namespace IDTO

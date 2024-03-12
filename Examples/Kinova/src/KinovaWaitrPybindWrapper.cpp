@@ -38,31 +38,32 @@ void KinovaWaitrPybindWrapper::set_obstacles(const int num_obstacles_inp,
                                              const py::array_t<double> obstacles_inp) {
     num_obstacles = num_obstacles_inp;      
 
-    if (num_obstacles < 0 || num_obstacles > MAX_OBSTACLE_NUM) {
-        throw std::invalid_argument("Number of obstacles must be non-negative or smaller than MAX_OBSTACLE_NUM");
+    if (num_obstacles < 0) {
+        throw std::invalid_argument("Number of obstacles must be non-negative");
     }                                
 
     py::buffer_info obstacles_buf = obstacles_inp.request();
 
-    if (obstacles_buf.size != num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3) {
+    if (obstacles_buf.size != num_obstacles * (3 + 3 + 3)) {
         throw std::invalid_argument("Number of obstacles does not match the input array size");
     }
 
     const double* obstacles_ptr = (const double*)obstacles_buf.ptr;
 
-    zonotopeCenters.resize(num_obstacles);
-    zonotopeGenerators.resize(num_obstacles);
+    boxCenters.resize(num_obstacles);
+    boxOrientation.resize(num_obstacles);
+    boxSize.resize(num_obstacles);
 
     for (int i = 0; i < num_obstacles; i++) {
-        zonotopeCenters(i) << obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 0],
-                              obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 1],
-                              obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 2];
-        zonotopeGenerators(i).resize(3, MAX_OBSTACLE_GENERATOR_NUM);
-        for (int j = 0; j < MAX_OBSTACLE_GENERATOR_NUM; j++) {
-            zonotopeGenerators(i)(0, j) = obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 3 + j * 3 + 0];
-            zonotopeGenerators(i)(1, j) = obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 3 + j * 3 + 1];
-            zonotopeGenerators(i)(2, j) = obstacles_ptr[i * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3 + 3 + j * 3 + 2];
-        }
+        boxCenters(i) << obstacles_ptr[i * 9 + 0],
+                         obstacles_ptr[i * 9 + 1],
+                         obstacles_ptr[i * 9 + 2];
+        boxOrientation(i) << obstacles_ptr[i * 9 + 3],
+                             obstacles_ptr[i * 9 + 4],
+                             obstacles_ptr[i * 9 + 5];
+        boxSize(i) << obstacles_ptr[i * 9 + 6],
+                      obstacles_ptr[i * 9 + 7],
+                      obstacles_ptr[i * 9 + 8];
     }
 
     set_obstacles_check = true;
@@ -214,8 +215,9 @@ py::tuple KinovaWaitrPybindWrapper::optimize() {
                               jtype,
                               atp,
                               csp,
-                              zonotopeCenters,
-                              zonotopeGenerators,
+                              boxCenters,
+                              boxOrientation,
+                              boxSize,
                               qdes,
                               tplan_n,
                               joint_limits_buffer,

@@ -2,19 +2,58 @@
 #define ZONOTOPE_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
+#include <vector>
+
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
+// DEPRECATED
 
 namespace IDTO {
 
-#define MAX_OBSTACLE_GENERATOR_NUM 3
-#define HYPERPLANE_NUM MAX_OBSTACLE_GENERATOR_NUM * (MAX_OBSTACLE_GENERATOR_NUM - 1)
-#define COMB_NUM HYPERPLANE_NUM / 2
-#define VERTICES_NUM HYPERPLANE_NUM * 4
+namespace ZonotopeParams {
+    constexpr int MAX_OBSTACLE_GENERATOR_NUM = 3;
+    constexpr int HYPERPLANE_NUM = MAX_OBSTACLE_GENERATOR_NUM * (MAX_OBSTACLE_GENERATOR_NUM - 1);
+    constexpr int COMB_NUM = HYPERPLANE_NUM / 2;
+    constexpr int VERTICES_NUM = HYPERPLANE_NUM * 4;
+};
 
 class ZonotopeCollisionAvoidance : public CollisionAvoidance {
 public:
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+
+    const int MAX_OBSTACLE_GENERATOR_NUM = ZonotopeParams::MAX_OBSTACLE_GENERATOR_NUM;
+    const int HYPERPLANE_NUM = ZonotopeParams::HYPERPLANE_NUM;
+    const int COMB_NUM = ZonotopeParams::COMB_NUM;
+    const int VERTICES_NUM = ZonotopeParams::VERTICES_NUM;
 
     // Constructor
     ZonotopeCollisionAvoidance() = default;
@@ -23,7 +62,13 @@ public:
                                const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input);
 
     // Destructor
-    ~ZonotopeCollisionAvoidance() = default;
+    ~ZonotopeCollisionAvoidance() {
+        delete [] A;
+        delete [] b;
+        delete [] v_start_idx;
+        delete [] v_size;
+        delete [] v;
+    }
 
     // class methods:
     void initialize();
@@ -38,13 +83,13 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> zonotopeGenerators;
 
         // hyperplane representation
-    double A[MAX_OBSTACLE_NUM * HYPERPLANE_NUM * 3] = {0.0};
-    double b[MAX_OBSTACLE_NUM * HYPERPLANE_NUM] = {0.0};
+    double* A = nullptr;
+    double* b = nullptr;
 
         // vertices representation
-    int v_start_idx[MAX_OBSTACLE_NUM] = {0};
-    int v_size[MAX_OBSTACLE_NUM] = {0};
-    double v[MAX_OBSTACLE_NUM * VERTICES_NUM * 3] = {0.0};
+    int* v_start_idx = nullptr;
+    int* v_size = nullptr;
+    double* v = nullptr;
 };
 
 }; // namespace IDTO

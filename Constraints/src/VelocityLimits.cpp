@@ -56,15 +56,15 @@ void VelocityLimits::print_violation_info() {
     for (int i = 0; i < trajPtr_->N; i++) {
         for (int j = 0; j < trajPtr_->Nact; j++) {
             if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
-                std::cout << "        VelocityLimits.cpp: Actuator " 
-                          << j << " at time instance " 
-                          << i << " is violating the lower velocity limit" 
+                std::cout << "        VelocityLimits.cpp: Actuator " << j 
+                          << " at time instance " << i 
+                          << " is violating the lower velocity limit" 
                           << std::endl;
             } 
             else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
-                std::cout << "        VelocityLimits.cpp: Actuator " 
-                          << j << " at time instance " 
-                          << i << " is violating the upper velocity limit" 
+                std::cout << "        VelocityLimits.cpp: Actuator " << j 
+                          << " at time instance " << i 
+                          << " is violating the upper velocity limit" 
                           << std::endl;
             }
         }

@@ -4,7 +4,7 @@
 #include "Constraints.h"
 #include "Trajectories.h"
 #include "ForwardKinematics.h"
-#include "ZonotopeCollisionAvoidance.h"
+#include "BoxCollisionAvoidance.h"
 
 #include <memory>
 
@@ -13,7 +13,7 @@ namespace Kinova {
 
 /*
 This class implements an example of customized constraints for Kinova.
-It uses balls to represent forward occupancy of the robot, 
+It uses spheres to represent forward occupancy of the robot, 
 computes the distance between the robot and the customized obstacles,
 and make sure the distance are larger than 0 to achieve collision avoidance.
 */
@@ -53,8 +53,9 @@ public:
     KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                 const Model& model_input,
                                 const Eigen::VectorXi& jtype_input,
-                                const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-                                const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input);
+                                const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
+                                const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
+                                const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input);
 
     // Destructor
     ~KinovaCustomizedConstraints() = default;
@@ -72,7 +73,7 @@ public:
     // class variables:
     std::shared_ptr<Trajectories>& trajPtr_;
 
-    std::shared_ptr<ZonotopeCollisionAvoidance> collisionAvoidancePtr_;
+    std::shared_ptr<BoxCollisionAvoidance> collisionAvoidancePtr_;
 
     std::unique_ptr<Model> modelPtr_;
 

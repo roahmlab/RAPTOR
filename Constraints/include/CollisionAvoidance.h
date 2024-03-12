@@ -2,11 +2,9 @@
 #define COLLISION_AVOIDANCE_H
 
 #include "Constraints.h"
-#include "Qhull.h"
+// #include "Qhull.h"
 
 namespace IDTO {
-
-#define MAX_OBSTACLE_NUM 40
 
 /*
 CollisionAvoidance class is one special class that does not inherit from Constraints class.

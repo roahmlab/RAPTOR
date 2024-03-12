@@ -18,8 +18,8 @@ namespace Kinova {
 class KinovaWaitrOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
-    using VecX = Eigen::VectorXd;
     using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
@@ -38,8 +38,9 @@ public:
         const Eigen::VectorXi& jtype_input,
         const WaitrTrajectoryParameters& atp_input,
         const contactSurfaceParams& csp_input,
-        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
-        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
+        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
+        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
+        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input,
         const VecX& qdes_input,
         const int tplan_n_input,
         const VecX& joint_limits_buffer_input,

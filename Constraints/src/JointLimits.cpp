@@ -4,9 +4,11 @@ namespace IDTO {
 
 JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                          const VecX& lowerLimits_input, 
-                         const VecX& upperLimits_input) : 
+                         const VecX& upperLimits_input,
+                         const bool wrapToPiOrNot_input) : 
     lowerLimits(lowerLimits_input), 
-    upperLimits(upperLimits_input) {
+    upperLimits(upperLimits_input),
+    wrapToPiOrNot(wrapToPiOrNot_input) {
     trajPtr_ = trajPtr_input;
 
     if (lowerLimits.size() != upperLimits.size()) {
@@ -37,7 +39,9 @@ void JointLimits::compute(const VecX& z, bool compute_derivatives) {
     trajPtr_->compute(z, compute_derivatives);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact));
+        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = wrapToPiOrNot ? 
+        							wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact)) :
+        							trajPtr_->q(i).head(trajPtr_->Nact);
 
         if (compute_derivatives) {
             pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_pz(i);
@@ -56,15 +60,15 @@ void JointLimits::print_violation_info() {
     for (int i = 0; i < trajPtr_->N; i++) {
         for (int j = 0; j < trajPtr_->Nact; j++) {
             if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
-                std::cout << "        JointLimits.cpp: Actuator " 
-                          << j << " at time instance " 
-                          << i << " is violating the lower position limit" 
+                std::cout << "        JointLimits.cpp: Actuator " << j 
+                          << " at time instance " << i 
+                          << " is violating the lower position limit" 
                           << std::endl;
             } 
             else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
-                std::cout << "        JointLimits.cpp: Actuator " 
-                          << j << " at time instance " 
-                          << i << " is violating the upper position limit" 
+                std::cout << "        JointLimits.cpp: Actuator " << j 
+                          << " at time instance " << i 
+                          << " is violating the upper position limit" 
                           << std::endl;
             }
         }

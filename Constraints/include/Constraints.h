@@ -2,6 +2,7 @@
 #ifndef CONSTRAINTS_H
 #define CONSTRAINTS_H
 
+#include <iostream>
 #include <Eigen/Dense>
 #include "Utils.h"
 
