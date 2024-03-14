@@ -2,6 +2,11 @@
 #define BOX_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
+#include <fcl/geometry/collision_geometry.h>
+#include <fcl/geometry/shape/box.h>
+#include <fcl/narrowphase/collision_object.h>
+
+#include <utility>
 
 namespace IDTO {
 
@@ -50,13 +55,20 @@ public:
     Eigen::Array<Vec3, 1, Eigen::Dynamic> boxSize;
     Eigen::Array<Mat3, 1, Eigen::Dynamic> boxR;
 
-        // hyperplane representation
-    Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> normals; //!< Normals of the box faces
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> intercepts; //!< Intercepts of the box faces
+    //     // hyperplane representation
+    // Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> normals; //!< Normals of the box faces
+    // Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> intercepts; //!< Intercepts of the box faces
 
-        // vertices representation
-    Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> vertices; //!< Vertices of the box
+    //     // vertices representation
+    // Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> vertices; //!< Vertices of the box
 };
+
+double computeBoxPointDistance(const fcl::CollisionObjectd* box, 
+                               const Eigen::Vector3d& point);
+
+std::pair<double, Eigen::VectorXd> computeBoxPointDistance(const fcl::CollisionObjectd* box,
+                                                           const Eigen::Vector3d& point,
+                                                           const Eigen::MatrixXd& ppoint_pz);
 
 }; // namespace IDTO
 

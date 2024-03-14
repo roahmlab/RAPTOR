@@ -18,13 +18,6 @@ message(${CMAKE_BUILD_TYPE})
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 14)
 
-# Define the MATLAB root directory
-# set(MATLAB_ROOT "/usr/local/MATLAB/R2022b")
-
-# Define the MEX extension
-find_package(Matlab)
-execute_process(COMMAND "${MATLAB_ROOT}/bin/mexext" OUTPUT_VARIABLE MEX_EXT OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 # Find Eigen library
 find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -36,6 +29,10 @@ include_directories(${GSL_INCLUDE_DIRS})
 # Find Qhull library
 # find_package(Qhull REQUIRED)
 # include_directories(${QHULL_INCLUDE_DIRS})
+
+# Find FCL library
+find_package(FCL REQUIRED)
+include_directories(${FCL_INCLUDE_DIRS})
 
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
@@ -117,7 +114,8 @@ add_library(Conslib SHARED
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/EndEffectorConstraints.cpp
     Constraints/src/ZonotopeCollisionAvoidance.cpp
-    Constraints/src/BoxCollisionAvoidance.cpp)
+    Constraints/src/BoxCollisionAvoidance.cpp
+    Constraints/src/fclCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include
@@ -127,7 +125,10 @@ target_include_directories(Conslib PUBLIC
     /usr/local/include/libqhullcpp)
 
 target_compile_options(Conslib PUBLIC
-    ${PINOCCHIO_FLAGS})    
+    ${PINOCCHIO_FLAGS})   
+    
+target_link_libraries(Conslib PRIVATE
+    ${FCL_LIBRARIES})
 
 ## Constraints library
 add_library(Optlib SHARED
@@ -339,7 +340,8 @@ target_link_libraries(Kinova_example PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES}
+    ${FCL_LIBRARIES})
 
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -366,7 +368,8 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES}
+    ${FCL_LIBRARIES})
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -422,6 +425,7 @@ target_link_libraries(oracle_pybind PRIVATE
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
+    ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_pybind PUBLIC
@@ -453,6 +457,7 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
+    ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_waitr_pybind PUBLIC
