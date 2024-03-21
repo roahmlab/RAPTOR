@@ -2,9 +2,9 @@
 #define BOX_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
-#include <fcl/geometry/collision_geometry.h>
-#include <fcl/geometry/shape/box.h>
-#include <fcl/narrowphase/collision_object.h>
+// #include <fcl/geometry/collision_geometry.h>
+// #include <fcl/geometry/shape/box.h>
+// #include <fcl/narrowphase/collision_object.h>
 
 #include <utility>
 
@@ -63,12 +63,12 @@ public:
     // Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> vertices; //!< Vertices of the box
 };
 
-double computeBoxPointDistance(const fcl::CollisionObjectd* box, 
-                               const Eigen::Vector3d& point);
+// double computeBoxPointDistance(const fcl::CollisionObjectd* box, 
+//                                const Eigen::Vector3d& point);
 
-std::pair<double, Eigen::VectorXd> computeBoxPointDistance(const fcl::CollisionObjectd* box,
-                                                           const Eigen::Vector3d& point,
-                                                           const Eigen::MatrixXd& ppoint_pz);
+// std::pair<double, Eigen::VectorXd> computeBoxPointDistance(const fcl::CollisionObjectd* box,
+//                                                            const Eigen::Vector3d& point,
+//                                                            const Eigen::MatrixXd& ppoint_pz);
 
 }; // namespace IDTO
 

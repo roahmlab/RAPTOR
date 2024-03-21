@@ -31,8 +31,8 @@ include_directories(${GSL_INCLUDE_DIRS})
 # include_directories(${QHULL_INCLUDE_DIRS})
 
 # Find FCL library
-find_package(FCL REQUIRED)
-include_directories(${FCL_INCLUDE_DIRS})
+# find_package(FCL REQUIRED)
+# include_directories(${FCL_INCLUDE_DIRS})
 
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
@@ -114,21 +114,21 @@ add_library(Conslib SHARED
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/EndEffectorConstraints.cpp
     Constraints/src/ZonotopeCollisionAvoidance.cpp
-    Constraints/src/BoxCollisionAvoidance.cpp
-    Constraints/src/fclCollisionAvoidance.cpp)
+    Constraints/src/BoxCollisionAvoidance.cpp)
+    # Constraints/src/fclCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
     InverseDynamics/include
     Trajectories/include
     Constraints/include
-    Utils/include
-    /usr/local/include/libqhullcpp)
+    Utils/include)
+    # /usr/local/include/libqhullcpp)
 
 target_compile_options(Conslib PUBLIC
     ${PINOCCHIO_FLAGS})   
     
-target_link_libraries(Conslib PRIVATE
-    ${FCL_LIBRARIES})
+# target_link_libraries(Conslib PRIVATE
+#     ${FCL_LIBRARIES})
 
 ## Constraints library
 add_library(Optlib SHARED
@@ -220,8 +220,8 @@ target_link_libraries(Kinovalib PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES}
-    ${QHULL_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES})
+    # ${QHULL_LIBRARIES})
 
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova/include
@@ -340,8 +340,8 @@ target_link_libraries(Kinova_example PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES}
-    ${FCL_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES})
+    # ${FCL_LIBRARIES})
 
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -368,8 +368,8 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES}
-    ${FCL_LIBRARIES})
+    ${PKG_PIN_CONFIG_LIBRARIES})
+    # ${FCL_LIBRARIES})
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -425,7 +425,7 @@ target_link_libraries(oracle_pybind PRIVATE
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
-    ${FCL_LIBRARIES}
+    # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_pybind PUBLIC
@@ -457,7 +457,7 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     ${BOOST_LIBRARIES} 
     ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
-    ${FCL_LIBRARIES}
+    # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_waitr_pybind PUBLIC

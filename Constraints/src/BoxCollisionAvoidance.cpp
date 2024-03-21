@@ -122,63 +122,63 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point, const MatX& ppoin
 	}
 }
 
-double computeBoxPointDistance(const fcl::CollisionObjectd* box, 
-                               const Eigen::Vector3d& point) {
-    if (box->getNodeType() != fcl::NODE_TYPE::GEOM_BOX) {
-		throw std::invalid_argument("computeBoxPointDistance(): The collision object should be a box");
-	}
+// double computeBoxPointDistance(const fcl::CollisionObjectd* box, 
+//                                const Eigen::Vector3d& point) {
+//     if (box->getNodeType() != fcl::NODE_TYPE::GEOM_BOX) {
+// 		throw std::invalid_argument("computeBoxPointDistance(): The collision object should be a box");
+// 	}
 
-	auto boxGeomtry = static_cast<const fcl::Boxd*>(box->collisionGeometry().get());
+// 	auto boxGeomtry = static_cast<const fcl::Boxd*>(box->collisionGeometry().get());
 
-	const fcl::Transform3<double>& tf = box->getTransform();
-	const Eigen::Vector3d& boxSize = boxGeomtry->side;
+// 	const fcl::Transform3<double>& tf = box->getTransform();
+// 	const Eigen::Vector3d& boxSize = boxGeomtry->side;
 
-    // Compute the closest point in the local frame of the box
-	Eigen::Vector3d localPoint = tf.linear().transpose() * (point - tf.translation());
-	Eigen::Vector3d localClosestPoint;
-	for (int i = 0; i < 3; i++) {
-		localClosestPoint(i) = std::max(-boxSize(i) / 2.0, std::min(localPoint(i), boxSize(i) / 2.0));
-	}
+//     // Compute the closest point in the local frame of the box
+// 	Eigen::Vector3d localPoint = tf.linear().transpose() * (point - tf.translation());
+// 	Eigen::Vector3d localClosestPoint;
+// 	for (int i = 0; i < 3; i++) {
+// 		localClosestPoint(i) = std::max(-boxSize(i) / 2.0, std::min(localPoint(i), boxSize(i) / 2.0));
+// 	}
 
-	// Transform the closest point from the local frame to the global frame
-	Eigen::Vector3d closestPoint = tf.linear() * localClosestPoint + tf.translation();
+// 	// Transform the closest point from the local frame to the global frame
+// 	Eigen::Vector3d closestPoint = tf.linear() * localClosestPoint + tf.translation();
 
-	return (point - closestPoint).norm();
-}
+// 	return (point - closestPoint).norm();
+// }
 
-std::pair<double, Eigen::VectorXd> computeBoxPointDistance(const fcl::CollisionObjectd* box,
-                                                           const Eigen::Vector3d& point,
-                                                           const Eigen::MatrixXd& ppoint_pz) {
-	if (box->getNodeType() != fcl::NODE_TYPE::GEOM_BOX) {
-		throw std::invalid_argument("computeBoxPointDistance(): The collision object should be a box");
-	}
+// std::pair<double, Eigen::VectorXd> computeBoxPointDistance(const fcl::CollisionObjectd* box,
+//                                                            const Eigen::Vector3d& point,
+//                                                            const Eigen::MatrixXd& ppoint_pz) {
+// 	if (box->getNodeType() != fcl::NODE_TYPE::GEOM_BOX) {
+// 		throw std::invalid_argument("computeBoxPointDistance(): The collision object should be a box");
+// 	}
 
-	auto boxGeomtry = static_cast<const fcl::Boxd*>(box->collisionGeometry().get());
+// 	auto boxGeomtry = static_cast<const fcl::Boxd*>(box->collisionGeometry().get());
 
-	const fcl::Transform3<double>& tf = box->getTransform();
-	const Eigen::Vector3d& boxSize = boxGeomtry->side;
-	Eigen::VectorXd pdistance_pz(ppoint_pz.cols());
+// 	const fcl::Transform3<double>& tf = box->getTransform();
+// 	const Eigen::Vector3d& boxSize = boxGeomtry->side;
+// 	Eigen::VectorXd pdistance_pz(ppoint_pz.cols());
 
-    // Compute the closest point in the local frame of the box
-	Eigen::Vector3d localPoint = tf.linear().transpose() * (point - tf.translation());
-	Eigen::Vector3d localClosestPoint;
-	for (int i = 0; i < 3; i++) {
-		localClosestPoint(i) = std::max(-boxSize(i) / 2.0, std::min(localPoint(i), boxSize(i) / 2.0));
-	}
+//     // Compute the closest point in the local frame of the box
+// 	Eigen::Vector3d localPoint = tf.linear().transpose() * (point - tf.translation());
+// 	Eigen::Vector3d localClosestPoint;
+// 	for (int i = 0; i < 3; i++) {
+// 		localClosestPoint(i) = std::max(-boxSize(i) / 2.0, std::min(localPoint(i), boxSize(i) / 2.0));
+// 	}
 
-	// Transform the closest point from the local frame to the global frame
-	Eigen::Vector3d closestPoint = tf.linear() * localClosestPoint + tf.translation();
+// 	// Transform the closest point from the local frame to the global frame
+// 	Eigen::Vector3d closestPoint = tf.linear() * localClosestPoint + tf.translation();
 
-	double distance = (point - closestPoint).norm();
+// 	double distance = (point - closestPoint).norm();
 
-	if (distance > 1e-5) {
-		pdistance_pz = (point - closestPoint).transpose() * ppoint_pz / distance;
-	}
-	else {
-		pdistance_pz.setZero();
-	}
+// 	if (distance > 1e-5) {
+// 		pdistance_pz = (point - closestPoint).transpose() * ppoint_pz / distance;
+// 	}
+// 	else {
+// 		pdistance_pz.setZero();
+// 	}
 
-	return std::make_pair(distance, pdistance_pz);
-}
+// 	return std::make_pair(distance, pdistance_pz);
+// }
 
 }; // namespace IDTO
