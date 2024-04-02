@@ -2,20 +2,6 @@
 
 namespace IDTO {
 
-double distancePointLineSegment(const Eigen::Vector3d& point, 
-                                const Eigen::Vector3d& p1, 
-                                const Eigen::Vector3d& p2) {
-    Eigen::Vector3d v = p2 - p1; //!< Vector representing the line segment
-    Eigen::Vector3d w = point - p1; //!< Vector from p1 to the point
-
-    double lambda = w.dot(v) / v.dot(v);
-    double t = std::max(0.0, std::min(1.0, lambda));
-    Eigen::Vector3d projection = p1 + t * v; //!< Projected point on the line segment
-
-    // Compute the distance between the projected point and the given point
-    return (projection - point).norm();
-}
-
 BoxCollisionAvoidance::BoxCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
 											 const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
 											 const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input) :

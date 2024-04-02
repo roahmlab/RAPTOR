@@ -17,10 +17,6 @@ namespace Box {
     constexpr int VERTICES_NUM = 8;
 };
 
-double distancePointLineSegment(const Eigen::Vector3d& point, 
-                                const Eigen::Vector3d& p1, 
-                                const Eigen::Vector3d& p2);
-
 class BoxCollisionAvoidance : public CollisionAvoidance {
 public:
     using Vec3 = Eigen::Vector3d;
