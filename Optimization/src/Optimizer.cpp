@@ -16,10 +16,10 @@ bool Optimizer::get_bounds_info(
     // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
     // If desired, we could assert to make sure they are what we think they are.
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in get_bounds_info!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
     }
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in get_bounds_info!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
     }
 
     // lower bounds
@@ -33,7 +33,7 @@ bool Optimizer::get_bounds_info(
     }
 
     if (constraintsPtrVec_.size() != constraintsNameVec_.size()) {
-        throw std::runtime_error("*** Error constraintsPtrVec_ and constraintsNameVec_ have different sizes!");
+        THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ and constraintsNameVec_ have different sizes!");
     }
 
     // compute bounds for all constraints
@@ -81,16 +81,15 @@ bool Optimizer::get_starting_point(
     // your own NLP, you can provide starting values for the dual variables
     // if you wish
     if (init_x == false || init_z == true || init_lambda == true) {
-        throw std::runtime_error("*** Error wrong value of init in get_starting_point!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of init in get_starting_point!");
     }
 
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in get_starting_point!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_starting_point!");
     }
 
     if (x0.size() != numVars) {
-        std::cout << "*** Error x0.size() != numVars in get_starting_point!" << std::endl;
-        throw std::runtime_error("x0.size() != numVars in get_starting_point!");
+        THROW_EXCEPTION(IpoptException, "*** Error x0.size() != numVars in get_starting_point!");
     }
 
     for ( Index i = 0; i < n; i++ ) {
@@ -112,10 +111,10 @@ bool Optimizer::eval_g(
 )
 {
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in eval_g!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_g!");
     }
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in eval_g!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_g!");
     }
 
     // fill in a Eigen Vector instance of decision variables
@@ -133,8 +132,8 @@ bool Optimizer::eval_g(
             constraintsPtrVec_[c]->compute(z, false);
         }
         catch (std::exception& e) {
-            std::cout << e.what() << std::endl;
-            throw std::runtime_error("*** Error in eval_g!");
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in eval_g! Check previous error message.");
         }
 
         // fill in constraints
@@ -166,10 +165,10 @@ bool Optimizer::eval_jac_g(
 )
 {
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in eval_jac_g!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_jac_g!");
     }
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in eval_jac_g!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_jac_g!");
     }
         
     if( values == NULL ) {
@@ -199,7 +198,7 @@ bool Optimizer::eval_jac_g(
             }
             catch (std::exception& e) {
                 std::cout << e.what() << std::endl;
-                throw std::runtime_error("*** Error in eval_jac_g!");
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g! Check previous error message.");
             }
 
             // fill in constraints
@@ -256,10 +255,10 @@ void Optimizer::finalize_solution(
 )
 {
     if (n != numVars) {
-        throw std::runtime_error("*** Error wrong value of n in finalize_solution!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in finalize_solution!");
     }
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in finalize_solution!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in finalize_solution!");
     }
 
     // here is where we would store the solution to variables, or write to a file, etc
@@ -284,7 +283,7 @@ void Optimizer::summarize_constraints(
 ) 
 {
     if (m != numCons) {
-        throw std::runtime_error("*** Error wrong value of m in summarize_constraints!");
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
     }
 
     std::cout << "Constraint violation report:" << std::endl;
@@ -323,7 +322,7 @@ void Optimizer::summarize_constraints(
                       << "], value: "   << g[max_constr_violation_id2] << std::endl;
 
             constraintsPtrVec_[c]->print_violation_info();
-
+                    
             ifFeasible = false;
         }
     }
