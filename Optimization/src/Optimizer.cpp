@@ -132,6 +132,7 @@ bool Optimizer::eval_g(
             constraintsPtrVec_[c]->compute(z, false);
         }
         catch (std::exception& e) {
+            std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "*** Error in eval_g! Check previous error message.");
         }
@@ -197,6 +198,7 @@ bool Optimizer::eval_jac_g(
                 constraintsPtrVec_[c]->compute(z, true);
             }
             catch (std::exception& e) {
+                std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cout << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g! Check previous error message.");
             }

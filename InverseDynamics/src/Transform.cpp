@@ -62,11 +62,20 @@ Transform::Transform(const int jtype, const double theta, const int order) {
         else if (jtype == 4) {
             p << theta, 0, 0;
         }
-        else if (jtype == 5) {
+        else if (jtype == 5) {  
             p << 0, theta, 0;
         }
         else if (jtype == 6) {
             p << 0, 0, theta;
+        }
+        else if (jtype == -4) {
+            p << -theta, 0, 0;
+        }
+        else if (jtype == -5) {  
+            p << 0, -theta, 0;
+        }
+        else if (jtype == -6) {
+            p << 0, 0, -theta;
         }
         else {
             throw std::runtime_error("spatial.cpp: Transform(): Unrecognized jtype!");
@@ -112,6 +121,15 @@ Transform::Transform(const int jtype, const double theta, const int order) {
         else if (jtype == 6) {
             p << 0, 0, 1;
         }
+        else if (jtype == -4) {
+            p << -1, 0, 0;
+        }
+        else if (jtype == -5) {
+            p << 0, -1, 0;
+        }
+        else if (jtype == -6) {
+            p << 0, 0, -1;
+        }
         else {
             throw std::runtime_error("spatial.cpp: Transform(): Unrecognized jtype!");
         }
@@ -156,6 +174,15 @@ Transform::Transform(const int jtype, const double theta, const int order) {
         else if (jtype == 6) {
             p << 0, 0, 0;
         }
+        else if (jtype == -4) {
+            p << 0, 0, 0;
+        }
+        else if (jtype == -5) {
+            p << 0, 0, 0;
+        }
+        else if (jtype == -6) {
+            p << 0, 0, 0;
+        }
         else {
             throw std::runtime_error("spatial.cpp: Transform(): Unrecognized jtype!");
         }
@@ -198,6 +225,15 @@ Transform::Transform(const int jtype, const double theta, const int order) {
             p << 0, 0, 0;
         }
         else if (jtype == 6) {
+            p << 0, 0, 0;
+        }
+        else if (jtype == -4) {
+            p << 0, 0, 0;
+        }
+        else if (jtype == -5) {
+            p << 0, 0, 0;
+        }
+        else if (jtype == -6) {
             p << 0, 0, 0;
         }
         else {
@@ -246,7 +282,8 @@ Transform Transform::operator*=(const SE3& x) {
 
 Transform Transform::inverse() const {
     assert(!ifDerivative);
-    return Transform(R.inverse(), -R.colPivHouseholderQr().solve(p));
+    // return Transform(R.inverse(), -R.colPivHouseholderQr().solve(p));
+    return Transform(R.transpose(), -R.transpose() * p);
 }
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
