@@ -3,6 +3,9 @@
 This repo is coded in the KISS (Keep it stupid and simple) principle. 
 There're private functions or members in any classes.
 Any results are stored as class members so that they can directly accessed by others.
+
+Readers can refer to `Examples/Kinova/include/KinovaOptimizer.h` and `Examples/Kinova/include/KinovaOptimizer.cpp` as a starting point to understand the structure.
+
 There are several stages of implementation:
 
 ### Trajectories
@@ -38,9 +41,32 @@ The core function is also called `compute(const Eigen::VectorXd& z, bool compute
  - In `compute`, the `compute` of the trajectory class will first be called, to update the trajectories of all joints.
  - Using `q`, `q_d`, `q_dd` in the trajectory class, we will compute the forward kinematics of each joints or the torque requried, depending on which kinematics/dynamics class it is.
  - If `compute_derivatives` is true, we will use `pq_pz`, `pq_d_pz`, `pq_dd_pz` in the trajectory class to compute the gradient of the forward kinematics or inverse dynamics with respect to the decision variable `z`.
+ - The results will be stored inside the class for the constraints classes to access.
 
  ### Constraints
+This class implements different types of constraints that will be later put into the optimization.
+Specifically, we would like to provide the formulation `g_lb <= g(z) <= g_ub`.
+The core function is called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`. 
+The constraint class usually requires a shared pointer of a trajectory class in the constructor, and a shared pointer of a forward kinematics and inverse dynamics class. 
+The results are stored in `g`, which is a class member, for the optimizer class to access.
+The gradient is stored in `pg_pz`.
 
+Another core function is called `compute_bounds()`.
+This is called by the optimizer class at the very beginning of the optimization.
+This updates `g_lb` and `g_ub`, which are also class members.
+
+There's also a function called `print_violation_information`, which will be called by the optimizer class at the end of the optimization, to print relevant information for tuning and debugging.
 
  ### Optimizer 
+This class serves as an interface to an open-source nonlinear solver `Ipopt`.
+We only cares about filling in the following functions:
+
+ - `get_nlp_info`: initialize the number of the decision variable `z`, and the number of constraints.
+ - `get_bounds_info`: initialize the bounds of the decision variable `z`, and the bounds of the constraints (where it will call `compute_bounds()` in each of the constraints class).
+ - `eval_f`: provide the cost function value.
+ - `eval_grad_f`: provide the gradient of the cost function.
+ - `eval_g`: provide the constraints values.
+ - `eval_jac_g`: provide the gradient (jacobian) of the constraints.
+ - `finalize_solution`: `Ipopt` will return a solution here (may be infeasible or not reach the constraint violation tolerance yet), but you can check things here if you want to take this as a valid solution.
+
 
