@@ -26,12 +26,10 @@ Note that this formulation only works for fully-actuated systems.
 - [GSL](https://www.gnu.org/software/gsl/): solve close-loop kinematics
 - [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html): compute inverse dynamics and its gradient
 - [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html): for nonlinear optimization
-- [Qhull](http://www.qhull.org): to compute vertices representation of zonotopes for collision checking
 - PkgConfig (`pkg-config`)
 - `urdfdom` (`liburdfdom-dev`)
-- [DRD](https://github.com/Cfather/DRD)
 
-A more detailed instruction is provided in the `Installation/README.md` file.
+A more detailed instruction is provided [here](Installation/README.md).
 
 ## Overview
  - Trajectories/ : This folder contains implementation of multiple primitives of smooth trajectories.
@@ -39,8 +37,10 @@ A more detailed instruction is provided in the `Installation/README.md` file.
  - Constraints/ : This folder contains implementation of multiple constriants that could be useful for trajectory optimization,
                   such as torque limits or collision avoidance.
  - Optimization/ : This folder contains a base class that provides interfaces to ipopt.  
- - Examples/ : This folder contains two examples of trajectory optimization problem for Digit-v3 and Kinova-gen3.                
+ - Examples/ : This folder contains two examples of trajectory optimization problem implementation for Digit-v3 and Kinova-gen3.
 
+A more detailed instruction on how to code your own optimization problem is provided [here](Coding/README.md).  
+            
 ## Getting Started
 Run the following commands for a Digit-v3 example:
 ```bash

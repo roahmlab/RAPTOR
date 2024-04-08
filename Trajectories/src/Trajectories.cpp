@@ -2,7 +2,8 @@
 
 namespace IDTO {
 
-Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
+Trajectories::Trajectories(const VecX& tspan_input, 
+                           int Nact_input) :
     tspan(tspan_input),
     Nact(Nact_input){
     T = tspan.bottomLeftCorner<1,1>().value();
@@ -21,7 +22,10 @@ Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
     current_z.resize(1);
 }
 
-Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization) :
+Trajectories::Trajectories(double T_input,  
+                           int N_input, 
+                           int Nact_input, 
+                           TimeDiscretization time_discretization) :
     T(T_input),
     N(N_input),
     Nact(Nact_input) {;

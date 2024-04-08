@@ -25,10 +25,14 @@ public:
     Trajectories() = default;
 
     // Constructor
-    Trajectories(const VecX& tspan_input, int Nact_input);
+    Trajectories(const VecX& tspan_input, 
+                 int Nact_input);
 
     // Constructor
-    Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization);
+    Trajectories(double T_input, 
+                 int N_input, 
+                 int Nact_input, 
+                 TimeDiscretization time_discretization);
 
     // Destructor
     ~Trajectories() = default;
