@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include <omp.h>
 #include <Utils.h>
 
 namespace IDTO {

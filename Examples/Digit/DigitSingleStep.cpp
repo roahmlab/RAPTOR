@@ -13,7 +13,9 @@ using std::cout;
 using std::endl;
 
 int main(int argc, char* argv[]) {
-    // Eigen::initParallel();
+    // set openmp number of threads
+    int num_threads = 32; // this number is currently hardcoded
+    omp_set_num_threads(num_threads);
 
     // define robot model
     const std::string urdf_filename = "../Examples/Digit/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";

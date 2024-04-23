@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <chrono>
+#include <omp.h>
 
 #include "Constraints.h"
 

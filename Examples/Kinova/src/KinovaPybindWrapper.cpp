@@ -4,6 +4,10 @@ namespace IDTO {
 namespace Kinova {
 
 KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename) {
+    // set openmp number of threads
+    int num_threads = 32; // this number is currently hardcoded
+    omp_set_num_threads(num_threads);
+
     // Define robot model
     pinocchio::urdf::buildModel(urdf_filename, model);
 

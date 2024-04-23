@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <Eigen/Dense>
+#include <omp.h>
 #include "Utils.h"
 
 namespace IDTO {
