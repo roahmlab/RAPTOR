@@ -86,17 +86,17 @@ target_include_directories(trajlib PUBLIC
 
 ## Inverse dynamics library
 add_library(IDlib SHARED
-    InverseDynamics/src/InverseDynamics.cpp
-    InverseDynamics/src/CustomizedInverseDynamics.cpp
-    InverseDynamics/src/DynamicsConstraints.cpp
-    InverseDynamics/src/ConstrainedInverseDynamics.cpp
-    InverseDynamics/src/InverseDynamicsWithFixedJoints.cpp
-    InverseDynamics/src/Transform.cpp
-    InverseDynamics/src/Spatial.cpp
-    InverseDynamics/src/ForwardKinematics.cpp)
+    KinematicsDynamics/src/InverseDynamics.cpp
+    KinematicsDynamics/src/CustomizedInverseDynamics.cpp
+    KinematicsDynamics/src/DynamicsConstraints.cpp
+    KinematicsDynamics/src/ConstrainedInverseDynamics.cpp
+    KinematicsDynamics/src/InverseDynamicsWithFixedJoints.cpp
+    KinematicsDynamics/src/Transform.cpp
+    KinematicsDynamics/src/Spatial.cpp
+    KinematicsDynamics/src/ForwardKinematics.cpp)
 
 target_include_directories(IDlib PUBLIC
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Utils/include)
 
@@ -118,7 +118,7 @@ add_library(Conslib SHARED
     # Constraints/src/fclCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Utils/include)
@@ -164,7 +164,7 @@ target_link_libraries(Digitlib PRIVATE
 
 target_include_directories(Digitlib PUBLIC
     Examples/Digit/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -195,7 +195,7 @@ target_link_libraries(DigitModifiedlib PRIVATE
 
 target_include_directories(DigitModifiedlib PUBLIC
     Examples/Digit-modified/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -225,7 +225,7 @@ target_link_libraries(Kinovalib PRIVATE
 
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -240,7 +240,7 @@ add_executable(Digit_example
 
 target_include_directories(Digit_example PRIVATE
     Examples/Digit/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -268,7 +268,7 @@ add_executable(DigitWithObstacles_example
 
 target_include_directories(DigitWithObstacles_example PRIVATE
     Examples/Digit/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -296,7 +296,7 @@ add_executable(DigitModified_example
 
 target_include_directories(DigitModified_example PRIVATE
     Examples/Digit-modified/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -323,7 +323,7 @@ add_executable(Kinova_example
 
 target_include_directories(Kinova_example PRIVATE
     Examples/Kinova/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -351,7 +351,7 @@ add_executable(KinovaWaitr_example
 
 target_include_directories(KinovaWaitr_example PRIVATE
     Examples/Kinova/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -379,7 +379,7 @@ target_compile_options(KinovaWaitr_example PUBLIC
 
 # target_include_directories(Kinova_example_mex PRIVATE
 #     Examples/Kinova/include
-#     InverseDynamics/include
+#     KinematicsDynamics/include
 #     Trajectories/include
 #     Constraints/include
 #     Optimization/include
@@ -407,7 +407,7 @@ pybind11_add_module(oracle_pybind SHARED
 
 target_include_directories(oracle_pybind PRIVATE
     Examples/Kinova/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include
@@ -439,7 +439,7 @@ pybind11_add_module(oracle_waitr_pybind SHARED
 
 target_include_directories(oracle_waitr_pybind PRIVATE
     Examples/Kinova/include
-    InverseDynamics/include
+    KinematicsDynamics/include
     Trajectories/include
     Constraints/include
     Optimization/include

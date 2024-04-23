@@ -12,9 +12,15 @@ public:
 
     Polynomials() = default;
 
-    Polynomials(const VecX& tspan_input, int Nact_input, int degree_input);
+    Polynomials(const VecX& tspan_input, 
+                int Nact_input, 
+                int degree_input);
 
-    Polynomials(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input);
+    Polynomials(double T_input, 
+                int N_input, 
+                int Nact_input, 
+                TimeDiscretization time_discretization, 
+                int degree_input);
 
     void compute(const VecX& z, bool compute_derivatives = true) override;
 

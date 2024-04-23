@@ -12,9 +12,15 @@ public:
 
     BezierCurves() = default;
 
-    BezierCurves(const VecX& tspan_input, int Nact_input, int degree_input);
+    BezierCurves(const VecX& tspan_input, 
+                 int Nact_input, 
+                 int degree_input);
 
-    BezierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input);
+    BezierCurves(double T_input, 
+                 int N_input, 
+                 int Nact_input, 
+                 TimeDiscretization time_discretization, 
+                 int degree_input);
 
     void compute(const VecX& z, bool compute_derivatives = true) override;
 
