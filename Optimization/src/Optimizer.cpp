@@ -39,7 +39,19 @@ bool Optimizer::get_bounds_info(
     // compute bounds for all constraints
     Index iter = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        constraintsPtrVec_[c]->compute_bounds();
+        try {
+            constraintsPtrVec_[c]->compute_bounds();
+        }
+        catch (std::exception& e) {
+            std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in get_bounds_info! Check previous error message.");
+        }
+
+        if (constraintsPtrVec_[c]->m != constraintsPtrVec_[c]->g_lb.size() || 
+            constraintsPtrVec_[c]->m != constraintsPtrVec_[c]->g_ub.size()) {
+            THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have different sizes!");
+        }
 
         for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
             g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
@@ -145,7 +157,7 @@ bool Optimizer::eval_g(
     }
 
     // auto end = std::chrono::high_resolution_clock::now();
-    // std::cout << "g time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds.\n";
+    // std::cout << "g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
 
     return true;
 }
@@ -213,7 +225,7 @@ bool Optimizer::eval_jac_g(
         }
 
         // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << "jac_g time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds.\n";
+        // std::cout << "jac_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
     }
 
     return true;
@@ -272,6 +284,9 @@ void Optimizer::finalize_solution(
         solution(i) = x[i];
     }
 
+    // re-evaluate constraints to update values in each constraint instances
+    Number g_copy[m];
+    eval_g(n, x, false, m, g_copy);
     summarize_constraints(m, g);
 
     std::cout << "Objective value: " << obj_value << std::endl;
