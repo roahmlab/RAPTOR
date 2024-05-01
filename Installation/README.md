@@ -1,5 +1,21 @@
 # Installation of required packages
 
+## Install Through Docker (Recommended)
+We strongly suggest you use docker.
+We have provided a docker file.
+In Visual Studio Code, simply click "ctrl+shift+P" and search "Dev Containers: Rebuild Container",
+it will build the environment automatically for you so that you don't need to follow the steps below.
+
+We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
+
+Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
+To be more specific, you need to get HSL library from its official [website](https://www.hsl.rl.ac.uk/), 
+and then put the folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL).
+Rename this folder as "HSL" and compress it so that you get a "HSL.zip".
+Put the "HSL.zip" in `docker/` so that dockerfile can find it.
+This zip file will later be 'unzip'ed and built inside the docker container.
+
+## Install Independently
 All of the following instructions are assuming that the packages are installed to root directories,
 like /usr/local or /usr.
 You might need to edit your ~/.basrc so that the environment variable PATH includes /usr/local/bin and
@@ -47,7 +63,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PY
 Please refer to this [link](https://coin-or.github.io/Ipopt/INSTALL.html).
 
 Note that in section "Download, build, and install dependencies", you actually only to install one of the external libraries.
-We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in a nonlinear optimization problem.
+We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
 To be more specific, you need to get HSL library from its official [website](https://www.hsl.rl.ac.uk/), 

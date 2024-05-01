@@ -40,3 +40,5 @@ build/
 data/
 
 test_oracle.py
+
+docker/HSL.zip

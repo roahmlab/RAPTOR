@@ -10,47 +10,64 @@ set(CMAKE_BUILD_TYPE Release)
 # endif()
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -fopenmp")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
 
 message(${CMAKE_BUILD_TYPE})
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 14)
-
-# Find Eigen library
-find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
-include_directories(${EIGEN3_INCLUDE_DIR})
-
-# Find GSL library
-find_package(GSL REQUIRED)
-include_directories(${GSL_INCLUDE_DIRS})
-
-# Find Qhull library
-# find_package(Qhull REQUIRED)
-# include_directories(${QHULL_INCLUDE_DIRS})
-
-# Find FCL library
-# find_package(FCL REQUIRED)
-# include_directories(${FCL_INCLUDE_DIRS})
-
-# Add pinocchio configurations
-include(cmake/pinocchio_config.cmake)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Find Python library
 add_subdirectory(extern/pybind)
-
-# Find urdf library
-#find_package(Urdfdom REQUIRED COMPONENTS
-#    urdf
-#)
-#include_directories(${URDFDOM_INCLUDE_DIRS})
 
 # Find Boost library
 find_package(Boost REQUIRED COMPONENTS
     system
     filesystem
+    serialization
 )
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+# Find GSL library
+find_package(GSL REQUIRED)
+include_directories(${GSL_INCLUDE_DIRS})
+link_directories(${GSL_LIBRARY_DIRS})
+
+# Find Eigen library
+find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+# Find Pinocchio library
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
+    pinocchio
+    hpp-fcl
+    urdfdom
+    console_bridge)
+include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
+link_directories(${PKG_PIN_CONFIG_LIBRARY_DIRS})
+
+set(PINOCCHIO_FLAGS
+  ${pinocchio_CFLAGS_OTHER}
+  -Wno-ignored-attributes
+  -Wno-invalid-partial-specialization    # to silence warning with unsupported Eigen Tensor
+  -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
+  -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
+)
+
+# Find YAML library
+find_package(yaml-cpp REQUIRED)
+# have to manually set the include and library directories for yaml-cpp for now
+set(YAML_CPP_INCLUDE_DIR /usr/local/include)
+set(YAML_CPP_LIBRARY_DIR /usr/lib/x86_64-linux-gnu/)
+set(yaml_cpp_LIBRARIES yaml-cpp)
+include_directories(${YAML_CPP_INCLUDE_DIR})
+link_directories(${YAML_CPP_LIBRARY_DIR})
+
+message(${yaml_cpp_LIBRARIES})
 
 # Find Ipopt library
 set(IPOPT_LIBRARY_DIR /usr/local/lib)
@@ -60,14 +77,9 @@ link_directories(${IPOPT_LIBRARY_DIR})
 
 # Find HSL library
 set(HSL_LIBRARY_DIR /usr/local/lib)
-set(HSL_INCLUDE_DIR /usr/local/include)
+set(HSL_INCLUDE_DIR /usr/local/include/coin/ThirdParty)
 include_directories(${HSL_INCLUDE_DIR})
 link_directories(${HSL_LIBRARY_DIR})
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
-    pinocchio)
-include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
 
 ## Trajectories library
 add_library(trajlib SHARED
@@ -156,10 +168,8 @@ target_link_libraries(Digitlib PRIVATE
     Optlib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_include_directories(Digitlib PUBLIC
@@ -188,9 +198,7 @@ target_link_libraries(DigitModifiedlib PRIVATE
     Optlib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_include_directories(DigitModifiedlib PUBLIC
@@ -217,9 +225,7 @@ target_link_libraries(Kinovalib PRIVATE
     Optlib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
     # ${QHULL_LIBRARIES})
 
@@ -254,41 +260,11 @@ target_link_libraries(Digit_example PRIVATE
     Digitlib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_compile_options(Digit_example PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-add_executable(DigitWithObstacles_example 
-    Examples/Digit/DigitSingleStepWithObstacles.cpp)
-
-target_include_directories(DigitWithObstacles_example PRIVATE
-    Examples/Digit/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
-
-target_link_libraries(DigitWithObstacles_example PRIVATE
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Digitlib
-    ipopt
-    coinhsl
-    ${EIGEN3_LIBRARIES} 
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
-    ${PKG_PIN_CONFIG_LIBRARIES})
-
-target_compile_options(DigitWithObstacles_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
@@ -310,9 +286,7 @@ target_link_libraries(DigitModified_example PRIVATE
     DigitModifiedlib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_compile_options(DigitModified_example PUBLIC
@@ -337,9 +311,7 @@ target_link_libraries(Kinova_example PRIVATE
     Kinovalib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
     # ${FCL_LIBRARIES})
 
@@ -365,41 +337,12 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     Kinovalib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES})
     # ${FCL_LIBRARIES})
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
-
-# add_executable(Kinova_example_mex 
-#     Examples/Kinova/KinovaExample_mex.cpp)
-
-# target_include_directories(Kinova_example_mex PRIVATE
-#     Examples/Kinova/include
-#     KinematicsDynamics/include
-#     Trajectories/include
-#     Constraints/include
-#     Optimization/include
-#     Utils/include)
-
-# target_link_libraries(Kinova_example_mex PRIVATE
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     Kinovalib
-#     ipopt
-#     coinhsl
-#     ${EIGEN3_LIBRARIES} 
-#     ${BOOST_LIBRARIES} 
-#     ${URDFDOM_LIBRARIES}
-#     ${PKG_PIN_CONFIG_LIBRARIES})
-
-# target_compile_options(Kinova_example_mex PUBLIC
-#     ${PINOCCHIO_FLAGS})
 
 pybind11_add_module(oracle_pybind SHARED
     Examples/Kinova/KinovaPybind.cpp
@@ -421,9 +364,7 @@ target_link_libraries(oracle_pybind PRIVATE
     Kinovalib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
     # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
@@ -453,9 +394,7 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     Kinovalib
     ipopt
     coinhsl
-    ${EIGEN3_LIBRARIES} 
     ${BOOST_LIBRARIES} 
-    ${URDFDOM_LIBRARIES}
     ${PKG_PIN_CONFIG_LIBRARIES}
     # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
@@ -464,7 +403,6 @@ target_compile_options(oracle_waitr_pybind PUBLIC
     ${PINOCCHIO_FLAGS})
 
 set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 
 ## Install
 install(TARGETS trajlib
@@ -492,10 +430,6 @@ install(TARGETS Kinovalib
 )
 
 install(TARGETS Digit_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS DigitWithObstacles_example
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
