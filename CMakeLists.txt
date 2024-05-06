@@ -78,7 +78,8 @@ add_library(trajlib SHARED
     Trajectories/src/ArmourBezierCurves.cpp
     Trajectories/src/WaitrBezierCurves.cpp
     Trajectories/src/Polynomials.cpp 
-    Trajectories/src/Plain.cpp)
+    Trajectories/src/Plain.cpp
+    Trajectories/src/TrajectoryGroup.cpp)
 
 target_include_directories(trajlib PUBLIC
     Trajectories/include

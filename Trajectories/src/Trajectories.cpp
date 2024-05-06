@@ -2,8 +2,7 @@
 
 namespace IDTO {
 
-Trajectories::Trajectories(const VecX& tspan_input, 
-                           int Nact_input) :
+Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
     tspan(tspan_input),
     Nact(Nact_input){
     T = tspan.bottomLeftCorner<1,1>().value();
@@ -19,13 +18,20 @@ Trajectories::Trajectories(const VecX& tspan_input,
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
 
+    for (int i = 0; i < N; i++) {
+        q(i) = VecX::Zero(Nact);
+        q_d(i) = VecX::Zero(Nact);
+        q_dd(i) = VecX::Zero(Nact);
+
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+    }
+
     current_z.resize(1);
 }
 
-Trajectories::Trajectories(double T_input,  
-                           int N_input, 
-                           int Nact_input, 
-                           TimeDiscretization time_discretization) :
+Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization) :
     T(T_input),
     N(N_input),
     Nact(Nact_input) {;
@@ -50,6 +56,18 @@ Trajectories::Trajectories(double T_input,
     pq_pz.resize(1, N);
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
+
+    for (int i = 0; i < N; i++) {
+        q(i) = VecX::Zero(Nact);
+        q_d(i) = VecX::Zero(Nact);
+        q_dd(i) = VecX::Zero(Nact);
+
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+    }
+
+    current_z.resize(1);
 }
 
 bool Trajectories::if_computed(const VecX& z, bool compute_derivatives) {

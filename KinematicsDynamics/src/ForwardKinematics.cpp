@@ -44,6 +44,7 @@ void ForwardKinematicsHighOrderDerivative::fk(Transform& T,
             T *= model.jointPlacements[i + 1];
 
             Transform Tj(jtype[i], q[i]);
+
             T *= Tj;
         }
 
@@ -86,7 +87,7 @@ void ForwardKinematicsHighOrderDerivative::fk_jacobian(std::vector<Transform>& d
 
         //     if (search_id < 0 || search_id >= numJoints) {
         //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-        //         throw -1;
+        //         throw std::runtime_error("forwardkinematics.cpp: fk(): Can not find end properly!");
         //     }
 
         //     search_id = model.parents[search_id];
@@ -155,7 +156,7 @@ void ForwardKinematicsHighOrderDerivative::fk_hessian(std::vector<std::vector<Tr
 
         //     if (search_id < 0 || search_id >= numJoints) {
         //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-        //         throw -1;
+        //         throw std::runtime_error("forwardkinematics.cpp: fk(): Can not find end properly!");
         //     }
 
         //     search_id = model.parents[search_id];
@@ -245,7 +246,7 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
 
         //     if (search_id < 0 || search_id >= numJoints) {
         //         cout << "forwardkinematics.cpp: fk(): Can not find end properly!\n";
-        //         throw -1;
+        //         throw std::runtime_error("forwardkinematics.cpp: fk(): Can not find end properly!");
         //     }
 
         //     search_id = model.parents[search_id];
@@ -358,6 +359,11 @@ Eigen::Vector3d ForwardKinematicsHighOrderDerivative::Transform2xyz(const Transf
 void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
                                                                     const Transform& T, 
                                                                     const std::vector<Transform>& dTdq) {
+    if (J.rows() != 6) {
+        std::cerr << "Jacobian matrix should have 6 rows and should be resized before this function!" << std::endl;
+        throw std::invalid_argument("Jacobian matrix should have 6 rows and should be resized before this function!");
+    }
+
     const Eigen::MatrixXd& R = T.R;
     
     // chain declared as class public variable. 
@@ -381,7 +387,15 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
         J(2, i) = dTdq[i].p(2);
 
         J(3, i) = R(1,2)*dTdq[i].R(2,2)*t9-R(2,2)*dTdq[i].R(1,2)*t9;
-        J(4, i) = dTdq[i].R(0,2)/sqrt(-R(0,2)*R(0,2)+1.0); 
+        if (1.0-R(0,2)*R(0,2) < 0) {
+            throw std::runtime_error("forwardkinematics.cpp: Transform2xyzrpyJacobian(): 1.0-R(0,2)*R(0,2) is negative and is put inside sqrt!");
+        }
+        else if (1.0-R(0,2)*R(0,2) < 1e-6) {
+            J(4, i) = 0;
+        }
+        else {
+            J(4, i) = dTdq[i].R(0,2)/sqrt(1.0-R(0,2)*R(0,2));
+        }
         J(5, i) = -R(0,0)*dTdq[i].R(0,1)*t8+R(0,1)*dTdq[i].R(0,0)*t8;
     }
 }
@@ -389,6 +403,11 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
 void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd& J, 
                                                                  const Transform& T, 
                                                                  const std::vector<Transform>& dTdq) {
+    if (J.rows() != 3) {
+        std::cerr << "Jacobian matrix should have 3 rows and should be resized before this function!" << std::endl;
+        throw std::invalid_argument("Jacobian matrix should have 3 rows and should be resized before this function!");
+    }
+
     const Eigen::MatrixXd& R = T.R;
     
     // chain declared as class public variable. 

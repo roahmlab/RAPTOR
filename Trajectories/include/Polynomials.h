@@ -16,7 +16,7 @@ public:
                 int Nact_input, 
                 int degree_input);
 
-    Polynomials(double T_input, 
+    Polynomials(double T_input,
                 int N_input, 
                 int Nact_input, 
                 TimeDiscretization time_discretization, 

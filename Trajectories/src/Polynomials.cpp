@@ -2,7 +2,9 @@
 
 namespace IDTO {
 
-Polynomials::Polynomials(const VecX& tspan_input, int Nact_input, int degree_input) : 
+Polynomials::Polynomials(const VecX& tspan_input, 
+                         int Nact_input, 
+                         int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
     varLength = (degree + 1) * Nact;
@@ -12,7 +14,11 @@ Polynomials::Polynomials(const VecX& tspan_input, int Nact_input, int degree_inp
     ddP = VecX::Zero(degree + 1);
 }
 
-Polynomials::Polynomials(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
+Polynomials::Polynomials(double T_input, 
+                         int N_input, 
+                         int Nact_input, 
+                         TimeDiscretization time_discretization, 
+                         int degree_input) :
     Trajectories(T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
     varLength = (degree + 1) * Nact;

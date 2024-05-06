@@ -61,6 +61,14 @@ public:
         Number* lambda
     );
 
+    /** Method to warm start the entire iterate */
+    virtual bool GetWarmStartIterate(
+        IteratesVector& /*warm_start_iterate*/
+    )
+    {
+        return false;
+    }
+
     /** Method to return the objective value */
     virtual bool eval_f(
         Index         n,
@@ -161,7 +169,7 @@ public:
        const Optimizer&
     );
 
-    // class variables:
+    // class members:
     int numVars = 0; // number of variables
     int numCons = 0; // number of constraints
 
@@ -172,6 +180,7 @@ public:
 
     VecX solution; // stores the final solution here
 
+    Number final_constr_violation = 0;
     bool ifFeasible = true;
 };
 

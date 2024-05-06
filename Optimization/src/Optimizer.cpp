@@ -24,12 +24,12 @@ bool Optimizer::get_bounds_info(
 
     // lower bounds
     for( Index i = 0; i < n; i++ ) {
-        x_l[i] = -1e8;
+        x_l[i] = -1e19;
     }
 
     // upper bounds  
     for( Index i = 0; i < n; i++ ) {
-        x_u[i] = 1e8;
+        x_u[i] = 1e19;
     }
 
     if (constraintsPtrVec_.size() != constraintsNameVec_.size()) {
@@ -146,7 +146,7 @@ bool Optimizer::eval_g(
         catch (std::exception& e) {
             std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
             std::cerr << e.what() << std::endl;
-            THROW_EXCEPTION(IpoptException, "*** Error in eval_g! Check previous error message.");
+            THROW_EXCEPTION(IpoptException, "*** Error in eval_g: " + constraintsNameVec_[c] + "! Check previous error message.");
         }
 
         // fill in constraints
@@ -212,7 +212,7 @@ bool Optimizer::eval_jac_g(
             catch (std::exception& e) {
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cout << e.what() << std::endl;
-                THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g! Check previous error message.");
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g in: " + constraintsNameVec_[c] + "! Check previous error message.");
             }
 
             // fill in constraints
@@ -305,7 +305,6 @@ void Optimizer::summarize_constraints(
 
     std::cout << "Constraint violation report:" << std::endl;
 
-    Number final_constr_violation = 0;
     Index iter = 0;
     ifFeasible = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
