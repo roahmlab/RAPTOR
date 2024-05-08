@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 
 namespace IDTO {
+namespace Utils {
 
 inline double deg2rad(const double deg) {
     return deg * M_PI / 180.0;
@@ -58,6 +59,20 @@ inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, const Eigen::VectorXd& b,
     return true;
 }
 
+inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b, double tol = 1e-10) {
+    if (a.rows() != b.rows() || a.cols() != b.cols()) {
+        return false;
+    }
+    for (int i = 0; i < a.rows(); i++) {
+        for (int j = 0; j < a.cols(); j++) {
+            if (fabs(a(i, j) - b(i, j)) > tol) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, int rows, int cols) {
     return Eigen::Map<const Eigen::MatrixXd>(vec.data(), rows, cols);
 }
@@ -78,6 +93,14 @@ inline Eigen::Vector3d skew(const Eigen::Matrix3d& m) {
     return res;
 }
 
+inline Eigen::Vector3d unskew(const Eigen::Matrix3d& m) {
+    Eigen::Vector3d res;
+    res << m(2,1), 
+           m(0,2), 
+           m(1,0);
+    return res;
+}
+
 inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, const Eigen::Vector3d& p) {
     Eigen::Matrix<double, 6, 6> res;
     res << R,            Eigen::MatrixXd::Zero(3, 3),
@@ -85,6 +108,7 @@ inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, const Eigen::V
     return res;
 }
 
+}; // namespace Utils
 }; // namespace IDTO
 
 #endif // UTILS_H

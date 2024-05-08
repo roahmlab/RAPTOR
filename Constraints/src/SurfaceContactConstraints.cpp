@@ -19,13 +19,15 @@ SurfaceContactConstraints::SurfaceContactConstraints(std::shared_ptr<Constrained
     pg_pz.resize(m, idPtr_->trajPtr_->varLength);
 }
 
-void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void SurfaceContactConstraints::compute(const VecX& z, 
+                                        bool compute_derivatives,
+                                        bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    if (compute_hessian) {
+        throw std::invalid_argument("SurfaceContactConstraints does not support hessian computation");
     }
     
     idPtr_->compute(z, compute_derivatives);
@@ -78,7 +80,7 @@ void SurfaceContactConstraints::compute(const VecX& z, bool compute_derivatives)
             }
 
             // (3) rotation friction cone
-            pg_pz.row(i * 7 + 2) = sign(lambda(5)) * plambda_pz.row(5) - 
+            pg_pz.row(i * 7 + 2) = Utils::sign(lambda(5)) * plambda_pz.row(5) - 
                                    fp.gamma * plambda_pz.row(2);
 
             // (4, 5) ZMP on one axis

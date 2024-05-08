@@ -43,35 +43,13 @@ public:
 
     // class methods:
     virtual void compute(const VecX& z,
-                         bool compute_derivatives = true);
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
         // determine if the constraints are computed before and save the current decision variable
-    bool is_computed(const VecX& z, bool compute_derivatives) {
-        if (z.size() != current_z.size()) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
-
-        if (compute_derivatives != if_compute_derivatives) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
-
-        bool isSame = true;
-
-        for (int i = 0; i < z.size(); i++) {
-            if (z(i) != current_z(i)) {
-                isSame = false;
-                break;
-            }
-        }
-
-        current_z = z;  
-        if_compute_derivatives = compute_derivatives;
-        return isSame;
-    }                     
+    bool is_computed(const VecX& z, 
+                     bool compute_derivatives, 
+                     bool compute_hessian);
 
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
@@ -84,6 +62,7 @@ public:
         // the decision variable that was evaluated last time
     VecX current_z;
     bool if_compute_derivatives = false;
+    bool if_compute_hessian = false;
 
     MatX prnea_pq;
     MatX prnea_pv;

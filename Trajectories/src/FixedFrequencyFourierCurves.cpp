@@ -38,16 +38,18 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
     dF0 = VecX::Zero(2 * degree + 1);
 }
 
-void FixedFrequencyFourierCurves::compute(const VecX& z, bool compute_derivatives) {
+void FixedFrequencyFourierCurves::compute(const VecX& z, 
+                                          bool compute_derivatives,
+                                          bool compute_hessian) {
     if (z.size() < varLength) {
         throw std::invalid_argument("FixedFrequencyFourierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
     // MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
-    MatX coefficients = reshape(temp, 2 * degree + 1, Nact);
+    MatX coefficients = Utils::reshape(temp, 2 * degree + 1, Nact);
     VecX q_act0       = z.block((2 * degree + 1) * Nact, 0, Nact, 1);
     VecX q_act_d0     = z.block((2 * degree + 1) * Nact + Nact, 0, Nact, 1);
 
@@ -132,6 +134,14 @@ void FixedFrequencyFourierCurves::compute(const VecX& z, bool compute_derivative
                 // derivative with respect to a_i
                 for (int j = 0; j < 2 * degree + 1; j++) {
                     pq_dd_pz(x)(i, i * (2 * degree + 1) + j) = ddF(j);
+                }
+            }
+
+            if (compute_hessian) {
+                for (int i = 0; i < Nact; i++) {
+                    pq_pz_pz(i, x).setZero(); 
+                    pq_d_pz_pz(i, x).setZero(); 
+                    pq_dd_pz_pz(i, x).setZero(); 
                 }
             }
         }

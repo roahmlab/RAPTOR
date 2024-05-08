@@ -26,7 +26,9 @@ public:
         // update original information in Trajectories class
     void gather_trajectories_information();
 
-    virtual void compute(const VecX& z, bool compute_derivatives = true);
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
     // class members:
     std::unordered_map<std::string, std::shared_ptr<Trajectories>> trajectories;

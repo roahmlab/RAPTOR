@@ -2,7 +2,9 @@
 
 namespace IDTO {
 
-FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
+FourierCurves::FourierCurves(const VecX& tspan_input, 
+                             int Nact_input, 
+                             int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
     varLength = (2 * degree + 4) * Nact;
@@ -22,7 +24,11 @@ FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree
     pdF0_pw = VecX::Zero(2 * degree + 1);
 }
 
-FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
+FourierCurves::FourierCurves(double T_input, 
+                             int N_input, 
+                             int Nact_input, 
+                             TimeDiscretization time_discretization,
+                             int degree_input) :
     Trajectories(T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
     varLength = (2 * degree + 4) * Nact;
@@ -42,16 +48,22 @@ FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDi
     pdF0_pw = VecX::Zero(2 * degree + 1);
 }
 
-void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
+void FourierCurves::compute(const VecX& z, 
+                            bool compute_derivatives,
+                            bool compute_hessian) {
     if (z.size() < varLength) {
         throw std::invalid_argument("FourierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
+
+    if (compute_hessian) {
+        throw std::invalid_argument("FourierCurves: Hessian computation not implemented");
+    }
 
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
     // MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
-    MatX coefficients = reshape(temp, 2 * degree + 2, Nact);
+    MatX coefficients = Utils::reshape(temp, 2 * degree + 2, Nact);
     VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
     VecX q_act_d0     = z.block((2 * degree + 2) * Nact + Nact, 0, Nact, 1);
 

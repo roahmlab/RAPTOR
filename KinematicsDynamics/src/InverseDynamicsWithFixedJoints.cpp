@@ -10,13 +10,18 @@ InverseDynamicsWithFixedJoints::InverseDynamicsWithFixedJoints(const Model& mode
 }
 
 void InverseDynamicsWithFixedJoints::compute(const VecX& z,
-                                             bool compute_derivatives) {
+                                             bool compute_derivatives,
+                                             bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }   
 
-    if (is_computed(z, compute_derivatives)) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
+    }
+
+    if (compute_hessian) {
+        throw std::invalid_argument("InverseDynamicsWithFixedJoints does not support hessian computation");
     }
 
     if (compute_derivatives) {
@@ -49,7 +54,7 @@ void InverseDynamicsWithFixedJoints::compute(const VecX& z,
         }
     }
 
-    trajPtr_->compute(z, compute_derivatives);                            
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);                            
 
     for (int i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);

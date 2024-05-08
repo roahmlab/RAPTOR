@@ -172,10 +172,10 @@ bool KinovaOptimizer::eval_f(
 
     const VecX& qplan = trajPtr_->q(tplan_n);
 
-    obj_value = pow(wrapToPi(qplan[0] - qdes[0]), 2) + // These are continuous joints
-                pow(wrapToPi(qplan[2] - qdes[2]), 2) + 
-                pow(wrapToPi(qplan[4] - qdes[4]), 2) + 
-                pow(wrapToPi(qplan[6] - qdes[6]), 2) + 
+    obj_value = pow(Utils::wrapToPi(qplan[0] - qdes[0]), 2) + // These are continuous joints
+                pow(Utils::wrapToPi(qplan[2] - qdes[2]), 2) + 
+                pow(Utils::wrapToPi(qplan[4] - qdes[4]), 2) + 
+                pow(Utils::wrapToPi(qplan[6] - qdes[6]), 2) + 
                 pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
                 pow(qplan[3] - qdes[3], 2) + 
                 pow(qplan[5] - qdes[5], 2);
@@ -209,7 +209,7 @@ bool KinovaOptimizer::eval_grad_f(
 
     for(Index i = 0; i < n; i++){
         if (i % 2 == 0) {
-            grad_f[i] = (2 * wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
+            grad_f[i] = (2 * Utils::wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
         }
         else {
             grad_f[i] = (2 * (qplan[i] - qdes[i]) * pqplan_pz(i, i));

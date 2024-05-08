@@ -33,23 +33,25 @@ ConstrainedJointLimits::ConstrainedJointLimits(std::shared_ptr<Trajectories>& tr
     pg_pz.resize(m, trajPtr_->varLength);
 }
 
-void ConstrainedJointLimits::compute(const VecX& z, bool compute_derivatives) {
-    // if (is_computed(z, compute_derivatives)) {
+void ConstrainedJointLimits::compute(const VecX& z, 
+                                     bool compute_derivatives,
+                                     bool compute_hessian) {
+    // if (is_computed(z, compute_derivatives, compute_hessian)) {
     //     return;
     // }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    if (compute_hessian) {
+        throw std::invalid_argument("ConstrainedJointLimits does not support hessian computation");
     }
 
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < trajPtr_->N; i++) {
         VecX qfull(NB);
         dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i), true);
 
         dcPtr_->setupJointPosition(qfull, compute_derivatives);
-        g.block(i * NB, 0, NB, 1) = wrapToPi(qfull);
+        g.block(i * NB, 0, NB, 1) = Utils::wrapToPi(qfull);
 
         if (compute_derivatives) {
             // fill in independent joints derivatives directly

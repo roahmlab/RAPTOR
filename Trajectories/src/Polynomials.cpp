@@ -28,15 +28,17 @@ Polynomials::Polynomials(double T_input,
     ddP = VecX::Zero(degree + 1);
 }
 
-void Polynomials::compute(const VecX& z, bool compute_derivatives) {
+void Polynomials::compute(const VecX& z, 
+                          bool compute_derivatives,
+                          bool compute_hessian) {
     if (z.size() < varLength) {
         throw std::invalid_argument("Polynomials: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     // MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
-    MatX coefficients = reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
+    MatX coefficients = Utils::reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x);
@@ -76,6 +78,14 @@ void Polynomials::compute(const VecX& z, bool compute_derivatives) {
                 pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = P.transpose();
                 pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dP.transpose();
                 pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddP.transpose();
+            }
+        }
+
+        if (compute_hessian) {
+            for (int i = 0; i < Nact; i++) {
+                pq_pz_pz(i, x).setZero();
+                pq_d_pz_pz(i, x).setZero();
+                pq_dd_pz_pz(i, x).setZero();
             }
         }
     }

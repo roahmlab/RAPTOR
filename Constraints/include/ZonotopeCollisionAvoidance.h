@@ -2,7 +2,6 @@
 #define ZONOTOPE_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
-#include <vector>
 
 // DEPRECATED
 // DEPRECATED

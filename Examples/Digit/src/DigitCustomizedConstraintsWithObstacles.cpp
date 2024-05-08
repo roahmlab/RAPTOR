@@ -50,7 +50,7 @@ DigitCustomizedConstraintsWithObstacles::DigitCustomizedConstraintsWithObstacles
 }
 
 void DigitCustomizedConstraintsWithObstacles::compute(const VecX& z, bool compute_derivatives) {
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {

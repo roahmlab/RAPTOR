@@ -11,7 +11,6 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <omp.h>
 
 namespace IDTO {
 

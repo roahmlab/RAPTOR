@@ -25,7 +25,8 @@ public:
     ~ConstrainedInverseDynamics() = default;
     
     virtual void compute(const VecX& z,
-                         bool compute_derivatives = true);
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
     // class members:
     int numDependentJoints = 0;

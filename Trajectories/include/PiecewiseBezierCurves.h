@@ -24,7 +24,9 @@ public:
     ~PiecewiseBezierCurves() = default;
 
     // class methods:
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
     // class members:
     MatX coefficients;

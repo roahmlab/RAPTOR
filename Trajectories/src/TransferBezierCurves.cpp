@@ -7,7 +7,8 @@ TransferBezierCurves::TransferBezierCurves(double T_input,
                                            int Nact_input, 
                                            const int degree_input,
                                            TimeDiscretization time_discretization, 
-                                           const TransferTrajectoryParameters& ttp_input) {
+                                           const TransferTrajectoryParameters& ttp_input) :
+    BezierCurves(T_input, N_input, Nact_input, time_discretization, degree_input) {
     T = T_input;
     N = N_input;
     Nact = Nact_input;
@@ -49,22 +50,16 @@ TransferBezierCurves::TransferBezierCurves(double T_input,
     if (varLength <= 0) {
         throw std::invalid_argument("TransferBezierCurves: degree must be larget than 5");
     }
-
-    q.resize(1, N);
-    q_d.resize(1, N);
-    q_dd.resize(1, N);
-
-    pq_pz.resize(1, N);
-    pq_d_pz.resize(1, N);
-    pq_dd_pz.resize(1, N);
 }
 
-void TransferBezierCurves::compute(const VecX& z, bool compute_derivatives) {
+void TransferBezierCurves::compute(const VecX& z, 
+                                   bool compute_derivatives,
+                                   bool compute_hessian) {
     if (z.size() != varLength) {
         throw std::invalid_argument("TransferBezierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     for (int i = 3; i < degree - 2; i++) {
         coefficients.row(i) = z.block((i - 3) * Nact, 0, Nact, 1).transpose();
@@ -122,6 +117,14 @@ void TransferBezierCurves::compute(const VecX& z, bool compute_derivatives) {
                     pq_d_pz(x)(i, (j - 3) * Nact + i) = dB(j);
                     pq_dd_pz(x)(i, (j - 3) * Nact + i) = ddB(j);
                 }
+            }
+        }
+
+        if (compute_hessian) {
+            for (int i = 0; i < Nact; i++) {
+                pq_pz_pz(i, x).setZero();
+                pq_d_pz_pz(i, x).setZero();
+                pq_dd_pz_pz(i, x).setZero();
             }
         }
     }

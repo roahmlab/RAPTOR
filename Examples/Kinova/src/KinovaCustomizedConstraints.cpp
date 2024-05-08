@@ -28,8 +28,14 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
     pg_pz.resize(m, trajPtr_->varLength);
 }
 
-void KinovaCustomizedConstraints::compute(const VecX& z, bool compute_derivatives) {
-    trajPtr_->compute(z, compute_derivatives);
+void KinovaCustomizedConstraints::compute(const VecX& z, 
+                                          bool compute_derivatives,
+                                          bool compute_hessian) {
+    if (compute_hessian) {
+        throw std::invalid_argument("KinovaCustomizedConstraints does not support hessian computation");
+    }
+
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
     
     const int numObstacles = collisionAvoidancePtr_->numObstacles;
 

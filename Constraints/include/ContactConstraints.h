@@ -1,5 +1,5 @@
-#ifndef WAITR_CONTACT_CONSTRAINTS_H
-#define WAITR_CONTACT_CONSTRAINTS_H
+#ifndef CONTACT_CONSTRAINTS_H
+#define CONTACT_CONSTRAINTS_H
 
 #include "Constraints.h"
 #include "Trajectories.h"
@@ -9,10 +9,10 @@
 namespace IDTO {
 
 typedef struct contactSurfaceParams_  {
-    double mu = 0.7;
-    double Lx = 0.1;
-    double Ly = 0.1;
-    double maxSuctionForce = 100;
+    double mu = 0.7; // friction coefficient
+    double Lx = 0.1; // radius of the contact surface (assumed to be rectangle)
+    double Ly = 0.1; // radius of the contact surface (assumed to be rectangle)
+    double maxSuctionForce = 100; // maximum suction force
 
     contactSurfaceParams_() = default;
 
@@ -26,7 +26,7 @@ typedef struct contactSurfaceParams_  {
         maxSuctionForce(maxSuctionForce_input) {}
 } contactSurfaceParams;
 
-class WaitrContactConstraints : public Constraints {
+class ContactConstraints : public Constraints {
 public:
     using Force = pinocchio::Data::Force;
     using Vec3 = Eigen::Vector3d;
@@ -35,28 +35,25 @@ public:
     using MatX = Eigen::MatrixXd;
 
     // Constructor
-    WaitrContactConstraints() = default;
+    ContactConstraints() = default;
 
     // Constructor
-    WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
-                            const contactSurfaceParams& csp_input);
+    ContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
+                       const contactSurfaceParams& csp_input);
 
     // Destructor
-    ~WaitrContactConstraints() = default;
+    ~ContactConstraints() = default;
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, 
-                 bool compute_derivatives = true,
-                 bool compute_hessian = false) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
-        // print violation information
-    void print_violation_info() override;
-
-    // class variables:
+    // class members:
     std::shared_ptr<CustomizedInverseDynamics> idPtr_;
 
     contactSurfaceParams csp;
@@ -64,4 +61,4 @@ public:
 
 }; // namespace IDTO
 
-#endif // WAITR_CONTACT_CONSTRAINTS_H
+#endif // CONTACT_CONSTRAINTS_H

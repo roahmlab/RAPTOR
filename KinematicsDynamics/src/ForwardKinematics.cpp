@@ -356,22 +356,42 @@ Eigen::Vector3d ForwardKinematicsHighOrderDerivative::Transform2xyz(const Transf
     return x;
 }
 
+void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd& J, 
+                                                                 const Transform& T, 
+                                                                 const std::vector<Transform>& dTdq) {
+    // chain declared as class public variable. 
+    // always assume that fk_hessian called after fk
+
+    // result container has been allocated outside the function
+    if (J.rows() != 3) {
+        std::cerr << "Jacobian matrix should have 3 rows and should be resized before this function!" << std::endl;
+        throw std::invalid_argument("Jacobian matrix should have 3 rows and should be resized before this function!");
+    }
+
+    J.setZero();
+
+    for (auto i : chain) {
+        J(0, i) = dTdq[i].p(0);
+        J(1, i) = dTdq[i].p(1);
+        J(2, i) = dTdq[i].p(2);
+    }
+}
+
 void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
                                                                     const Transform& T, 
                                                                     const std::vector<Transform>& dTdq) {
+    // chain declared as class public variable. 
+    // always assume that fk_jacobian called after fk
+
+    // result container has been allocated outside the function
     if (J.rows() != 6) {
         std::cerr << "Jacobian matrix should have 6 rows and should be resized before this function!" << std::endl;
         throw std::invalid_argument("Jacobian matrix should have 6 rows and should be resized before this function!");
     }
 
-    const Eigen::MatrixXd& R = T.R;
-    
-    // chain declared as class public variable. 
-    // always assume that fk_jacobian called after fk
-
-    // result container has been allocated outside the function
     J.setZero();
 
+    const Eigen::MatrixXd& R = T.R;
     double t2 = R(0,0) * R(0,0);
     double t3 = R(0,1) * R(0,1);
     double t4 = R(1,2) * R(1,2);
@@ -387,39 +407,39 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
         J(2, i) = dTdq[i].p(2);
 
         J(3, i) = R(1,2)*dTdq[i].R(2,2)*t9-R(2,2)*dTdq[i].R(1,2)*t9;
-        if (1.0-R(0,2)*R(0,2) < 0) {
+
+        double sqrt_input = 1.0-R(0,2)*R(0,2);
+        if (sqrt_input < 0) {
             throw std::runtime_error("forwardkinematics.cpp: Transform2xyzrpyJacobian(): 1.0-R(0,2)*R(0,2) is negative and is put inside sqrt!");
         }
-        else if (1.0-R(0,2)*R(0,2) < 1e-6) {
+        else if (sqrt_input == 0) {
             J(4, i) = 0;
         }
         else {
-            J(4, i) = dTdq[i].R(0,2)/sqrt(1.0-R(0,2)*R(0,2));
+            J(4, i) = dTdq[i].R(0,2)/sqrt(sqrt_input);
         }
         J(5, i) = -R(0,0)*dTdq[i].R(0,1)*t8+R(0,1)*dTdq[i].R(0,0)*t8;
     }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd& J, 
-                                                                 const Transform& T, 
-                                                                 const std::vector<Transform>& dTdq) {
-    if (J.rows() != 3) {
-        std::cerr << "Jacobian matrix should have 3 rows and should be resized before this function!" << std::endl;
-        throw std::invalid_argument("Jacobian matrix should have 3 rows and should be resized before this function!");
-    }
-
-    const Eigen::MatrixXd& R = T.R;
-    
+void ForwardKinematicsHighOrderDerivative::Transform2xyzHessian(Eigen::Array<Eigen::MatrixXd, 3, 1>& H,
+                                                                const Transform& T, 
+                                                                const std::vector<Transform>& dTdq,
+                                                                const std::vector<std::vector<Transform>>& ddTddq) {
     // chain declared as class public variable. 
     // always assume that fk_hessian called after fk
 
     // result container has been allocated outside the function
-    J.setZero();
+    for (int i = 0; i < 3; i++) {
+        H(i).setZero();
+    }  
 
     for (auto i : chain) {
-        J(0, i) = dTdq[i].p(0);
-        J(1, i) = dTdq[i].p(1);
-        J(2, i) = dTdq[i].p(2);
+        for (auto j : chain) {
+            H(0)(i, j) = ddTddq[i][j].p(0);
+            H(1)(i, j) = ddTddq[i][j].p(1);
+            H(2)(i, j) = ddTddq[i][j].p(2);
+        }
     }
 }
 
@@ -427,12 +447,15 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<
                                                                    const Transform& T, 
                                                                    const std::vector<Transform>& dTdq,
                                                                    const std::vector<std::vector<Transform>>& ddTddq) {
-    const Eigen::MatrixXd& R = T.R;
-
     // chain declared as class public variable. 
     // always assume that fk_hessian called after fk
 
     // result container has been allocated outside the function
+    for (int i = 0; i < 6; i++) {
+        H(i).setZero();
+    }  
+    
+    const Eigen::MatrixXd& R = T.R;
     double t2 = R(0,0) * R(0,0);
     double t3 = R(0,1) * R(0,1);
     double t4 = R(0,2) * R(0,2);
@@ -447,17 +470,23 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<
     double t12 = t11 * t11;
     double t14 = t13 * t13;
 
-    for (int i = 0; i < 6; i++) {
-        H(i).setZero();
-    }
-
     for (auto i : chain) {
         for (auto j : chain) {
             H(0)(i, j) = ddTddq[i][j].p(0);
             H(1)(i, j) = ddTddq[i][j].p(1);
             H(2)(i, j) = ddTddq[i][j].p(2);
             H(3)(i, j) = dTdq[j].R(1,2)*(dTdq[i].R(2,2)*t13-dTdq[i].R(2,2)*t5*t14*2.0+R(1,2)*R(2,2)*dTdq[i].R(1,2)*t14*2.0)-dTdq[j].R(2,2)*(dTdq[i].R(1,2)*t13-dTdq[i].R(1,2)*t6*t14*2.0+R(1,2)*R(2,2)*dTdq[i].R(2,2)*t14*2.0)+R(1,2)*ddTddq[i][j].R(2,2)*t13-R(2,2)*ddTddq[i][j].R(1,2)*t13;
-            H(4)(i, j) = ddTddq[i][j].R(0,2)/sqrt(t10)+R(0,2)*dTdq[i].R(0,2)*dTdq[j].R(0,2)/pow(t10,1.5);
+            
+            if (t10 < 0) {
+                throw std::runtime_error("forwardkinematics.cpp: Transform2xyzrpyHessian(): t10 is negative and is put inside sqrt!");
+            }
+            else if (t10 == 0) {
+                H(4)(i, j) = 0.0;
+            }
+            else {
+                H(4)(i, j) = ddTddq[i][j].R(0,2)/sqrt(t10)+R(0,2)*dTdq[i].R(0,2)*dTdq[j].R(0,2)/pow(t10,1.5);
+            }
+
             H(5)(i, j) = -dTdq[j].R(0,0)*(dTdq[i].R(0,1)*t11-dTdq[i].R(0,1)*t2*t12*2.0+R(0,0)*R(0,1)*dTdq[i].R(0,0)*t12*2.0)+dTdq[j].R(0,1)*(dTdq[i].R(0,0)*t11-dTdq[i].R(0,0)*t3*t12*2.0+R(0,0)*R(0,1)*dTdq[i].R(0,1)*t12*2.0)-R(0,0)*ddTddq[i][j].R(0,1)*t11+R(0,1)*ddTddq[i][j].R(0,0)*t11;
         }
     }
@@ -516,7 +545,18 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyThirdOrder(Eigen::Arr
                 double T2_i_j_k = dddTdddq[i][j][k].p(1);
                 double T3_i_j_k = dddTdddq[i][j][k].p(2);
                 double T4_i_j_k = -ddTddq[j][k].R(2,2)*(R(1,2)*t21+dTdq[i].R(1,2)*t14-dTdq[i].R(1,2)*t6*t15*2.0)+ddTddq[j][k].R(1,2)*(R(2,2)*t20+dTdq[i].R(2,2)*t14-dTdq[i].R(2,2)*t5*t15*2.0)+dTdq[k].R(1,2)*(-dTdq[j].R(1,2)*(R(1,2)*dTdq[i].R(2,2)*t15*6.0-R(2,2)*dTdq[i].R(1,2)*t15*2.0-(R(1,2)*R(1,2)*R(1,2))*dTdq[i].R(2,2)*t16*8.0+R(2,2)*dTdq[i].R(1,2)*t5*t16*8.0)+dTdq[j].R(2,2)*t31+ddTddq[i][j].R(2,2)*t14-ddTddq[i][j].R(2,2)*t5*t15*2.0+R(1,2)*R(2,2)*ddTddq[i][j].R(1,2)*t15*2.0)-dTdq[k].R(2,2)*(dTdq[j].R(2,2)*(R(1,2)*dTdq[i].R(2,2)*t15*2.0-R(2,2)*dTdq[i].R(1,2)*t15*6.0+(R(2,2)*R(2,2)*R(2,2))*dTdq[i].R(1,2)*t16*8.0-R(1,2)*dTdq[i].R(2,2)*t6*t16*8.0)-dTdq[j].R(1,2)*t31+ddTddq[i][j].R(1,2)*t14-ddTddq[i][j].R(1,2)*t6*t15*2.0+R(1,2)*R(2,2)*ddTddq[i][j].R(2,2)*t15*2.0)-ddTddq[i][k].R(1,2)*(dTdq[j].R(2,2)*(t14-t6*t15*2.0)-R(1,2)*R(2,2)*dTdq[j].R(1,2)*t15*2.0)+ddTddq[i][k].R(2,2)*(dTdq[j].R(1,2)*(t14-t5*t15*2.0)-R(1,2)*R(2,2)*dTdq[j].R(2,2)*t15*2.0)+R(1,2)*dddTdddq[i][j][k].R(2,2)*t14-R(2,2)*dddTdddq[i][j][k].R(1,2)*t14;
-                double T5_i_j_k = dddTdddq[i][j][k].R(0,2)/sqrt(t10)+dTdq[k].R(0,2)*(R(0,2)*ddTddq[i][j].R(0,2)*t17+dTdq[i].R(0,2)*dTdq[j].R(0,2)*t17+dTdq[i].R(0,2)*dTdq[j].R(0,2)*t4/pow(t10,2.5)*3.0)+R(0,2)*dTdq[i].R(0,2)*ddTddq[j][k].R(0,2)*t17+R(0,2)*dTdq[j].R(0,2)*ddTddq[i][k].R(0,2)*t17;
+                
+                double T5_i_j_k = 0.0;
+                if (t10 < 0) {
+                    throw std::runtime_error("forwardkinematics.cpp: Transform2xyzrpyThirdOrder(): t10 is negative and is put inside sqrt!");
+                }
+                else if (t10 == 0) {
+                    T5_i_j_k = 0.0;
+                }
+                else {
+                    T5_i_j_k = dddTdddq[i][j][k].R(0,2)/sqrt(t10)+dTdq[k].R(0,2)*(R(0,2)*ddTddq[i][j].R(0,2)*t17+dTdq[i].R(0,2)*dTdq[j].R(0,2)*t17+dTdq[i].R(0,2)*dTdq[j].R(0,2)*t4/pow(t10,2.5)*3.0)+R(0,2)*dTdq[i].R(0,2)*ddTddq[j][k].R(0,2)*t17+R(0,2)*dTdq[j].R(0,2)*ddTddq[i][k].R(0,2)*t17;
+                }
+                
                 double T6_i_j_k = -ddTddq[j][k].R(0,0)*(R(0,1)*t18+dTdq[i].R(0,1)*t11-dTdq[i].R(0,1)*t2*t12*2.0)+ddTddq[j][k].R(0,1)*(R(0,0)*t19+dTdq[i].R(0,0)*t11-dTdq[i].R(0,0)*t3*t12*2.0)-dTdq[k].R(0,0)*(-dTdq[j].R(0,0)*(R(0,0)*dTdq[i].R(0,1)*t12*6.0-R(0,1)*dTdq[i].R(0,0)*t12*2.0-(R(0,0)*R(0,0)*R(0,0))*dTdq[i].R(0,1)*t13*8.0+R(0,1)*dTdq[i].R(0,0)*t2*t13*8.0)+dTdq[j].R(0,1)*t30+ddTddq[i][j].R(0,1)*t11-ddTddq[i][j].R(0,1)*t2*t12*2.0+R(0,0)*R(0,1)*ddTddq[i][j].R(0,0)*t12*2.0)+dTdq[k].R(0,1)*(dTdq[j].R(0,1)*(R(0,0)*dTdq[i].R(0,1)*t12*2.0-R(0,1)*dTdq[i].R(0,0)*t12*6.0+(R(0,1)*R(0,1)*R(0,1))*dTdq[i].R(0,0)*t13*8.0-R(0,0)*dTdq[i].R(0,1)*t3*t13*8.0)-dTdq[j].R(0,0)*t30+ddTddq[i][j].R(0,0)*t11-ddTddq[i][j].R(0,0)*t3*t12*2.0+R(0,0)*R(0,1)*ddTddq[i][j].R(0,1)*t12*2.0)+ddTddq[i][k].R(0,0)*(dTdq[j].R(0,1)*(t11-t3*t12*2.0)-R(0,0)*R(0,1)*dTdq[j].R(0,0)*t12*2.0)-ddTddq[i][k].R(0,1)*(dTdq[j].R(0,0)*(t11-t2*t12*2.0)-R(0,0)*R(0,1)*dTdq[j].R(0,1)*t12*2.0)-R(0,0)*dddTdddq[i][j][k].R(0,1)*t11+R(0,1)*dddTdddq[i][j][k].R(0,0)*t11;
 
                 TOx(0)(i, j) += T1_i_j_k * x(k);

@@ -11,26 +11,24 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
     lowerLimits = lowerLimits_input;
     upperLimits = upperLimits_input;
     
-    m = trajPtr_->N * trajPtr_->Nact;
-
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    initialize_memory(trajPtr_->N * trajPtr_->Nact, 
+                      trajPtr_->varLength);
 }
 
-void TorqueLimits::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void TorqueLimits::compute(const VecX& z, 
+                           bool compute_derivatives,
+                           bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
+
+    if (compute_hessian) {
+        throw std::invalid_argument("TorqueLimits: Hessian not implemented yet");
     }
 
-    trajPtr_->compute(z, compute_derivatives);
-
-    idPtr_->compute(z, compute_derivatives);
+    idPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < trajPtr_->N; i++) {
         g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = idPtr_->tau(i);
@@ -45,25 +43,6 @@ void TorqueLimits::compute_bounds() {
     for (int i = 0; i < trajPtr_->N; i++) {
         g_lb.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = lowerLimits;
         g_ub.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = upperLimits;
-    }
-}
-
-void TorqueLimits::print_violation_info() {
-    for (int i = 0; i < trajPtr_->N; i++) {
-        for (int j = 0; j < trajPtr_->Nact; j++) {
-            if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
-                std::cout << "        TorqueLimits.cpp: Actuator " << j 
-                          << " at time instance "  << i 
-                          << " is violating the lower torque limit" 
-                          << std::endl;
-            } 
-            else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
-                std::cout << "        TorqueLimits.cpp: Actuator " << j 
-                          << " at time instance " << i 
-                          << " is violating the upper torque limit" 
-                          << std::endl;
-            }
-        }
     }
 }
 

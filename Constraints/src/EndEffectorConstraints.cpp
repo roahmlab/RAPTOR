@@ -28,26 +28,27 @@ EndEffectorConstraints::EndEffectorConstraints(const Model& model_input,
     }
 
     jointTJ = MatX::Zero(6, modelPtr_->nv);
-    pq_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
+    for (int i = 0; i < 6; i++) {
+        jointTH(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
+    }
 
     m = 6;
 
     g = VecX::Zero(m);
     g_lb = VecX::Zero(m);
     g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+
+    pg_pz = MatX::Zero(m, trajPtr_->varLength);
 }
 
-void EndEffectorConstraints::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void EndEffectorConstraints::compute(const VecX& z, 
+                                     bool compute_derivatives,
+                                     bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
-    }
-
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     // choose the end of the trajectory
     const VecX& q = trajPtr_->q(trajPtr_->N - 1);
@@ -59,9 +60,21 @@ void EndEffectorConstraints::compute(const VecX& z, bool compute_derivatives) {
     if (compute_derivatives) {
         fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
         fkhofPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
+        
+        pg_pz = jointTJ * trajPtr_->pq_pz(trajPtr_->N - 1);
+    }
 
-        pq_pz = trajPtr_->pq_pz(trajPtr_->N - 1);
-        pg_pz = jointTJ * pq_pz;
+    if (compute_hessian) {
+        fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+
+        for (int i = 0; i < 6; i++) {
+            jointTH(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
+        }
+        fkhofPtr_->Transform2xyzrpyHessian(jointTH, jointT, dTdq, ddTddq);
+
+        for (int i = 0; i < 6; i++) {
+            pg_pz_pz(i) = jointTH(i) * trajPtr_->pq_pz(trajPtr_->N - 1);
+        }
     }
 }
 

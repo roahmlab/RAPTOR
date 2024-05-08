@@ -118,6 +118,7 @@ target_compile_options(IDlib PUBLIC
 
 ## Constraints library
 add_library(Conslib SHARED
+    Constraints/src/Constraints.cpp
     Constraints/src/JointLimits.cpp
     Constraints/src/VelocityLimits.cpp
     Constraints/src/ConstrainedJointLimits.cpp
@@ -125,9 +126,9 @@ add_library(Conslib SHARED
     Constraints/src/SurfaceContactConstraints.cpp
     Constraints/src/WaitrContactConstraints.cpp
     Constraints/src/KinematicsConstraints.cpp
-    Constraints/src/EndEffectorConstraints.cpp
-    Constraints/src/ZonotopeCollisionAvoidance.cpp
+    Constraints/src/KinematicsConstraints.cpp
     Constraints/src/BoxCollisionAvoidance.cpp)
+    # Constraints/src/ZonotopeCollisionAvoidance.cpp
     # Constraints/src/fclCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
@@ -157,10 +158,9 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
-    Examples/Digit/src/DigitSingleStepOptimizerWithObstacles.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
-    Examples/Digit/src/DigitCustomizedConstraintsWithObstacles.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
+    # Examples/Digit/src/DigitSingleStepOptimizerWithObstacles.cpp
 
 target_link_libraries(Digitlib PRIVATE
     trajlib

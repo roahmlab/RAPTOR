@@ -27,7 +27,8 @@ public:
 
     // class methods:
     virtual void compute(const VecX& z,
-                         bool compute_derivatives = true) override;   
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;   
 
     // class members:
         // the contact wrench at the last joint, which is assumed to be fixed

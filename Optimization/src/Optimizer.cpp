@@ -112,6 +112,20 @@ bool Optimizer::get_starting_point(
 }
 // [TNLP_get_starting_point]
 
+// [eval_hess_f]
+// returns the hessian of the objective
+bool Optimizer::eval_hess_f(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    MatX&         hess_f
+) 
+{
+    throw std::invalid_argument("Objective function hessian is not implemented.");
+    return false;
+}
+// [eval_hess_f]
+
 // [TNLP_eval_g]
 // return the value of the constraints: g(x)
 bool Optimizer::eval_g(
@@ -157,7 +171,7 @@ bool Optimizer::eval_g(
     }
 
     // auto end = std::chrono::high_resolution_clock::now();
-    // std::cout << "g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+    // std::cout << "eval_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
 
     return true;
 }
@@ -225,7 +239,7 @@ bool Optimizer::eval_jac_g(
         }
 
         // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << "jac_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+        // std::cout << "eval_jac_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
     }
 
     return true;
@@ -249,7 +263,129 @@ bool Optimizer::eval_h(
    Number*       values
 )
 {
-    return false;
+    if (!enable_hessian) {
+        return false;
+    }
+
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_h!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_h!");
+    }
+    if (nele_hess != n * (n + 1) / 2) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of nele_hess in eval_h!");
+    }
+
+    if (values == NULL) {
+        /* return the structure */
+        /* the hessian for this problem is actually dense */
+        Index iter = 0;
+        for(Index i = 0; i < n; i++){
+            for(Index j = i; j < n; j++){
+                iRow[iter] = i;
+                jCol[iter] = j;
+                iter++;
+            }
+        }
+    }
+    else {
+        // fill in a Eigen Vector instance of decision variables
+        VecX z(n);
+        for ( Index i = 0; i < n; i++ ) {
+            z(i) = x[i];
+        }
+
+        MatX hessian(n, n);
+        hessian.setZero();
+
+        // auto start = std::chrono::high_resolution_clock::now();
+
+        MatX hess_f(n, n);
+        hess_f.setZero();
+
+        if (obj_factor != 0) {
+            try {
+                eval_hess_f(n, x, new_x, hess_f);
+            }
+            catch (std::exception& e) {
+                std::cerr << "Error in eval_hess_f: " << std::endl;
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f! Check previous error message.");
+            }
+
+            hessian += obj_factor * hess_f;
+        }
+
+        Index iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            // if lambda is zero for this constraint, skip (make CheckDerivative faster)
+            bool lambdaAllZeroForThisConstraint = true;
+            for (Index innerIter = iter; innerIter < iter + constraintsPtrVec_[c]->m; innerIter++) {
+                if (lambda[innerIter] != 0) {
+                    lambdaAllZeroForThisConstraint = false;
+                    break;
+                }
+            }
+            if (lambdaAllZeroForThisConstraint) {
+                iter += constraintsPtrVec_[c]->m;
+                continue;
+            } 
+
+            // compute constraints
+            try {
+                constraintsPtrVec_[c]->compute(z, true, true);
+            }
+            catch (std::exception& e) {
+                std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
+                std::cout << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_h in: " + constraintsNameVec_[c] + "! Check previous error message.");
+            }
+
+            if (constraintsPtrVec_[c]->pg_pz_pz.size() != constraintsPtrVec_[c]->m) {
+                std::cerr << "Error in " 
+                          << constraintsNameVec_[c] 
+                          << ": " 
+                          << constraintsPtrVec_[c]->pg_pz_pz.size() 
+                          << " != "
+                          << constraintsPtrVec_[c]->m << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have wrong sizes!");
+            }
+
+            for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
+                if (constraintsPtrVec_[c]->pg_pz_pz(i).rows() != n || 
+                    constraintsPtrVec_[c]->pg_pz_pz(i).cols() != n) {
+                    std::cerr << "Error in " 
+                              << constraintsNameVec_[c] 
+                              << ": " 
+                              << constraintsPtrVec_[c]->pg_pz_pz(i).rows() 
+                              << "x" 
+                              << constraintsPtrVec_[c]->pg_pz_pz(i).cols() 
+                              << " != " 
+                              << n 
+                              << "x" 
+                              << n << std::endl;
+                    THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have wrong sizes!");
+                }
+
+                hessian += lambda[iter] * constraintsPtrVec_[c]->pg_pz_pz(i);
+                iter++;
+            }
+        }
+
+        iter = 0;
+        for(Index i = 0; i < n; i++){
+            for(Index j = i; j < n; j++){
+                values[iter] = hessian(i, j);
+                iter++;
+            }
+        }
+
+        // auto end = std::chrono::high_resolution_clock::now();
+        // std::cout << "eval_h time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+    }
+
+    return true;
 }
 // [TNLP_eval_h]
 
@@ -313,8 +449,8 @@ void Optimizer::summarize_constraints(
         Index max_constr_violation_id1 = 0;
         Index max_constr_violation_id2 = 0;
         for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
-            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb[i] - g[iter], 
-                                               g[iter] - constraintsPtrVec_[c]->g_ub[i]);
+            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb(i) - g[iter], 
+                                               g[iter] - constraintsPtrVec_[c]->g_ub(i));
            
             if (constr_violation > max_constr_violation) {
                 max_constr_violation_id1 = i;

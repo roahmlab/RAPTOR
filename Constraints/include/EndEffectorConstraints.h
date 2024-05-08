@@ -32,12 +32,14 @@ public:
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
-    // class variables:
+    // class members:
     std::shared_ptr<Trajectories>& trajPtr_;
 
     std::unique_ptr<Model> modelPtr_;
@@ -56,10 +58,11 @@ public:
         // updated in compute()
     Transform jointT;
     MatX jointTJ;
-    MatX pq_pz;
+    Eigen::Array<MatX, 6, 1> jointTH;
 
         // forward kinematics derivatives
     std::vector<Transform> dTdq;
+    std::vector<std::vector<Transform>> ddTddq;
 };
 
 }; // namespace IDTO

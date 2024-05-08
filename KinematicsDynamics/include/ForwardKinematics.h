@@ -66,6 +66,11 @@ public:
 								  const Transform& T, 
 								  const std::vector<Transform>& dTdq);
 
+    void Transform2xyzHessian(Eigen::Array<Eigen::MatrixXd, 3, 1>& H,
+							  const Transform& T, 
+							  const std::vector<Transform>& dTdq,
+							  const std::vector<std::vector<Transform>>& ddTddq);
+
 	void Transform2xyzrpyHessian(Eigen::Array<Eigen::MatrixXd, 6, 1>& H,
 								 const Transform& T, 
 								 const std::vector<Transform>& dTdq,

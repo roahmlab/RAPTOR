@@ -2,9 +2,8 @@
 #ifndef CONSTRAINTS_H
 #define CONSTRAINTS_H
 
-#include <iostream>
 #include <Eigen/Dense>
-#include <omp.h>
+#include <iostream>
 #include "Utils.h"
 
 namespace IDTO {
@@ -18,36 +17,28 @@ public:
     // Constructor
     Constraints() = default;
 
+    Constraints(int m_input,
+                int varLength);
+
     // Destructor
     ~Constraints() = default;
 
     // class methods:
-    virtual void compute(const VecX& z, bool compute_derivatives = true) = 0;
-
-    virtual int return_m() {return m;}
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) = 0;
 
     virtual void compute_bounds() = 0;
 
     virtual void print_violation_info() {}
 
         // determine if the constraints are computed before and save the current decision variable
-    bool is_computed(const VecX& z, bool compute_derivatives) {
-        if (!ifTwoVectorEqual(current_z, z, 0)) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
+    bool is_computed(const VecX& z, 
+                     bool compute_derivatives,
+                     bool compute_hessian);
 
-        if (compute_derivatives != if_compute_derivatives) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
-
-        // current_z = z;  
-        if_compute_derivatives = compute_derivatives;
-        return true;
-    }
+    void initialize_memory(const int m_input, 
+                           const int varLength);
 
     // class members:
     int m = 0; // number of constraints
@@ -55,10 +46,12 @@ public:
     // the decision variable that was evaluated last time
     VecX current_z;
     bool if_compute_derivatives = false;
+    bool if_compute_hessian = false;
 
     // compute results are stored here
     VecX g;
     MatX pg_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pg_pz_pz;
 
     VecX g_lb;
     VecX g_ub;

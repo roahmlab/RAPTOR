@@ -43,7 +43,8 @@ ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input,
 }
 
 void ConstrainedInverseDynamics::compute(const VecX& z,
-                                         bool compute_derivatives) {
+                                         bool compute_derivatives,
+                                         bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }
@@ -52,11 +53,15 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
         throw std::runtime_error("dcPtr_ is not defined yet!");
     }                 
 
-    if (is_computed(z, compute_derivatives)) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }         
 
-    trajPtr_->compute(z, compute_derivatives);
+    if (compute_hessian) {
+        throw std::invalid_argument("ConstrainedInverseDynamics does not support hessian computation");
+    }
+
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < N; i++) {  
         // fill in independent indeces in a vector

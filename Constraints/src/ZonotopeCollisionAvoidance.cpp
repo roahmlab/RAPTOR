@@ -6,30 +6,6 @@
 // DEPRECATED
 // DEPRECATED
 // DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
-// DEPRECATED
 
 namespace IDTO {
 
@@ -145,14 +121,14 @@ void ZonotopeCollisionAvoidance::initialize() {
 			if (i >= dim) {
 				vertices_new.clear();
 				try {
-					// orgQhull::Qhull qhull("", dim, vertices.size() / 3, vertices.data(), "");
-					// for(const orgQhull::QhullVertex &v: qhull.vertexList()) {
-					// 	const orgQhull::QhullPoint &qhullPt = v.point();
-					// 	auto coords = qhullPt.coordinates();
-					// 	vertices_new.push_back(coords[0]);
-					// 	vertices_new.push_back(coords[1]);
-					// 	vertices_new.push_back(coords[2]);
-					// }
+					orgQhull::Qhull qhull("", dim, vertices.size() / 3, vertices.data(), "");
+					for(const orgQhull::QhullVertex &v: qhull.vertexList()) {
+						const orgQhull::QhullPoint &qhullPt = v.point();
+						auto coords = qhullPt.coordinates();
+						vertices_new.push_back(coords[0]);
+						vertices_new.push_back(coords[1]);
+						vertices_new.push_back(coords[2]);
+					}
 				} 
 				catch (...) {
 					std::cerr << "Qhull failed!" << std::endl;

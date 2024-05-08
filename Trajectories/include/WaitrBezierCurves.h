@@ -38,7 +38,9 @@ public:
                       TimeDiscretization time_discretization, 
                       const WaitrTrajectoryParameters& atp_input); 
 
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
     WaitrTrajectoryParameters atp;
 

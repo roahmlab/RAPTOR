@@ -2,117 +2,193 @@
 
 namespace IDTO {
 
-KinematicsConstraints::KinematicsConstraints(const Model& model_input,
-                                             const Eigen::VectorXi& jtype_input,
-                                             std::shared_ptr<Trajectories>& trajPtr_input,
-                                             const std::string joint_name_input,
-                                             const MatX& lowerLimits_input,
-                                             const MatX& upperLimits_input,
-                                             const Transform startT_input,
-                                             const Transform endT_input,
-                                             std::shared_ptr<DynamicsConstraints> dcPtr_input) : 
+KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                                               const Model& model_input,
+                                               const Eigen::VectorXi& jtype_input,
+                                               const size_t joint_id_input,
+                                               const size_t time_id_input,
+                                               const Transform& desiredTransform_input,
+                                               const Transform endT_input) :
     trajPtr_(trajPtr_input),
     jtype(jtype_input),
-    lowerLimits(lowerLimits_input),
-    upperLimits(upperLimits_input),
-    startT(startT_input),
-    endT(endT_input),
-    dcPtr_(dcPtr_input) {
-    if (lowerLimits.rows() != 6 || upperLimits.rows() != 6) {
-        throw std::invalid_argument("KinematicsConstraints: lowerLimits and upperLimits must have 6 rows (xyz and rpy).");
-    }
-
-    if (lowerLimits.cols() != trajPtr_->N || upperLimits.cols() != trajPtr_->N) {
-        throw std::invalid_argument("KinematicsConstraints: lowerLimits and upperLimits must have trajPtr_->N columns.");
-    }
-
+    joint_id(joint_id_input),
+    time_id(time_id_input),
+    endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
     fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
 
-    if (modelPtr_->nv > trajPtr_->Nact && dcPtr_ == nullptr) {
-        throw std::invalid_argument("KinematicsConstraints: dcPtr_ must be defined if modelPtr_->nv > trajPtr_->Nact, which is a constrained system.");
-    }
-    else if (modelPtr_->nv == trajPtr_->Nact && dcPtr_ != nullptr) {
-        throw std::invalid_argument("KinematicsConstraints: dcPtr_ must be nullptr if modelPtr_->nv == trajPtr_->Nact, which is an unconstrained system.");
+    if (joint_id > modelPtr_->nq) {
+        throw std::invalid_argument("joint_id should not be larger than model.nq");
     }
 
-    if (modelPtr_->existJointName(joint_name_input)) {
-        joint_id = modelPtr_->getJointId(joint_name_input) - 1;
-    }
-    else {
-        throw std::runtime_error("Can not find joint: " + joint_name_input);
+    if (time_id >= trajPtr_->N) {
+        throw std::invalid_argument("time_id should not be larger than number of instances in the trajectory");
     }
 
-    jointTJ = MatX::Zero(6, modelPtr_->nv);
-    pq_pz = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
+    desiredPosition = desiredTransform_input.p;
+    desiredRotation = desiredTransform_input.R;
 
-    m = trajPtr_->N * 6;
+    if (Utils::ifTwoMatrixEqual(desiredRotation, -desiredRotation.transpose())) {
+        throw std::invalid_argument("Input matrix is not skew-symmetric");
+    }
 
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    constrainPosition = true;
+    constrainRotation = true;
+
+    // This is only reserved for position
+    jointTJ = MatX::Zero(3, modelPtr_->nv);
+    for (int i = 0; i < 3; i++) {
+        jointTH(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
+    }
+
+    initialize_memory(6, trajPtr_->varLength);
 }
 
-void KinematicsConstraints::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                                               const Model& model_input,
+                                               const Eigen::VectorXi& jtype_input,
+                                               const size_t joint_id_input,
+                                               const size_t time_id_input,
+                                               const Vec3& desiredPosition_input,
+                                               const Transform endT_input) :
+    trajPtr_(trajPtr_input),
+    jtype(jtype_input),
+    joint_id(joint_id_input),
+    time_id(time_id_input),
+    endT(endT_input) {
+    modelPtr_ = std::make_unique<Model>(model_input);
+    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+
+    if (joint_id > modelPtr_->nq) {
+        throw std::invalid_argument("joint_id should not be larger than model.nq");
+    }
+
+    if (time_id >= trajPtr_->N) {
+        throw std::invalid_argument("time_id should not be larger than number of instances in the trajectory");
+    }
+
+    desiredPosition = desiredPosition_input;
+
+    constrainPosition = true;
+    constrainRotation = false;
+
+    jointTJ = MatX::Zero(3, modelPtr_->nv);
+    for (int i = 0; i < 3; i++) {
+        jointTH(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
+    }
+
+    initialize_memory(3, trajPtr_->varLength);
+}
+
+KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                                               const Model& model_input,
+                                               const Eigen::VectorXi& jtype_input,
+                                               const size_t joint_id_input,
+                                               const size_t time_id_input,
+                                               const Mat3& desiredRotation_input,
+                                               const Transform endT_input) :
+    trajPtr_(trajPtr_input),
+    jtype(jtype_input),
+    joint_id(joint_id_input),
+    time_id(time_id_input),
+    endT(endT_input) {
+    modelPtr_ = std::make_unique<Model>(model_input);
+    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+
+    if (joint_id > modelPtr_->nq) {
+        throw std::invalid_argument("joint_id should not be larger than model.nq");
+    }
+
+    if (time_id >= trajPtr_->N) {
+        throw std::invalid_argument("time_id should not be larger than number of instances in the trajectory");
+    }
+
+    desiredRotation = desiredRotation_input;
+    
+    if (Utils::ifTwoMatrixEqual(desiredRotation, -desiredRotation.transpose())) {
+        throw std::invalid_argument("Input matrix is not skew-symmetric");
+    }
+
+    constrainPosition = false;
+    constrainRotation = true;
+
+    initialize_memory(3, trajPtr_->varLength);
+}
+
+void KinematicsConstraints::compute(const VecX& z, 
+                                     bool compute_derivatives,
+                                     bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
+    
+    const VecX& q = trajPtr_->q(time_id);
+    const MatX& pq_pz = trajPtr_->pq_pz(time_id);
+    const Eigen::Array<MatX, Eigen::Dynamic, 1>& pq_pz_pz = trajPtr_->pq_pz_pz.col(time_id);
+
+    fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+
+    if (constrainPosition) {
+        g.head(3) = jointT.p - desiredPosition;
+    }
+    
+    if (constrainRotation) {
+        Mat3 residual = (desiredRotation.transpose() * jointT.R).log();
+        g.tail(3) = Utils::unskew(residual);
     }
 
-    trajPtr_->compute(z, compute_derivatives);
-
-    // for (int i = 0; i < trajPtr_->N; i++) {
-    //     VecX q;
+    if (compute_derivatives) {
+        fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
         
-    //     if (dcPtr_ == nullptr) { // unconstrained case
-    //         q = trajPtr_->q(i);
-    //     }
-    //     else { // constrained case
-    //         q = VecX::Zero(modelPtr_->nq);
-    //         dcPtr_->fill_independent_vector(q, trajPtr_->q(i));
-    //         dcPtr_->setupJointPosition(q, compute_derivatives);
-    //     }
+        if (constrainPosition) {
+            fkhofPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
+            pg_pz.topRows(3) = jointTJ * pq_pz;
+        }
+        
+        if (constrainRotation) {
+            pg_pz.bottomRows(3).setZero();
 
-    //     fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+            // The following is actually wrong
+            // There's no close form solution to the derivative of the log of a matrix
+            for (int i = 0; i < trajPtr_->varLength; i++) {
+                for (int j = 0; j < dTdq.size(); j++) {
+                    Mat3 temp = jointT.R.transpose() * dTdq[j].R * pq_pz(j, i);
+                    pg_pz.bottomRows(3).col(i) += Utils::unskew(temp);
+                } 
+            }
+        }
+    }
 
-    //     g.block(i * 6, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(jointT);
+    if (compute_hessian) {
+        fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
 
-    //     if (compute_derivatives) {
-    //         fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
-    //         fkhofPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
+        if (constrainPosition) {
+            fkhofPtr_->Transform2xyzHessian(jointTH, jointT, dTdq, ddTddq);
 
-    //         if (dcPtr_ == nullptr) { // unconstrained case
-    //             pq_pz = trajPtr_->pq_pz(i);
-    //         }
-    //         else { // constrained case
-    //             // fill in independent joints derivatives directly
-    //             for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
-    //                 int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
-    //                 pq_pz.row(indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
-    //             }
+            // (1) p2_FK_pq2 * pq_pz1 * pq_pz2
+            for (int i = 0; i < 3; i++) {
+                pg_pz_pz(i) = pq_pz.transpose() * jointTH(i) * pq_pz;
+            }
+            
+            // (2) p_FK_pq * p2_q_pz2
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < trajPtr_->Nact; j++) {
+                    pg_pz_pz(i) += jointTJ(i, j) * pq_pz_pz(j);
+                }
+            }
+        }
 
-    //             // compute and fill in dependent joints derivatives
-    //             MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
-    //             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
-    //                 int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
-    //                 pq_pz.row(denpendentJointIndex) = pq_dep_pz.row(j);
-    //             }
-    //         }
-
-    //         pg_pz.block(i * 6, 0, 6, trajPtr_->varLength) = jointTJ * pq_pz;
-    //     }
-    // }
+        if (constrainRotation) {
+            // do nothing here
+        }
+    }
 }
 
 void KinematicsConstraints::compute_bounds() {
-    for (int i = 0; i < trajPtr_->N; i++) {
-        g_lb.block(i * 6, 0, 6, 1) = lowerLimits.col(i);
-        g_ub.block(i * 6, 0, 6, 1) = upperLimits.col(i);
-    }
+    g_lb = VecX::Zero(m);
+    g_ub = VecX::Zero(m);
 }
 
 }; // namespace IDTO

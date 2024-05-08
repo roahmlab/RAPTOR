@@ -1,35 +1,31 @@
-#include "WaitrContactConstraints.h"
+#include "ContactConstraints.h"
 
 namespace IDTO {
 
-WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
-                                                 const contactSurfaceParams& csp_input) :
+ContactConstraints::ContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
+                                       const contactSurfaceParams& csp_input) :
     idPtr_(idPtr_input),
     csp(csp_input) {
     // (1)    positive contact force
     // (2)    translation friction cone
     // (3, 4) ZMP on one axis
     // (5, 6) ZMP on the other axis
-    m = idPtr_->trajPtr_->N * 6; // TODO: this is the number of constraints for all time instances
-
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, idPtr_->trajPtr_->varLength);
+    initialize_memory(idPtr_->trajPtr_->N * 6, 
+                      idPtr_->trajPtr_->varLength);
 }
 
-void WaitrContactConstraints::compute(const VecX& z, 
-                                      bool compute_derivatives,
-                                      bool compute_hessian) {
+void ContactConstraints::compute(const VecX& z, 
+                                 bool compute_derivatives,
+                                 bool compute_hessian) {
     if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
     if (compute_hessian) {
-        throw std::invalid_argument("WaitrContactConstraints does not support hessian computation");
+        throw std::invalid_argument("ContactConstraints: compute_hessian is not implemented yet!");
     }
     
-    idPtr_->compute(z, compute_derivatives);
+    idPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
         // access the last contact wrench, 
@@ -79,7 +75,7 @@ void WaitrContactConstraints::compute(const VecX& z,
                                        csp.mu * ptranslation_force_pz.row(2);
             }
 
-            // // (3, 4) ZMP on one axis
+            // (3, 4) ZMP on one axis
             pg_pz.row(i * 6 + 2) = protation_torque_pz.row(0) - csp.Lx * ptranslation_force_pz.row(2);
             pg_pz.row(i * 6 + 3) = -csp.Lx * ptranslation_force_pz.row(2) - protation_torque_pz.row(0);
 
@@ -90,7 +86,7 @@ void WaitrContactConstraints::compute(const VecX& z,
     }
 }
 
-void WaitrContactConstraints::compute_bounds() {
+void ContactConstraints::compute_bounds() {
     for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
         // (1) positive contact force
         g_lb(i * 6 + 0) = 0;
@@ -113,41 +109,6 @@ void WaitrContactConstraints::compute_bounds() {
 
         g_lb(i * 6 + 5) = -1e19; 
         g_ub(i * 6 + 5) = 0;
-    }
-}
-
-void WaitrContactConstraints::print_violation_info() {
-    for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
-        if (g(i * 6 + 0) <= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Negative contact force at time instance "
-                      << i
-                      << std::endl;
-        }
-        if (g(i * 6 + 1) >= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Translational friction out of friction cone at time instance "
-                      << i
-                      << std::endl;
-        }
-        if (g(i * 6 + 2) >= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Object peel off over x dimension at time instance "
-                      << i
-                      << std::endl;
-        }
-        if (g(i * 6 + 3) >= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Object peel off over x dimension at time instance "
-                      << i
-                      << std::endl;
-        }
-        if (g(i * 6 + 4) >= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Object peel off over y dimension at time instance "
-                      << i
-                      << std::endl;
-        }
-        if (g(i * 6 + 5) >= 0) {
-            std::cout << "        WaitrContactConstraints.cpp: Object peel off over y dimension at time instance "
-                      << i
-                      << std::endl;
-        }
     }
 }
 

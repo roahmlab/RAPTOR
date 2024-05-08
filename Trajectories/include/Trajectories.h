@@ -25,18 +25,26 @@ public:
     Trajectories() = default;
 
     // Constructor
-    Trajectories(const VecX& tspan_input, int Nact_input);
+    Trajectories(const VecX& tspan_input, 
+                 int Nact_input);
 
     // Constructor
-    Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization);
+    Trajectories(double T_input, 
+                 int N_input, 
+                 int Nact_input, 
+                 TimeDiscretization time_discretization);
 
     // Destructor
     ~Trajectories() = default;
 
     // class methods:
-    virtual void compute(const VecX& z, bool compute_derivatives = true);
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
-    bool if_computed(const VecX& z, bool compute_derivatives);
+    bool is_computed(const VecX& z, 
+                     bool compute_derivatives,
+                     bool compute_hessian);
 
     // class members:
     double T = 0; // total time of the trajectory
@@ -55,10 +63,16 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_d_pz;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_dd_pz;
 
+        // compute results are stored here
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_pz_pz;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_d_pz_pz;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_dd_pz_pz;
+
         // trajectory class is frequently used in the optimization problem
         // so we store the computed results here to avoid recomputation
     VecX current_z;
     bool if_compute_derivatives = false;
+    bool if_compute_hessian = false;
 };
 
 }; // namespace IDTO    

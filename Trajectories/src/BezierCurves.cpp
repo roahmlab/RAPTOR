@@ -2,7 +2,9 @@
 
 namespace IDTO {
 
-BezierCurves::BezierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
+BezierCurves::BezierCurves(const VecX& tspan_input, 
+                           int Nact_input, 
+                           int degree_input) : 
     Trajectories(tspan_input, Nact_input),
     degree(degree_input) {
     varLength = (degree + 1) * Nact;
@@ -18,7 +20,11 @@ BezierCurves::BezierCurves(const VecX& tspan_input, int Nact_input, int degree_i
     }
 }
 
-BezierCurves::BezierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
+BezierCurves::BezierCurves(double T_input, 
+                           int N_input, 
+                           int Nact_input, 
+                           TimeDiscretization time_discretization, 
+                           int degree_input) :
     Trajectories(T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
     varLength = (degree + 1) * Nact;
@@ -34,15 +40,17 @@ BezierCurves::BezierCurves(double T_input, int N_input, int Nact_input, TimeDisc
     }
 }
 
-void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
+void BezierCurves::compute(const VecX& z, 
+                           bool compute_derivatives,
+                           bool compute_hessian) {
     if (z.size() < varLength) {
         throw std::invalid_argument("BezierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     // MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
-    MatX coefficients = reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
+    MatX coefficients = Utils::reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x) / T;
@@ -94,6 +102,14 @@ void BezierCurves::compute(const VecX& z, bool compute_derivatives) {
                 pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = B.transpose();
                 pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dB.transpose();
                 pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddB.transpose();
+            }
+        }
+
+        if (compute_hessian) {
+            for (int i = 0; i < Nact; i++) {
+                pq_pz_pz(i, x).setZero(); 
+                pq_d_pz_pz(i, x).setZero(); 
+                pq_dd_pz_pz(i, x).setZero(); 
             }
         }
     }

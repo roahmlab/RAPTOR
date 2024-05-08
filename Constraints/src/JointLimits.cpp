@@ -4,11 +4,9 @@ namespace IDTO {
 
 JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                          const VecX& lowerLimits_input, 
-                         const VecX& upperLimits_input,
-                         const bool wrapToPiOrNot_input) : 
+                         const VecX& upperLimits_input) : 
     lowerLimits(lowerLimits_input), 
-    upperLimits(upperLimits_input),
-    wrapToPiOrNot(wrapToPiOrNot_input) {
+    upperLimits(upperLimits_input) {
     trajPtr_ = trajPtr_input;
 
     if (lowerLimits.size() != upperLimits.size()) {
@@ -19,32 +17,31 @@ JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
         throw std::invalid_argument("lowerLimits and upperLimits must be the same size as the number of actuated joints");
     }
 
-    m = trajPtr_->N * trajPtr_->Nact;
-    
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    initialize_memory(trajPtr_->N * trajPtr_->Nact, 
+                      trajPtr_->varLength);
 }
 
-void JointLimits::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void JointLimits::compute(const VecX& z, 
+                          bool compute_derivatives,
+                          bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
-    }
-
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = wrapToPiOrNot ? 
-        							wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact)) :
-        							trajPtr_->q(i).head(trajPtr_->Nact);
+        // g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = Utils::wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact));
+        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q(i).head(trajPtr_->Nact);
 
         if (compute_derivatives) {
             pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_pz(i);
+        }
+
+        if (compute_hessian) {
+            for (int j = 0; j < trajPtr_->Nact; j++) {
+                pg_pz_pz(i * trajPtr_->Nact + j) = trajPtr_->pq_pz_pz(j, i);
+            }
         }
     }
 }
@@ -59,16 +56,26 @@ void JointLimits::compute_bounds() {
 void JointLimits::print_violation_info() {
     for (int i = 0; i < trajPtr_->N; i++) {
         for (int j = 0; j < trajPtr_->Nact; j++) {
-            if (g(i * trajPtr_->Nact + j) <= g_lb(i * trajPtr_->Nact + j)) {
-                std::cout << "        JointLimits.cpp: Actuator " << j 
-                          << " at time instance " << i 
-                          << " is violating the lower position limit" 
+            if (g(i * trajPtr_->Nact + j) <= lowerLimits(j)) {
+                std::cout << "        JointLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i
+                          << " is below lower limit: "
+                          << g(i * trajPtr_->Nact + j) 
+                          << " < " 
+                          << lowerLimits(j) 
                           << std::endl;
             } 
-            else if (g(i * trajPtr_->Nact + j) >= g_ub(i * trajPtr_->Nact + j)) {
-                std::cout << "        JointLimits.cpp: Actuator " << j 
-                          << " at time instance " << i 
-                          << " is violating the upper position limit" 
+            else if (g(i * trajPtr_->Nact + j) >= upperLimits(j)) {
+                std::cout << "        JointLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * trajPtr_->Nact + j) 
+                          << " > " 
+                          << upperLimits(j) 
                           << std::endl;
             }
         }

@@ -19,11 +19,11 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
         const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
 
         // plux in Roy Featherstone's code (transformation matrix from parent to child)
-        Xtree(i) = plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
-                        modelPtr_->jointPlacements[pinocchio_joint_id].translation());
+        Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
+                               modelPtr_->jointPlacements[pinocchio_joint_id].translation());
         
         // mcI in Roy Featherstone's code (parallel axis theorem)
-        const MatX CC = skew(modelPtr_->inertias[pinocchio_joint_id].lever());
+        const MatX CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
         const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
         const MatX II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();
         I(i) << mm * CC * CC.transpose() + II, mm * CC,
@@ -51,16 +51,21 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
 }
 
 void CustomizedInverseDynamics::compute(const VecX& z,
-                                        bool compute_derivatives) {
+                                        bool compute_derivatives,
+                                        bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }   
 
-    if (is_computed(z, compute_derivatives)) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    trajPtr_->compute(z, compute_derivatives);                            
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
+
+    if (compute_hessian) {
+        throw std::invalid_argument("CustomizedInverseDynamics: Hessian not implemented yet");
+    }
 
     for (int i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
@@ -219,7 +224,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                 tau(i)(j) = S(j).transpose() * f(j) + 
                             modelPtr_->rotorInertia(j) * q_dd(j) +
                             modelPtr_->damping(j) * q_d(j) +
-                            modelPtr_->friction(j) * sign(q_d(j));
+                            modelPtr_->friction(j) * Utils::sign(q_d(j));
 
                 if (compute_derivatives) {
                     ptau_pz(i).row(j) = S(j).transpose() * pf_pz(j) + 

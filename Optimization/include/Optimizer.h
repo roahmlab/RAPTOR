@@ -85,6 +85,14 @@ public:
         Number*       grad_f
     ) = 0;
 
+    /** Method to return the hessian of the objective */
+    virtual bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
+    );
+
     /** Method to return the constraint residuals */
     virtual bool eval_g(
         Index         n,
@@ -170,6 +178,8 @@ public:
     );
 
     // class members:
+    bool enable_hessian = false;
+
     int numVars = 0; // number of variables
     int numCons = 0; // number of constraints
 

@@ -2,7 +2,8 @@
 
 namespace IDTO {
 
-Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
+Trajectories::Trajectories(const VecX& tspan_input, 
+                           int Nact_input) :
     tspan(tspan_input),
     Nact(Nact_input){
     T = tspan.bottomLeftCorner<1,1>().value();
@@ -18,6 +19,10 @@ Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
 
+    pq_pz_pz.resize(Nact, N);
+    pq_d_pz_pz.resize(Nact, N);
+    pq_dd_pz_pz.resize(Nact, N);
+
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
         q_d(i) = VecX::Zero(Nact);
@@ -26,12 +31,21 @@ Trajectories::Trajectories(const VecX& tspan_input, int Nact_input) :
         pq_pz(i) = MatX::Zero(Nact, varLength);
         pq_d_pz(i) = MatX::Zero(Nact, varLength);
         pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
     }
 
     current_z.resize(1);
 }
 
-Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization) :
+Trajectories::Trajectories(double T_input, 
+                           int N_input, 
+                           int Nact_input, 
+                           TimeDiscretization time_discretization) :
     T(T_input),
     N(N_input),
     Nact(Nact_input) {;
@@ -57,6 +71,10 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
 
+    pq_pz_pz.resize(Nact, N);
+    pq_d_pz_pz.resize(Nact, N);
+    pq_dd_pz_pz.resize(Nact, N);
+
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
         q_d(i) = VecX::Zero(Nact);
@@ -65,31 +83,56 @@ Trajectories::Trajectories(double T_input, int N_input, int Nact_input, TimeDisc
         pq_pz(i) = MatX::Zero(Nact, varLength);
         pq_d_pz(i) = MatX::Zero(Nact, varLength);
         pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
     }
 
     current_z.resize(1);
 }
 
-bool Trajectories::if_computed(const VecX& z, bool compute_derivatives) {
-    if (!ifTwoVectorEqual(current_z, z, 0)) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
-
-        if (compute_derivatives != if_compute_derivatives) {
-            current_z = z;
-            if_compute_derivatives = compute_derivatives;
-            return false;
-        }
-
-        // current_z = z;  
+bool Trajectories::is_computed(const VecX& z, 
+                               bool compute_derivatives,
+                               bool compute_hessian) {
+    if (compute_hessian && !compute_derivatives) {
+        throw std::invalid_argument("compute_derivatives needs to be true when compute_hessian is true.");
+        return false;
+    }
+                            
+    if (!Utils::ifTwoVectorEqual(current_z, z, 0)) {
+        current_z = z;
         if_compute_derivatives = compute_derivatives;
-        return true;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    if (compute_derivatives != if_compute_derivatives) {
+        current_z = z;
+        if_compute_derivatives = compute_derivatives;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    if (compute_hessian != if_compute_hessian) {
+        current_z = z;
+        if_compute_derivatives = compute_derivatives;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    // current_z = z;  
+    if_compute_derivatives = compute_derivatives;
+    if_compute_hessian = compute_hessian;
+    return true;
 }
 
-void Trajectories::compute(const VecX& z, bool compute_derivatives) {
-    if (if_computed(z, compute_derivatives)) return;
+void Trajectories::compute(const VecX& z, 
+                           bool compute_derivatives,
+                           bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     for (int i = 0; i < N; i++) {
         q(i) = VecX::Zero(Nact);
@@ -99,9 +142,19 @@ void Trajectories::compute(const VecX& z, bool compute_derivatives) {
 
     if (compute_derivatives) {
         for (int i = 0; i < N; i++) {
-            pq_pz(i).resize(Nact, varLength);
-            pq_d_pz(i).resize(Nact, varLength);
-            pq_dd_pz(i).resize(Nact, varLength);
+            pq_pz(i) = MatX::Zero(Nact, varLength);
+            pq_d_pz(i) = MatX::Zero(Nact, varLength);
+            pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+        }
+    }
+
+    if (compute_hessian) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < Nact; j++) {
+                pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+                pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+                pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            }
         }
     }
 }

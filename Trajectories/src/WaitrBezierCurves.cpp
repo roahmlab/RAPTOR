@@ -56,12 +56,14 @@ WaitrBezierCurves::WaitrBezierCurves(double T_input,
                           (T * T * atp.q_dd0.transpose()) / 20.0;
 }
 
-void WaitrBezierCurves::compute(const VecX& z, bool compute_derivatives) {
+void WaitrBezierCurves::compute(const VecX& z, 
+                                bool compute_derivatives,
+                                bool compute_hessian) {
     if (z.size() != varLength) {
         throw std::invalid_argument("WaitrBezierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     coefficients.row(5) = z.transpose();
     coefficients.row(4) = z.transpose();
@@ -117,6 +119,14 @@ void WaitrBezierCurves::compute(const VecX& z, bool compute_derivatives) {
                 pq_pz(x)(i, i)    = B(3) + B(4) + B(5);
                 pq_d_pz(x)(i, i)  = dB(3) + dB(4) + dB(5);
                 pq_dd_pz(x)(i, i) = ddB(3) + ddB(4) + ddB(5);
+            }
+        }
+
+        if (compute_hessian) {
+            for (int i = 0; i < Nact; i++) {
+                pq_pz_pz(i, x).setZero();
+                pq_d_pz_pz(i, x).setZero();
+                pq_dd_pz_pz(i, x).setZero();
             }
         }
     }

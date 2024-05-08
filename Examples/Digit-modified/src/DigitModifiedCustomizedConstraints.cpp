@@ -43,16 +43,18 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
     pg_pz.resize(m, trajPtr_->varLength);
 }
 
-void DigitModifiedCustomizedConstraints::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void DigitModifiedCustomizedConstraints::compute(const VecX& z, 
+                                                 bool compute_derivatives,
+                                                 bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    if (compute_hessian) {
+        throw std::invalid_argument("DigitModifiedCustomizedConstraints does not support hessian computation");
     }
 
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {
