@@ -9,7 +9,7 @@
 
 namespace IDTO {
 
-ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const std::vector<Vec3>& zonotopeCenters_input,
                                                        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input) :
     zonotopeCenters(zonotopeCenters_input), 
     zonotopeGenerators(zonotopeGenerators_input) {

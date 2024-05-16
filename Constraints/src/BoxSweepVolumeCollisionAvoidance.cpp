@@ -5,9 +5,9 @@ namespace IDTO {
 BoxSweepVolumeCollisionAvoidance::BoxSweepVolumeCollisionAvoidance(const Vec3& targetBoxCenter,
                                                                    const Vec3& targetBoxOrientation,
                                                                    const Vec3& targetBoxSize,
-                                                                   const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
-                                                                   const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
-                                                                   const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input) :
+                                                                   const std::vector<Vec3>& boxCenters_input,
+                                                                   const std::vector<Vec3>& boxOrientation_input,
+                                                                   const std::vector<Vec3>& boxSize_input) :
     targetBoxCenter(targetBoxCenter),
     targetBoxOrientation(targetBoxOrientation),
     targetBoxSize(targetBoxSize),
@@ -41,7 +41,7 @@ void BoxSweepVolumeCollisionAvoidance::initialize() {
          * Eigen::AngleAxisd(targetBoxOrientation[2], Vec3::UnitZ())).matrix();
 
     // the generators of two boxes combined
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> all_generators(GENERATOR_NUM);
+    std::vector<Vec3> all_generators(GENERATOR_NUM);
 
     // initialize generators for target box
     all_generators(0) = R * Vec3(targetBoxSize[0] / 2, 0, 0);

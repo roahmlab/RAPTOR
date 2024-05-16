@@ -2,6 +2,7 @@
 #define BOX_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
+#include <vector>
 
 namespace IDTO {
 
@@ -29,9 +30,9 @@ public:
     // Constructor
     BoxCollisionAvoidance() = default;
 
-    BoxCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
-                          const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
-                          const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input);
+    BoxCollisionAvoidance(const std::vector<Vec3>& boxCenters_input,
+                          const std::vector<Vec3>& boxOrientation_input,
+                          const std::vector<Vec3>& boxSize_input);
 
     // Destructor
     ~BoxCollisionAvoidance() = default;
@@ -53,9 +54,9 @@ public:
 
     // class members:
         // box information
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxCenters;
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxOrientation;
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxSize;
+    std::vector<Vec3> boxCenters;
+    std::vector<Vec3> boxOrientation;
+    std::vector<Vec3> boxSize;
     Eigen::Array<Mat3, 1, Eigen::Dynamic> boxR;
 
         // hyperplane representation

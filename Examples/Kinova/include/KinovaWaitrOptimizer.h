@@ -3,7 +3,6 @@
 
 #include "KinovaCustomizedConstraints.h"
 #include "KinovaConstants.h"
-#include "InverseDynamicsWithFixedJoints.h"
 #include "CustomizedInverseDynamics.h"
 #include "Optimizer.h"
 #include "WaitrBezierCurves.h"

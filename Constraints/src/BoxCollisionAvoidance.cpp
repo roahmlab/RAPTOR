@@ -16,9 +16,9 @@ double distancePointAndLineSegment(const Eigen::Vector3d& point,
     return (projection - point).norm();
 }
 
-BoxCollisionAvoidance::BoxCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
-											 const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
-											 const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input) :
+BoxCollisionAvoidance::BoxCollisionAvoidance(const std::vector<Vec3>& boxCenters_input,
+											 const std::vector<Vec3>& boxOrientation_input,
+											 const std::vector<Vec3>& boxSize_input) :
     boxCenters(boxCenters_input), 
     boxOrientation(boxOrientation_input),
 	boxSize(boxSize_input) {
@@ -46,9 +46,9 @@ void BoxCollisionAvoidance::initialize() {
 		const Vec3& center = boxCenters[obs_id];
 		const Vec3& rpy = boxOrientation[obs_id];
 
-		Mat3 R = (Eigen::AngleAxisd(rpy[0], Vec3::UnitX())
-				  * Eigen::AngleAxisd(rpy[1], Vec3::UnitY())
-				  * Eigen::AngleAxisd(rpy[2], Vec3::UnitZ())).matrix();
+		Mat3 R = (Eigen::AngleAxisd(rpy[2], Vec3::UnitZ()) *
+				  Eigen::AngleAxisd(rpy[1], Vec3::UnitY()) *
+				  Eigen::AngleAxisd(rpy[0], Vec3::UnitX())).matrix();
 
 		// initialize vertices
 		vertices(obs_id, 0) = center + R * Vec3(half_size(0), half_size(1), half_size(2));
@@ -82,14 +82,14 @@ void BoxCollisionAvoidance::initialize() {
 Eigen::Vector3d BoxCollisionAvoidance::computeCloestPoint(const Vec3& point, 
                             							  const int obs_id) {
 	// Compute the closest point in the local frame of the box
-	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters(obs_id));
+	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters[obs_id]);
 	Vec3 localClosestPoint;
 	for (int i = 0; i < 3; i++) {
-		localClosestPoint(i) = std::max(-boxSize(obs_id)(i) / 2.0, std::min(localPoint(i), boxSize(obs_id)(i) / 2.0));
+		localClosestPoint(i) = std::max(-boxSize[obs_id](i) / 2.0, std::min(localPoint(i), boxSize[obs_id](i) / 2.0));
 	}
 
 	// Transform the closest point from the local frame to the global frame
-	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters(obs_id);		
+	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters[obs_id];		
 
 	return closestPoint;					
 }
@@ -107,6 +107,7 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point) {
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
 			minimumDistanceIndex = obs_id;
+			minimumDistanceCloestPoint = closestPoint;
 		}
 	}
 }

@@ -13,6 +13,20 @@
 
 namespace IDTO {
 
+inline Eigen::VectorXd flatRotationMatrix(const Eigen::Matrix3d& R) {
+    Eigen::VectorXd x(9);
+    x(0) = R(0, 0);
+    x(1) = R(0, 1);
+    x(2) = R(0, 2);
+    x(3) = R(1, 0);
+    x(4) = R(1, 1);
+    x(5) = R(1, 2);
+    x(6) = R(2, 0);
+    x(7) = R(2, 1);
+    x(8) = R(2, 2);
+    return x;
+}
+
 class KinematicsConstraints : public Constraints {
 public:
     using Model = pinocchio::Model;
@@ -85,7 +99,8 @@ public:
         // updated in compute()
     Transform jointT;
     MatX jointTJ;
-    Eigen::Array<MatX, 3, 1> jointTH;
+    // Eigen::Array<MatX, 3, 1> jointTH;
+    Eigen::Array<MatX, 12, 1> jointTH;
 
         // forward kinematics derivatives
     std::vector<Transform> dTdq;

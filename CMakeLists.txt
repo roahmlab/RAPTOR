@@ -101,9 +101,9 @@ target_include_directories(trajlib PUBLIC
 add_library(IDlib SHARED
     KinematicsDynamics/src/InverseDynamics.cpp
     KinematicsDynamics/src/CustomizedInverseDynamics.cpp
+    KinematicsDynamics/src/RegressorInverseDynamics.cpp
     KinematicsDynamics/src/DynamicsConstraints.cpp
     KinematicsDynamics/src/ConstrainedInverseDynamics.cpp
-    KinematicsDynamics/src/InverseDynamicsWithFixedJoints.cpp
     KinematicsDynamics/src/Transform.cpp
     KinematicsDynamics/src/Spatial.cpp
     KinematicsDynamics/src/ForwardKinematics.cpp)

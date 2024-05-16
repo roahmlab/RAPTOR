@@ -42,6 +42,7 @@ public:
 
     double minimumDistance = 0;
     size_t minimumDistanceIndex = 0;
+    Vec3 minimumDistanceCloestPoint;
 
     bool onlyComputeDerivativesForMinimumDistance = false;
 };

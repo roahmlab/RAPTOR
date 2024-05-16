@@ -43,9 +43,7 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                    model_input.nq - 1, 
                                                    Chebyshev, 
                                                    atp_input);
-
-    // idPtr_ = std::make_shared<InverseDynamicsWithFixedJoints>(model_input,
-    //                                                           trajPtr_);
+                                                   
     idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
                                                          jtype_input,
                                                          trajPtr_);

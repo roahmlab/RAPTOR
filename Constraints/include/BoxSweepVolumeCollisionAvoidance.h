@@ -29,9 +29,9 @@ public:
     BoxSweepVolumeCollisionAvoidance(const Vec3& targetBoxCenter_input,
                                      const Vec3& targetBoxOrientation_input,
                                      const Vec3& targetBoxSize_input,
-                                     const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
-                                     const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
-                                     const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input);
+                                     const std::vector<Vec3>& boxCenters_input,
+                                     const std::vector<Vec3>& boxOrientation_input,
+                                     const std::vector<Vec3>& boxSize_input);
 
     // Destructor
     ~BoxSweepVolumeCollisionAvoidance() = default;
@@ -50,9 +50,9 @@ public:
     Vec3 targetBoxSize;
 
         // other box information
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxCenters;
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxOrientation;
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> boxSize;
+    std::vector<Vec3> boxCenters;
+    std::vector<Vec3> boxOrientation;
+    std::vector<Vec3> boxSize;
     Eigen::Array<Mat3, 1, Eigen::Dynamic> boxR;
 
         // hyperplane representation

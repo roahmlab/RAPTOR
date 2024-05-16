@@ -1,5 +1,5 @@
-#ifndef CUSTOMIZED_INVERSEDYNAMICS_H
-#define CUSTOMIZED_INVERSEDYNAMICS_H
+#ifndef REGRESSOR_INVERSEDYNAMICS_H
+#define REGRESSOR_INVERSEDYNAMICS_H
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -8,7 +8,7 @@
 
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-#include "InverseDynamics.h"
+#include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
 #include "Trajectories.h"
 
@@ -20,35 +20,37 @@
 
 namespace IDTO {
 
-// rewrite the inverse dynamics using the original Roy Featherstone's algorithm
-// so that we can get the force and the gradient of the force on the fixed joint
-class CustomizedInverseDynamics : public InverseDynamics {
-public:
+// Compute inverse dynamics using tau = Y * phi,
+// where Y is the n x 10*n regressor matrix and 
+// phi is the vector of 10*n dynamic parameters (inertia, com, mass for each of the link).
+// phi is constant and directly loaded from the robot. 
+// The gradient of Y will also be computed.
+class RegressorInverseDynamics : public InverseDynamics {
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
     using Vec6 = Vector6d;
     using Mat6 = Matrix6d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
 
     // Constructor
-    CustomizedInverseDynamics() = default;
+    RegressorInverseDynamics() = default;
 
     // Constructor
-    CustomizedInverseDynamics(const Model& model_input, 
-                              const Eigen::VectorXi& jtype_input,
-                              const std::shared_ptr<Trajectories>& trajPtr_input);
+    RegressorInverseDynamics(const Model& model_input, 
+                             const Eigen::VectorXi& jtype_input,
+                             const std::shared_ptr<Trajectories>& trajPtr_input);
 
     // Destructor
-    ~CustomizedInverseDynamics() = default;
+    ~RegressorInverseDynamics() = default;
 
     // class methods:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false) override; 
-
+                         
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
@@ -62,14 +64,19 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
     Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> f;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pf_pz;
+    
+    VecX phi;
 
-        // compute results are stored here
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> lambda;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pz;
+    MatX Y;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
+
+    MatX Yfull;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
+
+    MatX Y_current;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pY_current_pz;
 };
 
 }; // namespace IDTO
 
-#endif // CUSTOMIZED_INVERSEDYNAMICS_H
+#endif // REGRESSOR_INVERSEDYNAMICS_H
