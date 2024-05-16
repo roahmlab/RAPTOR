@@ -30,9 +30,9 @@ void BoxCollisionAvoidance::initialize() {
 		const Vec3& center = boxCenters[i];
 		const Vec3& rpy = boxOrientation[i];
 
-		Mat3 R = (Eigen::AngleAxisd(rpy[0], Vec3::UnitX())
-				  * Eigen::AngleAxisd(rpy[1], Vec3::UnitY())
-				  * Eigen::AngleAxisd(rpy[2], Vec3::UnitZ())).matrix();
+		Mat3 R = (Eigen::AngleAxisd(rpy[2], Vec3::UnitZ()) *
+				  Eigen::AngleAxisd(rpy[1], Vec3::UnitY()) *
+				  Eigen::AngleAxisd(rpy[0], Vec3::UnitX())).matrix();
 
 		// // initialize vertices
 		// vertices(i,0) = center + R * Vec3(half_size(0), half_size(1), half_size(2));
