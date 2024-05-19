@@ -26,12 +26,10 @@ class CustomizedInverseDynamics : public InverseDynamics {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
-    using Vec6 = Vector6d;
-    using Mat6 = Matrix6d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+    using Vec6 = Vector6d;
+    using Mat6 = Matrix6d;
 
     // Constructor
     CustomizedInverseDynamics() = default;

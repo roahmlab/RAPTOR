@@ -2,6 +2,16 @@
 
 namespace IDTO {
 
+namespace Box{ 
+void TensorProduct(const Eigen::Matrix3d& R, 
+                   const Eigen::Array<Eigen::MatrixXd, 3, 1>& inp,
+                   Eigen::Array<Eigen::MatrixXd, 3, 1>& out) {
+	out(0) = R(0, 0) * inp(0) + R(0, 1) * inp(1) + R(0, 2) * inp(2);
+	out(1) = R(1, 0) * inp(0) + R(1, 1) * inp(1) + R(1, 2) * inp(2);
+	out(2) = R(2, 0) * inp(0) + R(2, 1) * inp(1) + R(2, 2) * inp(2);
+}
+}; // namespace Box
+
 double distancePointAndLineSegment(const Eigen::Vector3d& point, 
                                    const Eigen::Vector3d& p1, 
                                    const Eigen::Vector3d& p2) {
@@ -37,9 +47,9 @@ BoxCollisionAvoidance::BoxCollisionAvoidance(const std::vector<Vec3>& boxCenters
 void BoxCollisionAvoidance::initialize() {
 	// allocate memory
 	boxR.resize(numObstacles);
-	normals.resize(numObstacles, HYPERPLANE_NUM);
-	intercepts.resize(numObstacles, HYPERPLANE_NUM);
-	vertices.resize(numObstacles, VERTICES_NUM);
+	normals.resize(numObstacles, Box::HYPERPLANE_NUM);
+	intercepts.resize(numObstacles, Box::HYPERPLANE_NUM);
+	vertices.resize(numObstacles, Box::VERTICES_NUM);
 
 	for (int obs_id = 0; obs_id < numObstacles; obs_id++) {
 		const Vec3 half_size = boxSize[obs_id] / 2;
@@ -79,35 +89,218 @@ void BoxCollisionAvoidance::initialize() {
 	}
 }
 
-Eigen::Vector3d BoxCollisionAvoidance::computeCloestPoint(const Vec3& point, 
-                            							  const int obs_id) {
+Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+											   			  				const int obs_id,
+																		double& isInside) const {
 	// Compute the closest point in the local frame of the box
 	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters[obs_id]);
 	Vec3 localClosestPoint;
+	isInside = -1.0;
+	double distancesWithFace[3][2];
+
 	for (int i = 0; i < 3; i++) {
+		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
+		distancesWithFace[i][1] = boxSize[obs_id](i) / 2.0 - localPoint(i);
 		localClosestPoint(i) = std::max(-boxSize[obs_id](i) / 2.0, std::min(localPoint(i), boxSize[obs_id](i) / 2.0));
+
+		if (localClosestPoint(i) != localPoint(i)) {
+			isInside = 1.0;
+		}
+	}
+
+	// The point is inside the box, find the closest point on the surface
+	if (isInside == -1.0) {
+		double minDist = 1e19;
+		size_t faceIndex = 0, directionIndex = 0;
+		for (int i = 0; i < 3; i++) {
+			if (distancesWithFace[i][0] < minDist) {
+				minDist = distancesWithFace[i][0];
+				faceIndex = i;
+				directionIndex = 0;
+			}
+			if (distancesWithFace[i][1] < minDist) {
+				minDist = distancesWithFace[i][1];
+				faceIndex = i;
+				directionIndex = 1;
+			}
+		}
+
+		localClosestPoint(faceIndex) = (directionIndex == 0) ? 
+											-boxSize[obs_id](faceIndex) / 2.0 : 
+											boxSize[obs_id](faceIndex) / 2.0;
 	}
 
 	// Transform the closest point from the local frame to the global frame
-	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters[obs_id];		
+	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters[obs_id];
 
-	return closestPoint;					
+	return point - closestPoint;
+}
+
+Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+																		const MatX& ppoint_pz,
+																		const int obs_id,
+																		MatX& pdiff_pz,
+																		double& isInside) const {
+	pdiff_pz.resize(3, ppoint_pz.cols());	
+
+	// Compute the closest point in the local frame of the box
+	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters[obs_id]);
+	MatX plocalPoint_pz = boxR(obs_id).transpose() * ppoint_pz;
+	Vec3 localClosestPoint;
+	MatX plocalClosestPoint_pz(3, ppoint_pz.cols());
+	isInside = -1.0;
+	double distancesWithFace[3][2];
+
+	for (int i = 0; i < 3; i++) {
+		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
+		distancesWithFace[i][1] = boxSize[obs_id](i) / 2.0 - localPoint(i);
+
+		if (localPoint(i) < -boxSize[obs_id](i) / 2.0) {
+			localClosestPoint(i) = -boxSize[obs_id](i) / 2.0;
+			isInside = 1.0;
+			plocalClosestPoint_pz.row(i).setZero();
+		}
+		else if (localPoint(i) > boxSize[obs_id](i) / 2.0) {
+			localClosestPoint(i) = boxSize[obs_id](i) / 2.0;
+			isInside = 1.0;
+			plocalClosestPoint_pz.row(i).setZero();
+		}
+		else {
+			localClosestPoint(i) = localPoint(i);
+			plocalClosestPoint_pz.row(i) = plocalPoint_pz.row(i);
+		}
+	}
+
+	// The point is inside the box, find the closest point on the surface
+	if (isInside == -1.0) {
+		double minDist = 1e19;
+		size_t faceIndex = 0, directionIndex = 0;
+		for (int i = 0; i < 3; i++) {
+			if (distancesWithFace[i][0] < minDist) {
+				minDist = distancesWithFace[i][0];
+				faceIndex = i;
+				directionIndex = 0;
+			}
+			if (distancesWithFace[i][1] < minDist) {
+				minDist = distancesWithFace[i][1];
+				faceIndex = i;
+				directionIndex = 1;
+			}
+		}
+
+		localClosestPoint(faceIndex) = (directionIndex == 0) ? 
+											-boxSize[obs_id](faceIndex) / 2.0 : 
+											boxSize[obs_id](faceIndex) / 2.0;
+		plocalClosestPoint_pz.row(faceIndex).setZero();
+	}
+
+	// Transform the closest point from the local frame to the global frame
+	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters[obs_id];
+	MatX pclosestPoint_pz = boxR(obs_id) * plocalClosestPoint_pz;
+	
+	pdiff_pz = ppoint_pz - pclosestPoint_pz;
+
+	return point - closestPoint;											
+}
+
+Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+																		const MatX& ppoint_pz,
+																		const Eigen::Array<MatX, 3, 1>& ppoint_pz_pz,
+																		const int obs_id,
+																		MatX& pdiff_pz,
+																		Eigen::Array<MatX, 3, 1>& pdiff_pz_pz,
+																		double& isInside) const {
+	pdiff_pz.resize(3, ppoint_pz.cols());	
+	for (int i = 0; i < 3; i++) {
+		pdiff_pz_pz(i).resize(ppoint_pz.cols(), ppoint_pz.cols());
+	}
+
+	// Compute the closest point in the local frame of the box
+	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters[obs_id]);
+	MatX plocalPoint_pz = boxR(obs_id).transpose() * ppoint_pz;
+	Eigen::Array<MatX, 3, 1> plocalPoint_pz_pz;
+	Box::TensorProduct(boxR(obs_id).transpose(), ppoint_pz_pz, plocalPoint_pz_pz);
+	Vec3 localClosestPoint;
+	MatX plocalClosestPoint_pz(3, ppoint_pz.cols());
+	Eigen::Array<MatX, 3, 1> plocalClosestPoint_pz_pz;
+	isInside = -1.0;
+	double distancesWithFace[3][2];
+
+	for (int i = 0; i < 3; i++) {
+		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
+		distancesWithFace[i][1] = boxSize[obs_id](i) / 2.0 - localPoint(i);
+
+		if (localPoint(i) < -boxSize[obs_id](i) / 2.0) {
+			localClosestPoint(i) = -boxSize[obs_id](i) / 2.0;
+			isInside = 1.0;
+			plocalClosestPoint_pz.row(i).setZero();
+			plocalClosestPoint_pz_pz(i) = MatX::Zero(ppoint_pz.cols(), ppoint_pz.cols());
+		}
+		else if (localPoint(i) > boxSize[obs_id](i) / 2.0) {
+			localClosestPoint(i) = boxSize[obs_id](i) / 2.0;
+			isInside = 1.0;
+			plocalClosestPoint_pz.row(i).setZero();
+			plocalClosestPoint_pz_pz(i) = MatX::Zero(ppoint_pz.cols(), ppoint_pz.cols());
+		}
+		else {
+			localClosestPoint(i) = localPoint(i);
+			plocalClosestPoint_pz.row(i) = plocalPoint_pz.row(i);
+			plocalClosestPoint_pz_pz(i) = plocalPoint_pz_pz(i);
+		}
+	}
+
+	// The point is inside the box, find the closest point on the surface
+	if (isInside == -1.0) {
+		double minDist = 1e19;
+		size_t faceIndex = 0, directionIndex = 0;
+		for (int i = 0; i < 3; i++) {
+			if (distancesWithFace[i][0] < minDist) {
+				minDist = distancesWithFace[i][0];
+				faceIndex = i;
+				directionIndex = 0;
+			}
+			if (distancesWithFace[i][1] < minDist) {
+				minDist = distancesWithFace[i][1];
+				faceIndex = i;
+				directionIndex = 1;
+			}
+		}
+
+		localClosestPoint(faceIndex) = (directionIndex == 0) ? 
+											-boxSize[obs_id](faceIndex) / 2.0 : 
+											boxSize[obs_id](faceIndex) / 2.0;
+		plocalClosestPoint_pz.row(faceIndex).setZero();
+		plocalClosestPoint_pz_pz(faceIndex).setZero();
+	}
+
+	// Transform the closest point from the local frame to the global frame
+	Vec3 closestPoint = boxR(obs_id) * localClosestPoint + boxCenters[obs_id];
+	MatX pclosestPoint_pz = boxR(obs_id) * plocalClosestPoint_pz;
+	Eigen::Array<MatX, 3, 1> pclosestPoint_pz_pz;
+	Box::TensorProduct(boxR(obs_id), plocalClosestPoint_pz_pz, pclosestPoint_pz_pz);
+	
+	pdiff_pz = ppoint_pz - pclosestPoint_pz;
+	for (int i = 0; i < 3; i++) {
+		pdiff_pz_pz(i) = ppoint_pz_pz(i) - pclosestPoint_pz_pz(i);
+	}
+
+	return point - closestPoint;
 }
 
 void BoxCollisionAvoidance::computeDistance(const Vec3& point) {
-	minimumDistance = std::numeric_limits<double>::max();
+	minimumDistance = 1e19;
+	Vec3 diff;
+	double isInside = 1.0;
 
 	for (int obs_id = 0; obs_id < numObstacles; obs_id++) {
-		Vec3 closestPoint = computeCloestPoint(point, obs_id);
-
-		Vec3 diff = point - closestPoint;
-		// distances(obs_id) = diff.norm();
-		distances(obs_id) = 0.5 * diff.dot(diff);
+		diff = computeDifferenceWithCloestPoint(point, 
+												obs_id, 
+												isInside);
+		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
 			minimumDistanceIndex = obs_id;
-			minimumDistanceCloestPoint = closestPoint;
 		}
 	}
 }
@@ -118,16 +311,27 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		throw std::invalid_argument("ppoint_pz should have 3 rows");
 	}
 
-	minimumDistance = std::numeric_limits<double>::max();
+	minimumDistance = 1e19;
+	Vec3 diff;
+	MatX pdiff_pz;
+	double isInside = 1.0;
 
 	pdistances_pz.resize(numObstacles, ppoint_pz.cols());
 
 	for (int obs_id = 0; obs_id < numObstacles; obs_id++) {
-		Vec3 closestPoint = computeCloestPoint(point, obs_id);
-		Vec3 diff = point - closestPoint;
-
-		// distances(obs_id) = diff.norm();
-		distances(obs_id) = diff.dot(diff);
+		if (onlyComputeDerivativesForMinimumDistance) {
+			diff = computeDifferenceWithCloestPoint(point, 
+													obs_id,
+													isInside);
+		}
+		else {
+			diff = computeDifferenceWithCloestPoint(point, ppoint_pz, 
+													obs_id, 
+													pdiff_pz,
+													isInside);
+		}
+		
+		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
@@ -135,27 +339,17 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		}
 
 		if (!onlyComputeDerivativesForMinimumDistance) {
-			// if (distances(obs_id) > 1e-5) {
-			// 	pdistances_pz.row(obs_id) = (point - closestPoint).transpose() * ppoint_pz / distances(obs_id);
-			// }
-			// else {
-			// 	pdistances_pz.row(obs_id).setZero();
-			// }
-			pdistances_pz.row(obs_id) = diff.transpose() * ppoint_pz;
+			pdistances_pz.row(obs_id) = isInside * diff.transpose() * pdiff_pz;
 		}
 	}
 
 	if (onlyComputeDerivativesForMinimumDistance) {
-		Vec3 closestPoint = computeCloestPoint(point, minimumDistanceIndex);
-		Vec3 diff = point - closestPoint;
+		diff = computeDifferenceWithCloestPoint(point, ppoint_pz, 
+												minimumDistanceIndex, 
+												pdiff_pz,
+												isInside);
 
-		// if (minimumDistance > 1e-5) {
-		// 	pdistances_pz.row(minimumDistanceIndex) = (point - closestPoint).transpose() * ppoint_pz / minimumDistance;
-		// }
-		// else {
-		// 	pdistances_pz.row(minimumDistanceIndex).setZero();
-		// }	
-		pdistances_pz.row(minimumDistanceIndex) = diff.transpose() * ppoint_pz;
+		pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz;
 	}
 }
 
@@ -179,7 +373,11 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		throw std::invalid_argument("ppoint_pz_pz should have the same number of columns as ppoint_pz");
 	}
 
-	minimumDistance = std::numeric_limits<double>::max();
+	minimumDistance = 1e19;
+	Vec3 diff;
+	MatX pdiff_pz;
+	Eigen::Array<MatX, 3, 1> pdiff_pz_pz;
+	double isInside = 1.0;
 
 	pdistances_pz.resize(numObstacles, ppoint_pz.cols());
 
@@ -189,11 +387,19 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 	}
 
 	for (int obs_id = 0; obs_id < numObstacles; obs_id++) {
-		Vec3 closestPoint = computeCloestPoint(point, obs_id);
+		if (onlyComputeDerivativesForMinimumDistance) {
+			diff = computeDifferenceWithCloestPoint(point, 
+													obs_id,
+													isInside);
+		}
+		else {
+			diff = computeDifferenceWithCloestPoint(point, ppoint_pz, ppoint_pz_pz,
+													obs_id, 
+													pdiff_pz, pdiff_pz_pz,
+													isInside);
+		}
 
-		Vec3 diff = point - closestPoint;
-		// distances(obs_id) = diff.norm();
-		distances(obs_id) = diff.dot(diff);
+		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
@@ -201,36 +407,26 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		}
 
 		if (!onlyComputeDerivativesForMinimumDistance) {
-			// if (distances(obs_id) > 1e-5) {
-			// 	pdistances_pz.row(obs_id) = (point - closestPoint).transpose() * ppoint_pz / distances(obs_id);
-			// }
-			// else {
-			// 	pdistances_pz.row(obs_id).setZero();
-			// }
-			pdistances_pz.row(obs_id) = diff.transpose() * ppoint_pz;
+			pdistances_pz.row(obs_id) = isInside * diff.transpose() * pdiff_pz;
 
-			pdistances_pz_pz(obs_id) = ppoint_pz.transpose() * ppoint_pz;
+			pdistances_pz_pz(obs_id) = isInside * pdiff_pz.transpose() * pdiff_pz;
 			for (int i = 0; i < 3; i++) {
-				pdistances_pz_pz(obs_id) += diff(i) * ppoint_pz_pz(i);
+				pdistances_pz_pz(obs_id) += isInside * diff(i) * pdiff_pz_pz(i);
 			}
 		}
 	}
 
 	if (onlyComputeDerivativesForMinimumDistance) {
-		Vec3 closestPoint = computeCloestPoint(point, minimumDistanceIndex);
-		Vec3 diff = point - closestPoint;
+		diff = computeDifferenceWithCloestPoint(point, ppoint_pz, ppoint_pz_pz,
+												minimumDistanceIndex, 
+												pdiff_pz, pdiff_pz_pz,
+												isInside);
+												
+		pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz;
 
-		// if (minimumDistance > 1e-5) {
-		// 	pdistances_pz.row(minimumDistanceIndex) = (point - closestPoint).transpose() * ppoint_pz / minimumDistance;
-		// }
-		// else {
-		// 	pdistances_pz.row(minimumDistanceIndex).setZero();
-		// }	
-		pdistances_pz.row(minimumDistanceIndex) = diff.transpose() * ppoint_pz;
-
-		pdistances_pz_pz(minimumDistanceIndex) = ppoint_pz.transpose() * ppoint_pz;
+		pdistances_pz_pz(minimumDistanceIndex) = isInside * pdiff_pz.transpose() * pdiff_pz;
 		for (int i = 0; i < 3; i++) {
-			pdistances_pz_pz(minimumDistanceIndex) += diff(i) * ppoint_pz_pz(i);
+			pdistances_pz_pz(minimumDistanceIndex) += isInside * diff(i) * pdiff_pz_pz(i);
 		}
 	}
 }

@@ -9,8 +9,12 @@ namespace IDTO {
 #define PROJECT_POINT_ON_FACE_THRESHOLD 1e-4
 
 namespace Box {
-    constexpr int HYPERPLANE_NUM = 6; // 3 * (3 - 1)
-    constexpr int VERTICES_NUM = 8;
+constexpr int HYPERPLANE_NUM = 6; // 3 * (3 - 1)
+constexpr int VERTICES_NUM = 8;
+
+void TensorProduct(const Eigen::Matrix3d& R, 
+                   const Eigen::Array<Eigen::MatrixXd, 3, 1>& inp,
+                   Eigen::Array<Eigen::MatrixXd, 3, 1>& out);
 };
 
 double distancePointAndLineSegment(const Eigen::Vector3d& point, 
@@ -23,9 +27,6 @@ public:
     using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-
-    const int HYPERPLANE_NUM = Box::HYPERPLANE_NUM;
-    const int VERTICES_NUM = Box::VERTICES_NUM;
 
     // Constructor
     BoxCollisionAvoidance() = default;
@@ -40,8 +41,23 @@ public:
     // class methods:
     void initialize();
 
-    Vec3 computeCloestPoint(const Vec3& point, 
-                            const int obs_id);
+    Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
+                                          const int obs_id,
+                                          double& isInside) const;
+
+    Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
+                                          const MatX& ppoint_pz,
+                                          const int obs_id,
+                                          MatX& pdiff_pz,
+                                          double& isInside) const;
+
+    Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
+                                          const MatX& ppoint_pz,
+                                          const Eigen::Array<MatX, 3, 1>& ppoint_pz_pz,
+                                          const int obs_id,
+                                          MatX& pdiff_pz,
+                                          Eigen::Array<MatX, 3, 1>& pdiff_pz_pz,
+                                          double& isInside) const;
 
     void computeDistance(const Vec3& point) override;
 

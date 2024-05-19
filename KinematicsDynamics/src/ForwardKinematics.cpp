@@ -330,8 +330,37 @@ void ForwardKinematicsHighOrderDerivative::fk_thirdorder(std::vector<std::vector
     }
 }
 
+Eigen::VectorXd ForwardKinematicsHighOrderDerivative::Transform2Vec(const Transform& T) {
+    VecX x(12);
+
+    x(0) = T.p(0); // x
+    x(1) = T.p(1); // y
+    x(2) = T.p(2); // z
+    x(3) = T.R(0, 0);
+    x(4) = T.R(0, 1);
+    x(5) = T.R(0, 2);
+    x(6) = T.R(1, 0);
+    x(7) = T.R(1, 1);
+    x(8) = T.R(1, 2);
+    x(9) = T.R(2, 0);
+    x(10) = T.R(2, 1);
+    x(11) = T.R(2, 2);
+
+    return x;
+}
+
+Eigen::Vector3d ForwardKinematicsHighOrderDerivative::Transform2xyz(const Transform& T) {
+    Vec3 x;
+
+    x(0) = T.p(0); // x
+    x(1) = T.p(1); // y
+    x(2) = T.p(2); // z
+
+    return x;
+}
+
 Eigen::VectorXd ForwardKinematicsHighOrderDerivative::Transform2xyzrpy(const Transform& T) {
-    const Eigen::MatrixXd& R = T.R;
+    const Mat3& R = T.R;
     VecX x(6);
 
     x(0) = T.p(0); // x
@@ -345,18 +374,37 @@ Eigen::VectorXd ForwardKinematicsHighOrderDerivative::Transform2xyzrpy(const Tra
     return x;
 }
 
-Eigen::Vector3d ForwardKinematicsHighOrderDerivative::Transform2xyz(const Transform& T) {
-    const Eigen::MatrixXd& R = T.R;
-    Vec3 x;
+void ForwardKinematicsHighOrderDerivative::Transform2VecJacobian(MatX& J, 
+                                                                 const Transform& T, 
+                                                                 const std::vector<Transform>& dTdq) {
+    // chain declared as class public variable. 
+    // always assume that fk_hessian called after fk
 
-    x(0) = T.p(0); // x
-    x(1) = T.p(1); // y
-    x(2) = T.p(2); // z
+    // result container has been allocated outside the function
+    if (J.rows() != 12) {
+        std::cerr << "Jacobian matrix should have 12 rows and should be resized before this function!" << std::endl;
+        throw std::invalid_argument("Jacobian matrix should have 12 rows and should be resized before this function!");
+    }
 
-    return x;
+    J.setZero();
+
+    for (auto i : chain) {
+        J(0, i) = dTdq[i].p(0);
+        J(1, i) = dTdq[i].p(1);
+        J(2, i) = dTdq[i].p(2);
+        J(3, i) = dTdq[i].R(0, 0);
+        J(4, i) = dTdq[i].R(0, 1);
+        J(5, i) = dTdq[i].R(0, 2);
+        J(6, i) = dTdq[i].R(1, 0);
+        J(7, i) = dTdq[i].R(1, 1);
+        J(8, i) = dTdq[i].R(1, 2);
+        J(9, i) = dTdq[i].R(2, 0);
+        J(10, i) = dTdq[i].R(2, 1);
+        J(11, i) = dTdq[i].R(2, 2);
+    }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd& J, 
+void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(MatX& J, 
                                                                  const Transform& T, 
                                                                  const std::vector<Transform>& dTdq) {
     // chain declared as class public variable. 
@@ -377,7 +425,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzJacobian(Eigen::MatrixXd
     }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
+void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(MatX& J, 
                                                                     const Transform& T, 
                                                                     const std::vector<Transform>& dTdq) {
     // chain declared as class public variable. 
@@ -391,7 +439,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
 
     J.setZero();
 
-    const Eigen::MatrixXd& R = T.R;
+    const Mat3& R = T.R;
     double t2 = R(0,0) * R(0,0);
     double t3 = R(0,1) * R(0,1);
     double t4 = R(1,2) * R(1,2);
@@ -422,7 +470,37 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyJacobian(Eigen::Matri
     }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzHessian(Eigen::Array<Eigen::MatrixXd, 3, 1>& H,
+void ForwardKinematicsHighOrderDerivative::Transform2VecHessian(Eigen::Array<MatX, 12, 1>& H,
+                                                                const Transform& T, 
+                                                                const std::vector<Transform>& dTdq,
+                                                                const std::vector<std::vector<Transform>>& ddTddq) {
+    // chain declared as class public variable. 
+    // always assume that fk_hessian called after fk
+
+    // result container has been allocated outside the function
+    for (int i = 0; i < 12; i++) {
+        H(i).setZero();
+    }  
+
+    for (auto i : chain) {
+        for (auto j : chain) {
+            H(0)(i, j) = ddTddq[i][j].p(0);
+            H(1)(i, j) = ddTddq[i][j].p(1);
+            H(2)(i, j) = ddTddq[i][j].p(2);
+            H(3)(i, j) = ddTddq[i][j].R(0, 0);
+            H(4)(i, j) = ddTddq[i][j].R(0, 1);
+            H(5)(i, j) = ddTddq[i][j].R(0, 2);
+            H(6)(i, j) = ddTddq[i][j].R(1, 0);
+            H(7)(i, j) = ddTddq[i][j].R(1, 1);
+            H(8)(i, j) = ddTddq[i][j].R(1, 2);
+            H(9)(i, j) = ddTddq[i][j].R(2, 0);
+            H(10)(i, j) = ddTddq[i][j].R(2, 1);
+            H(11)(i, j) = ddTddq[i][j].R(2, 2);
+        }
+    }
+}
+
+void ForwardKinematicsHighOrderDerivative::Transform2xyzHessian(Eigen::Array<MatX, 3, 1>& H,
                                                                 const Transform& T, 
                                                                 const std::vector<Transform>& dTdq,
                                                                 const std::vector<std::vector<Transform>>& ddTddq) {
@@ -443,7 +521,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzHessian(Eigen::Array<Eig
     }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<Eigen::MatrixXd, 6, 1>& H,
+void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<MatX, 6, 1>& H,
                                                                    const Transform& T, 
                                                                    const std::vector<Transform>& dTdq,
                                                                    const std::vector<std::vector<Transform>>& ddTddq) {
@@ -455,7 +533,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<
         H(i).setZero();
     }  
     
-    const Eigen::MatrixXd& R = T.R;
+    const Mat3& R = T.R;
     double t2 = R(0,0) * R(0,0);
     double t3 = R(0,1) * R(0,1);
     double t4 = R(0,2) * R(0,2);
@@ -492,7 +570,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyHessian(Eigen::Array<
     }
 }
 
-void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyThirdOrder(Eigen::Array<Eigen::MatrixXd, 6, 1>& TOx,
+void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyThirdOrder(Eigen::Array<MatX, 6, 1>& TOx,
                                                                       const VecX& x,
                                                                       const Transform& T, 
                                                                       const std::vector<Transform>& dTdq,
@@ -500,7 +578,7 @@ void ForwardKinematicsHighOrderDerivative::Transform2xyzrpyThirdOrder(Eigen::Arr
                                                                       const std::vector<std::vector<std::vector<Transform>>>& dddTdddq) {
     assert(x.size() == TOx(0).cols());
 
-    const Eigen::MatrixXd& R = T.R;
+    const Mat3& R = T.R;
     
     double t2 = R(0,0)*R(0,0);
     double t3 = R(0,1)*R(0,1);

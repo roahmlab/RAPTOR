@@ -53,13 +53,13 @@ void KinovaPybindWrapper::set_obstacles(const int num_obstacles_inp,
     boxSize.resize(num_obstacles);
 
     for (int i = 0; i < num_obstacles; i++) {
-        boxCenters(i) << obstacles_ptr[i * 9 + 0],
+        boxCenters[i] << obstacles_ptr[i * 9 + 0],
                          obstacles_ptr[i * 9 + 1],
                          obstacles_ptr[i * 9 + 2];
-        boxOrientation(i) << obstacles_ptr[i * 9 + 3],
+        boxOrientation[i] << obstacles_ptr[i * 9 + 3],
                              obstacles_ptr[i * 9 + 4],
                              obstacles_ptr[i * 9 + 5];
-        boxSize(i) << obstacles_ptr[i * 9 + 6],
+        boxSize[i] << obstacles_ptr[i * 9 + 6],
                       obstacles_ptr[i * 9 + 7],
                       obstacles_ptr[i * 9 + 8];
     }

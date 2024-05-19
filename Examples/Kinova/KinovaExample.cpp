@@ -32,14 +32,18 @@ int main() {
 
     // Define obstacles
     const int num_obstacles = 0;
-    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxCenters;
-    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxOrientation;
-    Eigen::Array<Eigen::Vector3d, 1, num_obstacles> boxSize;
+    std::vector<Eigen::Vector3d> boxCenters;
+    std::vector<Eigen::Vector3d> boxOrientation;
+    std::vector<Eigen::Vector3d> boxSize;
+
+    boxCenters.resize(num_obstacles);
+    boxOrientation.resize(num_obstacles);
+    boxSize.resize(num_obstacles);
 
     for (int i = 0; i < num_obstacles; i++) {
-        boxCenters(i) << 10, 0, 0.3 * i;
-        boxOrientation(i) << 0, 0, 0;
-        boxSize(i) << 0.1, 0.1, 0.1;
+        boxCenters[i] << 10, 0, 0.3 * i;
+        boxOrientation[i] << 0, 0, 0;
+        boxSize[i] << 0.1, 0.1, 0.1;
     }
 
     // Define trajectories

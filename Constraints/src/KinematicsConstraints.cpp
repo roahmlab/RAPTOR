@@ -199,7 +199,7 @@ void KinematicsConstraints::compute(const VecX& z,
             }
             
             // (2) p_FK_pq * p2_q_pz2
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 3; i++) {   
                 for (int j = 0; j < trajPtr_->Nact; j++) {
                     pg_pz_pz(i) += jointTJ(i, j) * pq_pz_pz(j);
                 }
@@ -229,6 +229,35 @@ void KinematicsConstraints::compute(const VecX& z,
 void KinematicsConstraints::compute_bounds() {
     g_lb = VecX::Zero(m);
     g_ub = VecX::Zero(m);
+}
+
+void KinematicsConstraints::print_violation_info() {
+    if (constrainPosition) {
+        const VecX& g_position = g.head(3);
+
+        if (abs(g_position(0)) > 1e-5) {
+            std::cout << "    Error on position x: " 
+                      << g_position(0) 
+                      << std::endl;
+        }
+        if (abs(g_position(1)) > 1e-5) {
+            std::cout << "    Error on position y: " 
+                      << g_position(1) << std::endl;
+        }
+        if (abs(g_position(2)) > 1e-5) {
+            std::cout << "    Error on position z: " 
+                      << g_position(2) << std::endl;
+        }
+    }
+
+    if (constrainRotation) {
+        const VecX& g_rotation = g.tail(9);
+
+        if (g_rotation.norm() > 1e-5) {
+            std::cout << "    Error on rotation (norm of rotation matrix): " 
+                      << g_rotation.norm() << std::endl;
+        }
+    }
 }
 
 }; // namespace IDTO

@@ -9,7 +9,9 @@ class ForwardKinematicsHighOrderDerivative {
 public:
     using Model = pinocchio::Model;
 	using Vec3 = Eigen::Vector3d;
+	using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
+	using MatX = Eigen::MatrixXd;
 
     // Constructor
 	ForwardKinematicsHighOrderDerivative();
@@ -54,29 +56,40 @@ public:
 					   const Transform& endT, 
 					   const Transform& startT);
 
+	VecX Transform2Vec(const Transform& T);
+
 	Vec3 Transform2xyz(const Transform& T);
 
 	VecX Transform2xyzrpy(const Transform& T);
 
-	void Transform2xyzJacobian(Eigen::MatrixXd& J, 
+	void Transform2VecJacobian(MatX& J, 
 							   const Transform& T, 
 							   const std::vector<Transform>& dTdq);
 
-	void Transform2xyzrpyJacobian(Eigen::MatrixXd& J, 
+	void Transform2xyzJacobian(MatX& J, 
+							   const Transform& T, 
+							   const std::vector<Transform>& dTdq);
+
+	void Transform2xyzrpyJacobian(MatX& J, 
 								  const Transform& T, 
 								  const std::vector<Transform>& dTdq);
 
-    void Transform2xyzHessian(Eigen::Array<Eigen::MatrixXd, 3, 1>& H,
+	void Transform2VecHessian(Eigen::Array<MatX, 12, 1>& H,
 							  const Transform& T, 
 							  const std::vector<Transform>& dTdq,
 							  const std::vector<std::vector<Transform>>& ddTddq);
 
-	void Transform2xyzrpyHessian(Eigen::Array<Eigen::MatrixXd, 6, 1>& H,
+    void Transform2xyzHessian(Eigen::Array<MatX, 3, 1>& H,
+							  const Transform& T, 
+							  const std::vector<Transform>& dTdq,
+							  const std::vector<std::vector<Transform>>& ddTddq);
+
+	void Transform2xyzrpyHessian(Eigen::Array<MatX, 6, 1>& H,
 								 const Transform& T, 
 								 const std::vector<Transform>& dTdq,
 								 const std::vector<std::vector<Transform>>& ddTddq);
 
-	void Transform2xyzrpyThirdOrder(Eigen::Array<Eigen::MatrixXd, 6, 1>& TOx,
+	void Transform2xyzrpyThirdOrder(Eigen::Array<MatX, 6, 1>& TOx,
 									const VecX& x,
 									const Transform& T, 
 									const std::vector<Transform>& dTdq,

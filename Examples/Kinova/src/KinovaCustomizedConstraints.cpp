@@ -6,9 +6,9 @@ namespace Kinova {
 KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                                          const Model& model_input,
                                                          const Eigen::VectorXi& jtype_input,
-                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxCenters_input,
-                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxOrientation_input,
-                                                         const Eigen::Array<Vec3, 1, Eigen::Dynamic>& boxSize_input) :
+                                                         const std::vector<Vec3>& boxCenters_input,
+                                                         const std::vector<Vec3>& boxOrientation_input,
+                                                         const std::vector<Vec3>& boxSize_input) :
     trajPtr_(trajPtr_input),
     jtype(jtype_input) {
     modelPtr_ = std::make_unique<Model>(model_input);

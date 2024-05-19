@@ -160,7 +160,6 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
-    # Examples/Digit/src/DigitSingleStepOptimizerWithObstacles.cpp
 
 target_link_libraries(Digitlib PRIVATE
     trajlib
