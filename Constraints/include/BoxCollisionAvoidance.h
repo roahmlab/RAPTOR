@@ -9,6 +9,8 @@ namespace IDTO {
 #define PROJECT_POINT_ON_FACE_THRESHOLD 1e-4
 
 namespace Box {
+constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
+
 constexpr int HYPERPLANE_NUM = 6; // 3 * (3 - 1)
 constexpr int VERTICES_NUM = 8;
 

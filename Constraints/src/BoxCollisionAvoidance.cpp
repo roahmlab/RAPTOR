@@ -296,7 +296,10 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point) {
 		diff = computeDifferenceWithCloestPoint(point, 
 												obs_id, 
 												isInside);
-		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
+		double diffSquared = diff.dot(diff);
+		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
+								isInside * std::sqrt(diffSquared) : 
+								0.0;
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
@@ -331,7 +334,10 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 													isInside);
 		}
 		
-		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
+		double diffSquared = diff.dot(diff);
+		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
+								isInside * std::sqrt(diffSquared) : 
+								0.0;
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
@@ -339,7 +345,12 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		}
 
 		if (!onlyComputeDerivativesForMinimumDistance) {
-			pdistances_pz.row(obs_id) = isInside * diff.transpose() * pdiff_pz;
+			if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
+				pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz / distances(obs_id);
+			}
+			else {
+				pdistances_pz.row(minimumDistanceIndex).setZero();
+			}
 		}
 	}
 
@@ -349,7 +360,13 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 												pdiff_pz,
 												isInside);
 
-		pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz;
+		double diffSquared = diff.dot(diff);
+		if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
+			pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz / std::sqrt(diffSquared);
+		}
+		else {
+			pdistances_pz.row(minimumDistanceIndex).setZero();
+		}
 	}
 }
 
@@ -399,7 +416,10 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 													isInside);
 		}
 
-		distances(obs_id) = isInside * 0.5 * diff.dot(diff);
+		double diffSquared = diff.dot(diff);
+		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
+								isInside * std::sqrt(diffSquared) : 
+								0.0;
 
 		if (distances(obs_id) < minimumDistance) {
 			minimumDistance = distances(obs_id);
@@ -407,11 +427,20 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 		}
 
 		if (!onlyComputeDerivativesForMinimumDistance) {
-			pdistances_pz.row(obs_id) = isInside * diff.transpose() * pdiff_pz;
+			if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
+				MatX pdiffSquare_pz = diff.transpose() * pdiff_pz;
+				pdistances_pz.row(obs_id) = isInside * pdiffSquare_pz / distances(obs_id);
 
-			pdistances_pz_pz(obs_id) = isInside * pdiff_pz.transpose() * pdiff_pz;
-			for (int i = 0; i < 3; i++) {
-				pdistances_pz_pz(obs_id) += isInside * diff(i) * pdiff_pz_pz(i);
+				pdistances_pz_pz(obs_id) = pdiff_pz.transpose() * pdiff_pz / distances(obs_id);
+				for (int i = 0; i < 3; i++) {
+					pdistances_pz_pz(obs_id) += diff(i) * pdiff_pz_pz(i) / distances(obs_id);
+				}
+				pdistances_pz_pz(obs_id) -= pdiffSquare_pz.transpose() * pdiffSquare_pz / std::pow(distances(obs_id), 3);
+				pdistances_pz_pz(obs_id) *= isInside;
+			}
+			else {
+				pdistances_pz.row(obs_id).setZero();
+				pdistances_pz_pz(obs_id).setZero();
 			}
 		}
 	}
@@ -422,11 +451,22 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 												pdiff_pz, pdiff_pz_pz,
 												isInside);
 												
-		pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz;
+		double diffSquared = diff.dot(diff);
+		if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
+			double dist = std::sqrt(diffSquared);
+			MatX pdiffSquare_pz = diff.transpose() * pdiff_pz;
+			pdistances_pz.row(minimumDistanceIndex) = isInside * pdiffSquare_pz / dist;
 
-		pdistances_pz_pz(minimumDistanceIndex) = isInside * pdiff_pz.transpose() * pdiff_pz;
-		for (int i = 0; i < 3; i++) {
-			pdistances_pz_pz(minimumDistanceIndex) += isInside * diff(i) * pdiff_pz_pz(i);
+			pdistances_pz_pz(minimumDistanceIndex) = pdiff_pz.transpose() * pdiff_pz / dist;
+			for (int i = 0; i < 3; i++) {
+				pdistances_pz_pz(minimumDistanceIndex) += diff(i) * pdiff_pz_pz(i) / dist;
+			}
+			pdistances_pz_pz(minimumDistanceIndex) -= pdiffSquare_pz.transpose() * pdiffSquare_pz / std::pow(diffSquared, 1.5);
+			pdistances_pz_pz(minimumDistanceIndex) *= isInside;
+		}
+		else {
+			pdistances_pz.row(minimumDistanceIndex).setZero();
+			pdistances_pz_pz(minimumDistanceIndex).setZero();
 		}
 	}
 }
