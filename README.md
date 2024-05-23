@@ -33,7 +33,7 @@ A more detailed instruction is provided [here](Installation/README.md).
 
 ## Overview
  - Trajectories/ : This folder contains implementation of multiple primitives of smooth trajectories.
- - InverseDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
+ - KinematicsDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
  - Constraints/ : This folder contains implementation of multiple constriants that could be useful for trajectory optimization,
                   such as torque limits or collision avoidance.
  - Optimization/ : This folder contains a base class that provides interfaces to ipopt.  
