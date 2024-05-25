@@ -437,6 +437,7 @@ void Optimizer::finalize_solution(
     summarize_constraints(m, g);
 
     if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
+	ifFeasible = true;
         solution = lastFeasibleSolution;
         std::cerr << "Solution is not feasible but we have found one feasible solution before. Switch to the last feasible solution." << std::endl;
 
