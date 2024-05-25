@@ -188,6 +188,7 @@ public:
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;
 
+    VecX lastFeasibleSolution; // stores the last feasible solution here
     VecX solution; // stores the final solution here
 
     Number final_constr_violation = 0;

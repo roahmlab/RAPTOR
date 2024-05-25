@@ -152,6 +152,7 @@ bool Optimizer::eval_g(
     // auto start = std::chrono::high_resolution_clock::now();
 
     Index iter = 0;
+    bool ifFeasibleCurrIter = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // compute constraints
         try {
@@ -163,6 +164,12 @@ bool Optimizer::eval_g(
             THROW_EXCEPTION(IpoptException, "*** Error in eval_g: " + constraintsNameVec_[c] + "! Check previous error message.");
         }
 
+        // test if constraints are feasible
+        if ((constraintsPtrVec_[c]->g - constraintsPtrVec_[c]->g_lb).minCoeff() < 0 || 
+            (constraintsPtrVec_[c]->g_ub - constraintsPtrVec_[c]->g).minCoeff() < 0) {
+            ifFeasibleCurrIter = false;
+        }
+
         // fill in constraints
         for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
             g[iter] = constraintsPtrVec_[c]->g(i);
@@ -172,6 +179,10 @@ bool Optimizer::eval_g(
 
     // auto end = std::chrono::high_resolution_clock::now();
     // std::cout << "eval_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+
+    if (ifFeasibleCurrIter) {
+        lastFeasibleSolution = z;
+    }
 
     return true;
 }
@@ -424,6 +435,20 @@ void Optimizer::finalize_solution(
     Number g_copy[m];
     eval_g(n, x, false, m, g_copy);
     summarize_constraints(m, g);
+
+    if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
+        solution = lastFeasibleSolution;
+        std::cerr << "Solution is not feasible but we have found one feasible solution before. Switch to the last feasible solution." << std::endl;
+
+        Number x_new[n];
+        for( Index i = 0; i < n; i++ ) {
+            x_new[i] = solution(i);
+        }
+
+        // re-evaluate constraints to update values in each constraint instances
+        eval_f(n, x_new, false, obj_value);
+        eval_g(n, x_new, false, m, g_copy);
+    }
 
     std::cout << "Objective value: " << obj_value << std::endl;
 }
