@@ -178,6 +178,10 @@ public:
     );
 
     // class members:
+    std::chrono::_V2::system_clock::time_point start_time;
+    std::chrono::_V2::system_clock::time_point end_time;
+    bool output_computation_time = false;
+    
     bool enable_hessian = false;
 
     int numVars = 0; // number of variables

@@ -149,12 +149,14 @@ bool Optimizer::eval_g(
         z(i) = x[i];
     }
 
-    // auto start = std::chrono::high_resolution_clock::now();
-
     Index iter = 0;
     bool ifFeasibleCurrIter = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // compute constraints
+        if (output_computation_time) {
+            start_time = std::chrono::high_resolution_clock::now();
+        }
+        
         try {
             constraintsPtrVec_[c]->compute(z, false);
         }
@@ -162,6 +164,13 @@ bool Optimizer::eval_g(
             std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "*** Error in eval_g: " + constraintsNameVec_[c] + "! Check previous error message.");
+        }
+
+        if (output_computation_time) {
+            end_time = std::chrono::high_resolution_clock::now();
+            std::cout << "eval_g compute time for " << constraintsNameVec_[c] 
+                      << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                      << " microseconds.\n";
         }
 
         // test if constraints are feasible
@@ -176,9 +185,6 @@ bool Optimizer::eval_g(
             iter++;
         }
     }
-
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::cout << "eval_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
 
     if (ifFeasibleCurrIter) {
         lastFeasibleSolution = z;
@@ -226,11 +232,13 @@ bool Optimizer::eval_jac_g(
             z(i) = x[i];
         }
 
-        // auto start = std::chrono::high_resolution_clock::now();
-
         Index iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
             // compute constraints
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
             try {
                 constraintsPtrVec_[c]->compute(z, true);
             }
@@ -238,6 +246,13 @@ bool Optimizer::eval_jac_g(
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cout << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g in: " + constraintsNameVec_[c] + "! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_jac_g compute time for " << constraintsNameVec_[c] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
             }
 
             // fill in constraints
@@ -248,9 +263,6 @@ bool Optimizer::eval_jac_g(
                 }
             }
         }
-
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << "eval_jac_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
     }
 
     return true;
@@ -310,12 +322,14 @@ bool Optimizer::eval_h(
         MatX hessian(n, n);
         hessian.setZero();
 
-        // auto start = std::chrono::high_resolution_clock::now();
-
         MatX hess_f(n, n);
         hess_f.setZero();
 
         if (obj_factor != 0) {
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
             try {
                 eval_hess_f(n, x, new_x, hess_f);
             }
@@ -323,6 +337,12 @@ bool Optimizer::eval_h(
                 std::cerr << "Error in eval_hess_f: " << std::endl;
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_hess_f compute time is" << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
             }
 
             hessian += obj_factor * hess_f;
@@ -344,6 +364,10 @@ bool Optimizer::eval_h(
             } 
 
             // compute constraints
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
             try {
                 constraintsPtrVec_[c]->compute(z, true, true);
             }
@@ -351,6 +375,13 @@ bool Optimizer::eval_h(
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cout << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_h in: " + constraintsNameVec_[c] + "! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_hessian_g compute time for " << constraintsNameVec_[c] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
             }
 
             if (constraintsPtrVec_[c]->pg_pz_pz.size() != constraintsPtrVec_[c]->m) {
@@ -392,8 +423,8 @@ bool Optimizer::eval_h(
             }
         }
 
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << "eval_h time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+        // auto end_time = std::chrono::high_resolution_clock::now();
+        // std::cout << "eval_h time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds.\n";
     }
 
     return true;
@@ -437,7 +468,7 @@ void Optimizer::finalize_solution(
     summarize_constraints(m, g);
 
     if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
-	ifFeasible = true;
+        ifFeasible = true;
         solution = lastFeasibleSolution;
         std::cerr << "Solution is not feasible but we have found one feasible solution before. Switch to the last feasible solution." << std::endl;
 
