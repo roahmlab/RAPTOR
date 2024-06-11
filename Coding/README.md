@@ -33,6 +33,8 @@ This function takes in the decision variable `z` of the optimization problem and
 
  These gradients are later taken in by other classes to eventually compute the gradients of the constraints or costs in the optimization.
 
+For more information, please refer to [README](../Trajectories/README.md) in `Trajectories/` folder.
+
  ### Kinematics & Dynamics
 For some of the constraints, such as end effector position, or torque limits, we need to compute the forward kinematics and inverse dynamics of the robot.
 The core function is also called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`
@@ -42,6 +44,8 @@ The core function is also called `compute(const Eigen::VectorXd& z, bool compute
  - Using `q`, `q_d`, `q_dd` in the trajectory class, we will compute the forward kinematics of each joints or the torque requried, depending on which kinematics/dynamics class it is.
  - If `compute_derivatives` is true, we will use `pq_pz`, `pq_d_pz`, `pq_dd_pz` in the trajectory class to compute the gradient of the forward kinematics or inverse dynamics with respect to the decision variable `z`.
  - The results will be stored inside the class for the constraints classes to access.
+
+For more information, please refer to [README](../KinematicsDynamics/README.md) in `KinematicsDynamics/` folder. 
 
  ### Constraints
 This class implements different types of constraints that will be later put into the optimization.
@@ -57,6 +61,8 @@ This updates `g_lb` and `g_ub`, which are also class members.
 
 There's also a function called `print_violation_information`, which will be called by the optimizer class at the end of the optimization, to print relevant information for tuning and debugging.
 
+For more information, please refer to [README](../Constraints/README.md) in `Constraints/` folder. 
+
  ### Optimizer 
 This class serves as an interface to an open-source nonlinear solver `Ipopt`.
 We only cares about filling in the following functions:
@@ -67,6 +73,7 @@ We only cares about filling in the following functions:
  - `eval_grad_f`: provide the gradient of the cost function.
  - `eval_g`: provide the constraints values.
  - `eval_jac_g`: provide the gradient (jacobian) of the constraints.
+ - `eval_h`: provide the hessian of the entire Lagrange multiplier.
  - `finalize_solution`: `Ipopt` will return a solution here (may be infeasible or not reach the constraint violation tolerance yet), but you can check things here if you want to take this as a valid solution.
 
 

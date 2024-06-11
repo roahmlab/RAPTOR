@@ -59,11 +59,15 @@ Specifically, run the following command
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PYTHON_INTERFACE=OFF
 ```
 
+### Qhull (Not used for now)
+Please refer to this [link](http://www.qhull.org/download/)
+Build from source in the downloaded folder so that the libraries are installed in /usr/local/
+
 ### Ipopt
 Please refer to this [link](https://coin-or.github.io/Ipopt/INSTALL.html).
 
 Note that in section "Download, build, and install dependencies", you actually only to install one of the external libraries.
-We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
+We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in a nonlinear optimization problem.
 
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
 To be more specific, you need to get HSL library from its official [website](https://www.hsl.rl.ac.uk/), 
