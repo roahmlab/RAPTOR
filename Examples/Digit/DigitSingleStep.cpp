@@ -9,9 +9,6 @@ using namespace IDTO;
 using namespace Digit;
 using namespace Ipopt;
 
-using std::cout;
-using std::endl;
-
 int main(int argc, char* argv[]) {
     // set openmp number of threads
     int num_threads = 32; // this number is currently hardcoded
@@ -57,18 +54,23 @@ int main(int argc, char* argv[]) {
     const TimeDiscretization time_discretization = Uniform;
     const int N = 14;
     const int degree = 5;
-    const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
+    // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
 
     GaitParameters gp;
-    // gp.swingfoot_midstep_z_des = 0.30;
-    // gp.swingfoot_begin_y_des = 0.40;
-    // gp.swingfoot_end_y_des = -0.40;
-    gp.swingfoot_midstep_z_des = std::atof(argv[2]);
-    gp.swingfoot_begin_y_des = std::atof(argv[1]);
-    gp.swingfoot_end_y_des = - std::atof(argv[1]);
+    gp.swingfoot_midstep_z_des = 0.30;
+    gp.swingfoot_begin_y_des = 0.40;
+    gp.swingfoot_end_y_des = -0.40;
+    // gp.swingfoot_midstep_z_des = std::atof(argv[2]);
+    // gp.swingfoot_begin_y_des = std::atof(argv[1]);
+    // gp.swingfoot_end_y_des = - std::atof(argv[1]);
 
-    std::ifstream initial_guess("initial-digit-Bezier.txt");
+    // std::ifstream initial_guess("initial-digit-Bezier.txt");
     // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
+    std::ifstream initial_guess("../data/Digit/solution-digit-Bezier-0.00-0.15.txt");
+    if (initial_guess.fail()) {
+        throw std::runtime_error("Error opening initial guess file!");
+    }
+
     double temp = 0;
     std::vector<double> z_array;
     while (initial_guess >> temp) {
@@ -101,9 +103,9 @@ int main(int argc, char* argv[]) {
 	app->Options()->SetNumericValue("max_wall_time", 500);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetIntegerValue("max_iter", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("nlp_scaling_method", "none");
@@ -138,12 +140,12 @@ int main(int argc, char* argv[]) {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("../data/Digit/solution-digit-Bezier-" + output_name + ".txt");
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+        // std::ofstream solution("../data/Digit/solution-digit-Bezier-" + output_name + ".txt");
+        // solution << std::setprecision(20);
+        // for (int i = 0; i < mynlp->numVars; i++) {
+        //     solution << mynlp->solution[i] << std::endl;
+        // }
+        // solution.close();
 
         // std::ofstream trajectory("../data/Digit/trajectory-digit-Bezier-" + output_name + ".txt");
         // trajectory << std::setprecision(20);

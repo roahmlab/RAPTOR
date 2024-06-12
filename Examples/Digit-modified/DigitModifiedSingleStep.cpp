@@ -41,18 +41,26 @@ int main(int argc, char* argv[]) {
 
     pinocchio::Data data(model);
 
-    const double T = 0.4;
-    const int N = 16;
-    const TimeDiscretization time_discretization = Chebyshev;
-    const int degree = 5;
+    double T = 0.4;
+    int N = 16;
+    TimeDiscretization time_discretization = Chebyshev;
+    int degree = 5;
     // const std::string output_name = "Chebyshev-N16";
+
+    if (argc > 2) {
+        N = std::stoi(argv[2]);
+    }
+    if (argc > 3) {
+        int temp = std::stoi(argv[3]);
+        time_discretization = (temp == 0) ? Uniform : Chebyshev;
+    }
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.27;
     gp.swingfoot_begin_x_des = -0.25;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
-    gp.swingfoot_end_y_des = -0.40;                                  
+    gp.swingfoot_end_y_des = -0.40;                                
 
     std::ifstream initial_guess("initial-digit-modified-Bezier.txt");
     // std::ifstream initial_guess("solution-digit-modified-Bezier-" + output_name + ".txt");
@@ -69,7 +77,7 @@ int main(int argc, char* argv[]) {
     }
 
     // add disturbance to initial guess
-    Eigen::VectorXd disturbance(z_array.size());
+    Eigen::VectorXd disturbance(z.size());
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
@@ -108,14 +116,14 @@ int main(int argc, char* argv[]) {
     // app->Options()->SetNumericValue("acceptable_dual_inf_tol", 10);
     app->Options()->SetIntegerValue("max_iter", 2000);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    app->Options()->SetStringValue("nlp_scaling_method", "none");
+    // app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking
-    // const std::string outputfilename = "../data/Digit-modified/ipopt_digit-modified-Bezier-" + std::string(argv[1]) + ".out";
+    // const std::string outputfilename = "../data/Digit-modified-2/ipopt_digit-modified-Bezier-" + std::string(argv[1]) + ".out";
     // app->Options()->SetStringValue("output_file", outputfilename.c_str());
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
@@ -149,12 +157,12 @@ int main(int argc, char* argv[]) {
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {
-    //     std::ofstream solution("solution-digit-modified-Bezier-" + output_name + ".txt");
-    //     solution << std::setprecision(20);
-    //     for (int i = 0; i < mynlp->numVars; i++) {
-    //         solution << mynlp->solution[i] << std::endl;
-    //     }
-    //     solution.close();
+        // std::ofstream solution("solution-digit-modified-Bezier-" + output_name + ".txt");
+        // solution << std::setprecision(20);
+        // for (int i = 0; i < mynlp->numVars; i++) {
+        //     solution << mynlp->solution[i] << std::endl;
+        // }
+        // solution.close();
 
     //     std::ofstream trajectory("trajectory-digit-modified-Bezier-" + output_name + ".txt");
     //     trajectory << std::setprecision(20);
