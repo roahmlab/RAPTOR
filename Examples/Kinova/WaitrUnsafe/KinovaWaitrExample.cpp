@@ -18,7 +18,7 @@ int main() {
     omp_set_num_threads(num_threads);
     
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/kinova_grasp.urdf";
+    const std::string urdf_filename = "../Examples/Kinova/WaitrUnsafe/kinova_grasp.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);

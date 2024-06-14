@@ -5,7 +5,6 @@
 #include <Eigen/Sparse>
 
 #include "pinocchio/parsers/urdf.hpp"
-
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
 #include "CustomizedInverseDynamics.h"

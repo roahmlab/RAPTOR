@@ -277,12 +277,14 @@ void RegressorInverseDynamics::compute(const VecX& z,
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
 
             if (parent_id > -1) {
-                Yfull.block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) += Xup(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                Yfull.block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) 
+                    += Xup(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
 
                 if (compute_derivatives) {
                     for (int k = 0; k < trajPtr_->varLength; k++) {
-                        pYfull_pz(k).block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) += Xup(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv) + 
-                                                                                       dXupdq(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                        pYfull_pz(k).block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) 
+                            += Xup(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv) + 
+                               dXupdq(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
                     }
                 }
             }
@@ -302,7 +304,6 @@ void RegressorInverseDynamics::compute(const VecX& z,
         if (compute_derivatives) {
             for (int k = 0; k < trajPtr_->varLength; k++) {
                 pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv) = pY_current_pz(k);
-
                 ptau_pz(i).col(k) = pY_current_pz(k) * phi;
             }
         }
@@ -311,6 +312,11 @@ void RegressorInverseDynamics::compute(const VecX& z,
         for (int j = 0; j < modelPtr_->nv; j++) {
             tau(i)(j) += modelPtr_->damping(j) * q_d(j) +
                          modelPtr_->rotorInertia(j) * q_dd(j);
+
+            if (compute_derivatives) {
+                ptau_pz(i).row(j) += modelPtr_->damping(j) * pq_d_pz.row(j) +
+                                     modelPtr_->rotorInertia(j) * pq_dd_pz.row(j);
+            }
                     
             if (fabs(q_d(j)) > 1e-8) {
                 if (q_d(j) > 0) {
