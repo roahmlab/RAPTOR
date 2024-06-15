@@ -73,8 +73,7 @@ public:
     MatX Yfull;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
 
-    MatX Y_current;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pY_current_pz;
+    MatX Ycurrent;
 };
 
 }; // namespace IDTO

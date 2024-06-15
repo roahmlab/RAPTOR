@@ -74,7 +74,7 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         pYfull_pz(i) = MatX::Zero(6 * modelPtr_->nv, 10 * modelPtr_->nv);
     }
 
-    Y_current = MatX::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
+    Ycurrent = MatX::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
 }
 
 void RegressorInverseDynamics::compute(const VecX& z,
@@ -114,7 +114,13 @@ void RegressorInverseDynamics::compute(const VecX& z,
         Vec6 vJ;
         Mat6 XJ, dXJdq;
         Yfull.setZero();
-        Y_current.setZero();
+        Ycurrent.setZero();
+
+        if (compute_derivatives) {
+            for (int k = 0; k < trajPtr_->varLength; k++) {
+                pYfull_pz(k).setZero();
+            }
+        }
 
         for (int j = 0; j < modelPtr_->nv; j++) {
             const int pinocchio_joint_id = j + 1; // the first joint in pinocchio is the root joint
@@ -265,10 +271,10 @@ void RegressorInverseDynamics::compute(const VecX& z,
                     pYfull_pz(k).block(6 * j, 10 * j, 6, 10) <<
                                  pa1, pa2 - v1*pv3 - pv1*v3, pa3 + v1*pv2 + pv1*v2, -pv2*v3 - v2*pv3,   2*v2*pv2 - 2*v3*pv3,  pv2*v3 + v2*pv3,                                       0, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4, v1*pv6 + pv1*v6 - pa5 - v3*pv4 - pv3*v4,                                       0,
                      v1*pv3 + pv1*v3, pa1 + v2*pv3 + pv2*v3,   2*v3*pv3 - 2*v1*pv1,              pa2, pa3 - v1*pv2 - pv1*v2, -v1*pv3 - pv1*v3, v2*pv4 + pv2*v4 - v1*pv5 - pv1*v5 - pa6,                                       0, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,                                       0,
-                    -v1*pv2 - pv1*v2,   2*v1*pv1 - 2*v2*pv2, pa1 - v2*pv3 - pv2*v3,  v1*pv2 + pv1*v2, pa2 + v1*pv3 + pv1*v3,              pa3, v3*pv5 + pv3*v5 - v1*pv6 - pv1*v6 + pa5, v3*pv4 + pv3*v4 - v2*pv6 - pv2*v6 - pa4,                                       0,                                       0,
-                                   0,                     0,                     0,                0,                     0,                0,                    -2*v2*pv2 - 2*v3*pv3,                   v1*pv2 - pa3 - pv1*v3,                   pa2 + v1*pv3 + pv1*v3, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,
-                                   0,                     0,                     0,                0,                     0,                0,                   pa3 + v1*pv2 + pv1*v2,                    -2*v1*pv1 - 2*v3*pv3,                   v2*pv3 - pa1 - pv2*v3, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5,
-                                   0,                     0,                     0,                0,                     0,                0,                   v1*pv3 - pa2 - pv1*v3,                   pa1 + v2*pv3 + pv2*v3,                    -2*v1*pv1 - 2*v2*pv2, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4;
+                    -v1*pv2 - pv1*v2,   2*v1*pv1 - 2*v2*pv2, pa1 - v2*pv3 - pv2*v3,  v1*pv2 + pv1*v2, pa2 + v1*pv3 + pv1*v3,              pa3, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5, v3*pv5 + pv3*v5 - v2*pv6 - pv2*v6 - pa4,                                       0,                                       0,
+                                   0,                     0,                     0,                0,                     0,                0,                    -2*v2*pv2 - 2*v3*pv3,                   v1*pv2 + pv1*v2 - pa3,                   pa2 + v1*pv3 + pv1*v3, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,
+                                   0,                     0,                     0,                0,                     0,                0,                   pa3 + v1*pv2 + pv1*v2,                    -2*v1*pv1 - 2*v3*pv3,                   v2*pv3 + pv2*v3 - pa1, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5,
+                                   0,                     0,                     0,                0,                     0,                0,                   v1*pv3 + pv1*v3 - pa2,                   pa1 + v2*pv3 + pv2*v3,                    -2*v1*pv1 - 2*v2*pv2, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4;
                 }
             }
         }
@@ -280,28 +286,29 @@ void RegressorInverseDynamics::compute(const VecX& z,
 
             if (parent_id > -1) {
                 if (compute_derivatives) {
+                    MatX dXupdq_Yfull = dXupdq(j).transpose() * Yfull.middleRows(6 * j, 6);
                     for (int k = 0; k < trajPtr_->varLength; k++) {
-                        pYfull_pz(k).block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) 
-                            += Xup(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv) + 
-                               dXupdq(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                        MatX temp1 = Xup(j).transpose() * pYfull_pz(k).middleRows(6 * j, 6);
+                        pYfull_pz(k).middleRows(6 * parent_id, 6) += 
+                            temp1 + dXupdq_Yfull * pq_pz(j, k);
                     }
                 }
 
-                MatX temp = Xup(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
-                Yfull.block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) += temp;
+                MatX temp2 = Xup(j).transpose() * Yfull.middleRows(6 * j, 6);
+                Yfull.middleRows(6 * parent_id, 6) += temp2;
             }
 
-            Y_current.row(j) = S(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
+            Ycurrent.row(j) = S(j).transpose() * Yfull.middleRows(6 * j, 6);
 
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
-                    pY_pz(k).row(i * modelPtr_->nv + j) = S(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                    pY_pz(k).row(i * modelPtr_->nv + j) = S(j).transpose() * pYfull_pz(k).middleRows(6 * j, 6);
                 }
             }
         }
 
-        Y.middleRows(i * modelPtr_->nv, modelPtr_->nv) = Y_current;
-        tau(i) = Y_current * phi;
+        Y.middleRows(i * modelPtr_->nv, modelPtr_->nv) = Ycurrent;
+        tau(i) = Ycurrent * phi;
 
         if (compute_derivatives) {
             for (int k = 0; k < trajPtr_->varLength; k++) {

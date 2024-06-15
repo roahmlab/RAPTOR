@@ -4,6 +4,8 @@
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
 #include "FixedFrequencyFourierCurves.h"
+#include "BezierCurves.h"
+#include "Plain.h"
 
 #include "RegressorInverseDynamics.h"
 
@@ -39,6 +41,12 @@ int main() {
                                                                                        model.nv, 
                                                                                        TimeDiscretization::Uniform, 
                                                                                        4);
+    // std::shared_ptr<Trajectories> traj = std::make_shared<BezierCurves>(1.0, 
+    //                                                                     5, 
+    //                                                                     model.nv, 
+    //                                                                     TimeDiscretization::Uniform, 
+    //                                                                     2);
+    // std::shared_ptr<Trajectories> traj = std::make_shared<Plain>(model.nv);
 
     RegressorInverseDynamics rid(model, jtype, traj);
     InverseDynamics id(model, traj);
@@ -46,7 +54,7 @@ int main() {
     Eigen::VectorXd z = Eigen::VectorXd::Random(traj->varLength);
 
     auto start = std::chrono::high_resolution_clock::now();
-    rid.compute(z, false);
+    rid.compute(z, true);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Regressor Inverse Dynamics: " << duration.count() << " microseconds" << std::endl;
@@ -59,6 +67,27 @@ int main() {
 
     for (int i = 0; i < rid.tau.size(); i++) {
         std::cout << rid.tau(i).transpose() - id.tau(i).transpose() << std::endl;
+    }
+
+    // compute numerical gradient by central finite difference
+    for (int j = 0; j < traj->N; j++) {
+        for (int i = 0; i < z.size(); i++) {
+            Eigen::VectorXd z_plus = z;
+            Eigen::VectorXd z_minus = z;
+            z_plus(i) += 1e-8;
+            z_minus(i) -= 1e-8;
+
+            rid.compute(z_plus, false);
+            Eigen::VectorXd tau_plus = rid.tau(j);
+
+            rid.compute(z_minus, false);
+            Eigen::VectorXd tau_minus = rid.tau(j);
+
+            Eigen::VectorXd grad = (tau_plus - tau_minus) / 2e-8;
+            std::cout << (grad - rid.ptau_pz(j).col(i)).norm() << std::endl;
+            // std::cout <<  << std::endl;
+        }
+        std::cout << std::endl;
     }
 
     return 0;
