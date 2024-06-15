@@ -22,7 +22,7 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
         Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
                                modelPtr_->jointPlacements[pinocchio_joint_id].translation());
         
-        // mcI in Roy Featherstone's code (parallel axis theorem)
+        // function mcI in Roy Featherstone's code (parallel axis theorem)
         const MatX CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
         const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
         const MatX II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();

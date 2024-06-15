@@ -25,6 +25,7 @@ namespace IDTO {
 // phi is constant and directly loaded from the robot. 
 // The gradient of Y will also be computed.
 class RegressorInverseDynamics : public InverseDynamics {
+public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;

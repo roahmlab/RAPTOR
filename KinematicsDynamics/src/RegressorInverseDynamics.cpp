@@ -23,21 +23,24 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
                                modelPtr_->jointPlacements[pinocchio_joint_id].translation());
         
-        // mcI in Roy Featherstone's code (parallel axis theorem)
+        // function mcI in Roy Featherstone's code (parallel axis theorem)
         const Mat3 CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
         const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
         const Mat3 II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();
-        I(i) << mm * CC * CC.transpose() + II, mm * CC,
-                mm * CC.transpose(),           mm * MatX::Identity(3, 3);
 
-        phi.segment<10>(10 * i) << I(i)(0, 0),
+        // apply parallel axis theorem
+        Mat3 mC = mm * CC;
+        I(i) << mm * CC * CC.transpose() + II, mC,
+                mC.transpose(),                mm * MatX::Identity(3, 3);
+
+        phi.segment<10>(10 * i) << I(i)(0, 0), // inertia (in parent joint frame)
                                    I(i)(0, 1),
                                    I(i)(0, 2),
                                    I(i)(1, 1),
                                    I(i)(1, 2),
                                    I(i)(2, 2),
-                                   mm * Utils::skew(CC).array(),
-                                   I(i)(5, 5);
+                                   Utils::skew(mC), // center of mass (in parent joint frame)
+                                   mm; // mass
     }
 
     a_grav << modelPtr_->gravity.angular(),
@@ -72,10 +75,6 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     }
 
     Y_current = MatX::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
-    pY_current_pz.resize(trajPtr_->varLength);
-    for (int i = 0; i < trajPtr_->varLength; i++) {
-        pY_current_pz(i) = MatX::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
-    }
 }
 
 void RegressorInverseDynamics::compute(const VecX& z,
@@ -114,6 +113,9 @@ void RegressorInverseDynamics::compute(const VecX& z,
         // forward pass
         Vec6 vJ;
         Mat6 XJ, dXJdq;
+        Yfull.setZero();
+        Y_current.setZero();
+
         for (int j = 0; j < modelPtr_->nv; j++) {
             const int pinocchio_joint_id = j + 1; // the first joint in pinocchio is the root joint
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
@@ -243,7 +245,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
                  0,             0,             0,      0,             0,      0,     -v2*v2 - v3*v3,         v1*v2 - a3,         a2 + v1*v3, a4 + v2*v6 - v3*v5,
                  0,             0,             0,      0,             0,      0,         a3 + v1*v2,     -v1*v1 - v3*v3,         v2*v3 - a1, a5 - v1*v6 + v3*v4,
                  0,             0,             0,      0,             0,      0,         v1*v3 - a2,         a1 + v2*v3,     -v1*v1 - v2*v2, a6 + v1*v5 - v2*v4;
-
+                 
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
                     const double& pv1 = pv_pz(j)(0, k);
@@ -277,9 +279,6 @@ void RegressorInverseDynamics::compute(const VecX& z,
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
 
             if (parent_id > -1) {
-                Yfull.block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) 
-                    += Xup(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
-
                 if (compute_derivatives) {
                     for (int k = 0; k < trajPtr_->varLength; k++) {
                         pYfull_pz(k).block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) 
@@ -287,13 +286,16 @@ void RegressorInverseDynamics::compute(const VecX& z,
                                dXupdq(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
                     }
                 }
+
+                MatX temp = Xup(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                Yfull.block(6 * parent_id, 0, 6, 10 * modelPtr_->nv) += temp;
             }
 
             Y_current.row(j) = S(j).transpose() * Yfull.block(6 * j, 0, 6, 10 * modelPtr_->nv);
 
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
-                    pY_current_pz(k) = S(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv);
+                    pY_pz(k).row(i * modelPtr_->nv + j) = S(j).transpose() * pYfull_pz(k).block(6 * j, 0, 6, 10 * modelPtr_->nv);
                 }
             }
         }
@@ -303,8 +305,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
 
         if (compute_derivatives) {
             for (int k = 0; k < trajPtr_->varLength; k++) {
-                pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv) = pY_current_pz(k);
-                ptau_pz(i).col(k) = pY_current_pz(k) * phi;
+                ptau_pz(i).col(k) = pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv) * phi;
             }
         }
 

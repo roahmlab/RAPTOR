@@ -86,6 +86,7 @@ void InverseDynamics::compute(const VecX& z,
         tau(i) = dataPtr_->tau + 
                  modelPtr_->damping.cwiseProduct(v) + 
                  modelPtr_->rotorInertia.cwiseProduct(a);
+        // TODO: add friction here!!!
                 
         if (compute_derivatives) {
             // prnea_pa is just the inertia matrix.
