@@ -3,17 +3,32 @@
 namespace IDTO {
 namespace Kinova {
 
+// // constructor
+// ConditionNumberOptimizer::ConditionNumberOptimizer()
+// {
+// }
+
+
+// // destructor
+// ConditionNumberOptimizer::~ConditionNumberOptimizer()
+// {
+// }
+
 bool ConditionNumberOptimizer::set_parameters(
         const VecX& x0_input,
-        const double T_input,
+        const Number T_input,
         const int N_input,
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
+        const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input
 ) {
+    x0 = x0_input;
+    regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
+
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
                                                              N_input, 
                                                              model_input.nv, 
@@ -25,7 +40,7 @@ bool ConditionNumberOptimizer::set_parameters(
                                                          trajPtr_);
 
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) + 
+    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
                                   joint_limits_buffer_input;
 
     VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) -
@@ -64,6 +79,23 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
+    // Customized constraints (collision avoidance with ground)
+    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, -0.01)};
+    std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
+    std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
+    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
+                                                                               model_input,
+                                                                               jtype_input,
+                                                                               groundCenter,
+                                                                               groundOrientation,
+                                                                               groundSize));   
+    constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+
+    // check dimensions of regroupMatrix
+    if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
+        throw std::invalid_argument("ConditionNumberOptimizer: regroupMatrix has wrong dimensions!");
+    }
+
     return true;
 }
 
@@ -100,7 +132,29 @@ bool ConditionNumberOptimizer::eval_f(
     bool          new_x,
     Number&       obj_value
 ) {
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
 
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    ridPtr_->compute(z, false);
+
+    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
+    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+                               Eigen::ComputeThinU | Eigen::ComputeThinV);
+    const VecX& singularValues = svd.singularValues();
+    const MatX& U = svd.matrixU();
+    const MatX& V = svd.matrixV();
+
+    Number sigmaMax = singularValues(0);
+    Number sigmaMin = singularValues(singularValues.size() - 1);
+
+    // log of 2-norm condition number (sigmaMax / sigmaMin)
+    obj_value = std::log(sigmaMax) - std::log(sigmaMin);
 
     return true;
 }
@@ -111,7 +165,38 @@ bool ConditionNumberOptimizer::eval_grad_f(
     bool          new_x,
     Number*       grad_f
 ) {
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
 
+    VecX z(n);
+    for ( Index i = 0; i < n; i++ ) {
+        z(i) = x[i];
+    }
+
+    ridPtr_->compute(z, true);
+
+    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
+    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+                               Eigen::ComputeThinU | Eigen::ComputeThinV);
+    const VecX& singularValues = svd.singularValues();
+    const MatX& U = svd.matrixU();
+    const MatX& V = svd.matrixV();
+
+    Index lastRow = singularValues.size() - 1;
+    Number sigmaMax = singularValues(0);
+    Number sigmaMin = singularValues(lastRow);
+
+    // refer to https://j-towns.github.io/papers/svd-derivative.pdf
+    // for analytical gradient of singular values
+    for (Index i = 0; i < n; i++) {
+        MatX gradRegroupedObservationMatrix = ridPtr_->pY_pz(i) * regroupMatrix;
+
+        Number gradSigmaMax = U.col(0).transpose()       * gradRegroupedObservationMatrix * V.col(0);
+        Number gradSigmaMin = U.col(lastRow).transpose() * gradRegroupedObservationMatrix * V.col(lastRow);
+
+        grad_f[i] = gradSigmaMax / sigmaMax - gradSigmaMin / sigmaMin;
+    }
 
     return true;
 }

@@ -2,6 +2,9 @@
 #define UTILS_H
 
 #include <cmath>
+#include <vector>
+#include <string>
+#include <fstream>
 #include <Eigen/Dense>
 
 namespace IDTO {
@@ -122,6 +125,52 @@ inline Eigen::VectorXd initializeEigenVectorFromArray(const double* array,
         res(i) = array[i];
     }
     return res;
+}
+
+inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file " + filename);
+    }
+
+    std::vector<std::vector<double>> data;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::vector<double> lineData;
+        double value;
+        while (iss >> value) {
+            lineData.push_back(value);
+        }
+        data.push_back(lineData);
+    }
+
+    Eigen::MatrixXd res(data.size(), data[0].size());
+    for (int i = 0; i < data.size(); i++) {
+        for (int j = 0; j < data[0].size(); j++) {
+            res(i, j) = data[i][j];
+        }
+    }
+
+    return res;
+}
+
+inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix, 
+                                   const std::string filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file " + filename);
+    }
+
+    for (int i = 0; i < matrix.rows(); i++) {
+        for (int j = 0; j < matrix.cols(); j++) {
+            file << matrix(i, j) << " ";
+        }
+        file << std::endl;
+    }
+
+    file.close();
 }
 
 }; // namespace Utils

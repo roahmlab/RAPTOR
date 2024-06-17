@@ -11,6 +11,7 @@
 #include "JointLimits.h"
 #include "VelocityLimits.h"
 #include "TorqueLimits.h"
+#include "KinovaCustomizedConstraints.h"
 
 namespace IDTO {
 namespace Kinova {
@@ -18,6 +19,7 @@ namespace Kinova {
 class ConditionNumberOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
+    using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -35,6 +37,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
+        const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input
@@ -85,6 +88,8 @@ public:
     ConditionNumberOptimizer& operator=(
        const ConditionNumberOptimizer&
     );
+
+    MatX regroupMatrix;
 
     std::shared_ptr<Trajectories> trajPtr_;
 

@@ -151,7 +151,7 @@ bool KinovaWaitrOptimizer::eval_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
     VecX z(n);
@@ -185,7 +185,7 @@ bool KinovaWaitrOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
     VecX z(n);

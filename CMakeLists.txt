@@ -302,7 +302,6 @@ target_link_libraries(KinovaWaitr_example PRIVATE
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-
 add_executable(KinovaSysId_example 
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
 
@@ -317,6 +316,7 @@ target_link_libraries(KinovaSysId_example PRIVATE
     IDlib
     Conslib
     Optlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
@@ -324,9 +324,6 @@ target_link_libraries(KinovaSysId_example PRIVATE
 
 target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
-
-
-
 
 pybind11_add_module(oracle_pybind SHARED
     Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp

@@ -194,6 +194,8 @@ public:
 
     VecX lastFeasibleSolution; // stores the last feasible solution here
     VecX solution; // stores the final solution here
+    Number obj_value_copy = 0;
+    std::vector<Number> g_copy;
 
     Number final_constr_violation = 0;
     bool ifFeasible = true;

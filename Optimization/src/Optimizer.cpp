@@ -463,8 +463,9 @@ void Optimizer::finalize_solution(
     }
 
     // re-evaluate constraints to update values in each constraint instances
-    Number g_copy[m];
-    eval_g(n, x, false, m, g_copy);
+    obj_value_copy = obj_value;
+    g_copy.resize(m);
+    eval_g(n, x, false, m, g_copy.data());
     summarize_constraints(m, g);
 
     if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
@@ -479,7 +480,8 @@ void Optimizer::finalize_solution(
 
         // re-evaluate constraints to update values in each constraint instances
         eval_f(n, x_new, false, obj_value);
-        eval_g(n, x_new, false, m, g_copy);
+        eval_g(n, x_new, false, m, g_copy.data());
+        obj_value_copy = obj_value;
     }
 
     std::cout << "Objective value: " << obj_value << std::endl;
