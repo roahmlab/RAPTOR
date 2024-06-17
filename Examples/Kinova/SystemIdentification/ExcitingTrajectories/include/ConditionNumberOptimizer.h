@@ -1,33 +1,31 @@
-#ifndef KINOVA_OPTIMIZER_H
-#define KINOVA_OPTIMIZER_H
+#ifndef CONDITION_NUMBER_OPTIMIZER_H
+#define CONDITION_NUMBER_OPTIMIZER_H
 
 #include "KinovaConstants.h"
 
 #include "Optimizer.h"
 
-#include "ArmourBezierCurves.h"
+#include "RegressorInverseDynamics.h"
+#include "FixedFrequencyFourierCurves.h"
 
-#include "InverseDynamics.h"
 #include "JointLimits.h"
 #include "VelocityLimits.h"
 #include "TorqueLimits.h"
-#include "KinovaCustomizedConstraints.h"
 
 namespace IDTO {
 namespace Kinova {
 
-class KinovaOptimizer : public Optimizer {
+class ConditionNumberOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
-    using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    KinovaOptimizer() = default;
+    ConditionNumberOptimizer() = default;
 
     /** Default destructor */
-    ~KinovaOptimizer() = default;
+    ~ConditionNumberOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
@@ -37,12 +35,6 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const ArmourTrajectoryParameters& atp_input,
-        const std::vector<Vec3>& boxCenters_input,
-        const std::vector<Vec3>& boxOrientation_input,
-        const std::vector<Vec3>& boxSize_input,
-        const VecX& qdes_input,
-        const int tplan_n_input,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input
@@ -86,23 +78,20 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    KinovaOptimizer(
-       const KinovaOptimizer&
+    ConditionNumberOptimizer(
+       const ConditionNumberOptimizer&
     );
 
-    KinovaOptimizer& operator=(
-       const KinovaOptimizer&
+    ConditionNumberOptimizer& operator=(
+       const ConditionNumberOptimizer&
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
 
-    std::shared_ptr<InverseDynamics> idPtr_;
-
-    VecX qdes;
-    int tplan_n = 0;
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 };
 
 }; // namespace Kinova
 }; // namespace IDTO
 
-#endif // KINOVA_OPTIMIZER_H
+#endif // CONDITION_NUMBER_OPTIMIZER_H

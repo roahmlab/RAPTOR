@@ -47,7 +47,9 @@ int sign(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
-inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, const Eigen::VectorXd& b, double tol = 1e-10) {
+inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, 
+                             const Eigen::VectorXd& b, 
+                             double tol = 1e-10) {
     if (a.size() != b.size()) {
         return false;
     }
@@ -59,7 +61,9 @@ inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, const Eigen::VectorXd& b,
     return true;
 }
 
-inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b, double tol = 1e-10) {
+inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, 
+                             const Eigen::MatrixXd& b, 
+                             double tol = 1e-10) {
     if (a.rows() != b.rows() || a.cols() != b.cols()) {
         return false;
     }
@@ -73,7 +77,9 @@ inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b,
     return true;
 }
 
-inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, int rows, int cols) {
+inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, 
+                               int rows, 
+                               int cols) {
     return Eigen::Map<const Eigen::MatrixXd>(vec.data(), rows, cols);
 }
 
@@ -101,10 +107,20 @@ inline Eigen::Vector3d unskew(const Eigen::Matrix3d& m) {
     return res;
 }
 
-inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, const Eigen::Vector3d& p) {
+inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, 
+                                        const Eigen::Vector3d& p) {
     Eigen::Matrix<double, 6, 6> res;
     res << R,            Eigen::MatrixXd::Zero(3, 3),
            -R * skew(p), R;
+    return res;
+}
+
+inline Eigen::VectorXd initializeEigenVectorFromArray(const double* array, 
+                                                      size_t size) {
+    Eigen::VectorXd res(size);
+    for (int i = 0; i < size; i++) {
+        res(i) = array[i];
+    }
     return res;
 }
 

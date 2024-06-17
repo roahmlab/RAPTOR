@@ -14,7 +14,7 @@ namespace Kinova {
 // {
 // }
 
-
+// [TNLP_set_parameters]
 bool KinovaOptimizer::set_parameters(
     const VecX& x0_input,
     const double T_input,
@@ -47,43 +47,25 @@ bool KinovaOptimizer::set_parameters(
                                                trajPtr_);
     
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_LOWER_VEC(i) = JOINT_LIMITS_LOWER[i];
-    }
-    JOINT_LIMITS_LOWER_VEC = JOINT_LIMITS_LOWER_VEC + joint_limits_buffer_input;
+    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) + 
+                                  joint_limits_buffer_input;
 
-    VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_UPPER_VEC(i) = JOINT_LIMITS_UPPER[i];
-    }
-    JOINT_LIMITS_UPPER_VEC = JOINT_LIMITS_UPPER_VEC - joint_limits_buffer_input;
+    VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) -
+                                  joint_limits_buffer_input;
 
     // read velocity limits from KinovaConstants.h
-    VecX VELOCITY_LIMITS_LOWER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        VELOCITY_LIMITS_LOWER_VEC(i) = VELOCITY_LIMITS_LOWER[i];
-    }
-    VELOCITY_LIMITS_LOWER_VEC = VELOCITY_LIMITS_LOWER_VEC + velocity_limits_buffer_input;
+    VecX VELOCITY_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_LOWER, NUM_JOINTS) + 
+                                     velocity_limits_buffer_input;
 
-    VecX VELOCITY_LIMITS_UPPER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        VELOCITY_LIMITS_UPPER_VEC(i) = VELOCITY_LIMITS_UPPER[i];
-    }
-    VELOCITY_LIMITS_UPPER_VEC = VELOCITY_LIMITS_UPPER_VEC - velocity_limits_buffer_input;
+    VecX VELOCITY_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_UPPER, NUM_JOINTS) -
+                                     velocity_limits_buffer_input;
 
     // read torque limits from KinovaConstants.h
-    VecX TORQUE_LIMITS_LOWER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
-    }
-    TORQUE_LIMITS_LOWER_VEC = TORQUE_LIMITS_LOWER_VEC + torque_limits_buffer_input;
+    VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_JOINTS) + 
+                                   torque_limits_buffer_input;
 
-    VecX TORQUE_LIMITS_UPPER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
-    }
-    TORQUE_LIMITS_UPPER_VEC = TORQUE_LIMITS_UPPER_VEC - torque_limits_buffer_input;
+    VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
+                                   torque_limits_buffer_input;
 
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
@@ -121,6 +103,8 @@ bool KinovaOptimizer::set_parameters(
 }
 // [TNLP_set_parameters]
 
+// [TNLP_get_nlp_info]
+// returns some info about the nlp
 bool KinovaOptimizer::get_nlp_info(
    Index&          n,
    Index&          m,

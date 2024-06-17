@@ -189,29 +189,13 @@ target_include_directories(DigitModifiedlib PUBLIC
     Examples/Digit-modified/include)
 
 # Kinova libraries
-add_library(KinovaArmourlib SHARED
+add_library(Kinovalib SHARED
     Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp)
-
-target_link_libraries(KinovaArmourlib PRIVATE
-    trajlib
-    IDlib
-    Conslib
-    Optlib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
-
-target_include_directories(KinovaArmourlib PUBLIC
-    Examples/Kinova
-    Examples/Kinova/ArmourUnsafe/include)
-
-add_library(KinovaWaitrlib SHARED
+    Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
     Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
-    Examples/Kinova/WaitrUnsafe/src/KinovaCustomizedConstraints.cpp)
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
-target_link_libraries(KinovaWaitrlib PRIVATE
+target_link_libraries(Kinovalib PRIVATE
     trajlib
     IDlib
     Conslib
@@ -221,28 +205,13 @@ target_link_libraries(KinovaWaitrlib PRIVATE
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_include_directories(KinovaWaitrlib PUBLIC
+target_include_directories(Kinovalib PUBLIC
     Examples/Kinova
-    Examples/Kinova/WaitrUnsafe/include)
-
-# add_library(KinovaSysIdlib SHARED
-#     Examples/Kinova/SystemIdentification/src/DataFilter/KinovaOptimizer.cpp)
-
-# target_link_libraries(KinovaSysIdlib PRIVATE
-#     trajlib
-#     IDlib
-#     Conslib
-#     Optlib
-#     ipopt
-#     coinhsl
-#     ${BOOST_LIBRARIES} 
-#     ${PKG_PIN_CONFIG_LIBRARIES})
-
-# target_include_directories(KinovaSysIdlib PUBLIC
-#     Examples/Kinova
-#     Examples/Kinova/SystemIdentification/DataFilter/include
-#     Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
-#     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
+    Examples/Kinova/ArmourUnsafe/include
+    Examples/Kinova/WaitrUnsafe/include
+    Examples/Kinova/SystemIdentification/DataFilter/include
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
+    Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
 ## Example scripts
 add_executable(Digit_example 
@@ -303,7 +272,7 @@ target_link_libraries(Kinova_example PRIVATE
     IDlib
     Conslib
     Optlib
-    KinovaArmourlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
@@ -324,7 +293,7 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     IDlib
     Conslib
     Optlib
-    KinovaWaitrlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
@@ -372,7 +341,7 @@ target_link_libraries(oracle_pybind PRIVATE
     IDlib
     Conslib
     Optlib
-    KinovaArmourlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
@@ -397,7 +366,7 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     IDlib
     Conslib
     Optlib
-    KinovaWaitrlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
@@ -430,7 +399,7 @@ install(TARGETS Digitlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(TARGETS KinovaArmourlib
+install(TARGETS Kinovalib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
