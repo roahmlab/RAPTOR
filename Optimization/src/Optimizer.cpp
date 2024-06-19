@@ -503,6 +503,11 @@ void Optimizer::finalize_solution(
             solution = minimalCostSolution;
             obj_value_copy = currentMinimalCost;
         }
+        else {
+            obj_value_copy = obj_value;
+            eval_g(n, x, false, m, g_copy.data());
+            summarize_constraints(m, g);
+        }
     }
     else {
         obj_value_copy = obj_value;

@@ -36,9 +36,7 @@ bool ConditionNumberOptimizer::set_parameters(
                                                              model_input.nv, 
                                                              TimeDiscretization::Uniform, 
                                                              degree_input,
-                                                             base_frequency_input,
-                                                             VecX::Zero(0),
-                                                             VecX::Zero(model_input.nv));
+                                                             base_frequency_input);
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
                                                          jtype_input, 

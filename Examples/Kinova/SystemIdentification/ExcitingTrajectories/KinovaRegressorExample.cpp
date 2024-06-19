@@ -9,7 +9,8 @@ int main(int argc, char* argv[]) {
     int num_threads = 32; // this number is currently hardcoded
     omp_set_num_threads(num_threads);
 
-    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
+    // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
+    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
     
     // Define robot model
     const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 2) * model.nv);
+    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv);
     z.block((2 * degree + 1) * model.nv, 0, model.nv, 1) = 
         2 * 2.23 * Eigen::VectorXd::Random(model.nv).array() - 2.23;
     // z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1)
@@ -111,39 +112,47 @@ int main(int argc, char* argv[]) {
     }
 
     // Re-evaluate the solution at a higher resolution and print the results.
-    std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(T, 
-                                                                                       2000, 
-                                                                                       model.nv, 
-                                                                                       TimeDiscretization::Uniform, 
-                                                                                       degree,
-                                                                                       base_frequency,
-                                                                                       Eigen::VectorXd::Zero(0),
-                                                                                       Eigen::VectorXd::Zero(model.nv));
-    traj->compute(mynlp->solution, false);
+    if (mynlp->ifFeasible) {
+        std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(T, 
+                                                                                        2000, 
+                                                                                        model.nv, 
+                                                                                        TimeDiscretization::Uniform, 
+                                                                                        degree,
+                                                                                        base_frequency,
+                                                                                        Eigen::VectorXd::Zero(0),
+                                                                                        Eigen::VectorXd::Zero(model.nv));
+        traj->compute(mynlp->solution, false);
 
-    if (argc > 1) {
-        std::ofstream position("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-position-" + std::string(argv[1]) + ".csv");
-        std::ofstream velocity("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-velocity-" + std::string(argv[1]) + ".csv");
-        std::ofstream acceleration("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-acceleration-" + std::string(argv[1]) + ".csv");
+        if (argc > 1) {
+            // const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4_withoutmotordynamics/";
+            std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
+            std::ofstream position(outputfolder + "exciting-position-" + std::string(argv[1]) + ".csv");
+            std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");
+            std::ofstream acceleration(outputfolder + "exciting-acceleration-" + std::string(argv[1]) + ".csv");
 
-        for (int i = 0; i < traj->N; i++) {
-            position << traj->q(i).transpose() << std::endl;
-            velocity << traj->q_d(i).transpose() << std::endl;
-            acceleration << traj->q_dd(i).transpose() << std::endl;
+            for (int i = 0; i < traj->N; i++) {
+                position << traj->q(i).transpose() << std::endl;
+                velocity << traj->q_d(i).transpose() << std::endl;
+                acceleration << traj->q_dd(i).transpose() << std::endl;
+            }
+
+            for (int i = 0; i < mynlp->solution.size(); i++) {
+                solution << mynlp->solution(i) << std::endl;
+            }
+        }
+        else {
+            std::ofstream position("exciting-position.csv");
+            std::ofstream velocity("exciting-velocity.csv");
+            std::ofstream acceleration("exciting-acceleration.csv");
+
+            for (int i = 0; i < traj->N; i++) {
+                position << traj->q(i).transpose() << std::endl;
+                velocity << traj->q_d(i).transpose() << std::endl;
+                acceleration << traj->q_dd(i).transpose() << std::endl;
+            }
         }
     }
-    else {
-        std::ofstream position("exciting-position.csv");
-        std::ofstream velocity("exciting-velocity.csv");
-        std::ofstream acceleration("exciting-acceleration.csv");
-
-        for (int i = 0; i < traj->N; i++) {
-            position << traj->q(i).transpose() << std::endl;
-            velocity << traj->q_d(i).transpose() << std::endl;
-            acceleration << traj->q_dd(i).transpose() << std::endl;
-        }
-    }
-
 
 
 
