@@ -161,6 +161,8 @@ bool ConditionNumberOptimizer::eval_f(
     // log of 2-norm condition number (sigmaMax / sigmaMin)
     obj_value = std::log(sigmaMax) - std::log(sigmaMin);
 
+    update_minimal_cost_solution(n, x, obj_value);
+
     return true;
 }
 

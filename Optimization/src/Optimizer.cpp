@@ -124,6 +124,7 @@ bool Optimizer::update_minimal_cost_solution(
     }
 
     if (obj_value < currentMinimalCost) {
+        minimalCostSolution.resize(n);
         for ( Index i = 0; i < n; i++ ) {
             minimalCostSolution(i) = x[i];
         }
@@ -526,7 +527,7 @@ void Optimizer::finalize_solution(
         obj_value_copy = obj_value;
     }
 
-    std::cout << "Objective value: " << obj_value << std::endl;
+    std::cout << "Objective value: " << obj_value_copy << std::endl;
 }
 // [TNLP_finalize_solution]
 
