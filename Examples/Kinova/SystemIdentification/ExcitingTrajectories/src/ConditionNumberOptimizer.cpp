@@ -83,7 +83,7 @@ bool ConditionNumberOptimizer::set_parameters(
     constraintsNameVec_.push_back("torque limits"); 
 
     // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.02)};
+    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
     std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
     std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
@@ -159,7 +159,7 @@ bool ConditionNumberOptimizer::eval_f(
     // log of 2-norm condition number (sigmaMax / sigmaMin)
     obj_value = std::log(sigmaMax) - std::log(sigmaMin);
 
-    update_minimal_cost_solution(n, x, obj_value);
+    update_minimal_cost_solution(n, z, new_x, obj_value);
 
     return true;
 }

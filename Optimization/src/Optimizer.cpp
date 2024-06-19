@@ -115,7 +115,8 @@ bool Optimizer::get_starting_point(
 // [TNLP_update_minimal_cost_solution]
 bool Optimizer::update_minimal_cost_solution(
     Index         n,
-    const Number* x,
+    const VecX&   z,
+    bool          new_x,
     Number        obj_value
 ) 
 {
@@ -123,12 +124,42 @@ bool Optimizer::update_minimal_cost_solution(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in update_minimal_cost_solution!");
     }
 
-    if (obj_value < currentMinimalCost) {
-        minimalCostSolution.resize(n);
-        for ( Index i = 0; i < n; i++ ) {
-            minimalCostSolution(i) = x[i];
+    // update status of the current solution
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = obj_value;
+        ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+    }
+    else { // update currentIpoptSolution
+        bool ifEqual = true;
+        for (Index i = 0; i < n; i++) {
+            if (currentIpoptSolution(i) != z(i)) {
+                ifEqual = false;
+                break;
+            }
         }
-        currentMinimalCost = obj_value;
+
+        if (ifEqual) {
+            if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::UNINITIALIZED) {
+                THROW_EXCEPTION(IpoptException, "*** Error ifCurrentIpoptFeasible is not initialized!");
+            }
+            else { // this has been evaluated in eval_g, just need to update the cost
+                currentIpoptObjValue = obj_value;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = obj_value;
+            ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
     }
 
     return true;
@@ -209,8 +240,48 @@ bool Optimizer::eval_g(
         }
     }
 
-    if (ifFeasibleCurrIter) {
-        lastFeasibleSolution = z;
+    // update status of the current solution
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        bool ifEqual = true;
+        for (Index i = 0; i < n; i++) {
+            if (currentIpoptSolution(i) != z(i)) {
+                ifEqual = false;
+                break;
+            }
+        }
+
+        if (ifEqual) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
     }
 
     return true;
@@ -487,39 +558,23 @@ void Optimizer::finalize_solution(
 
     // re-evaluate constraints to update values in each constraint instances
     g_copy.resize(m);
+    eval_f(n, x, false, obj_value_copy);
+    eval_g(n, x, false, m, g_copy.data());
+    summarize_constraints(m, g);
 
-    if(currentMinimalCost < obj_value) {
-        Number x_copy[n];
-        for( Index i = 0; i < n; i++ ) {
-            x_copy[i] = solution(i);
-        }
+    bool recordedOptimalSolutionAvailable = 
+        optimalIpoptSolution.size() == n &&
+        optimalIpoptObjValue < std::numeric_limits<Number>::max() &&
+        ifOptimalIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE;
 
-        eval_g(n, x_copy, false, m, g_copy.data());
-        summarize_constraints(m, g, false);
+    if (recordedOptimalSolutionAvailable &&
+        (!ifFeasible || optimalIpoptObjValue < obj_value)) {
+        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before with cost: " 
+                  << optimalIpoptObjValue << std::endl;
 
-        if (ifFeasible) {
-            std::cout << "The final solution returned by ipopt is not the minimal cost solution! " << std::endl;
-            std::cout << "Switch to the minimal cost solution recorded before." << std::endl;
-            solution = minimalCostSolution;
-            obj_value_copy = currentMinimalCost;
-        }
-        else {
-            obj_value_copy = obj_value;
-            eval_g(n, x, false, m, g_copy.data());
-            summarize_constraints(m, g);
-        }
-    }
-    else {
-        obj_value_copy = obj_value;
-        eval_g(n, x, false, m, g_copy.data());
-        summarize_constraints(m, g);
-    }
-
-    if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
         ifFeasible = true;
-        solution = lastFeasibleSolution;
-        std::cout << "Solution is not feasible but we have found one feasible solution before. " << std::endl;
-        std::cout << "Switch to the last feasible solution recorded before." << std::endl;
+        solution = optimalIpoptSolution;
+        obj_value_copy = optimalIpoptObjValue;
 
         Number x_new[n];
         for( Index i = 0; i < n; i++ ) {
@@ -527,9 +582,8 @@ void Optimizer::finalize_solution(
         }
 
         // re-evaluate constraints to update values in each constraint instances
-        eval_f(n, x_new, false, obj_value);
+        eval_f(n, x_new, false, obj_value_copy);
         eval_g(n, x_new, false, m, g_copy.data());
-        obj_value_copy = obj_value;
     }
 
     std::cout << "Objective value: " << obj_value_copy << std::endl;

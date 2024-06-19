@@ -38,11 +38,11 @@ int main(int argc, char* argv[]) {
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv);
+    Eigen::VectorXd z = 2 * 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 1.0;
     z.block((2 * degree + 1) * model.nv, 0, model.nv, 1) = 
-        2 * 2.23 * Eigen::VectorXd::Random(model.nv).array() - 2.23;
-    // z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1)
-    //     = Eigen::VectorXd::Zero(model.nv);
+        2 * 2.0 * Eigen::VectorXd::Random(model.nv).array() - 2.0;
+    z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1) = 
+        2 * 1.0 * Eigen::VectorXd::Random(model.nv).array() - 1.0;
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
@@ -114,13 +114,11 @@ int main(int argc, char* argv[]) {
     // Re-evaluate the solution at a higher resolution and print the results.
     if (mynlp->ifFeasible) {
         std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(T, 
-                                                                                        2000, 
-                                                                                        model.nv, 
-                                                                                        TimeDiscretization::Uniform, 
-                                                                                        degree,
-                                                                                        base_frequency,
-                                                                                        Eigen::VectorXd::Zero(0),
-                                                                                        Eigen::VectorXd::Zero(model.nv));
+                                                                                           2000, 
+                                                                                           model.nv, 
+                                                                                           TimeDiscretization::Uniform, 
+                                                                                           degree,
+                                                                                           base_frequency);
         traj->compute(mynlp->solution, false);
 
         if (argc > 1) {
@@ -142,6 +140,7 @@ int main(int argc, char* argv[]) {
             }
         }
         else {
+            std::ofstream solution("exciting-solution.csv");
             std::ofstream position("exciting-position.csv");
             std::ofstream velocity("exciting-velocity.csv");
             std::ofstream acceleration("exciting-acceleration.csv");
@@ -150,6 +149,10 @@ int main(int argc, char* argv[]) {
                 position << traj->q(i).transpose() << std::endl;
                 velocity << traj->q_d(i).transpose() << std::endl;
                 acceleration << traj->q_dd(i).transpose() << std::endl;
+            }
+
+            for (int i = 0; i < mynlp->solution.size(); i++) {
+                solution << mynlp->solution(i) << std::endl;
             }
         }
     }

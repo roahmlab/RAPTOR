@@ -16,6 +16,14 @@ namespace IDTO {
 
 using namespace Ipopt;
 
+namespace OptimizerConstants {
+    enum FeasibleState {
+        INFEASIBLE = 0,
+        FEASIBLE = 1,
+        UNINITIALIZED = 2
+    };
+};
+
 class Optimizer : public Ipopt::TNLP {
 public:
     using VecX = Eigen::VectorXd;
@@ -72,7 +80,8 @@ public:
     /** Method to update the solution with the minimal cost in the current iteration */
     virtual bool update_minimal_cost_solution(
         Index         n,
-        const Number* x,
+        const VecX&   z,
+        bool          new_x,
         Number        obj_value
     );
 
@@ -200,9 +209,13 @@ public:
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;
 
-    VecX lastFeasibleSolution; // stores the last feasible solution here
-    VecX minimalCostSolution; // stores the minimal cost solution here
-    Number currentMinimalCost = std::numeric_limits<Number>::max();
+    VecX currentIpoptSolution;
+    Number currentIpoptObjValue = std::numeric_limits<Number>::max();
+    OptimizerConstants::FeasibleState ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+
+    VecX optimalIpoptSolution;
+    Number optimalIpoptObjValue = std::numeric_limits<Number>::max();
+    OptimizerConstants::FeasibleState ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
 
     VecX solution; // stores the final solution here
     Number obj_value_copy = 0;
