@@ -69,6 +69,13 @@ public:
         return false;
     }
 
+    /** Method to update the solution with the minimal cost in the current iteration */
+    virtual bool update_minimal_cost_solution(
+        Index         n,
+        const Number* x,
+        Number        obj_value
+    );
+
     /** Method to return the objective value */
     virtual bool eval_f(
         Index         n,
@@ -154,7 +161,8 @@ public:
     /** This method summarizes constraint violation for each type of constraints */
     virtual void summarize_constraints(
         Index                      m,
-        const Number*              g
+        const Number*              g,
+        const bool                 verbose = true
     );
     //@}
 
@@ -184,8 +192,8 @@ public:
     
     bool enable_hessian = false;
 
-    int numVars = 0; // number of variables
-    int numCons = 0; // number of constraints
+    Index numVars = 0; // number of variables
+    Index numCons = 0; // number of constraints
 
     VecX x0; // stores the initial guess here
 
@@ -193,6 +201,9 @@ public:
     std::vector<std::string> constraintsNameVec_;
 
     VecX lastFeasibleSolution; // stores the last feasible solution here
+    VecX minimalCostSolution; // stores the minimal cost solution here
+    Number currentMinimalCost = std::numeric_limits<Number>::max();
+
     VecX solution; // stores the final solution here
     Number obj_value_copy = 0;
     std::vector<Number> g_copy;

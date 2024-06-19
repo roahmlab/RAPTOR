@@ -31,23 +31,25 @@ int main(int argc, char* argv[]) {
 
     // Define trajectory parameters
     double T = 10.0;
-    int N = 100;
+    int N = 50;
     int degree = 4;
+    int base_frequency = 10;
 
     // Define initial guess
-    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv);
+    std::srand(static_cast<unsigned int>(time(0)));
+    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 2) * model.nv);
     z.block((2 * degree + 1) * model.nv, 0, model.nv, 1) = 
-        2.23 * Eigen::VectorXd::Random(model.nv);
-    z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1)
-        = Eigen::VectorXd::Zero(model.nv);
+        2 * 2.23 * Eigen::VectorXd::Random(model.nv).array() - 2.23;
+    // z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1)
+    //     = Eigen::VectorXd::Zero(model.nv);
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
-    joint_limits_buffer.setConstant(0.0);
+    joint_limits_buffer.setConstant(0.02);
     Eigen::VectorXd velocity_limits_buffer(model.nq);
-    velocity_limits_buffer.setConstant(0.0);
+    velocity_limits_buffer.setConstant(0.05);
     Eigen::VectorXd torque_limits_buffer(model.nq);
-    torque_limits_buffer.setConstant(0.0);
+    torque_limits_buffer.setConstant(0.5);
 
     // Initialize Kinova optimizer
     SmartPtr<ConditionNumberOptimizer> mynlp = new ConditionNumberOptimizer();
@@ -56,6 +58,7 @@ int main(int argc, char* argv[]) {
                               T,
                               N,
                               degree,
+                              base_frequency,
                               model,
                               jtype,
                               regroupMatrixFileName,
@@ -112,7 +115,10 @@ int main(int argc, char* argv[]) {
                                                                                        2000, 
                                                                                        model.nv, 
                                                                                        TimeDiscretization::Uniform, 
-                                                                                       degree);
+                                                                                       degree,
+                                                                                       base_frequency,
+                                                                                       Eigen::VectorXd::Zero(0),
+                                                                                       Eigen::VectorXd::Zero(model.nv));
     traj->compute(mynlp->solution, false);
 
     if (argc > 1) {

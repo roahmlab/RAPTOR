@@ -112,6 +112,28 @@ bool Optimizer::get_starting_point(
 }
 // [TNLP_get_starting_point]
 
+// [TNLP_update_minimal_cost_solution]
+bool Optimizer::update_minimal_cost_solution(
+    Index         n,
+    const Number* x,
+    Number        obj_value
+) 
+{
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in update_minimal_cost_solution!");
+    }
+
+    if (obj_value < currentMinimalCost) {
+        for ( Index i = 0; i < n; i++ ) {
+            minimalCostSolution(i) = x[i];
+        }
+        currentMinimalCost = obj_value;
+    }
+
+    return true;
+}
+// [TNLP_update_minimal_cost_solution]
+
 // [eval_hess_f]
 // returns the hessian of the objective
 bool Optimizer::eval_hess_f(
@@ -121,7 +143,7 @@ bool Optimizer::eval_hess_f(
     MatX&         hess_f
 ) 
 {
-    throw std::invalid_argument("Objective function hessian is not implemented.");
+    throw std::invalid_argument("Objective function hessian is not implemented! Disable hessian please.");
     return false;
 }
 // [eval_hess_f]
@@ -463,15 +485,35 @@ void Optimizer::finalize_solution(
     }
 
     // re-evaluate constraints to update values in each constraint instances
-    obj_value_copy = obj_value;
     g_copy.resize(m);
-    eval_g(n, x, false, m, g_copy.data());
-    summarize_constraints(m, g);
+
+    if(currentMinimalCost < obj_value) {
+        Number x_copy[n];
+        for( Index i = 0; i < n; i++ ) {
+            x_copy[i] = solution(i);
+        }
+
+        eval_g(n, x_copy, false, m, g_copy.data());
+        summarize_constraints(m, g, false);
+
+        if (ifFeasible) {
+            std::cout << "The final solution returned by ipopt is not the minimal cost solution! " << std::endl;
+            std::cout << "Switch to the minimal cost solution recorded before." << std::endl;
+            solution = minimalCostSolution;
+            obj_value_copy = currentMinimalCost;
+        }
+    }
+    else {
+        obj_value_copy = obj_value;
+        eval_g(n, x, false, m, g_copy.data());
+        summarize_constraints(m, g);
+    }
 
     if ((!ifFeasible) && lastFeasibleSolution.size() == n) {
         ifFeasible = true;
         solution = lastFeasibleSolution;
-        std::cerr << "Solution is not feasible but we have found one feasible solution before. Switch to the last feasible solution." << std::endl;
+        std::cout << "Solution is not feasible but we have found one feasible solution before. " << std::endl;
+        std::cout << "Switch to the last feasible solution recorded before." << std::endl;
 
         Number x_new[n];
         for( Index i = 0; i < n; i++ ) {
@@ -491,14 +533,15 @@ void Optimizer::finalize_solution(
 // [TNLP_summarize_constraints]
 void Optimizer::summarize_constraints(
     Index                      m,
-    const Number*              g
+    const Number*              g,
+    const bool                 verbose
 ) 
 {
     if (m != numCons) {
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
     }
 
-    std::cout << "Constraint violation report:" << std::endl;
+    if (verbose) std::cout << "Constraint violation report:" << std::endl;
 
     Index iter = 0;
     ifFeasible = true;
@@ -526,11 +569,13 @@ void Optimizer::summarize_constraints(
 
         // report constraint violation
         if (max_constr_violation > 0) {
-            std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
-            std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
-                                        << ", " 
-                                        << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
-                      << "], value: "   << g[max_constr_violation_id2] << std::endl;
+            if (verbose) {
+                std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
+                std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
+                                            << ", " 
+                                            << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
+                          << "], value: "   << g[max_constr_violation_id2] << std::endl;
+            }
 
             constraintsPtrVec_[c]->print_violation_info();
                     
@@ -538,7 +583,7 @@ void Optimizer::summarize_constraints(
         }
     }
 
-    std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    if (verbose) std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
 }
 // [TNLP_summarize_constraints]
 

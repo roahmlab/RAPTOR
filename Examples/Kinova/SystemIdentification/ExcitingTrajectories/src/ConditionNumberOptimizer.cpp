@@ -19,6 +19,7 @@ bool ConditionNumberOptimizer::set_parameters(
         const Number T_input,
         const int N_input,
         const int degree_input,
+        const int base_frequency_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
         const std::string& regroupMatrixFileName,
@@ -29,11 +30,15 @@ bool ConditionNumberOptimizer::set_parameters(
     x0 = x0_input;
     regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
 
+    // fixed frequency fourier curves with 0 initial velocity
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
                                                              N_input, 
                                                              model_input.nv, 
                                                              TimeDiscretization::Uniform, 
-                                                             degree_input);
+                                                             degree_input,
+                                                             base_frequency_input,
+                                                             VecX::Zero(0),
+                                                             VecX::Zero(model_input.nv));
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
                                                          jtype_input, 
@@ -80,7 +85,7 @@ bool ConditionNumberOptimizer::set_parameters(
     constraintsNameVec_.push_back("torque limits"); 
 
     // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, -0.01)};
+    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.02)};
     std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
     std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,

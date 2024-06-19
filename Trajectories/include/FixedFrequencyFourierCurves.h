@@ -16,14 +16,18 @@ public:
     FixedFrequencyFourierCurves(const VecX& tspan_input, 
                                 int Nact_input, 
                                 int degree_input,
-                                double base_frequency_input = 10);
+                                double base_frequency_input = 10,
+                                VecX q0_input = VecX::Zero(0),
+                                VecX q_d0_input = VecX::Zero(0));
 
     FixedFrequencyFourierCurves(double T_input, 
                                 int N_input, 
                                 int Nact_input, 
                                 TimeDiscretization time_discretization, 
                                 int degree_input,
-                                double base_frequency_input = 10);
+                                double base_frequency_input = 10,
+                                VecX q0_input = VecX::Zero(0),
+                                VecX q_d0_input = VecX::Zero(0));
 
     // class methods:
         // compute trajectories
@@ -42,6 +46,11 @@ public:
 
     VecX F0;
     VecX dF0;
+
+    VecX q0;
+    VecX q_d0;
+    bool optimize_initial_position = true;
+    bool optimize_initial_velocity = true;
 };
 
 }; // namespace IDTO

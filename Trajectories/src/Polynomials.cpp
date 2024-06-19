@@ -32,6 +32,8 @@ void Polynomials::compute(const VecX& z,
                           bool compute_derivatives,
                           bool compute_hessian) {
     if (z.size() < varLength) {
+        std::cerr << "function input: z.size() = " << z.size() << std::endl;
+        std::cerr << "desired: varLength = " << varLength << std::endl;
         throw std::invalid_argument("Polynomials: decision variable vector has wrong size");
     }
 
