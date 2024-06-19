@@ -30,9 +30,9 @@ int main(int argc, char* argv[]) {
     jtype << 3, 3, 3, 3, 3, 3, 3;
 
     // Define trajectory parameters
-    double T = 5.0;
+    double T = 10.0;
     int N = 100;
-    int degree = 5;
+    int degree = 4;
 
     // Define initial guess
     Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv);
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 40.0);
+	app->Options()->SetNumericValue("max_wall_time", 60.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     // app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
@@ -116,9 +116,9 @@ int main(int argc, char* argv[]) {
     traj->compute(mynlp->solution, false);
 
     if (argc > 1) {
-        std::ofstream position("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/exciting-position-" + std::string(argv[1]) + ".csv");
-        std::ofstream velocity("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/exciting-velocity-" + std::string(argv[1]) + ".csv");
-        std::ofstream acceleration("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/exciting-acceleration-" + std::string(argv[1]) + ".csv");
+        std::ofstream position("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-position-" + std::string(argv[1]) + ".csv");
+        std::ofstream velocity("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-velocity-" + std::string(argv[1]) + ".csv");
+        std::ofstream acceleration("../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/exciting-acceleration-" + std::string(argv[1]) + ".csv");
 
         for (int i = 0; i < traj->N; i++) {
             position << traj->q(i).transpose() << std::endl;
@@ -137,6 +137,8 @@ int main(int argc, char* argv[]) {
             acceleration << traj->q_dd(i).transpose() << std::endl;
         }
     }
+
+
 
 
     // std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(1.0, 

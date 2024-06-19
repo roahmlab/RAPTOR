@@ -45,9 +45,16 @@ inline Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
     return res;
 }
 
-template <typename T>
-int sign(T val) {
-    return (T(0) < val) - (val < T(0));
+inline double sign(double val, double eps = 1e-8) {
+    if (val > eps) {
+        return 1.0;
+    } 
+    else if (val < -eps) {
+        return -1.0;
+    } 
+    else {
+        return 0.0;
+    }
 }
 
 inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, 

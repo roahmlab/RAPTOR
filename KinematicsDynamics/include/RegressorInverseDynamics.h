@@ -67,6 +67,9 @@ public:
     
     VecX phi;
 
+    int numInertialParams = 0;
+    int numParams = 0;
+
     MatX Y;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
 
