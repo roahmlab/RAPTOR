@@ -16,6 +16,14 @@ namespace IDTO {
 
 using namespace Ipopt;
 
+namespace OptimizerConstants {
+    enum FeasibleState {
+        INFEASIBLE = 0,
+        FEASIBLE = 1,
+        UNINITIALIZED = 2
+    };
+};
+
 class Optimizer : public Ipopt::TNLP {
 public:
     using VecX = Eigen::VectorXd;
@@ -68,6 +76,14 @@ public:
     {
         return false;
     }
+
+    /** Method to update the solution with the minimal cost in the current iteration */
+    virtual bool update_minimal_cost_solution(
+        Index         n,
+        const VecX&   z,
+        bool          new_x,
+        Number        obj_value
+    );
 
     /** Method to return the objective value */
     virtual bool eval_f(
@@ -146,7 +162,8 @@ public:
     /** This method summarizes constraint violation for each type of constraints */
     virtual void summarize_constraints(
         Index                      m,
-        const Number*              g
+        const Number*              g,
+        const bool                 verbose = true
     );
     //@}
 
@@ -170,18 +187,39 @@ public:
     );
 
     // class members:
-    int numVars = 0; // number of variables
-    int numCons = 0; // number of constraints
+    std::chrono::_V2::system_clock::time_point start_time;
+    std::chrono::_V2::system_clock::time_point end_time;
+    bool output_computation_time = false;
+    
+    bool enable_hessian = false;
+
+    Index numVars = 0; // number of variables
+    Index numCons = 0; // number of constraints
 
     VecX x0; // stores the initial guess here
 
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;
 
+    VecX currentIpoptSolution;
+    Number currentIpoptObjValue = std::numeric_limits<Number>::max();
+    OptimizerConstants::FeasibleState ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+
+    VecX optimalIpoptSolution;
+    Number optimalIpoptObjValue = std::numeric_limits<Number>::max();
+    OptimizerConstants::FeasibleState ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+
     VecX solution; // stores the final solution here
+    Number obj_value_copy = 0;
+    std::vector<Number> g_copy;
 
     Number final_constr_violation = 0;
     bool ifFeasible = true;
+
+    // This is supposed to be consistent with the settings in IpoptApplicationFactory
+    // But right now it is hardcoded here
+    // You have to manually change this from outside
+    Number constr_viol_tol = 1e-4;
 };
 
 }; // namespace IDTO

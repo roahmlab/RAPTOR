@@ -112,6 +112,60 @@ bool Optimizer::get_starting_point(
 }
 // [TNLP_get_starting_point]
 
+// [TNLP_update_minimal_cost_solution]
+bool Optimizer::update_minimal_cost_solution(
+    Index         n,
+    const VecX&   z,
+    bool          new_x,
+    Number        obj_value
+) 
+{
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in update_minimal_cost_solution!");
+    }
+
+    // update status of the current solution
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = obj_value;
+        ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+    }
+    else { // update currentIpoptSolution
+        bool ifEqual = true;
+        for (Index i = 0; i < n; i++) {
+            if (currentIpoptSolution(i) != z(i)) {
+                ifEqual = false;
+                break;
+            }
+        }
+
+        if (ifEqual) {
+            if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::UNINITIALIZED) {
+                THROW_EXCEPTION(IpoptException, "*** Error ifCurrentIpoptFeasible is not initialized!");
+            }
+            else { // this has been evaluated in eval_g, just need to update the cost
+                currentIpoptObjValue = obj_value;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = obj_value;
+            ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
+    }
+
+    return true;
+}
+// [TNLP_update_minimal_cost_solution]
+
 // [TNLP_eval_g]
 // return the value of the constraints: g(x)
 bool Optimizer::eval_g(
@@ -135,11 +189,14 @@ bool Optimizer::eval_g(
         z(i) = x[i];
     }
 
-    // auto start = std::chrono::high_resolution_clock::now();
-
     Index iter = 0;
+    bool ifFeasibleCurrIter = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // compute constraints
+        if (output_computation_time) {
+            start_time = std::chrono::high_resolution_clock::now();
+        }
+        
         try {
             constraintsPtrVec_[c]->compute(z, false);
         }
@@ -149,6 +206,19 @@ bool Optimizer::eval_g(
             THROW_EXCEPTION(IpoptException, "*** Error in eval_g: " + constraintsNameVec_[c] + "! Check previous error message.");
         }
 
+        if (output_computation_time) {
+            end_time = std::chrono::high_resolution_clock::now();
+            std::cout << "eval_g compute time for " << constraintsNameVec_[c] 
+                      << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                      << " microseconds.\n";
+        }
+
+        // test if constraints are feasible
+        if ((constraintsPtrVec_[c]->g - constraintsPtrVec_[c]->g_lb).minCoeff() < -constr_viol_tol || 
+            (constraintsPtrVec_[c]->g_ub - constraintsPtrVec_[c]->g).minCoeff() < -constr_viol_tol) {
+            ifFeasibleCurrIter = false;
+        }
+
         // fill in constraints
         for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
             g[iter] = constraintsPtrVec_[c]->g(i);
@@ -156,8 +226,49 @@ bool Optimizer::eval_g(
         }
     }
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::cout << "g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
+    // update status of the current solution
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        bool ifEqual = true;
+        for (Index i = 0; i < n; i++) {
+            if (currentIpoptSolution(i) != z(i)) {
+                ifEqual = false;
+                break;
+            }
+        }
+
+        if (ifEqual) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
+    }
 
     return true;
 }
@@ -201,11 +312,13 @@ bool Optimizer::eval_jac_g(
             z(i) = x[i];
         }
 
-        // auto start = std::chrono::high_resolution_clock::now();
-
         Index iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
             // compute constraints
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
             try {
                 constraintsPtrVec_[c]->compute(z, true);
             }
@@ -213,6 +326,13 @@ bool Optimizer::eval_jac_g(
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cout << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g in: " + constraintsNameVec_[c] + "! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_jac_g compute time for " << constraintsNameVec_[c] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
             }
 
             // fill in constraints
@@ -223,9 +343,6 @@ bool Optimizer::eval_jac_g(
                 }
             }
         }
-
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << "jac_g time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
     }
 
     return true;
@@ -285,25 +402,53 @@ void Optimizer::finalize_solution(
     }
 
     // re-evaluate constraints to update values in each constraint instances
-    Number g_copy[m];
-    eval_g(n, x, false, m, g_copy);
+    g_copy.resize(m);
+    eval_f(n, x, false, obj_value_copy);
+    eval_g(n, x, false, m, g_copy.data());
     summarize_constraints(m, g);
 
-    std::cout << "Objective value: " << obj_value << std::endl;
+    bool recordedOptimalSolutionAvailable = 
+        optimalIpoptSolution.size() == n &&
+        optimalIpoptObjValue < std::numeric_limits<Number>::max() &&
+        ifOptimalIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE;
+
+    if (recordedOptimalSolutionAvailable &&
+        (!ifFeasible || optimalIpoptObjValue < obj_value)) {
+        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before with cost: " 
+                  << optimalIpoptObjValue;
+
+        ifFeasible = true;
+        solution = optimalIpoptSolution;
+        obj_value_copy = optimalIpoptObjValue;
+
+        Number x_new[n];
+        for( Index i = 0; i < n; i++ ) {
+            x_new[i] = solution(i);
+        }
+
+        // re-evaluate constraints to update values in each constraint instances
+        eval_f(n, x_new, false, obj_value_copy);
+        eval_g(n, x_new, false, m, g_copy.data());
+
+        std::cout << " and constraint violation: " << final_constr_violation << std::endl;
+    }
+
+    std::cout << "Objective value: " << obj_value_copy << std::endl;
 }
 // [TNLP_finalize_solution]
 
 // [TNLP_summarize_constraints]
 void Optimizer::summarize_constraints(
     Index                      m,
-    const Number*              g
+    const Number*              g,
+    const bool                 verbose
 ) 
 {
     if (m != numCons) {
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
     }
 
-    std::cout << "Constraint violation report:" << std::endl;
+    if (verbose) std::cout << "Constraint violation report:" << std::endl;
 
     Index iter = 0;
     ifFeasible = true;
@@ -313,8 +458,8 @@ void Optimizer::summarize_constraints(
         Index max_constr_violation_id1 = 0;
         Index max_constr_violation_id2 = 0;
         for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
-            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb[i] - g[iter], 
-                                               g[iter] - constraintsPtrVec_[c]->g_ub[i]);
+            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb(i) - g[iter], 
+                                               g[iter] - constraintsPtrVec_[c]->g_ub(i));
            
             if (constr_violation > max_constr_violation) {
                 max_constr_violation_id1 = i;
@@ -330,12 +475,14 @@ void Optimizer::summarize_constraints(
         }
 
         // report constraint violation
-        if (max_constr_violation > 0) {
-            std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
-            std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
-                                        << ", " 
-                                        << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
-                      << "], value: "   << g[max_constr_violation_id2] << std::endl;
+        if (max_constr_violation > constr_viol_tol) {
+            if (verbose) {
+                std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
+                std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
+                                            << ", " 
+                                            << constraintsPtrVec_[c]->g_ub[max_constr_violation_id1] 
+                          << "], value: "   << g[max_constr_violation_id2] << std::endl;
+            }
 
             constraintsPtrVec_[c]->print_violation_info();
                     
@@ -343,7 +490,7 @@ void Optimizer::summarize_constraints(
         }
     }
 
-    std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    if (verbose) std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
 }
 // [TNLP_summarize_constraints]
 

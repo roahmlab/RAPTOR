@@ -160,6 +160,8 @@ bool DigitModifiedSingleStepOptimizer::eval_f(
 
     obj_value /= cidPtr_->N;
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 // [TNLP_eval_f]
@@ -174,7 +176,7 @@ bool DigitModifiedSingleStepOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       throw std::runtime_error("*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z(n);

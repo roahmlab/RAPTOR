@@ -52,8 +52,12 @@ int main(int argc, char* argv[]) {
     }
     if (argc > 3) {
         int temp = std::stoi(argv[3]);
-        time_discretization = (temp == 0) ? Uniform : Chebyshev;
+        time_discretization = (temp == 0) ? 
+                                  Uniform : 
+                                  Chebyshev;
     }
+
+    std::cout << "Experiment settings: " << N << ' ' << time_discretization << std::endl;
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.27;
@@ -147,13 +151,15 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        // solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        // solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
+
+    std::cout << "ActualDataYouNeed: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {
