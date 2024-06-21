@@ -10,6 +10,7 @@
 #include <chrono>
 #include <omp.h>
 
+#include "Utils.h"
 #include "Constraints.h"
 
 namespace IDTO {

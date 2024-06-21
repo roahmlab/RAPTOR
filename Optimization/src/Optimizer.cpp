@@ -131,15 +131,7 @@ bool Optimizer::update_minimal_cost_solution(
         ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
     }
     else { // update currentIpoptSolution
-        bool ifEqual = true;
-        for (Index i = 0; i < n; i++) {
-            if (currentIpoptSolution(i) != z(i)) {
-                ifEqual = false;
-                break;
-            }
-        }
-
-        if (ifEqual) {
+        if (ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::UNINITIALIZED) {
                 THROW_EXCEPTION(IpoptException, "*** Error ifCurrentIpoptFeasible is not initialized!");
             }
@@ -235,15 +227,7 @@ bool Optimizer::eval_g(
                                      OptimizerConstants::FeasibleState::INFEASIBLE;
     }
     else { // update currentIpoptSolution
-        bool ifEqual = true;
-        for (Index i = 0; i < n; i++) {
-            if (currentIpoptSolution(i) != z(i)) {
-                ifEqual = false;
-                break;
-            }
-        }
-
-        if (ifEqual) {
+        if (ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
                 THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
             }
@@ -403,9 +387,9 @@ void Optimizer::finalize_solution(
 
     // re-evaluate constraints to update values in each constraint instances
     g_copy.resize(m);
-    eval_f(n, x, false, obj_value_copy);
-    eval_g(n, x, false, m, g_copy.data());
-    summarize_constraints(m, g);
+    eval_f(n, x, true, obj_value_copy);
+    eval_g(n, x, true, m, g_copy.data());
+    summarize_constraints(m, g, false);
 
     bool recordedOptimalSolutionAvailable = 
         optimalIpoptSolution.size() == n &&
@@ -414,9 +398,6 @@ void Optimizer::finalize_solution(
 
     if (recordedOptimalSolutionAvailable &&
         (!ifFeasible || optimalIpoptObjValue < obj_value)) {
-        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before with cost: " 
-                  << optimalIpoptObjValue;
-
         ifFeasible = true;
         solution = optimalIpoptSolution;
         obj_value_copy = optimalIpoptObjValue;
@@ -427,10 +408,16 @@ void Optimizer::finalize_solution(
         }
 
         // re-evaluate constraints to update values in each constraint instances
-        eval_f(n, x_new, false, obj_value_copy);
-        eval_g(n, x_new, false, m, g_copy.data());
+        eval_f(n, x_new, true, obj_value_copy);
+        eval_g(n, x_new, true, m, g_copy.data());
+        summarize_constraints(m, g_copy.data());
 
-        std::cout << " and constraint violation: " << final_constr_violation << std::endl;
+        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before" 
+                  << " with cost: " << optimalIpoptObjValue
+                  << " and constraint violation: " << final_constr_violation << std::endl;
+    }
+    else {
+        summarize_constraints(m, g);
     }
 
     std::cout << "Objective value: " << obj_value_copy << std::endl;
@@ -452,6 +439,7 @@ void Optimizer::summarize_constraints(
 
     Index iter = 0;
     ifFeasible = true;
+    final_constr_violation = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // find where the maximum constraint violation is
         Number max_constr_violation = 0;
