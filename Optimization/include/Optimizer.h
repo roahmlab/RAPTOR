@@ -10,6 +10,7 @@
 #include <chrono>
 #include <omp.h>
 
+#include "Utils.h"
 #include "Constraints.h"
 
 namespace IDTO {
@@ -223,6 +224,11 @@ public:
 
     Number final_constr_violation = 0;
     bool ifFeasible = true;
+
+    // This is supposed to be consistent with the settings in IpoptApplicationFactory
+    // But right now it is hardcoded here
+    // You have to manually change this from outside
+    Number constr_viol_tol = 1e-4;
 };
 
 }; // namespace IDTO

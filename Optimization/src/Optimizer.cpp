@@ -131,15 +131,7 @@ bool Optimizer::update_minimal_cost_solution(
         ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
     }
     else { // update currentIpoptSolution
-        bool ifEqual = true;
-        for (Index i = 0; i < n; i++) {
-            if (currentIpoptSolution(i) != z(i)) {
-                ifEqual = false;
-                break;
-            }
-        }
-
-        if (ifEqual) {
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::UNINITIALIZED) {
                 THROW_EXCEPTION(IpoptException, "*** Error ifCurrentIpoptFeasible is not initialized!");
             }
@@ -228,8 +220,8 @@ bool Optimizer::eval_g(
         }
 
         // test if constraints are feasible
-        if ((constraintsPtrVec_[c]->g - constraintsPtrVec_[c]->g_lb).minCoeff() < 0 || 
-            (constraintsPtrVec_[c]->g_ub - constraintsPtrVec_[c]->g).minCoeff() < 0) {
+        if ((constraintsPtrVec_[c]->g - constraintsPtrVec_[c]->g_lb).minCoeff() < -constr_viol_tol || 
+            (constraintsPtrVec_[c]->g_ub - constraintsPtrVec_[c]->g).minCoeff() < -constr_viol_tol) {
             ifFeasibleCurrIter = false;
         }
 
@@ -249,15 +241,7 @@ bool Optimizer::eval_g(
                                      OptimizerConstants::FeasibleState::INFEASIBLE;
     }
     else { // update currentIpoptSolution
-        bool ifEqual = true;
-        for (Index i = 0; i < n; i++) {
-            if (currentIpoptSolution(i) != z(i)) {
-                ifEqual = false;
-                break;
-            }
-        }
-
-        if (ifEqual) {
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
                 THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
             }
@@ -558,9 +542,9 @@ void Optimizer::finalize_solution(
 
     // re-evaluate constraints to update values in each constraint instances
     g_copy.resize(m);
-    eval_f(n, x, false, obj_value_copy);
-    eval_g(n, x, false, m, g_copy.data());
-    summarize_constraints(m, g);
+    eval_f(n, x, true, obj_value_copy);
+    eval_g(n, x, true, m, g_copy.data());
+    summarize_constraints(m, g, false);
 
     bool recordedOptimalSolutionAvailable = 
         optimalIpoptSolution.size() == n &&
@@ -569,9 +553,6 @@ void Optimizer::finalize_solution(
 
     if (recordedOptimalSolutionAvailable &&
         (!ifFeasible || optimalIpoptObjValue < obj_value)) {
-        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before with cost: " 
-                  << optimalIpoptObjValue << std::endl;
-
         ifFeasible = true;
         solution = optimalIpoptSolution;
         obj_value_copy = optimalIpoptObjValue;
@@ -582,8 +563,16 @@ void Optimizer::finalize_solution(
         }
 
         // re-evaluate constraints to update values in each constraint instances
-        eval_f(n, x_new, false, obj_value_copy);
-        eval_g(n, x_new, false, m, g_copy.data());
+        eval_f(n, x_new, true, obj_value_copy);
+        eval_g(n, x_new, true, m, g_copy.data());
+        summarize_constraints(m, g_copy.data());
+
+        std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before" 
+                  << " with cost: " << optimalIpoptObjValue
+                  << " and constraint violation: " << final_constr_violation << std::endl;
+    }
+    else {
+        summarize_constraints(m, g);
     }
 
     std::cout << "Objective value: " << obj_value_copy << std::endl;
@@ -605,6 +594,7 @@ void Optimizer::summarize_constraints(
 
     Index iter = 0;
     ifFeasible = true;
+    final_constr_violation = 0;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // find where the maximum constraint violation is
         Number max_constr_violation = 0;
@@ -628,7 +618,7 @@ void Optimizer::summarize_constraints(
         }
 
         // report constraint violation
-        if (max_constr_violation > 0) {
+        if (max_constr_violation > constr_viol_tol) {
             if (verbose) {
                 std::cout << constraintsNameVec_[c] << ": " << max_constr_violation << std::endl;
                 std::cout << "    range: [" << constraintsPtrVec_[c]->g_lb[max_constr_violation_id1] 
