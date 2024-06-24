@@ -193,6 +193,7 @@ add_library(Kinovalib SHARED
     Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
     Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
     Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
+    Examples/Kinova/SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
 target_link_libraries(Kinovalib PRIVATE
@@ -301,6 +302,27 @@ target_link_libraries(KinovaWaitr_example PRIVATE
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
+
+
+
+add_executable(KinovaFilter_example 
+    Examples/Kinova/SystemIdentification/DataFilter/KinovaAccelerationEstimator.cpp)
+
+target_include_directories(KinovaFilter_example PRIVATE
+    Examples/Kinova
+    Examples/Kinova/SystemIdentification/DataFilter/include
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
+    Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaFilter_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES})
 
 add_executable(KinovaSysId_example 
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)

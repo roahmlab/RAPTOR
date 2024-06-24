@@ -139,10 +139,7 @@ bool ConditionNumberOptimizer::eval_f(
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     ridPtr_->compute(z, false);
 
@@ -174,10 +171,7 @@ bool ConditionNumberOptimizer::eval_grad_f(
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     ridPtr_->compute(z, true);
 

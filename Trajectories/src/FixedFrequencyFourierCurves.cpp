@@ -8,11 +8,9 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input
                                                          double base_frequency_input,
                                                          VecX q0_input,
                                                          VecX q_d0_input) :
-    Trajectories(tspan_input, Nact_input),
+    Trajectories((2 * degree_input + 1) * Nact_input, tspan_input, Nact_input),
     degree(degree_input),
     w(base_frequency_input) {
-    varLength = (2 * degree + 1) * Nact;
-
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -37,6 +35,19 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input
     else {
         optimize_initial_velocity = true;
         varLength += Nact;
+    }
+
+    // varLength is changed so we have to reallocate the memory
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
     }
 }
 
@@ -48,11 +59,9 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
                                                          double base_frequency_input,
                                                          VecX q0_input,
                                                          VecX q_d0_input) :
-    Trajectories(T_input, N_input, Nact_input, time_discretization),
+    Trajectories((2 * degree_input + 1) * Nact_input, T_input, N_input, Nact_input, time_discretization),
     degree(degree_input),
     w(base_frequency_input) {
-    varLength = (2 * degree + 1) * Nact;
-
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -77,6 +86,19 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
     else {
         optimize_initial_velocity = true;
         varLength += Nact;
+    }
+
+    // varLength is changed so we have to reallocate the memory
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
     }
 }
 

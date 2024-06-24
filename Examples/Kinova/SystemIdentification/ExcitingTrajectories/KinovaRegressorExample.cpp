@@ -31,10 +31,10 @@ int main(int argc, char* argv[]) {
     jtype << 3, 3, 3, 3, 3, 3, 3;
 
     // Define trajectory parameters
-    double T = 10.0;
-    int N = 50;
-    int degree = 4;
-    int base_frequency = 10;
+    const double T = 10.0;
+    const int N = 50;
+    const int degree = 4;
+    const int base_frequency = 10;
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));

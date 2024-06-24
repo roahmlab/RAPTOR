@@ -166,10 +166,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, false);
 
@@ -206,10 +203,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_grad_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, true);
 

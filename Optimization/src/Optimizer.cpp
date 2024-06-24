@@ -190,10 +190,7 @@ bool Optimizer::eval_g(
     }
 
     // fill in a Eigen Vector instance of decision variables
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     Index iter = 0;
     bool ifFeasibleCurrIter = true;

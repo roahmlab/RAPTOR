@@ -25,11 +25,13 @@ public:
     Trajectories() = default;
 
     // Constructor
-    Trajectories(const VecX& tspan_input, 
+    Trajectories(const int varLength_input,
+                 const VecX& tspan_input, 
                  int Nact_input);
 
     // Constructor
-    Trajectories(double T_input, 
+    Trajectories(const int varLength_input,
+                 double T_input, 
                  int N_input, 
                  int Nact_input, 
                  TimeDiscretization time_discretization);

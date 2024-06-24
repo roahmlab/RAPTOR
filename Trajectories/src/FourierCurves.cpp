@@ -5,10 +5,8 @@ namespace IDTO {
 FourierCurves::FourierCurves(const VecX& tspan_input, 
                              int Nact_input, 
                              int degree_input) : 
-    Trajectories(tspan_input, Nact_input),
+    Trajectories((2 * degree_input + 4) * Nact_input, tspan_input, Nact_input),
     degree(degree_input) {
-    varLength = (2 * degree + 4) * Nact;
-
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -29,10 +27,8 @@ FourierCurves::FourierCurves(double T_input,
                              int Nact_input, 
                              TimeDiscretization time_discretization,
                              int degree_input) :
-    Trajectories(T_input, N_input, Nact_input, time_discretization),
+    Trajectories((2 * degree_input + 4) * Nact_input, T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
-    varLength = (2 * degree + 4) * Nact;
-
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);

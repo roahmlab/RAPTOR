@@ -5,10 +5,8 @@ namespace IDTO {
 BezierCurves::BezierCurves(const VecX& tspan_input, 
                            int Nact_input, 
                            int degree_input) : 
-    Trajectories(tspan_input, Nact_input),
+    Trajectories((degree_input + 1) * Nact_input, tspan_input, Nact_input),
     degree(degree_input) {
-    varLength = (degree + 1) * Nact;
-
     B = VecX::Zero(degree + 1);
     dB = VecX::Zero(degree + 1);
     ddB = VecX::Zero(degree + 1);
@@ -25,10 +23,8 @@ BezierCurves::BezierCurves(double T_input,
                            int Nact_input, 
                            TimeDiscretization time_discretization, 
                            int degree_input) :
-    Trajectories(T_input, N_input, Nact_input, time_discretization),
+    Trajectories((degree_input + 1) * Nact_input, T_input, N_input, Nact_input, time_discretization),
     degree(degree_input) {
-    varLength = (degree + 1) * Nact;
-
     B = VecX::Zero(degree + 1);
     dB = VecX::Zero(degree + 1);
     ddB = VecX::Zero(degree + 1);

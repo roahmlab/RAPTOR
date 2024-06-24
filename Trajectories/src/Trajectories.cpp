@@ -2,14 +2,14 @@
 
 namespace IDTO {
 
-Trajectories::Trajectories(const VecX& tspan_input, 
+Trajectories::Trajectories(const int varLength_input,
+                           const VecX& tspan_input, 
                            int Nact_input) :
+    varLength(varLength_input),
     tspan(tspan_input),
     Nact(Nact_input){
     T = tspan.bottomLeftCorner<1,1>().value();
     N = tspan.size();
-
-    varLength = 1;
     
     q.resize(1, N);
     q_d.resize(1, N);
@@ -42,10 +42,12 @@ Trajectories::Trajectories(const VecX& tspan_input,
     current_z.resize(1);
 }
 
-Trajectories::Trajectories(double T_input, 
+Trajectories::Trajectories(const int varLength_input,
+                           double T_input, 
                            int N_input, 
                            int Nact_input, 
                            TimeDiscretization time_discretization) :
+    varLength(varLength_input),
     T(T_input),
     N(N_input),
     Nact(Nact_input) {;
@@ -60,8 +62,6 @@ Trajectories::Trajectories(double T_input,
         tspan(0) = 0;
         tspan(N - 1) = T;
     }
-
-    varLength = 1;
     
     q.resize(1, N);
     q_d.resize(1, N);
