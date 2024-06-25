@@ -228,7 +228,7 @@ py::tuple KinovaWaitrPybindWrapper::optimize() {
                               velocity_limits_buffer,
                               torque_limits_buffer);
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
@@ -251,7 +251,7 @@ py::tuple KinovaWaitrPybindWrapper::optimize() {
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 

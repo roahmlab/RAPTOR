@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
                               jtype,
                               gp);
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
         solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
     
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     //     std::cout << "Objective function value: " << obj_value << std::endl;
     //     mynlp->summarize_constraints(mynlp->numCons, g);
     // }
-    // catch (int errorCode) {
+    // catch (std::exception& e) {
     //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     // }
 

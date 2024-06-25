@@ -35,7 +35,7 @@ int main () {
                               degree,
                               base_frequency);
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
@@ -75,7 +75,7 @@ int main () {
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
