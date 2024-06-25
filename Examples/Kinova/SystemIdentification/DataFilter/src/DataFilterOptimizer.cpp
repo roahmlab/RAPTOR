@@ -106,6 +106,8 @@ bool DataFilterOptimizer::eval_f(
     obj_value = position_weight * position_error + 
                 velocity_weight * velocity_error;
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 
@@ -116,7 +118,7 @@ bool DataFilterOptimizer::eval_grad_f(
     Number*       grad_f
 ) {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -164,7 +166,7 @@ bool DataFilterOptimizer::eval_hess_f(
     MatX&         hess_f
 ) {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);

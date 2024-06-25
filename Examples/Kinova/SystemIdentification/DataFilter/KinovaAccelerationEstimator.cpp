@@ -10,13 +10,17 @@ int main () {
     omp_set_num_threads(num_threads);
 
     // Define Data
-    Eigen::VectorXd tspan = Eigen::VectorXd::LinSpaced(100, 0, 10);
-    Eigen::MatrixXd q_data = Eigen::MatrixXd::Zero(7, 100);
-    Eigen::MatrixXd q_d_data = Eigen::MatrixXd::Zero(7, 100);
+    Eigen::MatrixXd temp;
+    temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/feedback_pos.csv");
+    Eigen::MatrixXd q_data = temp.transpose();
+    temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/feedback_vel.csv");
+    Eigen::MatrixXd q_d_data = temp.transpose();
+    temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/frame_ts.csv");
+    Eigen::VectorXd tspan = temp.array() - temp(0);
 
     // Define trajectory parameters
-    const int degree = 5;
-    const int base_frequency = 10;
+    const int degree = 10;
+    const int base_frequency = 5;
 
     // Define initial guess
     Eigen::VectorXd z = 2 * 1.0 * Eigen::VectorXd::Random((2 * degree + 1) * 7).array() - 1.0;
@@ -25,9 +29,9 @@ int main () {
     SmartPtr<DataFilterOptimizer> mynlp = new DataFilterOptimizer();
     try {
 	    mynlp->set_parameters(z,
-                              tspan,
-                              q_data,
-                              q_d_data,
+                              tspan.head(1000),
+                              q_data.leftCols(1000),
+                              q_d_data.leftCols(1000),
                               degree,
                               base_frequency);
     }
@@ -73,6 +77,18 @@ int main () {
     }
     catch (int errorCode) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+    }
+
+    // Print the solution
+    std::ofstream filtered_position("../Examples/Kinova/SystemIdentification/DataFilter/data/filtered_pos.csv");
+    std::ofstream filtered_velocity("../Examples/Kinova/SystemIdentification/DataFilter/data/filtered_vel.csv");
+    std::ofstream filtered_acceleration("../Examples/Kinova/SystemIdentification/DataFilter/data/filtered_acc.csv");
+
+    const auto trajPtr_ = mynlp->trajPtr_;
+    for (int i = 0; i < trajPtr_->N; i++) {
+        filtered_position << trajPtr_->q(i).transpose() << std::endl;
+        filtered_velocity << trajPtr_->q_d(i).transpose() << std::endl;
+        filtered_acceleration << trajPtr_->q_dd(i).transpose() << std::endl;
     }
 
     return 0;   
