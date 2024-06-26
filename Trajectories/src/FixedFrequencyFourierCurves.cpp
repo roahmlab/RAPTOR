@@ -10,16 +10,15 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input
                                                          VecX q_d0_input) :
     Trajectories((2 * degree_input + 1) * Nact_input, tspan_input, Nact_input),
     degree(degree_input),
-    w(base_frequency_input) {
+    w(base_frequency_input),
+    q0(q0_input),
+    q_d0(q_d0_input) {
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
 
     F0 = VecX::Zero(2 * degree + 1);
     dF0 = VecX::Zero(2 * degree + 1);
-
-    q0 = q0_input;
-    q_d0 = q_d0_input;
 
     if (q0.size() == Nact) {
         optimize_initial_position = false;
@@ -61,16 +60,15 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
                                                          VecX q_d0_input) :
     Trajectories((2 * degree_input + 1) * Nact_input, T_input, N_input, Nact_input, time_discretization),
     degree(degree_input),
-    w(base_frequency_input) {
+    w(base_frequency_input),
+    q0(q0_input),
+    q_d0(q_d0_input) {
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
 
     F0 = VecX::Zero(2 * degree + 1);
     dF0 = VecX::Zero(2 * degree + 1);
-
-    q0 = q0_input;
-    q_d0 = q_d0_input;
 
     if (q0.size() == Nact) {
         optimize_initial_position = false;
@@ -114,7 +112,6 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
-    // MatX coefficients = temp.reshaped(2 * degree + 1, Nact);
     MatX coefficients = Utils::reshape(temp, 2 * degree + 1, Nact);
 
     if (optimize_initial_position) {

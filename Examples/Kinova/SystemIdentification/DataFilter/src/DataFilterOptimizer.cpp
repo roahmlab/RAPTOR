@@ -38,12 +38,17 @@ bool DataFilterOptimizer::set_parameters(
                                                              base_frequency_input,
                                                              q_data.col(0),
                                                              q_d_data.col(0));
+    // trajPtr_ = std::make_shared<FourierCurves>(tspan_input,
+    //                                            q_data.rows(), 
+    //                                            degree_input,
+    //                                            q_data.col(0),
+    //                                            q_d_data.col(0));
 
-    // Joint limits
-    constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
-                                                               JOINT_LIMITS_LOWER_VEC, 
-                                                               JOINT_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("joint limits");
+    // // Joint limits
+    // constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
+    //                                                            JOINT_LIMITS_LOWER_VEC, 
+    //                                                            JOINT_LIMITS_UPPER_VEC));
+    // constraintsNameVec_.push_back("joint limits");
 
     return true;
 }
@@ -71,6 +76,76 @@ bool DataFilterOptimizer::get_nlp_info(
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
+
+    return true;
+}
+
+bool DataFilterOptimizer::get_bounds_info(
+   Index   n,
+   Number* x_l,
+   Number* x_u,
+   Index   m,
+   Number* g_l,
+   Number* g_u
+)
+{
+    // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
+    // If desired, we could assert to make sure they are what we think they are.
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
+    }
+
+    // lower bounds
+    for( Index i = 0; i < n; i++ ) {
+        x_l[i] = -100;
+    }
+
+    // upper bounds  
+    for( Index i = 0; i < n; i++ ) {
+        x_u[i] = 100;
+    }
+
+    if (constraintsPtrVec_.size() != constraintsNameVec_.size()) {
+        THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ and constraintsNameVec_ have different sizes!");
+    }
+
+    // compute bounds for all constraints
+    Index iter = 0;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        try {
+            constraintsPtrVec_[c]->compute_bounds();
+        }
+        catch (std::exception& e) {
+            std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in get_bounds_info! Check previous error message.");
+        }
+
+        if (constraintsPtrVec_[c]->m != constraintsPtrVec_[c]->g_lb.size() || 
+            constraintsPtrVec_[c]->m != constraintsPtrVec_[c]->g_ub.size()) {
+            THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have different sizes!");
+        }
+
+        for ( Index i = 0; i < constraintsPtrVec_[c]->m; i++ ) {
+            g_l[iter] = constraintsPtrVec_[c]->g_lb(i);
+            g_u[iter] = constraintsPtrVec_[c]->g_ub(i);
+            iter++;
+        }
+    }
+
+    // report constraints distribution
+    std::cout << "Dimension of each constraints and their locations: \n";
+    iter = 0;
+    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+        std::cout << constraintsNameVec_[c] << ": ";
+        std::cout << constraintsPtrVec_[c]->m << " [";
+        std::cout << iter << " ";
+        iter += constraintsPtrVec_[c]->m;
+        std::cout << iter << "]\n";
+    }
 
     return true;
 }

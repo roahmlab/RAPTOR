@@ -180,6 +180,96 @@ inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix,
     file.close();
 }
 
+inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec, 
+                                             int numSamples) {
+    Eigen::VectorXd samples(0);
+
+    if (numSamples <= 0 || 
+        vec.size() == 0) {
+        return samples; 
+    }
+
+    if (numSamples >= vec.size()) {
+        samples = vec;
+        return samples;
+    }
+
+    samples.resize(numSamples);
+
+    // Calculate sampling interval
+    double interval = static_cast<double>(vec.size()) / numSamples;
+    
+    for (int i = 0; i < numSamples; i++) {
+        int idx = static_cast<int>(i * interval);
+        // Ensure the index is within the bounds of the vector
+        if (idx >= 0 && idx < vec.size()) {
+            samples(i) = vec(idx);
+        }
+    }
+
+    return samples;
+}
+
+inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
+                                                   int numSamples) {
+    Eigen::MatrixXd samples(0, 0);
+
+    if (numSamples <= 0 || 
+        mat.rows() == 0 || 
+        mat.cols() == 0) {
+        return samples; 
+    }
+
+    if (numSamples >= mat.rows()) {
+        samples = mat;
+        return samples;
+    }
+
+    samples.resize(numSamples, mat.cols());
+
+    // Calculate sampling interval
+    double interval = static_cast<double>(mat.rows()) / numSamples;
+    
+    for (int i = 0; i < numSamples; i++) {
+        int idx = static_cast<int>(i * interval);
+        if (idx >= 0 && idx < mat.rows()) {
+            samples.row(i) = mat.row(idx);
+        }
+    }
+
+    return samples;
+}
+
+inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
+                                                   int numSamples) {
+    Eigen::MatrixXd samples(0, 0);
+
+    if (numSamples <= 0 || 
+        mat.rows() == 0 || 
+        mat.cols() == 0) {
+        return samples; 
+    }
+
+    if (numSamples >= mat.cols()) {
+        samples = mat;
+        return samples;
+    }
+
+    samples.resize(mat.rows(), numSamples);
+
+    // Calculate sampling interval
+    double interval = static_cast<double>(mat.cols()) / numSamples;
+    
+    for (int i = 0; i < numSamples; i++) {
+        int idx = static_cast<int>(i * interval);
+        if (idx >= 0 && idx < mat.cols()) {
+            samples.col(i) = mat.col(idx);
+        }
+    }
+
+    return samples;
+}
+
 }; // namespace Utils
 }; // namespace IDTO
 

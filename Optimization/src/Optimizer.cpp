@@ -101,6 +101,8 @@ bool Optimizer::get_starting_point(
     }
 
     if (x0.size() != numVars) {
+        std::cerr << "x0.size() = " << x0.size() << std::endl;
+        std::cerr << "numVars = " << numVars << std::endl;
         THROW_EXCEPTION(IpoptException, "*** Error x0.size() != numVars in get_starting_point!");
     }
 

@@ -14,13 +14,17 @@ public:
 
     FourierCurves(const VecX& tspan_input, 
                   int Nact_input, 
-                  int degree_input);
+                  int degree_input,
+                  VecX q0_input = VecX::Zero(0),
+                  VecX q_d0_input = VecX::Zero(0));
 
     FourierCurves(double T_input, 
                   int N_input, 
                   int Nact_input, 
                   TimeDiscretization time_discretization, 
-                  int degree_input);
+                  int degree_input,
+                  VecX q0_input = VecX::Zero(0),
+                  VecX q_d0_input = VecX::Zero(0));
 
     void compute(const VecX& z, 
                  bool compute_derivatives = true,
@@ -41,6 +45,11 @@ public:
 
     VecX pF0_pw;
     VecX pdF0_pw;
+
+    VecX q0;
+    VecX q_d0;
+    bool optimize_initial_position = true;
+    bool optimize_initial_velocity = true;
 };
 
 }; // namespace IDTO

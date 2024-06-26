@@ -6,6 +6,7 @@
 #include "Optimizer.h"
 
 #include "FixedFrequencyFourierCurves.h"
+#include "FourierCurves.h"
 
 #include "JointLimits.h"
 
@@ -43,6 +44,16 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
+    ) override;
+
+    /** Method to return the bounds for my problem */
+    bool get_bounds_info(
+        Index   n,
+        Number* x_l,
+        Number* x_u,
+        Index   m,
+        Number* g_l,
+        Number* g_u
     ) override;
 
     /** Method to return the objective value */
