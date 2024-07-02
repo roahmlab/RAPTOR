@@ -197,17 +197,11 @@ void ForwardKinematicsSolver::compute(const int start,
 }
 
 Eigen::Vector3d ForwardKinematicsSolver::getTranslation() const {
-    return Eigen::Vector3d(T.data[9], 
-                           T.data[10], 
-                           T.data[11]);
+    return T.p;
 }
 
 Eigen::Matrix3d ForwardKinematicsSolver::getRotation() const {
-    Eigen::Matrix3d R;
-    R << T.data[0], T.data[1], T.data[2],
-         T.data[3], T.data[4], T.data[5],
-         T.data[6], T.data[7], T.data[8];
-    return R;
+    return T.R;
 }
 
 Eigen::MatrixXd ForwardKinematicsSolver::getTranslationJacobian() const {
@@ -217,9 +211,7 @@ Eigen::MatrixXd ForwardKinematicsSolver::getTranslationJacobian() const {
 
     Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, model.nv);
     for (auto i : chain) {
-        J.col(i) = Eigen::Vector3d(dTdq[i].data[9], 
-                                   dTdq[i].data[10], 
-                                   dTdq[i].data[11]);
+        J.col(i) = dTdq[i].p;
     }
     return J;
 }
@@ -235,9 +227,9 @@ void ForwardKinematicsSolver::getTranslationHessian(Eigen::Array<MatX, 3, 1>& re
 
     for (auto i : chain) {
         for (auto j : chain) {
-            result(0)(i, j) = ddTddq[i][j].data[9];
-            result(1)(i, j) = ddTddq[i][j].data[10];
-            result(2)(i, j) = ddTddq[i][j].data[11];
+            result(0)(i, j) = ddTddq[i][j].p(0);
+            result(1)(i, j) = ddTddq[i][j].p(1);
+            result(2)(i, j) = ddTddq[i][j].p(2);
         }
     }
 }

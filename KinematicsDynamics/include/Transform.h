@@ -56,8 +56,8 @@ public:
     Vec3 getTranslation() const;
 
     // class members:
-        // 3x3 rotation matrix data + 3x1 translation vector data
-    double data[12] = {0.0}; 
+    Mat3 R; // rotation matrix
+    Vec3 p; // translation vector
 
         // this is like the right bottom entry of a 4x4 transformation matrix.
         // usually it should be 1, but for derivatives, it should be 0.
