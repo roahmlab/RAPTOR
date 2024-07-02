@@ -12,7 +12,7 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
     trajPtr_(trajPtr_input),
     jtype(jtype_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
     collisionAvoidancePtr_ = std::make_shared<BoxCollisionAvoidance>(boxCenters_input, 
                                                                      boxOrientation_input,
                                                                      boxSize_input);
@@ -50,15 +50,15 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
             // define the transform matrix of the sphere center with respect to the joint
             endT = Transform(sphere_offset_axis[j], sphere_offset[j]);
 
-            fkhofPtr_->fk(jointT, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
+            fkPtr_->fk(jointT, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
 
             Vec3 sphereCenters = jointT.getTranslation();
 
             collisionAvoidancePtr_->computeDistance(sphereCenters);
 
             if (compute_derivatives) {
-                fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
-                fkhofPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
+                fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
+                fkPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
 
                 MatX psphereCenters_pz = jointTJ * trajPtr_->pq_pz(i);
 

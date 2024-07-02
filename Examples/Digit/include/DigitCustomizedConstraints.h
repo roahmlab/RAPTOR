@@ -56,7 +56,7 @@ public:
 
     std::unique_ptr<Model> modelPtr_;
 
-    std::unique_ptr<ForwardKinematicsSolver> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
         // jtype copy
     Eigen::VectorXi jtype;

@@ -39,28 +39,28 @@ public:
     KinematicsConstraints() = default;
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Transform& desiredTransform_input,
-                           const Transform endT_input = Transform());
+                          const Model& model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Transform& desiredTransform_input,
+                          const Transform endT_input = Transform());
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Vec3& desiredPosition_input,
-                           const Transform endT_input = Transform());
+                          const Model& model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Vec3& desiredPosition_input,
+                          const Transform endT_input = Transform());
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Mat3& desiredRotation_input,
-                           const Transform endT_input = Transform());
+                          const Model& model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Mat3& desiredRotation_input,
+                          const Transform endT_input = Transform());
 
     // Destructor
     ~KinematicsConstraints() = default;
@@ -82,7 +82,7 @@ public:
     std::unique_ptr<Model> modelPtr_;
     Eigen::VectorXi jtype;
 
-    std::unique_ptr<ForwardKinematicsSolver> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
     Vec3 desiredPosition;
     Mat3 desiredRotation;

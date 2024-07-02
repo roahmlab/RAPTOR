@@ -13,7 +13,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     dcPtr_(dcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (modelPtr_->existJointName("right_toe_roll")) {
         swingfoot_id = modelPtr_->getJointId("right_toe_roll");
@@ -59,9 +59,9 @@ void DigitCustomizedConstraints::compute(const VecX& z,
         dcPtr_->setupJointPosition(qi, compute_derivatives);
         q.col(i) = qi;
 
-        fkhofPtr_->fk(jointT, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
+        fkPtr_->fk(jointT, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
 
-        swingfoot_xyzrpy.col(i) = fkhofPtr_->Transform2xyzrpy(jointT);
+        swingfoot_xyzrpy.col(i) = fkPtr_->Transform2xyzrpy(jointT);
 
         if (compute_derivatives) {
             pq_pz(i).resize(modelPtr_->nv, trajPtr_->varLength);
@@ -77,8 +77,8 @@ void DigitCustomizedConstraints::compute(const VecX& z,
                 pq_pz(i).row(denpendentJointIndex) = pq_dep_pz.row(j);
             }
 
-            fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
-            fkhofPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
+            fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
+            fkPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
             pswingfoot_xyzrpy_pz(i) = jointTJ * pq_pz(i);
         }
     }

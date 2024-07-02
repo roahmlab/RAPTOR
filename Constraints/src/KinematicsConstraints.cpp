@@ -15,7 +15,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -63,7 +63,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -104,7 +104,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -145,7 +145,7 @@ void KinematicsConstraints::compute(const VecX& z,
     const MatX& pq_pz = trajPtr_->pq_pz(time_id);
     const Eigen::Array<MatX, Eigen::Dynamic, 1>& pq_pz_pz = trajPtr_->pq_pz_pz.col(time_id);
 
-    fkhofPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+    fkPtr_->fk(jointT, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
 
     if (constrainPosition) {
         g.head(3) = jointT.p - desiredPosition;
@@ -159,11 +159,11 @@ void KinematicsConstraints::compute(const VecX& z,
     }
 
     if (compute_derivatives) {
-        fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
-        fkhofPtr_->Transform2VecJacobian(jointTJ, jointT, dTdq);
+        fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+        fkPtr_->Transform2VecJacobian(jointTJ, jointT, dTdq);
 
         if (constrainPosition) {
-            // fkhofPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
+            // fkPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
             // pg_pz.topRows(3) = jointTJ * pq_pz;
             pg_pz.topRows(3) = jointTJ.topRows(3) * pq_pz;
         }
@@ -185,13 +185,13 @@ void KinematicsConstraints::compute(const VecX& z,
     }
 
     if (compute_hessian) {
-        fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
+        fkPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, joint_id, 0, q, endT, startT);
 
         size_t offset = 3;
-        fkhofPtr_->Transform2VecHessian(jointTH, jointT, dTdq, ddTddq);
+        fkPtr_->Transform2VecHessian(jointTH, jointT, dTdq, ddTddq);
 
         if (constrainPosition) {
-            // fkhofPtr_->Transform2xyzHessian(jointTH, jointT, dTdq, ddTddq);
+            // fkPtr_->Transform2xyzHessian(jointTH, jointT, dTdq, ddTddq);
 
             // (1) p2_FK_pq2 * pq_pz1 * pq_pz2
             for (int i = 0; i < 3; i++) {
