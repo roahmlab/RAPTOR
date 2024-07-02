@@ -11,7 +11,7 @@ DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::sh
     jtype(jtype_input),
     stanceLeg(stanceLeg_input),
     DynamicsConstraints(modelPtr_input->nv, NUM_DEPENDENT_JOINTS) {
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         if (modelPtr_->existJointName(dependentJointNames[i])) {

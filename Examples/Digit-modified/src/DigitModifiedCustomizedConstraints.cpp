@@ -13,7 +13,7 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
     dcPtr_(dcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (modelPtr_->existJointName("right_toe_roll")) {
         swingfoot_id = modelPtr_->getJointId("right_toe_roll");

@@ -15,7 +15,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -63,7 +63,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -104,7 +104,7 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
     time_id(time_id_input),
     endT(endT_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");

@@ -18,7 +18,7 @@ EndEffectorConstraints::EndEffectorConstraints(const Model& model_input,
     }
 
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkhofPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     if (modelPtr_->existJointName(joint_name_input)) {
         joint_id = modelPtr_->getJointId(joint_name_input) - 1;

@@ -82,7 +82,7 @@ public:
     std::unique_ptr<Model> modelPtr_;
     Eigen::VectorXi jtype;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkhofPtr_;
 
     Vec3 desiredPosition;
     Mat3 desiredRotation;

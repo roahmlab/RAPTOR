@@ -97,7 +97,7 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
             }
 
             // derivatives of unactuated joint velocities
-            MatX pv_dep_pz = dcPtr_->pv_dep_pq       * pq_pz(i) +               // all joint positions  
+            MatX pv_dep_pz = dcPtr_->pv_dep_pq       * pq_pz(i) +            // all joint positions  
                              dcPtr_->pv_dep_pv_indep * trajPtr_->pq_d_pz(i); // actuated joint velocities
 
             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
@@ -106,8 +106,8 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
             }
 
             // derivatives of unactuated joint accelerations
-            MatX pa_dep_pz = dcPtr_->pa_dep_pq       * pq_pz(i) +                // all joint positions  
-                             dcPtr_->pa_dep_pv       * pv_pz(i) +                // all joint velocities  
+            MatX pa_dep_pz = dcPtr_->pa_dep_pq       * pq_pz(i) +             // all joint positions  
+                             dcPtr_->pa_dep_pv       * pv_pz(i) +             // all joint velocities  
                              dcPtr_->pa_dep_pa_indep * trajPtr_->pq_dd_pz(i); // actuated joint accelerations
 
             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
@@ -118,10 +118,12 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
 
         // compute unconstrained inverse dynamics
         if (!compute_derivatives) {
-            pinocchio::rnea(*modelPtr_, *dataPtr_, q(i), v(i), a(i));
+            pinocchio::rnea(*modelPtr_, *dataPtr_, 
+                            q(i), v(i), a(i));
         }
         else {
-            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, q(i), v(i), a(i), 
+            pinocchio::computeRNEADerivatives(*modelPtr_, *dataPtr_, 
+                                              q(i), v(i), a(i), 
                                               prnea_pq, prnea_pv, prnea_pa);
         }
 
@@ -136,6 +138,7 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
             for (int mi = 0; mi < prnea_pa.rows(); mi++) {
                 for (int mj = 0; mj <= mi; mj++) {
                     if (mi == mj) {
+                        // pinocchio rnea does not take rotor inertia into account
                         prnea_pa(mi, mj) += modelPtr_->rotorInertia(mi);
                     }
                     else {
@@ -170,14 +173,6 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
             dcPtr_->get_dependent_rows(JTlambda_partial_dq_dep, JTlambda_partial_dq);
             dcPtr_->get_independent_rows(JTlambda_partial_dq_indep, JTlambda_partial_dq);
 
-            // plambda_pq = dcPtr_->J_dep_T_qr.solve(prnea_pq_dep - JTlambda_partial_dq_dep);
-            // plambda_pv = dcPtr_->J_dep_T_qr.solve(prnea_pv_dep);
-            // plambda_pa = dcPtr_->J_dep_T_qr.solve(prnea_pa_dep);
-
-            // plambda_pz(i) = plambda_pq * pq_pz(i) + 
-            //                 plambda_pv * pv_pz(i) + 
-            //                 plambda_pa * pa_pz(i);
-
             plambda_pz(i) = dcPtr_->J_dep_T_qr.solve((prnea_pq_dep - JTlambda_partial_dq_dep) * pq_pz(i) + 
                                                       prnea_pv_dep * pv_pz(i) + 
                                                       prnea_pa_dep * pa_pz(i));
@@ -185,17 +180,8 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
 
         // assume setupJointPositionVelocityAcceleration() has been called
         tau(i) = tau_indep - dcPtr_->J_indep.transpose() * lambda(i);
-        // tau(i).topRows(6) = lambda(i);
 
         if (compute_derivatives) {
-            // MatX ptau_pq = prnea_pq_indep - dcPtr_->J_indep.transpose() * plambda_pq - JTlambda_partial_dq_indep;
-            // MatX ptau_pv = prnea_pv_indep - dcPtr_->J_indep.transpose() * plambda_pv;
-            // MatX ptau_pa = prnea_pa_indep - dcPtr_->J_indep.transpose() * plambda_pa;
-
-            // ptau_pz(i) = ptau_pq * pq_pz(i) + 
-            //              ptau_pv * pv_pz(i) + 
-            //              ptau_pa * pa_pz(i);
-
             ptau_pz(i) = (prnea_pq_indep - JTlambda_partial_dq_indep) * pq_pz(i) + 
                          prnea_pv_indep * pv_pz(i) + 
                          prnea_pa_indep * pa_pz(i) - 

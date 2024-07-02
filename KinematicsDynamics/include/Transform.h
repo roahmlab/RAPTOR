@@ -25,17 +25,17 @@ public:
     Transform();
 
     // Constructor
-    Transform(const Mat3& R_in, const Vec3& p_in, const bool i_in = false) : 
-        R(R_in) , p(p_in), ifDerivative(i_in) {}
+    Transform(const Mat3& R_in, 
+              const Vec3& p_in, 
+              const bool i_in = false);
 
     // Constructor
-    Transform(const Vec3& p_in) : 
-        p(p_in) {
-        R.setIdentity();
-    }
+    Transform(const Vec3& p_in);
 
     // Constructor
-    Transform(const int jtype, const double theta, const int order = 0);
+    Transform(const int jtype, 
+              const double theta, 
+              const int order = 0);
 
     // Destructor
     ~Transform() = default;
@@ -53,14 +53,18 @@ public:
 
     Transform inverse() const;
 
-    // class members:
-    Mat3 R; // rotation matrix
-    Vec3 p; // translation vector
+    Vec3 getTranslation() const;
 
-    // this is like the right bottom entry of a 4x4 transformation matrix.
-    // usually it should be 1, but for derivatives, it should be 0.
+    // class members:
+        // 3x3 rotation matrix data + 3x1 translation vector data
+    double data[12] = {0.0}; 
+
+        // this is like the right bottom entry of a 4x4 transformation matrix.
+        // usually it should be 1, but for derivatives, it should be 0.
     bool ifDerivative = false; 
 };
+
+Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp);
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp);
 

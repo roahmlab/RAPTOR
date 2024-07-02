@@ -128,7 +128,7 @@ public:
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_ = nullptr;
+    std::unique_ptr<ForwardKinematicsSolver> fkhofPtr_ = nullptr;
 
         // dep/indep joint indeces
     int dependentJointIds[NUM_DEPENDENT_JOINTS] = {0};
