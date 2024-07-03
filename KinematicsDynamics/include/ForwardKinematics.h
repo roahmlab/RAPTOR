@@ -16,7 +16,7 @@ public:
     // Constructor
 	ForwardKinematicsSolver() = default;
 
-	ForwardKinematicsSolver(const Model& model_input,
+	ForwardKinematicsSolver(const Model* model_input,
 							const Eigen::VectorXi& jtype_input);
 
     // Destructor
@@ -32,16 +32,20 @@ public:
 				 const int order = 0);
 
 	// get the forward kinematics result in different formats
+	Transform getTransform() const;
+
 	Vec3 getTranslation() const;
 
 	Mat3 getRotation() const;
 
 	MatX getTranslationJacobian() const;
 
+	void getRotationJacobian(Eigen::Array<Mat3, Eigen::Dynamic, 1>& result) const;
+
 	void getTranslationHessian(Eigen::Array<MatX, 3, 1>& result) const;
 	
     // class members:
-	Model model;
+	const Model* modelPtr_ = nullptr;
 	Eigen::VectorXi jtype;
 
 		// a index vector that stores the kinematics chain

@@ -19,9 +19,10 @@ int main() {
              3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
              3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
 
-    ForwardKinematicsSolver fkSolver(model, jtype);
+    ForwardKinematicsSolver fkSolver(&model, jtype);
 
     // set joint angles
+    std::srand(std::time(nullptr));
     Eigen::VectorXd q = 2 * M_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
