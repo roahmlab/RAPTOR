@@ -52,24 +52,6 @@ inline double safeacos(const double x,
     return std::acos(x);
 }
 
-// compute d(arccos(x)) / dx safely and accurately around x = -1 and x = 1
-inline double safedacosdx(const double x,
-                          const bool throw_exception = false) {
-    if (x >= 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    else if (x <= -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    return -1.0 / std::sqrt(1.0 - x * x);
-}
-
 // compute x / sin(x) safely and accurately around x = 0
 inline double safexSinx(const double x,
                         const double nearZeroThreshold = 1e-6) {
@@ -93,6 +75,22 @@ inline double safedxSinxdx(const double x,
     }
     const double sinx = std::sin(x);
     return (sinx - x * std::cos(x)) / (sinx * sinx);
+}
+
+// compute dd(x / sin(x)) / ddx (the derivative of the previous function x / sin(x)) 
+// safely and accurately around x = 0
+inline double safeddxSinxddx(const double x,
+                             const double nearZeroThreshold = 1e-6) {
+    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
+        double xSquare = x * x;
+        double xFourth = xSquare * xSquare;
+        double xSixth = xFourth * xSquare;
+        return 1.0 / 3.0 + 7.0 * xSquare / 30.0 + 31.0 * xFourth / 504.0; // + O(x^6)
+    }
+    const double sinx = std::sin(x);
+    const double cosx = std::cos(x);
+    const double sinxSquare = sinx * sinx;
+    return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
 }
 
 inline double wrapToPi(const double angle) {

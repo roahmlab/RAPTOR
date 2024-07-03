@@ -43,6 +43,9 @@ public:
 	void getRotationJacobian(Eigen::Array<Mat3, Eigen::Dynamic, 1>& result) const;
 
 	void getTranslationHessian(Eigen::Array<MatX, 3, 1>& result) const;
+
+	void getRotationHessian(Eigen::Array<MatX, 3, 3>& result) const;
+	void getRotationHessian(Eigen::Array<Mat3, Eigen::Dynamic, Eigen::Dynamic>& result) const;
 	
     // class members:
 	const Model* modelPtr_ = nullptr;

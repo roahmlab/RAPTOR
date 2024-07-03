@@ -80,11 +80,12 @@ void Polynomials::compute(const VecX& z,
         }
 
         if (compute_hessian) {
-            for (int i = 0; i < Nact; i++) {
-                pq_pz_pz(i, x).setZero();
-                pq_d_pz_pz(i, x).setZero();
-                pq_dd_pz_pz(i, x).setZero();
-            }
+            // already done this in the constructor
+            // for (int i = 0; i < Nact; i++) {
+            //     pq_pz_pz(i, x).setZero();
+            //     pq_d_pz_pz(i, x).setZero();
+            //     pq_dd_pz_pz(i, x).setZero();
+            // }
         }
     }
 }

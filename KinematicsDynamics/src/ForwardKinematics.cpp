@@ -257,4 +257,45 @@ void ForwardKinematicsSolver::getTranslationHessian(Eigen::Array<MatX, 3, 1>& re
     }
 }
 
+void ForwardKinematicsSolver::getRotationHessian(Eigen::Array<MatX, 3, 3>& result) const {
+    if (ddTddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("ddTddq is not computed yet!");
+    }
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            result(i, j) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
+        }
+    }
+
+    for (auto i : chain) {
+        for (auto j : chain) {
+            for (int k = 0; k < 3; k++) {
+                for (int l = 0; l < 3; l++) {
+                    result(k, l)(i, j) = ddTddq[i][j].R(k, l);
+                }
+            }
+        }
+    }
+}
+
+void ForwardKinematicsSolver::getRotationHessian(Eigen::Array<Mat3, Eigen::Dynamic, Eigen::Dynamic>& result) const {
+    if (ddTddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("ddTddq is not computed yet!");
+    }
+    
+    result.resize(modelPtr_->nv, modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        for (int j = 0; j < modelPtr_->nv; j++) {
+            result(i, j).setZero();
+        }
+    }
+
+    for (auto i : chain) {
+        for (auto j : chain) {
+            result(i, j) = ddTddq[i][j].R;
+        }
+    }
+}
+
 }  // namespace IDTO

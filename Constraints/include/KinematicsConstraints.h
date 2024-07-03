@@ -15,19 +15,52 @@ namespace IDTO {
 
 // This namespace contains functions to compute the residual of the Lie space
 // including the translation and rotation part in SE(3) space, with their derivatives
+// Assume that fkPtr_ is a valid pointer and has computed all corresponding kinematics
 namespace LieSpaceResidual {
 
-Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr,
-                                    const Eigen::Vector3d& desiredPosition);
+inline double safedacosdx(const double x,
+                          const bool throw_exception = false) {
+    if (x >= 1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is greater than 1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    else if (x <= -1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is less than -1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    return -1.0 / std::sqrt(1.0 - x * x);
+}
 
-Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr,
-                                 const Eigen::Matrix3d& desiredRotation);
+inline double safeddacosddx(const double x,
+                            const bool throw_exception = false) {
+    if (x >= 1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is greater than 1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    else if (x <= -1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is less than -1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    return -x / std::pow(1.0 - x * x, 1.5);
+}
 
-Eigen::MatrixXd translationResidualGradient(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr,
-                                            const Eigen::Vector3d& desiredPosition);
+Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                    const Eigen::Vector3d& desiredPosition,
+                                    Eigen::MatrixXd* gradientPtr_ = nullptr,
+                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
 
-Eigen::MatrixXd rotationResidualGradient(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr,
-                                         const Eigen::Matrix3d& desiredRotation);
+Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                 const Eigen::Matrix3d& desiredRotation,
+                                 Eigen::MatrixXd* gradientPtr_ = nullptr,
+                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
 
 }; // namespace LieSpaceResidual
 
