@@ -53,7 +53,7 @@ int main() {
     atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
 
     const double T = 1;
-    const int N = 16;
+    const int N = 8;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define target
@@ -63,7 +63,7 @@ int main() {
 
     // Define initial guess
     Eigen::VectorXd z(model.nq);
-    z.setZero();
+    z.setRandom();
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
@@ -106,11 +106,16 @@ int main() {
     app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    if (mynlp->enable_hessian) {
+        app->Options()->SetStringValue("hessian_approximation", "exact");
+    }
+    else {
+        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    }
 
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetStringValue("derivative_test", "second-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
@@ -137,43 +142,43 @@ int main() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    // Print the solution
-    if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution("solution-kinova.txt");
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+    // // Print the solution
+    // if (mynlp->solution.size() == mynlp->numVars) {
+    //     std::ofstream solution("solution-kinova.txt");
+    //     solution << std::setprecision(20);
+    //     for (int i = 0; i < mynlp->numVars; i++) {
+    //         solution << mynlp->solution[i] << std::endl;
+    //     }
+    //     solution.close();
 
-        std::ofstream trajectory("trajectory-kinova.txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
-    }
+    //     std::ofstream trajectory("trajectory-kinova.txt");
+    //     trajectory << std::setprecision(20);
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     for (int i = 0; i < NUM_JOINTS; i++) {
+    //         for (int j = 0; j < N; j++) {
+    //             trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
+    //         }
+    //         trajectory << std::endl;
+    //     }
+    //     trajectory.close();
+    // }
 
     return 0;
 }

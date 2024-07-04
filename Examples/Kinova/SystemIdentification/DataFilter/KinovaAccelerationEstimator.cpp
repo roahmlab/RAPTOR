@@ -61,8 +61,12 @@ int main () {
     // app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
-	app->Options()->SetStringValue("hessian_approximation", "exact");
-    // app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+	if (mynlp->enable_hessian) {
+        app->Options()->SetStringValue("hessian_approximation", "exact");
+    }
+    else {
+        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    }
 
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");

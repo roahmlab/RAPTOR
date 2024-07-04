@@ -124,7 +124,7 @@ bool DigitModifiedSingleStepOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_jac_g = n * m;
-    nnz_h_lag = n * n;
+    nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;

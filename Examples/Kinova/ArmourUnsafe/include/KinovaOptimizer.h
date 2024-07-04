@@ -75,6 +75,14 @@ public:
         Number*       grad_f
     ) override;
 
+    /** Method to return the hessian of the objective */
+    bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
+    ) override;
+
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.

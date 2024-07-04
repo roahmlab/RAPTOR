@@ -26,6 +26,19 @@ ArmourBezierCurves::ArmourBezierCurves(const VecX& tspan_input,
     coefficients.row(2) = coefficients.row(0) + 
                           (2.0 * T * atp.q_d0.transpose()) / 5.0 + 
                           (T * T * atp.q_dd0.transpose()) / 20.0;
+
+    // resize the memory since varLength is changed
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
+    }
 }
 
 ArmourBezierCurves::ArmourBezierCurves(double T_input, 
@@ -54,6 +67,19 @@ ArmourBezierCurves::ArmourBezierCurves(double T_input,
     coefficients.row(2) = atp.q0.transpose() + 
                           (2.0 * T * atp.q_d0.transpose()) / 5.0 + 
                           (T * T * atp.q_dd0.transpose()) / 20.0;
+
+    // resize the memory since varLength is changed
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
+    }
 }
 
 void ArmourBezierCurves::compute(const VecX& z, 
@@ -125,11 +151,12 @@ void ArmourBezierCurves::compute(const VecX& z,
         }
 
         if (compute_hessian) {
-            for (int i = 0; i < Nact; i++) {
-                pq_pz_pz(i, x).setZero(); 
-                pq_d_pz_pz(i, x).setZero(); 
-                pq_dd_pz_pz(i, x).setZero(); 
-            }
+            // This has been set to 0 in the constructor
+            // for (int i = 0; i < Nact; i++) {
+            //     pq_pz_pz(i, x).setZero(); 
+            //     pq_d_pz_pz(i, x).setZero(); 
+            //     pq_dd_pz_pz(i, x).setZero(); 
+            // }
         }
     }
 }

@@ -33,6 +33,7 @@ bool KinovaOptimizer::set_parameters(
     const VecX& torque_limits_buffer_input
  ) 
 {
+    enable_hessian = true;
     x0 = x0_input;
     qdes = qdes_input;
     tplan_n = tplan_n_input;
@@ -125,7 +126,7 @@ bool KinovaOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_jac_g = n * m;
-    nnz_h_lag = n * n;
+    nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -157,9 +158,11 @@ bool KinovaOptimizer::eval_f(
                 pow(Utils::wrapToPi(qplan[2] - qdes[2]), 2) + 
                 pow(Utils::wrapToPi(qplan[4] - qdes[4]), 2) + 
                 pow(Utils::wrapToPi(qplan[6] - qdes[6]), 2) + 
-                pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
+                pow(qplan[1] - qdes[1], 2) +                  // These are not continuous joints
                 pow(qplan[3] - qdes[3], 2) + 
                 pow(qplan[5] - qdes[5], 2);
+
+    obj_value = 0.5 * obj_value;
 
     return true;
 }
@@ -175,7 +178,7 @@ bool KinovaOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -185,18 +188,53 @@ bool KinovaOptimizer::eval_grad_f(
     const VecX& qplan = trajPtr_->q(tplan_n);
     const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);
 
+    Number qdiff = 0;
     for(Index i = 0; i < n; i++){
         if (i % 2 == 0) {
-            grad_f[i] = (2 * Utils::wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
+            qdiff = Utils::wrapToPi(qplan[i] - qdes[i]);
         }
         else {
-            grad_f[i] = (2 * (qplan[i] - qdes[i]) * pqplan_pz(i, i));
+            qdiff = qplan[i] - qdes[i];
         }
+        
+        grad_f[i] = qdiff * pqplan_pz(i, i);
     }
 
     return true;
 }
 // [TNLP_eval_grad_f]
+
+// [TNLP_eval_hess_f]
+// return the hessian of the objective function hess_{x} f(x) as a dense matrix
+bool KinovaOptimizer::eval_hess_f(
+   Index         n,
+   const Number* x,
+   bool          new_x,
+   MatX&         hess_f
+)
+{
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
+    }
+
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    trajPtr_->compute(z, true);
+
+    const VecX& qplan = trajPtr_->q(tplan_n);
+    const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);
+    // we know the following is just 0
+    // const Eigen::Array<MatX, Eigen::Dynamic, 1>& pqplan_pz_pz = trajPtr_->pq_pz_pz.col(tplan_n);
+
+    hess_f = MatX::Zero(n, n);
+
+    for(Index i = 0; i < n; i++){
+        hess_f(i, i) = pqplan_pz(i, i) * pqplan_pz(i, i);
+    }
+
+    return true;
+}
+// [TNLP_eval_hess_f]
 
 }; // namespace Kinova
 }; // namespace IDTO
