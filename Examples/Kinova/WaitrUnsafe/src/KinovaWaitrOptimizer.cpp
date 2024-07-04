@@ -49,7 +49,7 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                          trajPtr_);
     
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) + 
+    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
                                   joint_limits_buffer_input;
 
     VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) -
@@ -167,6 +167,8 @@ bool KinovaWaitrOptimizer::eval_f(
                 pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
                 pow(qplan[3] - qdes[3], 2) + 
                 pow(qplan[5] - qdes[5], 2);
+
+    update_minimal_cost_solution(n, z, new_x, obj_value);
 
     return true;
 }

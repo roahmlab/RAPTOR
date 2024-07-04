@@ -53,7 +53,7 @@ int main() {
     atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
 
     const double T = 1;
-    const int N = 8;
+    const int N = 16;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define target

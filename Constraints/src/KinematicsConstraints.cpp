@@ -88,7 +88,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
             for (auto i : chain) {
                 for (auto j : chain) {
                     ddthetaddq(i, j) = 0.5 * 
-                        (0.5 * safeddacosddx((traceR - 1) / 2) * dtraceRdq(i) * dtraceRdq(i) +
+                        (0.5 * safeddacosddx((traceR - 1) / 2) * dtraceRdq(i) * dtraceRdq(j) +
                          safedacosdx((traceR - 1) / 2)   * ddtraceRddq(i, j));
                 }
             }
@@ -127,8 +127,13 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     Eigen::Matrix3d temp2 = 
                         Utils::safedxSinxdx(theta) * dthetadq(i) * (dRdq(j) - dRdq(j).transpose());
                     Eigen::Matrix3d temp3 = 
+                        Utils::safedxSinxdx(theta) * dthetadq(j) * (dRdq(i) - dRdq(i).transpose());
+                    Eigen::Matrix3d temp4 = 
                         Utils::safexSinx(theta) * (ddRddq(i, j) - ddRddq(i, j).transpose());
-                    Eigen::Vector3d h = Utils::unskew(0.5 * ((temp1_1 + temp1_2) + 2 * temp2 + temp3));
+
+                    Eigen::Vector3d h = 
+                        Utils::unskew(
+                            0.5 * ((temp1_1 + temp1_2) + temp2 + temp3 + temp4));
 
                     hessian(0)(i, j) = h(0);
                     hessian(1)(i, j) = h(1);
@@ -137,7 +142,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
             }
         }
     }
-
+    
     return Utils::unskew(logR);
 }
 

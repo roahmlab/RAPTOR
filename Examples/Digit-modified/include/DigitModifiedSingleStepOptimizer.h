@@ -55,7 +55,7 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
-    ) override;
+    ) final override;
 
     /** Method to return the objective value */
     bool eval_f(
@@ -63,7 +63,7 @@ public:
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) override;
+    ) final override;
 
     /** Method to return the gradient of the objective */
     bool eval_grad_f(
@@ -71,7 +71,7 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) override;
+    ) final override;
 
     /**@name Methods to block default compiler methods.
     *

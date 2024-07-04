@@ -48,7 +48,7 @@ bool KinovaOptimizer::set_parameters(
                                                trajPtr_);
     
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) + 
+    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
                                   joint_limits_buffer_input;
 
     VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) -
@@ -80,12 +80,12 @@ bool KinovaOptimizer::set_parameters(
                                                                   VELOCITY_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("velocity limits");        
 
-    // Torque limits
-    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-                                                                idPtr_,
-                                                                TORQUE_LIMITS_LOWER_VEC, 
-                                                                TORQUE_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("torque limits");                                                            
+    // // Torque limits
+    // constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
+    //                                                             idPtr_,
+    //                                                             TORQUE_LIMITS_LOWER_VEC, 
+    //                                                             TORQUE_LIMITS_UPPER_VEC));
+    // constraintsNameVec_.push_back("torque limits");                                                            
 
     // Customized constraints (collision avoidance with obstacles)
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
@@ -164,6 +164,8 @@ bool KinovaOptimizer::eval_f(
 
     obj_value = 0.5 * obj_value;
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 // [TNLP_eval_f]
@@ -219,7 +221,7 @@ bool KinovaOptimizer::eval_hess_f(
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-    trajPtr_->compute(z, true);
+    trajPtr_->compute(z, true, true);
 
     const VecX& qplan = trajPtr_->q(tplan_n);
     const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);

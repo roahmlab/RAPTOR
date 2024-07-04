@@ -187,6 +187,8 @@ bool DigitSingleStepOptimizer::eval_f(
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 // [TNLP_eval_f]

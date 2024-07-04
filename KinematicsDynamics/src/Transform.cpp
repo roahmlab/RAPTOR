@@ -310,7 +310,8 @@ Transform Transform::inverse() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
-    os << sRp.R << std::endl << sRp.p;
+    os << "rotation:\n" << sRp.R << std::endl 
+       << "translation:\n" << sRp.p << std::endl;
     return os;
 }
 

@@ -157,6 +157,8 @@ bool DigitModifiedSingleStepOptimizer::eval_f(
 
     obj_value /= cidPtr_->N;
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 // [TNLP_eval_f]
