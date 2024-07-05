@@ -98,6 +98,27 @@ void ForwardKinematicsSolver::compute(const int start,
             }
         }
     }
+    else {
+        T = Transform();
+
+        if (order >= 1) {
+            for (auto i : chain) {
+                dTdq[i] = Transform();
+
+                if (order >= 2) {
+                    for (auto j : chain) {
+                        ddTddq[i][j] = Transform();
+
+                        if (order >= 3) {
+                            for (auto k : chain) {
+                                dddTdddq[i][j][k] = Transform();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // iterative process to compute the forward kinematics
     for (auto i : chain) {
@@ -221,6 +242,7 @@ Eigen::MatrixXd ForwardKinematicsSolver::getTranslationJacobian() const {
     for (auto i : chain) {
         J.col(i) = dTdq[i].p;
     }
+    
     return J;
 }
 

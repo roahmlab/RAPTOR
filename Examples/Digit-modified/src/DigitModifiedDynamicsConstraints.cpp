@@ -308,7 +308,6 @@ void DigitModifiedDynamicsConstraints::get_J(const VecX& q) {
     LieSpaceResidual::translationResidual(fkPtr_, stance_foot_T_des.p, &J_translation);
     LieSpaceResidual::rotationResidual(fkPtr_, stance_foot_T_des.R, &J_rotation);
 
-    J.resize(6, modelPtr_->nv);
     J << J_translation, J_rotation;
 }
 
