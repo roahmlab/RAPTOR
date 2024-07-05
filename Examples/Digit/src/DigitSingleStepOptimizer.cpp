@@ -145,7 +145,7 @@ bool DigitSingleStepOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_jac_g = n * m;
-    nnz_h_lag = n * n;
+    nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -186,6 +186,8 @@ bool DigitSingleStepOptimizer::eval_f(
     // minimize initial acceleration
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
+
+    update_minimal_cost_solution(n, z, new_x, obj_value);
 
     return true;
 }

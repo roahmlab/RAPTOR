@@ -13,19 +13,56 @@
 
 namespace IDTO {
 
-inline Eigen::VectorXd flatRotationMatrix(const Eigen::Matrix3d& R) {
-    Eigen::VectorXd x(9);
-    x(0) = R(0, 0);
-    x(1) = R(0, 1);
-    x(2) = R(0, 2);
-    x(3) = R(1, 0);
-    x(4) = R(1, 1);
-    x(5) = R(1, 2);
-    x(6) = R(2, 0);
-    x(7) = R(2, 1);
-    x(8) = R(2, 2);
-    return x;
+// This namespace contains functions to compute the residual of the Lie space
+// including the translation and rotation part in SE(3) space, with their derivatives
+// Assume that fkPtr_ is a valid pointer and has computed all corresponding kinematics
+namespace LieSpaceResidual {
+
+inline double safedacosdx(const double x,
+                          const bool throw_exception = false) {
+    if (x >= 1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is greater than 1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    else if (x <= -1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is less than -1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    return -1.0 / std::sqrt(1.0 - x * x);
 }
+
+inline double safeddacosddx(const double x,
+                            const bool throw_exception = false) {
+    if (x >= 1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is greater than 1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    else if (x <= -1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is less than -1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    return -x / std::pow(1.0 - x * x, 1.5);
+}
+
+Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                    const Eigen::Vector3d& desiredPosition,
+                                    Eigen::MatrixXd* gradientPtr_ = nullptr,
+                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
+
+Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                 const Eigen::Matrix3d& desiredRotation,
+                                 Eigen::MatrixXd* gradientPtr_ = nullptr,
+                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
+
+}; // namespace LieSpaceResidual
 
 class KinematicsConstraints : public Constraints {
 public:
@@ -39,28 +76,28 @@ public:
     KinematicsConstraints() = default;
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Transform& desiredTransform_input,
-                           const Transform endT_input = Transform());
+                          const Model* model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Transform& desiredTransform_input,
+                          const Transform endT_input = Transform());
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Vec3& desiredPosition_input,
-                           const Transform endT_input = Transform());
+                          const Model* model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Vec3& desiredPosition_input,
+                          const Transform endT_input = Transform());
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                           const Model& model_input,
-                           const Eigen::VectorXi& jtype_input,
-                           const size_t joint_id_input,
-                           const size_t time_id_input,
-                           const Mat3& desiredRotation_input,
-                           const Transform endT_input = Transform());
+                          const Model* model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Mat3& desiredRotation_input,
+                          const Transform endT_input = Transform());
 
     // Destructor
     ~KinematicsConstraints() = default;
@@ -79,10 +116,10 @@ public:
     // class members:
     std::shared_ptr<Trajectories>& trajPtr_;
 
-    std::unique_ptr<Model> modelPtr_;
+    const Model* modelPtr_ = nullptr;
     Eigen::VectorXi jtype;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
     Vec3 desiredPosition;
     Mat3 desiredRotation;
@@ -91,22 +128,11 @@ public:
     bool constrainRotation = false;
 
     size_t joint_id = 0;
-
     size_t time_id = 0;
 
         // the transform matrix at the beginning and at the end
     Transform startT;
     Transform endT;
-
-        // updated in compute()
-    Transform jointT;
-    MatX jointTJ;
-    // Eigen::Array<MatX, 3, 1> jointTH;
-    Eigen::Array<MatX, 12, 1> jointTH;
-
-        // forward kinematics derivatives
-    std::vector<Transform> dTdq;
-    std::vector<std::vector<Transform>> ddTddq;
 };
 
 }; // namespace IDTO

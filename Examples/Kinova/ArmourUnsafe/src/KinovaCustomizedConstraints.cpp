@@ -12,7 +12,7 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
     trajPtr_(trajPtr_input),
     jtype(jtype_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
     collisionAvoidancePtr_ = std::make_shared<BoxCollisionAvoidance>(boxCenters_input, 
                                                                      boxOrientation_input,
                                                                      boxSize_input);
@@ -22,19 +22,12 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);
 
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength);
 }
 
 void KinovaCustomizedConstraints::compute(const VecX& z, 
                                           bool compute_derivatives,
                                           bool compute_hessian) {
-    if (compute_hessian) {
-        throw std::invalid_argument("KinovaCustomizedConstraints does not support hessian computation");
-    }
-
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
     
     const int numObstacles = collisionAvoidancePtr_->numObstacles;
@@ -43,46 +36,73 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
         return;
     }
 
+    Vec3 sphereCenter;
+    MatX psphereCenter_pz;
+    Eigen::Array<MatX, 3, 1> psphereCenter_pz_pz;
+
     for (int i = 0; i < trajPtr_->N; i++) {
         const VecX& q = trajPtr_->q(i).head(trajPtr_->Nact);
+        const MatX& pq_pz = trajPtr_->pq_pz(i);
+        const Eigen::Array<MatX, Eigen::Dynamic, 1>& pq_pz_pz = trajPtr_->pq_pz_pz.col(i); 
 
         for (int j = 0; j < NUM_SPHERES; j++) {
             // define the transform matrix of the sphere center with respect to the joint
             endT = Transform(sphere_offset_axis[j], sphere_offset[j]);
 
-            fkhofPtr_->fk(jointT, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
-
-            Vec3 sphereCenters = fkhofPtr_->Transform2xyz(jointT);
-
-            collisionAvoidancePtr_->computeDistance(sphereCenters);
-
-            if (compute_derivatives) {
-                fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, sphere_joint_id[j], 0, q, endT, startT);
-                fkhofPtr_->Transform2xyzJacobian(jointTJ, jointT, dTdq);
-
-                MatX psphereCenters_pz = jointTJ * trajPtr_->pq_pz(i);
-
-                collisionAvoidancePtr_->computeDistance(sphereCenters, psphereCenters_pz);
+            if (compute_hessian) {
+                fkPtr_->compute(0, sphere_joint_id[j], q, &startT, &endT, 2);
+            }
+            else if (compute_derivatives) {
+                fkPtr_->compute(0, sphere_joint_id[j], q, &startT, &endT, 1);
+            }
+            else {
+                fkPtr_->compute(0, sphere_joint_id[j], q, &startT, &endT, 0);
             }
 
-            // g.block((i * NUM_SPHERES + j) * numObstacles, 
-            //         0, 
-            //         numObstacles, 
-            //         1) = collisionAvoidancePtr_->distances.array() - sphere_radius[j];
-
-            // if (compute_derivatives) {
-            //     pg_pz.block((i * NUM_SPHERES + j) * numObstacles, 
-            //                 0, 
-            //                 numObstacles, 
-            //                 trajPtr_->varLength) = collisionAvoidancePtr_->pdistances_pz;
-            // }
-            Eigen::VectorXd::Index minIndex;
-            collisionAvoidancePtr_->distances.minCoeff(&minIndex);
-            double distance = collisionAvoidancePtr_->distances(minIndex) - sphere_radius[j];
-            g(i * NUM_SPHERES + j) = distance;
+            sphereCenter = fkPtr_->getTranslation();
 
             if (compute_derivatives) {
-                pg_pz.row(i * NUM_SPHERES + j) = collisionAvoidancePtr_->pdistances_pz.row(minIndex);
+                psphereCenter_pz = fkPtr_->getTranslationJacobian() * pq_pz;
+            }
+
+            if (compute_hessian) {
+                Eigen::Array<MatX, 3, 1> psphereCenter_pq_pq;
+                fkPtr_->getTranslationHessian(psphereCenter_pq_pq);
+
+                // (1) p2_FK_pq2 * pq_pz1 * pq_pz2
+                for (int k = 0; k < 3; k++) {
+                    psphereCenter_pz_pz(k) = pq_pz.transpose() * psphereCenter_pq_pq(k) * pq_pz;
+                }
+                
+                // (2) p_FK_pq * p2_q_pz2 (this should be zero for most trajectories)
+                for (int k = 0; k < 3; k++) {
+                    for (int p = 0; p < trajPtr_->Nact; p++) {
+                        psphereCenter_pz_pz(k) += jointTJ(k, p) * pq_pz_pz(p);
+                    }
+                }
+            }
+
+            if (compute_hessian) {
+                collisionAvoidancePtr_->computeDistance(sphereCenter, psphereCenter_pz, psphereCenter_pz_pz);
+            }
+            else if (compute_derivatives) {
+                collisionAvoidancePtr_->computeDistance(sphereCenter, psphereCenter_pz);
+            }
+            else {
+                collisionAvoidancePtr_->computeDistance(sphereCenter);
+            }
+            
+            const auto& minIndex = collisionAvoidancePtr_->minimumDistanceIndex;
+            g(i * NUM_SPHERES + j) = collisionAvoidancePtr_->minimumDistance - sphere_radius[j];
+
+            if (compute_derivatives) {
+                pg_pz.row(i * NUM_SPHERES + j) = 
+                    collisionAvoidancePtr_->pdistances_pz.row(minIndex);
+            }
+
+            if (compute_hessian) {
+                pg_pz_pz(i * NUM_SPHERES + j) = 
+                    collisionAvoidancePtr_->pdistances_pz_pz(minIndex);
             }
         }
     }
@@ -95,20 +115,6 @@ void KinovaCustomizedConstraints::compute_bounds() {
 }
 
 void KinovaCustomizedConstraints::print_violation_info() {
-    const int numObstacles = collisionAvoidancePtr_->numObstacles;
-    // for (int i = 0; i < trajPtr_->N; i++) {
-    //     for (int j = 0; j < NUM_SPHERES; j++) {
-    //         for (int k = 0; k < numObstacles; k++) {
-    //             if (g((i * NUM_SPHERES + j) * numObstacles + k) <= 0) {
-    //                 std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " << j 
-    //                           << " corresponding to link " << sphere_joint_id[j]
-    //                           << " at time instance " << i 
-    //                           << " is in collision with obstacle " << k
-    //                           << std::endl;
-    //             }
-    //         }
-    //     }
-    // }
     for (int i = 0; i < trajPtr_->N; i++) {
         for (int j = 0; j < NUM_SPHERES; j++) {
             if (g(i * NUM_SPHERES + j) <= 0) {

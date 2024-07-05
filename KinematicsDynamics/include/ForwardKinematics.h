@@ -5,7 +5,7 @@
 
 namespace IDTO {
 
-class ForwardKinematicsHighOrderDerivative {
+class ForwardKinematicsSolver {
 public:
     using Model = pinocchio::Model;
 	using Vec3 = Eigen::Vector3d;
@@ -14,103 +14,61 @@ public:
 	using MatX = Eigen::MatrixXd;
 
     // Constructor
-	ForwardKinematicsHighOrderDerivative();
+	ForwardKinematicsSolver() = default;
+
+	ForwardKinematicsSolver(const Model* model_input,
+							const Eigen::VectorXi& jtype_input);
 
     // Destructor
-	~ForwardKinematicsHighOrderDerivative() = default;
+	~ForwardKinematicsSolver() = default;
 
     // class methods:
-	void fk(Transform& T, 
-			const Model& model, 
-			const Eigen::VectorXi& jtype, 
-			const int end, 
-			const int start, 
-			const VecX& q, 
-			const Transform& endT, 
-			const Transform& startT);
+		// compute forward kinematics and its high-order derivatives
+	void compute(const int start,
+				 const int end,
+				 const VecX& q, 
+				 const Transform* startT = nullptr,
+				 const Transform* endT = nullptr,
+				 const int order = 0);
 
-	void fk_jacobian(std::vector<Transform>& dTdq, 
-					 const Model& model,
-					 const Eigen::VectorXi& jtype,
-					 const int end, 
-					 const int start, 
-					 const VecX& q, 
-					 const Transform& endT, 
-					 const Transform& startT);
+	// get the forward kinematics result in different formats
+	Transform getTransform() const;
 
-	void fk_hessian(std::vector<std::vector<Transform>>& ddTddq, 
-					const Model& model, 
-					const Eigen::VectorXi& jtype,
-					const int end,
-					const int start, 
-					const VecX& q, 
-					const Transform& endT, 
-					const Transform& startT);
+	Vec3 getTranslation() const;
 
-	void fk_thirdorder(std::vector<std::vector<std::vector<Transform>>>& dddTdddq, 
-					   const Model& model, 
-					   const Eigen::VectorXi& jtype,
-					   const int end,
-					   const int start, 
-					   const VecX& q, 
-					   const Transform& endT, 
-					   const Transform& startT);
+	Mat3 getRotation() const;
 
-	VecX Transform2Vec(const Transform& T);
+	MatX getTranslationJacobian() const;
 
-	Vec3 Transform2xyz(const Transform& T);
+	void getRotationJacobian(Eigen::Array<Mat3, Eigen::Dynamic, 1>& result) const;
 
-	VecX Transform2xyzrpy(const Transform& T);
+	void getTranslationHessian(Eigen::Array<MatX, 3, 1>& result) const;
 
-	void Transform2VecJacobian(MatX& J, 
-							   const Transform& T, 
-							   const std::vector<Transform>& dTdq);
-
-	void Transform2xyzJacobian(MatX& J, 
-							   const Transform& T, 
-							   const std::vector<Transform>& dTdq);
-
-	void Transform2xyzrpyJacobian(MatX& J, 
-								  const Transform& T, 
-								  const std::vector<Transform>& dTdq);
-
-	void Transform2VecHessian(Eigen::Array<MatX, 12, 1>& H,
-							  const Transform& T, 
-							  const std::vector<Transform>& dTdq,
-							  const std::vector<std::vector<Transform>>& ddTddq);
-
-    void Transform2xyzHessian(Eigen::Array<MatX, 3, 1>& H,
-							  const Transform& T, 
-							  const std::vector<Transform>& dTdq,
-							  const std::vector<std::vector<Transform>>& ddTddq);
-
-	void Transform2xyzrpyHessian(Eigen::Array<MatX, 6, 1>& H,
-								 const Transform& T, 
-								 const std::vector<Transform>& dTdq,
-								 const std::vector<std::vector<Transform>>& ddTddq);
-
-	void Transform2xyzrpyThirdOrder(Eigen::Array<MatX, 6, 1>& TOx,
-									const VecX& x,
-									const Transform& T, 
-									const std::vector<Transform>& dTdq,
-									const std::vector<std::vector<Transform>>& ddTddq,
-									const std::vector<std::vector<std::vector<Transform>>>& dddTdddq);
-
+	void getRotationHessian(Eigen::Array<MatX, 3, 3>& result) const;
+	void getRotationHessian(Eigen::Array<Mat3, Eigen::Dynamic, Eigen::Dynamic>& result) const;
+	
     // class members:
-    // a index vector that stores the kinematics chain
-	// shared by fk, fk_jacobian, fk_hessian
-	// shared by forwardkinematics.cpp and Digit_model_floating.cpp
+	const Model* modelPtr_ = nullptr;
+	Eigen::VectorXi jtype;
+
+		// a index vector that stores the kinematics chain
 	std::vector<int> chain;  
 
-	// internal copies
-	int current_order = -1;
-	int end_copy = -1;
-	int start_copy = -1;
-	VecX q_copy;
-	Transform T_copy;
-	std::vector<Transform> dTdq_copy;
-	std::vector<std::vector<Transform>> ddTddq_copy;
-	std::vector<std::vector<std::vector<Transform>>> dddTdddq_copy;
+		// results
+	Transform T;
+	std::vector<Transform> dTdq;
+	std::vector<std::vector<Transform>> ddTddq;
+	std::vector<std::vector<std::vector<Transform>>> dddTdddq;
+
+	// 	// internal copies
+	// int current_order = -1;
+	// int end_copy = -1;
+	// int start_copy = -1;
+	// VecX q_copy;
+	// Transform T_copy;
+	// std::vector<Transform> dTdq_copy;
+	// std::vector<std::vector<Transform>> ddTddq_copy;
+	// std::vector<std::vector<std::vector<Transform>>> dddTdddq_copy;
 };
 
 }  // namespace IDTO

@@ -1,48 +1,37 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef KINOVA_IK_SOLVER_H
+#define KINOVA_IK_SOLVER_H
+
+#include "KinovaConstants.h"
 
 #include "Optimizer.h"
 
-#include "FourierCurves.h"
-#include "FixedFrequencyFourierCurves.h"
-#include "BezierCurves.h"
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
-#include "Utils.h"
+#include "Plain.h"
 
-#include "ConstrainedJointLimits.h"
-#include "TorqueLimits.h"
-#include "SurfaceContactConstraints.h"
-#include "DigitCustomizedConstraints.h"
-#include "DigitSingleStepPeriodicityConstraints.h"
+#include "JointLimits.h"
+#include "KinematicsConstraints.h"
 
 namespace IDTO {
-namespace Digit {
+namespace Kinova {
 
-using namespace Ipopt;
-
-class DigitSingleStepOptimizer : public Optimizer {
+class KinovaIKSolver : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
+    using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DigitSingleStepOptimizer() = default;
+    KinovaIKSolver() = default;
 
     /** Default destructor */
-    ~DigitSingleStepOptimizer() = default;
+    ~KinovaIKSolver() = default;
 
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const double T_input,
-        const int N_input,
-        const TimeDiscretization time_discretization_input,
-        const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const GaitParameters& gp_input
+        const Transform& desiredTransform_input
     );
 
     /**@name Overloaded from TNLP */
@@ -54,6 +43,16 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
+    ) final override;
+
+    /** Method to return the bounds for my problem */
+    bool get_bounds_info(
+        Index   n,
+        Number* x_l,
+        Number* x_u,
+        Index   m,
+        Number* g_l,
+        Number* g_u
     ) final override;
 
     /** Method to return the objective value */
@@ -72,6 +71,14 @@ public:
         Number*       grad_f
     ) final override;
 
+    /** Method to return the hessian of the objective */
+    bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
+    ) final override;
+
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -83,20 +90,18 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitSingleStepOptimizer(
-       const DigitSingleStepOptimizer&
+    KinovaIKSolver(
+       const KinovaIKSolver&
     );
 
-    DigitSingleStepOptimizer& operator=(
-       const DigitSingleStepOptimizer&
+    KinovaIKSolver& operator=(
+       const KinovaIKSolver&
     );
 
-    std::shared_ptr<Trajectories> trajPtr_; 
-
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+    std::shared_ptr<Trajectories> trajPtr_;
 };
 
-}; // namespace Digit
+}; // namespace Kinova
 }; // namespace IDTO
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // KINOVA_IK_SOLVER_H

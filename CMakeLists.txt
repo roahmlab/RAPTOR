@@ -126,7 +126,6 @@ add_library(Conslib SHARED
     Constraints/src/SurfaceContactConstraints.cpp
     Constraints/src/WaitrContactConstraints.cpp
     Constraints/src/KinematicsConstraints.cpp
-    Constraints/src/KinematicsConstraints.cpp
     Constraints/src/BoxCollisionAvoidance.cpp)
     # Constraints/src/ZonotopeCollisionAvoidance.cpp
     # Constraints/src/fclCollisionAvoidance.cpp)
@@ -145,51 +144,52 @@ target_include_directories(Optlib PUBLIC
 
 include_directories(Optimization/include)
 
-## Digit library
-add_library(Digitlib SHARED
-    Examples/Digit/src/DigitDynamicsConstraints.cpp
-    Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
-    Examples/Digit/src/DigitSingleStepOptimizer.cpp
-    Examples/Digit/src/DigitCustomizedConstraints.cpp
-    Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
+# ## Digit library
+# add_library(Digitlib SHARED
+#     Examples/Digit/src/DigitDynamicsConstraints.cpp
+#     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
+#     Examples/Digit/src/DigitSingleStepOptimizer.cpp
+#     Examples/Digit/src/DigitCustomizedConstraints.cpp
+#     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
-target_link_libraries(Digitlib PRIVATE
-    trajlib
-    IDlib
-    Conslib
-    Optlib
-    ipopt
-    coinhsl
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+# target_link_libraries(Digitlib PRIVATE
+#     trajlib
+#     IDlib
+#     Conslib
+#     Optlib
+#     ipopt
+#     coinhsl
+#     ${GSL_LIBRARIES}
+#     ${BOOST_LIBRARIES} 
+#     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_include_directories(Digitlib PUBLIC
-    Examples/Digit/include)
+# target_include_directories(Digitlib PUBLIC
+#     Examples/Digit/include)
 
-## Digit-modified library
-add_library(DigitModifiedlib SHARED
-    Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
-    Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
-    Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
-    Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
-    Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
+# ## Digit-modified library
+# add_library(DigitModifiedlib SHARED
+#     Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
+#     Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
+#     Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
+#     Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
+#     Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
 
-target_link_libraries(DigitModifiedlib PRIVATE
-    trajlib
-    IDlib
-    Conslib
-    Optlib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+# target_link_libraries(DigitModifiedlib PRIVATE
+#     trajlib
+#     IDlib
+#     Conslib
+#     Optlib
+#     ipopt
+#     coinhsl
+#     ${BOOST_LIBRARIES} 
+#     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_include_directories(DigitModifiedlib PUBLIC
-    Examples/Digit-modified/include)
+# target_include_directories(DigitModifiedlib PUBLIC
+#     Examples/Digit-modified/include)
 
 # Kinova libraries
 add_library(Kinovalib SHARED
+    Examples/Kinova/InverseKinematics/KinovaIKSolver.cpp
     Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
     Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
     Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
@@ -208,6 +208,7 @@ target_link_libraries(Kinovalib PRIVATE
 
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova
+    Examples/Kinova/InverseKinematics
     Examples/Kinova/ArmourUnsafe/include
     Examples/Kinova/WaitrUnsafe/include
     Examples/Kinova/SystemIdentification/DataFilter/include
@@ -215,50 +216,71 @@ target_include_directories(Kinovalib PUBLIC
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
 ## Example scripts
-add_executable(Digit_example 
-    Examples/Digit/DigitSingleStep.cpp)
+# add_executable(Digit_example 
+#     Examples/Digit/DigitSingleStep.cpp)
 
-target_include_directories(Digit_example PRIVATE
-    Examples/Digit/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+# target_include_directories(Digit_example PRIVATE
+#     Examples/Digit/include
+#     KinematicsDynamics/include
+#     Trajectories/include
+#     Constraints/include
+#     Optimization/include
+#     Utils/include)
 
-target_link_libraries(Digit_example PRIVATE
+# target_link_libraries(Digit_example PRIVATE
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     Digitlib
+#     ipopt
+#     coinhsl
+#     ${GSL_LIBRARIES}
+#     ${BOOST_LIBRARIES} 
+#     ${PKG_PIN_CONFIG_LIBRARIES})
+
+# target_compile_options(Digit_example PUBLIC
+#     ${PINOCCHIO_FLAGS})
+
+# add_executable(DigitModified_example 
+#     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
+
+# target_include_directories(DigitModified_example PRIVATE
+#     Examples/Digit-modified/include)
+
+# target_link_libraries(DigitModified_example PRIVATE
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     DigitModifiedlib
+#     ipopt
+#     coinhsl
+#     ${BOOST_LIBRARIES} 
+#     ${PKG_PIN_CONFIG_LIBRARIES})
+
+# target_compile_options(DigitModified_example PUBLIC
+#     ${PINOCCHIO_FLAGS})
+
+add_executable(KinovaIK_example 
+    Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)
+
+target_include_directories(KinovaIK_example PRIVATE
+    Examples/Kinova
+    Examples/Kinova/InverseKinematics)
+
+target_link_libraries(KinovaIK_example PRIVATE
     trajlib 
     IDlib
     Conslib
     Optlib
-    Digitlib
-    ipopt
-    coinhsl
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
-
-target_compile_options(Digit_example PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-add_executable(DigitModified_example 
-    Examples/Digit-modified/DigitModifiedSingleStep.cpp)
-
-target_include_directories(DigitModified_example PRIVATE
-    Examples/Digit-modified/include)
-
-target_link_libraries(DigitModified_example PRIVATE
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    DigitModifiedlib
+    Kinovalib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_compile_options(DigitModified_example PUBLIC
+target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Kinova_example 
@@ -302,8 +324,6 @@ target_link_libraries(KinovaWaitr_example PRIVATE
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
-
-
 
 add_executable(KinovaFilter_example 
     Examples/Kinova/SystemIdentification/DataFilter/KinovaAccelerationEstimator.cpp)
@@ -397,6 +417,31 @@ target_compile_options(oracle_waitr_pybind PUBLIC
 
 set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+## Test scripts
+add_executable(ForwardKinematics_test 
+    Tests/KinematicsDynamics/TestForwardKinematicsSolver.cpp)
+
+target_link_libraries(ForwardKinematics_test PRIVATE
+    IDlib
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(ForwardKinematics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(KinematicsConstraints_test 
+    Tests/Constraints/TestKinematicsConstraints.cpp)
+
+target_link_libraries(KinematicsConstraints_test PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(KinematicsConstraints_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 ## Install
 install(TARGETS trajlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -414,22 +459,10 @@ install(TARGETS Optlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(TARGETS Digitlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+# install(TARGETS Digitlib
+#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+# )
 
 install(TARGETS Kinovalib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Digit_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS DigitModified_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS Kinova_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

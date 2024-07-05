@@ -44,7 +44,7 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
-    ) override;
+    ) final override;
 
     /** Method to return the bounds for my problem */
     bool get_bounds_info(
@@ -54,7 +54,7 @@ public:
         Index   m,
         Number* g_l,
         Number* g_u
-    ) override;
+    ) final override;
 
     /** Method to return the objective value */
     bool eval_f(
@@ -62,7 +62,7 @@ public:
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) override;
+    ) final override;
 
     /** Method to return the gradient of the objective */
     bool eval_grad_f(
@@ -70,7 +70,7 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) override;
+    ) final override;
 
     /** Method to return the hessian of the objective */
     bool eval_hess_f(
@@ -78,7 +78,7 @@ public:
         const Number* x,
         bool          new_x,
         MatX&         hess_f
-    ) override;
+    ) final override;
 
     /**@name Methods to block default compiler methods.
     *

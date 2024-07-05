@@ -3,12 +3,28 @@
 namespace IDTO {
 
 Transform::Transform() {
-    R = Mat3::Identity();
-    p = Vec3::Zero(3);
+    R.setIdentity();
+    p.setZero();
     ifDerivative = false;
 } 
 
-Transform::Transform(const int jtype, const double theta, const int order) {
+Transform::Transform(const Mat3& R_in, 
+                     const Vec3& p_in, 
+                     const bool i_in) :
+    R(R_in),
+    p(p_in), 
+    ifDerivative(i_in) {
+}
+
+Transform::Transform(const Vec3& p_in) :
+    p(p_in) {
+    R.setIdentity();
+    ifDerivative = false;
+}
+
+Transform::Transform(const int jtype, 
+                     const double theta, 
+                     const int order) {
     if (order == 0) { // Transform of rotation matrix
         R = Mat3::Identity();
     }
@@ -271,7 +287,9 @@ Transform Transform::operator*=(const Transform& x) {
 }
 
 Transform Transform::operator*(const SE3& x) const {
-    return Transform(R * x.rotation(), R * x.translation() + p, ifDerivative);
+    return Transform(R * x.rotation(), 
+                     R * x.translation() + p, 
+                     ifDerivative);
 }
 
 Transform Transform::operator*=(const SE3& x) {
@@ -280,14 +298,20 @@ Transform Transform::operator*=(const SE3& x) {
     return *this;
 }
 
+Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp) {
+    return Transform(x.rotation() * sRp.R, 
+                     x.rotation() * sRp.p + x.translation(), 
+                     sRp.ifDerivative);
+}
+
 Transform Transform::inverse() const {
     assert(!ifDerivative);
-    // return Transform(R.inverse(), -R.colPivHouseholderQr().solve(p));
     return Transform(R.transpose(), -R.transpose() * p);
 }
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
-    os << sRp.R << std::endl << sRp.p;
+    os << "rotation:\n" << sRp.R << std::endl 
+       << "translation:\n" << sRp.p << std::endl;
     return os;
 }
 

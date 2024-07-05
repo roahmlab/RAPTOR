@@ -11,7 +11,7 @@ DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::sh
     jtype(jtype_input),
     stanceLeg(stanceLeg_input),
     DynamicsConstraints(modelPtr_input->nv, NUM_DEPENDENT_JOINTS) {
-    fkhofPtr_ = std::make_unique<ForwardKinematicsHighOrderDerivative>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         if (modelPtr_->existJointName(dependentJointNames[i])) {
@@ -245,9 +245,9 @@ void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX&
 
 void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
     // fill in dependent joint positions 
-    fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, modelPtr_->getJointId("Rz"), q, stance_foot_endT, startT);
+    fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, modelPtr_->getJointId("Rz"), q, stance_foot_endT, startT);
     Transform torso_T = stance_foot_T_des * stance_foot_T.inverse();
-    q.block(0, 0, 6, 1) = fkhofPtr_->Transform2xyzrpy(torso_T);
+    q.block(0, 0, 6, 1) = fkPtr_->Transform2xyzrpy(torso_T);
 
     if (compute_derivatives) {
         get_c(q);
@@ -274,17 +274,17 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
 }
 
 void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
-    fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    c = fkhofPtr_->Transform2xyzrpy(stance_foot_T) - fkhofPtr_->Transform2xyzrpy(stance_foot_T_des);
+    fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    c = fkPtr_->Transform2xyzrpy(stance_foot_T) - fkPtr_->Transform2xyzrpy(stance_foot_T_des);
 }
 
 void DigitModifiedDynamicsConstraints::get_J(const VecX& q) {
     assert(J.rows() == NUM_DEPENDENT_JOINTS);
     assert(J.cols() == modelPtr_->nv);
 
-    // fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    fkhofPtr_->Transform2xyzrpyJacobian(J, stance_foot_T, dTdq);
+    // fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    fkPtr_->Transform2xyzrpyJacobian(J, stance_foot_T, dTdq);
 }
 
 void DigitModifiedDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
@@ -292,15 +292,15 @@ void DigitModifiedDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const Ve
     assert(Jx_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
     assert(Jx_partial_dq.cols() == modelPtr_->nv);
 
-    // fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    fkPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
     
     Eigen::Array<MatX, 6, 1> H_contact;
     for (int i = 0; i < 6; i++) {
         H_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
-    fkhofPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
+    fkPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
 
     for (int i = 0; i < 6; i++) {
         Jx_partial_dq.row(i) = (H_contact(i) * x).transpose();
@@ -312,15 +312,15 @@ void DigitModifiedDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const V
     assert(JTx_partial_dq.rows() == modelPtr_->nv);
     assert(JTx_partial_dq.cols() == modelPtr_->nv);
 
-    // fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    fkPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
     
     Eigen::Array<MatX, 6, 1> H_contact;
     for (int i = 0; i < 6; i++) {
         H_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
-    fkhofPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
+    fkPtr_->Transform2xyzrpyHessian(H_contact, stance_foot_T, dTdq, ddTddq);
 
     JTx_partial_dq.setZero();
     for (int i = 0; i < 6; i++) {
@@ -334,16 +334,16 @@ void DigitModifiedDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const V
     assert(Jxy_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
     assert(Jxy_partial_dq.cols() == modelPtr_->nv);
 
-    // fkhofPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // fkhofPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // fkhofPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    fkhofPtr_->fk_thirdorder(dddTdddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    // fkPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
+    fkPtr_->fk_thirdorder(dddTdddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
     
     Eigen::Array<MatX, 6, 1> TOx_contact;
     for (int i = 0; i < 6; i++) {
         TOx_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
     }
-    fkhofPtr_->Transform2xyzrpyThirdOrder(TOx_contact, x, stance_foot_T, dTdq, ddTddq, dddTdddq);
+    fkPtr_->Transform2xyzrpyThirdOrder(TOx_contact, x, stance_foot_T, dTdq, ddTddq, dddTdddq);
 
     for (int i = 0; i < 6; i++) {
         Jxy_partial_dq.row(i) = TOx_contact(i) * y;
