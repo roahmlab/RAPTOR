@@ -52,47 +52,6 @@ inline double safeacos(const double x,
     return std::acos(x);
 }
 
-// compute x / sin(x) safely and accurately around x = 0
-inline double safexSinx(const double x,
-                        const double nearZeroThreshold = 1e-6) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
-        return 1.0 + xSquare / 6.0 + 7.0 * xFourth / 360.0; // + O(x^6)
-    }
-    return x / std::sin(x);
-}
-
-// compute d(x / sin(x)) / dx (the derivative of the previous function x / sin(x)) 
-// safely and accurately around x = 0
-inline double safedxSinxdx(const double x,
-                           const double nearZeroThreshold = 1e-6) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xThird = x * xSquare;
-        double XFifth = xThird * xSquare;
-        return x / 3.0 + 7.0 * xThird / 90.0 + 31.0 * XFifth / 2520.0; // + O(x^7)
-    }
-    const double sinx = std::sin(x);
-    return (sinx - x * std::cos(x)) / (sinx * sinx);
-}
-
-// compute dd(x / sin(x)) / ddx (the derivative of the previous function x / sin(x)) 
-// safely and accurately around x = 0
-inline double safeddxSinxddx(const double x,
-                             const double nearZeroThreshold = 1e-6) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
-        double xSixth = xFourth * xSquare;
-        return 1.0 / 3.0 + 7.0 * xSquare / 30.0 + 31.0 * xFourth / 504.0; // + O(x^6)
-    }
-    const double sinx = std::sin(x);
-    const double cosx = std::cos(x);
-    const double sinxSquare = sinx * sinx;
-    return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
-}
-
 inline double wrapToPi(const double angle) {
     double res = angle;
     while (res > M_PI) {

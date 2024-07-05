@@ -21,7 +21,9 @@ public:
     ~DynamicsConstraints() = default;
 
     // class methods:
-    virtual void reinitialize();
+        // helper function to reinitialize the results
+        // useful for multiple-step humanoid gait optimization
+    virtual void reinitialize() {};
 
     // You need to implement all following methods in your derived class!!!
         // return the index of id th dependent joint
@@ -75,7 +77,8 @@ public:
 
         // fill in dependent joint positions and velocities in the full joint vector q and v
         // that satisfies the constraints
-    // virtual void setupJointPositionVelocity(VecX& q, VecX& v);
+        // this seems to useless currently
+    // virtual void setupJointPositionVelocity(VecX& q, VecX& v, bool compute_derivatives = true) = 0;
 
         // fill in dependent joint positions, velocities, and accelerations in the full joint vector q, v, and a
         // that satisfies the constraints

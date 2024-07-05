@@ -53,7 +53,9 @@ public:
 
     Transform inverse() const;
 
-    Vec3 getTranslation() const;
+    Vec3 getRPY() const;
+
+    Eigen::Matrix<double, 6, 1> getXYZRPY() const;
 
     // class members:
     Mat3 R; // rotation matrix

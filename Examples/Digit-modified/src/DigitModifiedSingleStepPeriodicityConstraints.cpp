@@ -14,10 +14,8 @@ DigitModifiedSingleStepPeriodicityConstraints::DigitModifiedSingleStepPeriodicit
         NUM_INDEPENDENT_JOINTS +  // position reset
         NUM_INDEPENDENT_JOINTS +  // velocity reset
         7;                        // lambda contact constraints
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+
+    initialize_memory(m, trajPtr_->varLength);
 
     // initialize intermediate variables
     prnea_pq = MatX::Zero(dcidPtr_->modelPtr_->nv, dcidPtr_->modelPtr_->nv);
@@ -57,6 +55,10 @@ DigitModifiedSingleStepPeriodicityConstraints::DigitModifiedSingleStepPeriodicit
 void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z, 
                                                             bool compute_derivatives,
                                                             bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
+        return;
+    }
+    
     if (compute_hessian) {
         throw std::invalid_argument("DigitModifiedSingleStepPeriodicityConstraints does not support hessian computation");
     }
@@ -100,12 +102,14 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
         // this is terrible coding unfortunately
+        double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
         dcidPtr_->modelPtr_->gravity.linear()(2) = 0;
-        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), q_minus, zeroVec, v_plus - v_minus,
+        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), 
+                                          q_minus, zeroVec, v_plus - v_minus,
                                           prnea_pq, prnea_pv, prnea_pa);
 
         // restore gravity
-        dcidPtr_->modelPtr_->gravity.linear()(2) = -9.806;
+        dcidPtr_->modelPtr_->gravity.linear()(2) = original_gravity;
 
         dcidPtr_->dcPtr_->get_JTx_partial_dq(q_minus, lambda);
         const MatX& JTx_partial_dq = dcidPtr_->dcPtr_->JTx_partial_dq;
@@ -208,12 +212,6 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
     // combine all constraints together
     g << g1, g2, g3, g4, g5;
 
-    // std::cout << g1.transpose() << std::endl;
-    // std::cout << g2.transpose() << std::endl;
-    // std::cout << g3.transpose() << std::endl;
-    // std::cout << g4.transpose() << std::endl;
-    // std::cout << g5.transpose() << std::endl;
-
     if (compute_derivatives) {
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
     }
@@ -221,6 +219,7 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
 
 void DigitModifiedSingleStepPeriodicityConstraints::compute_bounds() {
     // everything before this are equality constraints, so just zeros
+    // g_lb and g_ub are already initialized to zeros in the constructor
 
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;

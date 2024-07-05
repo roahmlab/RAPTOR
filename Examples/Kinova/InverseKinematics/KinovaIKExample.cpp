@@ -48,6 +48,7 @@ int main() {
                               model,
                               jtype,
                               desiredTransform);
+        mynlp->constr_viol_tol = 1e-8;
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");

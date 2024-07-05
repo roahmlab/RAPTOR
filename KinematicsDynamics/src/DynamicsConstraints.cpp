@@ -2,10 +2,6 @@
 
 namespace IDTO {
 
-void DynamicsConstraints::reinitialize() {
-
-}
-
 DynamicsConstraints::DynamicsConstraints(const int numJoints_input, int numDependentJoints_input) :
     numJoints(numJoints_input),
     numDependentJoints(numDependentJoints_input) {
@@ -55,6 +51,7 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
         throw std::runtime_error("constraint jacobian is not full rank!");
     }
 
+    // get the dependent columns of the projection matrix
     P_dep = -J_dep_qr.solve(J_indep);
 
     // fill in depuated joints velocities
@@ -76,11 +73,11 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
         fill_dependent_vector(Pa_indep, P_dep * get_independent_vector(a));
         fill_independent_vector(Pa_indep, get_independent_vector(a));
 
-        get_Jx_partial_dq(q, Pa_indep); // be careful here, Jx_partial_dq has been changed!
+        get_Jx_partial_dq(q, Pa_indep); // be careful here, Jx_partial_dq has been changed here!
         temp1 = Jx_partial_dq;
         
         fill_dependent_vector(temp2_1, J_dep_qr.solve(Jv_partial_dq * v), true);
-        get_Jx_partial_dq(q, temp2_1); // be careful here, Jx_partial_dq has been changed!
+        get_Jx_partial_dq(q, temp2_1); // be careful here, Jx_partial_dq has been changed here!
         temp2 = Jx_partial_dq;
 
         get_Jxy_partial_dq(q, v, v);

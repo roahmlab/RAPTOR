@@ -13,7 +13,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     dcPtr_(dcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
 
     if (modelPtr_->existJointName("right_toe_roll")) {
         swingfoot_id = modelPtr_->getJointId("right_toe_roll");
@@ -36,11 +36,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength);
 }
 
 void DigitCustomizedConstraints::compute(const VecX& z, 
@@ -52,6 +48,8 @@ void DigitCustomizedConstraints::compute(const VecX& z,
 
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
+    const int fk_order = compute_derivatives ? 1 : 0;
+
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {
         VecX qi(modelPtr_->nq);
@@ -59,7 +57,7 @@ void DigitCustomizedConstraints::compute(const VecX& z,
         dcPtr_->setupJointPosition(qi, compute_derivatives);
         q.col(i) = qi;
 
-        fkPtr_->fk(jointT, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
+        fkPtr_->compute(0, swingfoot_id, qi, nullptr, &swingfoot_endT, fk_order);
 
         swingfoot_xyzrpy.col(i) = fkPtr_->Transform2xyzrpy(jointT);
 

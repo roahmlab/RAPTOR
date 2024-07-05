@@ -309,8 +309,27 @@ Transform Transform::inverse() const {
     return Transform(R.transpose(), -R.transpose() * p);
 }
 
+Eigen::Vector3d Transform::getRPY() const {
+    // roll pitch yaw conversion does not make sense 
+    // for the derivative of a transformation matrix
+    assert(!ifDerivative);
+
+    Eigen::Vector3d rpy;
+    rpy << atan2(-R(1,2), R(2,2)), // roll
+           asin(R(0,2)),           // pitch
+           atan2(-R(0,1), R(0,0)); // yaw
+
+    return rpy;
+}
+
+Eigen::Matrix<double, 6, 1> Transform::getXYZRPY() const {
+    Eigen::Matrix<double, 6, 1> xyzrpy;
+    xyzrpy << p, getRPY();
+    return xyzrpy;
+}
+
 std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
-    os << "rotation:\n" << sRp.R << std::endl 
+    os << "rotation:\n"    << sRp.R << std::endl 
        << "translation:\n" << sRp.p << std::endl;
     return os;
 }

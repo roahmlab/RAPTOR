@@ -3,7 +3,8 @@
 #define DIGIT_MODIFIED_CUSTOMIZED_CONSTRAINTS_H
 
 #include "Constraints.h"
-#include "FourierCurves.h"
+#include "LieSpaceResidual.h"
+#include "Trajectories.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
@@ -65,17 +66,16 @@ public:
     Model::JointIndex swingfoot_id = 0;
 
         // the transform matrix at the beginning and at the end
-    Transform startT;
     Transform swingfoot_endT;
+    Transform swingfoot_T_des;
 
         // updated in compute()
-    Transform jointT;
-    MatX jointTJ;
-
+    // full joint trajectories and derivatives 
+    // including both independent and dependent joints
     MatX q;
-    MatX swingfoot_xyzrpy;
-
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
+    
+    MatX swingfoot_xyzrpy;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pswingfoot_xyzrpy_pz;
 
         // forward kinematics derivatives

@@ -125,6 +125,7 @@ add_library(Conslib SHARED
     Constraints/src/TorqueLimits.cpp
     Constraints/src/SurfaceContactConstraints.cpp
     Constraints/src/WaitrContactConstraints.cpp
+    Constraints/src/LieSpaceResidual.cpp
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/BoxCollisionAvoidance.cpp)
     # Constraints/src/ZonotopeCollisionAvoidance.cpp
@@ -166,26 +167,26 @@ include_directories(Optimization/include)
 # target_include_directories(Digitlib PUBLIC
 #     Examples/Digit/include)
 
-# ## Digit-modified library
-# add_library(DigitModifiedlib SHARED
-#     Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
-#     Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
-#     Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
-#     Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
-#     Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
+## Digit-modified library
+add_library(DigitModifiedlib SHARED
+    Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
+    Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
+    Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
+    Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
+    Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
 
-# target_link_libraries(DigitModifiedlib PRIVATE
-#     trajlib
-#     IDlib
-#     Conslib
-#     Optlib
-#     ipopt
-#     coinhsl
-#     ${BOOST_LIBRARIES} 
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_link_libraries(DigitModifiedlib PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_include_directories(DigitModifiedlib PUBLIC
-#     Examples/Digit-modified/include)
+target_include_directories(DigitModifiedlib PUBLIC
+    Examples/Digit-modified/include)
 
 # Kinova libraries
 add_library(Kinovalib SHARED
@@ -242,25 +243,25 @@ target_include_directories(Kinovalib PUBLIC
 # target_compile_options(Digit_example PUBLIC
 #     ${PINOCCHIO_FLAGS})
 
-# add_executable(DigitModified_example 
-#     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
+add_executable(DigitModified_example 
+    Examples/Digit-modified/DigitModifiedSingleStep.cpp)
 
-# target_include_directories(DigitModified_example PRIVATE
-#     Examples/Digit-modified/include)
+target_include_directories(DigitModified_example PRIVATE
+    Examples/Digit-modified/include)
 
-# target_link_libraries(DigitModified_example PRIVATE
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     DigitModifiedlib
-#     ipopt
-#     coinhsl
-#     ${BOOST_LIBRARIES} 
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_link_libraries(DigitModified_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    DigitModifiedlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_compile_options(DigitModified_example PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_compile_options(DigitModified_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaIK_example 
     Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)

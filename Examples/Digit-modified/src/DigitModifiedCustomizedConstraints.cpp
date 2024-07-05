@@ -13,7 +13,7 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
     dcPtr_(dcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>();
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
 
     if (modelPtr_->existJointName("right_toe_roll")) {
         swingfoot_id = modelPtr_->getJointId("right_toe_roll");
@@ -29,18 +29,19 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
                         sin(M_PI / 3), 0,  0.5;
     swingfoot_endT.p << 0, 0, 0;
 
-    jointTJ = MatX::Zero(6, modelPtr_->nv);
+    // desired swing foot orientation
+    swingfoot_T_des.R << 0, -1, 0,
+                         1,  0, 0,
+                         0,  0, 1;
+
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
-    swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
+
+    swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength);
 }
 
 void DigitModifiedCustomizedConstraints::compute(const VecX& z, 
@@ -55,6 +56,9 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
     }
 
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
+    
+    const int fk_order = compute_derivatives ? 1 : 0;
+    MatX J_rotation;
 
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {
@@ -63,12 +67,21 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
         dcPtr_->setupJointPosition(qi, compute_derivatives);
         q.col(i) = qi;
 
-        fkPtr_->fk(jointT, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
+        fkPtr_->compute(0, swingfoot_id, qi, nullptr, &swingfoot_endT, fk_order);
 
-        swingfoot_xyzrpy.col(i) = fkPtr_->Transform2xyzrpy(jointT);
+        swingfoot_xyzrpy.col(i).head(3) = fkPtr_->getTranslation();
+        if (compute_derivatives) {
+            swingfoot_xyzrpy.col(i).tail(3) = 
+                LieSpaceResidual::rotationResidual(fkPtr_, swingfoot_T_des.R, &J_rotation);
+        }
+        else {
+            swingfoot_xyzrpy.col(i).tail(3) = 
+                LieSpaceResidual::rotationResidual(fkPtr_, swingfoot_T_des.R);
+        }
 
         if (compute_derivatives) {
             pq_pz(i).resize(modelPtr_->nv, trajPtr_->varLength);
+
             // fill in independent joints derivatives directly
             for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
                 int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
@@ -81,9 +94,9 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
                 pq_pz(i).row(denpendentJointIndex) = pq_dep_pz.row(j);
             }
 
-            fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
-            fkPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
-            pswingfoot_xyzrpy_pz(i) = jointTJ * pq_pz(i);
+            pswingfoot_xyzrpy_pz(i).resize(6, trajPtr_->varLength);
+            pswingfoot_xyzrpy_pz(i).topRows(3) = fkPtr_->getTranslationJacobian() * pq_pz(i);
+            pswingfoot_xyzrpy_pz(i).bottomRows(3) = J_rotation * pq_pz(i);
         }
     }
 
@@ -95,7 +108,7 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
     // (2) swingfoot always flat and points forward
     VecX g2 = swingfoot_xyzrpy.row(3).transpose(); // swingfoot roll
     VecX g3 = swingfoot_xyzrpy.row(4).transpose(); // swingfoot pitch
-    VecX g4 = swingfoot_xyzrpy.row(5).transpose().array() + M_PI / 2; // swingfoot yaw
+    VecX g4 = swingfoot_xyzrpy.row(5).transpose(); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     VecX g5(4);
