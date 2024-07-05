@@ -466,15 +466,3 @@ install(TARGETS Optlib
 install(TARGETS Kinovalib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-
-# install(TARGETS Digit_example
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
-
-# install(TARGETS DigitModified_example
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
-
-# install(TARGETS Kinova_example
-#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
