@@ -1,6 +1,7 @@
 #ifndef FORWARD_KINEMATICS_HPP
 #define FORWARD_KINEMATICS_HPP
 
+#include <unsupported/Eigen/CXX11/Tensor>
 #include "Transform.h"
 
 namespace IDTO {
@@ -46,6 +47,10 @@ public:
 
 	void getRotationHessian(Eigen::Array<MatX, 3, 3>& result) const;
 	void getRotationHessian(Eigen::Array<Mat3, Eigen::Dynamic, Eigen::Dynamic>& result) const;
+
+	void getTranslationThirdOrderTensor(Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>& result) const;
+
+	void getRotationThirdOrderTensor(Eigen::Tensor<Mat3, 3>& result) const;
 	
     // class members:
 	const Model* modelPtr_ = nullptr;

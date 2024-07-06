@@ -7,8 +7,6 @@
 #include "ForwardKinematics.h"
 #include "LieSpaceResidual.h"
 
-#include <memory>
-
 namespace IDTO {
 
 class KinematicsConstraints : public Constraints {

@@ -6,13 +6,18 @@ namespace LieSpaceResidual {
 Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                     const Eigen::Vector3d& desiredPosition,
                                     Eigen::MatrixXd* gradientPtr_,
-                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
+                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_,
+                                    Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_) {
     if (gradientPtr_ != nullptr) {
         *gradientPtr_ = fkPtr_->getTranslationJacobian();
     }
 
     if (hessianPtr_ != nullptr) {
         fkPtr_->getTranslationHessian(*hessianPtr_);
+    }
+
+    if (thridOrderTensorPtr_ != nullptr) {
+        fkPtr_->getTranslationThirdOrderTensor(*thridOrderTensorPtr_);
     }
     
     return fkPtr_->getTranslation() - desiredPosition;
@@ -21,10 +26,14 @@ Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolve
 Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                  const Eigen::Matrix3d& desiredRotation,
                                  Eigen::MatrixXd* gradientPtr_,
-                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
+                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_,
+                                 Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_) {
     bool compute_derivatives = (gradientPtr_ != nullptr) ||
-                               (hessianPtr_ != nullptr);
-    bool compute_hessian = (hessianPtr_ != nullptr);
+                               (hessianPtr_ != nullptr) ||
+                               (thridOrderTensorPtr_ != nullptr);
+    bool compute_hessian = (hessianPtr_ != nullptr) ||
+                           (thridOrderTensorPtr_ != nullptr);
+    bool compute_thrid_order_tensor = (thridOrderTensorPtr_ != nullptr);
 
     // kinematics chain (derivative is only related to these joints)
     const auto& chain = fkPtr_->chain;
@@ -34,6 +43,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
 
     Eigen::Array<Eigen::Matrix3d, Eigen::Dynamic, 1> dRdq;
     Eigen::Array<Eigen::Matrix3d, Eigen::Dynamic, Eigen::Dynamic> ddRddq;
+    Eigen::Tensor<Eigen::Matrix3d, 3> dddRdddq;
     if (compute_derivatives) {
         fkPtr_->getRotationJacobian(dRdq);
 
@@ -49,6 +59,19 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     ddRddq(i, j) = desiredRotation.transpose() * ddRddq(i, j);
                 }
             }
+
+            if (compute_thrid_order_tensor) {
+                fkPtr_->getRotationThirdOrderTensor(dddRdddq);
+
+                for (auto i : chain) {
+                    for (auto j : chain) {
+                        for (auto k : chain) {
+                            dddRdddq(i, j, k) = desiredRotation.transpose() * dddRdddq(i, j, k);
+                        }
+                    }
+                }
+            
+            }
         }
     }
 
@@ -56,6 +79,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
 
     Eigen::VectorXd dtraceRdq;
     Eigen::MatrixXd ddtraceRddq;
+    Eigen::Tensor<double, 3> dddtraceRdddq;
     if (compute_derivatives) {
         dtraceRdq = Eigen::VectorXd::Zero(dRdq.size());
         for (auto i : chain) {
@@ -69,6 +93,18 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     ddtraceRddq(i, j) = ddRddq(i, j).trace();
                 }
             }
+
+            if (compute_thrid_order_tensor) {
+                dddtraceRdddq.resize(dRdq.size(), dRdq.size(), dRdq.size());
+                dddtraceRdddq.setZero();
+                for (auto i : chain) {
+                    for (auto j : chain) {
+                        for (auto k : chain) {
+                            dddtraceRdddq(i, j, k) = dddRdddq(i, j, k).trace();
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -76,6 +112,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
 
     Eigen::VectorXd dthetadq;
     Eigen::MatrixXd ddthetaddq;
+    Eigen::Tensor<double, 3> dddthetadddq;
     if (compute_derivatives) {
         const double dacosdxTraceR = safedacosdx((traceR - 1) / 2);
         
@@ -93,6 +130,25 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     ddthetaddq(i, j) = 0.5 * 
                         (0.5 * ddacosddxTraceR * dtraceRdq(i) * dtraceRdq(j) +
                          dacosdxTraceR * ddtraceRddq(i, j));
+                }
+            }
+
+            if (compute_thrid_order_tensor) {
+                const double dddacosdddxTraceR = safedddacosdddx((traceR - 1) / 2);
+
+                dddthetadddq.resize(dRdq.size(), dRdq.size(), dRdq.size());
+                dddthetadddq.setZero();
+                for (auto i : chain) {
+                    for (auto j : chain) {
+                        for (auto k : chain) {
+                            dddthetadddq(i, j, k) = 0.5 * 
+                                (0.25 * dddacosdddxTraceR * dtraceRdq(i) * dtraceRdq(j) * dtraceRdq(k) +
+                                 0.5 * ddacosddxTraceR * ddtraceRddq(i, k) * dtraceRdq(j) +
+                                 0.5 * ddacosddxTraceR * dtraceRdq(i) * ddtraceRddq(j, k) +
+                                 0.5 * ddacosddxTraceR * dtraceRdq(k) * ddtraceRddq(i, j) +
+                                 dacosdxTraceR * dddtraceRdddq(i, j, k));
+                        }
+                    }
                 }
             }
         }
@@ -191,6 +247,24 @@ double safeddacosddx(const double x,
     return -x / std::pow(1.0 - x * x, 1.5);
 }
 
+double safedddacosdddx(const double x,
+                       const bool throw_exception) {
+    if (x >= 1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is greater than 1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    else if (x <= -1.0) {
+        if (throw_exception) {
+            throw std::runtime_error("Input value is less than -1.0");
+        }
+        return -1e10; // a very large negative number
+    } 
+    const double xSquare = x * x;
+    return -(1 + 2 * xSquare) / std::pow(1.0 - xSquare, 2.5);
+}
+
 double safexSinx(const double x,
                  const double nearZeroThreshold) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
@@ -225,6 +299,23 @@ double safeddxSinxddx(const double x,
     const double cosx = std::cos(x);
     const double sinxSquare = sinx * sinx;
     return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
+}
+
+double safedddxSinxdddx(const double x,
+                        const double nearZeroThreshold) {
+    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
+        double xSquare = x * x;
+        double xThird = x * xSquare;
+        double XFifth = xThird * xSquare;
+        return 7.0 * x / 15.0 + 31.0 * xThird / 126.0 + 127.0 * XFifth / 1800.0; // + O(x^7)
+    }
+    const double sinx = std::sin(x);
+    const double cosx = std::cos(x);
+    const double sinxSquare = sinx * sinx;
+    return x * cosx / sinxSquare +
+           6 * cosx * cosx / (sinx * sinxSquare) -
+           6 * x * cosx / (sinxSquare * sinxSquare) + 
+           3 / sinx;
 }
 
 }; // namespace LieSpaceResidual

@@ -320,4 +320,48 @@ void ForwardKinematicsSolver::getRotationHessian(Eigen::Array<Mat3, Eigen::Dynam
     }
 }
 
+void ForwardKinematicsSolver::getTranslationThirdOrderTensor(Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>& result) const {
+    if (dddTdddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("dddTdddq is not computed yet!");
+    }
+
+    for (int i = 0; i < 3; i++) {
+        result(i) = Eigen::Tensor<double, 3>(modelPtr_->nv, modelPtr_->nv, modelPtr_->nv);
+        result(i).setZero();
+    }
+
+    for (auto i : chain) {
+        for (auto j : chain) {
+            for (auto k : chain) {
+                result(0)(i, j, k) = dddTdddq[i][j][k].p(0);
+                result(1)(i, j, k) = dddTdddq[i][j][k].p(1);
+                result(2)(i, j, k) = dddTdddq[i][j][k].p(2);
+            }
+        }
+    }
+}
+
+void ForwardKinematicsSolver::getRotationThirdOrderTensor(Eigen::Tensor<Mat3, 3>& result) const {
+    if (dddTdddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("dddTdddq is not computed yet!");
+    }
+
+    result.resize(modelPtr_->nv, modelPtr_->nv, modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        for (int j = 0; j < modelPtr_->nv; j++) {
+            for (int k = 0; k < modelPtr_->nv; k++) {
+                result(i, j, k).setZero();
+            }
+        }
+    }
+
+    for (auto i : chain) {
+        for (auto j : chain) {
+            for (auto k : chain) {
+                result(i, j, k) = dddTdddq[i][j][k].R;
+            }
+        }
+    }
+}
+
 }  // namespace IDTO
