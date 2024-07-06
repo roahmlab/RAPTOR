@@ -430,6 +430,21 @@ target_link_libraries(ForwardKinematics_test PRIVATE
 target_compile_options(ForwardKinematics_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(ForwardKinematicsGradient_test 
+    Tests/KinematicsDynamics/TestForwardKinematicsRPYDerivatives.cpp)
+
+target_link_libraries(ForwardKinematicsGradient_test PRIVATE
+    IDlib
+    Optlib
+    Conslib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(ForwardKinematicsGradient_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(KinematicsConstraints_test 
     Tests/Constraints/TestKinematicsConstraints.cpp)
 

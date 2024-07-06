@@ -5,6 +5,7 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 #include "Utils.h"
+#include "HigherOrderDerivatives.h"
 #include "ForwardKinematics.h"
 
 namespace IDTO {
@@ -13,34 +14,6 @@ namespace IDTO {
 // including the translation and rotation part in SE(3) space, with their derivatives
 // Assume that fkPtr_ is a valid pointer and has computed all corresponding kinematics
 namespace LieSpaceResidual {
-
-double safedacosdx(const double x,
-                   const bool throw_exception = false);
-
-double safeddacosddx(const double x,
-                     const bool throw_exception = false);
-
-double safedddacosdddx(const double x,
-                       const bool throw_exception = false);
-
-// compute x / sin(x) safely and accurately around x = 0
-double safexSinx(const double x,
-                 const double nearZeroThreshold = 1e-6);
-
-// compute d(x / sin(x)) / dx (the derivative of the previous function x / sin(x)) 
-// safely and accurately around x = 0
-double safedxSinxdx(const double x,
-                    const double nearZeroThreshold = 1e-6);
-
-// compute dd(x / sin(x)) / ddx (the derivative of the previous function d(x / sin(x)) / dx) 
-// safely and accurately around x = 0
-double safeddxSinxddx(const double x,
-                      const double nearZeroThreshold = 1e-6);
-
-// compute ddd(x / sin(x)) / dddx (the derivative of the previous function dd(x / sin(x)) / ddx)
-// safely and accurately around x = 0
-double safedddxSinxdddx(const double x,
-                        const double nearZeroThreshold = 1e-6);
 
 // You have to make sure that fkPtr_ has already computed the corresponding forward kinematics
 // and its gradient or hessian before using this function!!!

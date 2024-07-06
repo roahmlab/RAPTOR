@@ -8,6 +8,8 @@
 #include "pinocchio/algorithm/kinematics.hpp"
 #include "pinocchio/algorithm/kinematics-derivatives.hpp"
 
+#include "HigherOrderDerivatives.h"
+
 #include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>

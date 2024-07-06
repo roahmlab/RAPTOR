@@ -9,8 +9,8 @@ int main(int argc, char* argv[]) {
     int num_threads = 32; // this number is currently hardcoded
     omp_set_num_threads(num_threads);
 
-    // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
-    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
+    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
+    // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
     
     // Define robot model
     const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     // Define trajectory parameters
     const double T = 10.0;
     const int N = 50;
-    const int degree = 10;
+    const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
     // Define initial guess
@@ -69,6 +69,7 @@ int main(int argc, char* argv[]) {
         mynlp->constr_viol_tol = 1e-5;
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
@@ -113,6 +114,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
@@ -128,7 +130,7 @@ int main(int argc, char* argv[]) {
 
         if (argc > 1) {
             // const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/";
-            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d10_withoutmotordynamics/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
             std::ofstream position(outputfolder + "exciting-position-" + std::string(argv[1]) + ".csv");
             std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");

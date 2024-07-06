@@ -51,6 +51,7 @@ int main() {
         mynlp->constr_viol_tol = 1e-8;
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 

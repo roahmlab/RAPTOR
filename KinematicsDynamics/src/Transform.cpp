@@ -315,9 +315,9 @@ Eigen::Vector3d Transform::getRPY() const {
     assert(!ifDerivative);
 
     Eigen::Vector3d rpy;
-    rpy << atan2(-R(1,2), R(2,2)), // roll
-           asin(R(0,2)),           // pitch
-           atan2(-R(0,1), R(0,0)); // yaw
+    rpy << atan2(-R(1,2), R(2,2)),                   // roll
+           HigherOrderDerivatives::safeasin(R(0,2)), // pitch
+           atan2(-R(0,1), R(0,0));                   // yaw
 
     return rpy;
 }

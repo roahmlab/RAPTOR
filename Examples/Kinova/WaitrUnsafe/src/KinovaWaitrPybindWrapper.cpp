@@ -229,6 +229,7 @@ py::tuple KinovaWaitrPybindWrapper::optimize() {
                               torque_limits_buffer);
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 

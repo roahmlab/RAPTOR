@@ -233,6 +233,10 @@ Eigen::Matrix3d ForwardKinematicsSolver::getRotation() const {
     return T.R;
 }
 
+Eigen::Vector3d ForwardKinematicsSolver::getRPY() const {
+    return T.getRPY();
+}
+
 Eigen::MatrixXd ForwardKinematicsSolver::getTranslationJacobian() const {
     if (dTdq.size() != modelPtr_->nv) {
         throw std::runtime_error("dTdq is not computed yet!");
@@ -259,6 +263,34 @@ void ForwardKinematicsSolver::getRotationJacobian(Eigen::Array<Mat3, Eigen::Dyna
     for (auto i : chain) {
         result(i) = dTdq[i].R;
     }
+}
+
+Eigen::MatrixXd ForwardKinematicsSolver::getRPYJacobian() const {
+    if (dTdq.size() != modelPtr_->nv) {
+        throw std::runtime_error("dTdq is not computed yet!");
+    }
+    
+    const Mat3& R = T.R; // so that the code is cleaner
+
+    const double rollDenomSquare = R(1,2) * R(1,2) + R(2,2) * R(2,2);
+    const double yawDenomSquare = R(0,0) * R(0,0) + R(0,1) * R(0,1);
+
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, modelPtr_->nv);
+    for (auto i : chain) {
+        const Mat3& dRdq = dTdq[i].R; // so that the code is cleaner
+
+        J(0, i) = (R(1,2) * dRdq(2,2) - 
+                   R(2,2) * dRdq(1,2)) 
+                        / rollDenomSquare;
+
+        J(1, i) = HigherOrderDerivatives::safedasindx(R(0,2)) * dRdq(0,2);
+
+        J(2, i) = (R(0,1) * dRdq(0,0) - 
+                   R(0,0) * dRdq(0,1)) 
+                        / yawDenomSquare;
+    }
+    
+    return J;
 }
 
 void ForwardKinematicsSolver::getTranslationHessian(Eigen::Array<MatX, 3, 1>& result) const {
@@ -316,6 +348,61 @@ void ForwardKinematicsSolver::getRotationHessian(Eigen::Array<Mat3, Eigen::Dynam
     for (auto i : chain) {
         for (auto j : chain) {
             result(i, j) = ddTddq[i][j].R;
+        }
+    }
+}
+
+void ForwardKinematicsSolver::getRPYHessian(Eigen::Array<MatX, 3, 1>& result) const {
+    if (ddTddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("ddTddq is not computed yet!");
+    }
+
+    for (int i = 0; i < 3; i++) {
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
+    }
+
+    const Mat3& R = T.R; // so that the code is cleaner
+
+    const double R12Square = R(1,2) * R(1,2);
+    const double R22Square = R(2,2) * R(2,2);
+    const double rollDenomSquare = R12Square + R22Square;
+    const double rollDenomFourth = rollDenomSquare * rollDenomSquare;
+
+    const double R00Square = R(0,0) * R(0,0);
+    const double R01Square = R(0,1) * R(0,1);
+    const double yawDenomSquare =  R00Square + R01Square;
+    const double yawDenomFourth = yawDenomSquare * yawDenomSquare;
+
+    const double dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
+    const double ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
+
+    for (auto i : chain) {
+        const Mat3& dRdqi = dTdq[i].R; // so that the code is cleaner
+        for (auto j : chain) {
+            const Mat3& dRdqj = dTdq[j].R; // so that the code is cleaner
+            const Mat3& ddRdqdq = ddTddq[i][j].R; // so that the code is cleaner
+
+            result(0)(i, j) = 
+                dRdqj(1,2) * (dRdqi(2,2) / rollDenomSquare + 
+                              (R(1,2)*R(2,2)*dRdqi(1,2) - dRdqi(2,2) * R12Square)
+                                 * (2.0 / rollDenomFourth)) -
+                dRdqj(2,2) * (dRdqi(1,2) / rollDenomSquare + 
+                              (R(1,2)*R(2,2)*dRdqi(2,2) - dRdqi(1,2) * R22Square)
+                                 * (2.0 / rollDenomFourth)) +
+                (R(1,2) * ddRdqdq(2,2) - R(2,2)*ddRdqdq(1,2)) / rollDenomSquare;
+
+            result(1)(i, j) = 
+                ddasinddx * dRdqi(0,2) * dRdqj(0,2) + 
+                dasindx   * ddRdqdq(0,2);
+
+            result(2)(i, j) = 
+                dRdqj(0,1) * (dRdqi(0,0) / yawDenomSquare + 
+                              (R(0,1)*R(0,0)*dRdqi(0,1) - dRdqi(0,0) * R01Square)
+                                 * (2.0 / yawDenomFourth)) -
+                dRdqj(0,0) * (dRdqi(0,1) / yawDenomSquare + 
+                              (R(0,1)*R(0,0)*dRdqi(0,0) - dRdqi(0,1) * R00Square)
+                                 * (2.0 / yawDenomFourth)) +
+                (R(0,1) * ddRdqdq(0,0) - R(0,0)*ddRdqdq(0,1)) / yawDenomSquare;
         }
     }
 }

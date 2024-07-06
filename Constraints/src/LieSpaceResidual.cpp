@@ -108,13 +108,13 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
     }
 
-    double theta = Utils::safeacos((traceR - 1) / 2);
+    double theta = HigherOrderDerivatives::safeacos((traceR - 1) / 2);
 
     Eigen::VectorXd dthetadq;
     Eigen::MatrixXd ddthetaddq;
     Eigen::Tensor<double, 3> dddthetadddq;
     if (compute_derivatives) {
-        const double dacosdxTraceR = safedacosdx((traceR - 1) / 2);
+        const double dacosdxTraceR = HigherOrderDerivatives::safedacosdx((traceR - 1) / 2);
         
         dthetadq = Eigen::VectorXd::Zero(dRdq.size());
         for (auto i : chain) {
@@ -122,7 +122,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
 
         if (compute_hessian) {
-            const double ddacosddxTraceR = safeddacosddx((traceR - 1) / 2);
+            const double ddacosddxTraceR = HigherOrderDerivatives::safeddacosddx((traceR - 1) / 2);
 
             ddthetaddq = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
             for (auto i : chain) {
@@ -134,7 +134,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
             }
 
             if (compute_thrid_order_tensor) {
-                const double dddacosdddxTraceR = safedddacosdddx((traceR - 1) / 2);
+                const double dddacosdddxTraceR = HigherOrderDerivatives::safedddacosdddx((traceR - 1) / 2);
 
                 dddthetadddq.resize(dRdq.size(), dRdq.size(), dRdq.size());
                 dddthetadddq.setZero();
@@ -156,13 +156,13 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
 
     const double st = std::sin(theta);
     const double ct = std::cos(theta);
-    const double xSinxTheta = safexSinx(theta);
+    const double xSinxTheta = HigherOrderDerivatives::safexSinx(theta);
     const Eigen::Matrix3d RRT = residualMatrix - residualMatrix.transpose();
 
     Eigen::Matrix3d logR = 0.5 * xSinxTheta * RRT;
 
     if (compute_derivatives) {
-        const double dxSinxTheta = safedxSinxdx(theta);
+        const double dxSinxTheta = HigherOrderDerivatives::safedxSinxdx(theta);
 
         if (gradientPtr_ != nullptr) {
             Eigen::MatrixXd& gradient = *gradientPtr_;
@@ -178,7 +178,7 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
 
         if (compute_hessian) {
-            const double ddxSinxddx = safeddxSinxddx(theta);
+            const double ddxSinxddx = HigherOrderDerivatives::safeddxSinxddx(theta);
 
             Eigen::Array<Eigen::MatrixXd, 3, 1>& hessian = *hessianPtr_;
             hessian(0) = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
@@ -211,111 +211,6 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
     }
     
     return Utils::unskew(logR);
-}
-
-double safedacosdx(const double x,
-                   const bool throw_exception) {
-    if (x >= 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    else if (x <= -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    return -1.0 / std::sqrt(1.0 - x * x);
-}
-
-double safeddacosddx(const double x,
-                     const bool throw_exception) {
-    if (x >= 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    else if (x <= -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    return -x / std::pow(1.0 - x * x, 1.5);
-}
-
-double safedddacosdddx(const double x,
-                       const bool throw_exception) {
-    if (x >= 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    else if (x <= -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return -1e10; // a very large negative number
-    } 
-    const double xSquare = x * x;
-    return -(1 + 2 * xSquare) / std::pow(1.0 - xSquare, 2.5);
-}
-
-double safexSinx(const double x,
-                 const double nearZeroThreshold) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
-        return 1.0 + xSquare / 6.0 + 7.0 * xFourth / 360.0; // + O(x^6)
-    }
-    return x / std::sin(x);
-}
-
-double safedxSinxdx(const double x,
-                    double nearZeroThreshold) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xThird = x * xSquare;
-        double XFifth = xThird * xSquare;
-        return x / 3.0 + 7.0 * xThird / 90.0 + 31.0 * XFifth / 2520.0; // + O(x^7)
-    }
-    const double sinx = std::sin(x);
-    return (sinx - x * std::cos(x)) / (sinx * sinx);
-}
-
-double safeddxSinxddx(const double x,
-                      const double nearZeroThreshold) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
-        double xSixth = xFourth * xSquare;
-        return 1.0 / 3.0 + 7.0 * xSquare / 30.0 + 31.0 * xFourth / 504.0; // + O(x^6)
-    }
-    const double sinx = std::sin(x);
-    const double cosx = std::cos(x);
-    const double sinxSquare = sinx * sinx;
-    return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
-}
-
-double safedddxSinxdddx(const double x,
-                        const double nearZeroThreshold) {
-    if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xThird = x * xSquare;
-        double XFifth = xThird * xSquare;
-        return 7.0 * x / 15.0 + 31.0 * xThird / 126.0 + 127.0 * XFifth / 1800.0; // + O(x^7)
-    }
-    const double sinx = std::sin(x);
-    const double cosx = std::cos(x);
-    const double sinxSquare = sinx * sinx;
-    return x * cosx / sinxSquare +
-           6 * cosx * cosx / (sinx * sinxSquare) -
-           6 * x * cosx / (sinxSquare * sinxSquare) + 
-           3 / sinx;
 }
 
 }; // namespace LieSpaceResidual

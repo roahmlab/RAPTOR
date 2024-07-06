@@ -16,9 +16,9 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     I.resize(1, modelPtr_->nv);
 
     numInertialParams = 10 * modelPtr_->nv;
-    // numParams = 10 * modelPtr_->nv + // inertial parameters
-    //             3 * modelPtr_->nv;   // motor dynamics parameters
-    numParams = 10 * modelPtr_->nv; // inertial parameters
+    numParams = 10 * modelPtr_->nv + // inertial parameters
+                3 * modelPtr_->nv;   // motor dynamics parameters
+    // numParams = 10 * modelPtr_->nv; // inertial parameters
     phi = VecX::Zero(numParams); 
 
     for (int i = 0; i < modelPtr_->nv; i++) {
@@ -38,18 +38,18 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         I(i) << mm * CC * CC.transpose() + II, mC,
                 mC.transpose(),                mm * MatX::Identity(3, 3);
 
-        phi.segment<10>(10 * i) << I(i)(0, 0), // inertia (in parent joint frame)
+        phi.segment<10>(10 * i) << I(i)(0, 0),      // inertia (in parent joint frame)
                                    I(i)(0, 1),
                                    I(i)(0, 2),
                                    I(i)(1, 1),
                                    I(i)(1, 2),
                                    I(i)(2, 2),
                                    Utils::skew(mC), // center of mass (in parent joint frame)
-                                   mm; // mass
+                                   mm;              // mass
 
-        // phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
-        //                                              modelPtr_->damping(i),
-        //                                              modelPtr_->rotorInertia(i);
+        phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
+                                                     modelPtr_->damping(i),
+                                                     modelPtr_->rotorInertia(i);
     }
 
     a_grav << modelPtr_->gravity.angular(),
@@ -320,20 +320,20 @@ void RegressorInverseDynamics::compute(const VecX& z,
         Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, numInertialParams) = Ycurrent;
 
         // motor dynamics
-        // for (int j = 0; j < modelPtr_->nv; j++) {
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = Utils::sign(q_d(j));
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = q_d(j);
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = q_dd(j);
+        for (int j = 0; j < modelPtr_->nv; j++) {
+            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = Utils::sign(q_d(j));
+            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = q_d(j);
+            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = q_dd(j);
 
-        //     if (compute_derivatives) {
-        //         for (int k = 0; k < trajPtr_->varLength; k++) {
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
+            if (compute_derivatives) {
+                for (int k = 0; k < trajPtr_->varLength; k++) {
+                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
+                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
+                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
                 
-        //         }
-        //     }
-        // }
+                }
+            }
+        }
 
         // compute torque
         tau(i) = Y.middleRows(i * modelPtr_->nv, modelPtr_->nv) * phi;

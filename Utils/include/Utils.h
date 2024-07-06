@@ -18,40 +18,6 @@ inline double rad2deg(const double rad) {
     return rad * 180.0 / M_PI;
 }
 
-inline double safeasin(const double x,
-                       const bool throw_exception = false) {
-    if (x > 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return M_PI / 2.0;
-    } 
-    else if (x < -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return -M_PI / 2.0;
-    } 
-    return std::asin(x);
-}
-
-inline double safeacos(const double x,
-                       const bool throw_exception = false) {
-    if (x > 1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is greater than 1.0");
-        }
-        return 0.0;
-    } 
-    else if (x < -1.0) {
-        if (throw_exception) {
-            throw std::runtime_error("Input value is less than -1.0");
-        }
-        return M_PI;
-    } 
-    return std::acos(x);
-}
-
 inline double wrapToPi(const double angle) {
     double res = angle;
     while (res > M_PI) {

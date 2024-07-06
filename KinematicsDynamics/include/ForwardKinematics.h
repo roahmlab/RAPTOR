@@ -3,6 +3,7 @@
 
 #include <unsupported/Eigen/CXX11/Tensor>
 #include "Transform.h"
+#include "HigherOrderDerivatives.h"
 
 namespace IDTO {
 
@@ -39,14 +40,20 @@ public:
 
 	Mat3 getRotation() const;
 
+	Vec3 getRPY() const; // roll, pitch, yaw
+
 	MatX getTranslationJacobian() const;
 
 	void getRotationJacobian(Eigen::Array<Mat3, Eigen::Dynamic, 1>& result) const;
+
+	MatX getRPYJacobian() const;
 
 	void getTranslationHessian(Eigen::Array<MatX, 3, 1>& result) const;
 
 	void getRotationHessian(Eigen::Array<MatX, 3, 3>& result) const;
 	void getRotationHessian(Eigen::Array<Mat3, Eigen::Dynamic, Eigen::Dynamic>& result) const;
+
+	void getRPYHessian(Eigen::Array<MatX, 3, 1>& result) const;
 
 	void getTranslationThirdOrderTensor(Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>& result) const;
 
