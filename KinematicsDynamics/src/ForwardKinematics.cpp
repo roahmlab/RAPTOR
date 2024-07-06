@@ -272,8 +272,8 @@ Eigen::MatrixXd ForwardKinematicsSolver::getRPYJacobian() const {
     
     const Mat3& R = T.R; // so that the code is cleaner
 
-    const double rollDenomSquare = R(1,2) * R(1,2) + R(2,2) * R(2,2);
-    const double yawDenomSquare = R(0,0) * R(0,0) + R(0,1) * R(0,1);
+    const double rollDenom = R(1,2) * R(1,2) + R(2,2) * R(2,2);
+    const double yawDenom = R(0,0) * R(0,0) + R(0,1) * R(0,1);
 
     Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, modelPtr_->nv);
     for (auto i : chain) {
@@ -281,13 +281,13 @@ Eigen::MatrixXd ForwardKinematicsSolver::getRPYJacobian() const {
 
         J(0, i) = (R(1,2) * dRdq(2,2) - 
                    R(2,2) * dRdq(1,2)) 
-                        / rollDenomSquare;
+                        / rollDenom;
 
         J(1, i) = HigherOrderDerivatives::safedasindx(R(0,2)) * dRdq(0,2);
 
         J(2, i) = (R(0,1) * dRdq(0,0) - 
                    R(0,0) * dRdq(0,1)) 
-                        / yawDenomSquare;
+                        / yawDenom;
     }
     
     return J;
@@ -365,13 +365,13 @@ void ForwardKinematicsSolver::getRPYHessian(Eigen::Array<MatX, 3, 1>& result) co
 
     const double R12Square = R(1,2) * R(1,2);
     const double R22Square = R(2,2) * R(2,2);
-    const double rollDenomSquare = R12Square + R22Square;
-    const double rollDenomFourth = rollDenomSquare * rollDenomSquare;
+    const double rollDenom = R12Square + R22Square;
+    const double rollDenomSquare = rollDenom * rollDenom;
 
     const double R00Square = R(0,0) * R(0,0);
     const double R01Square = R(0,1) * R(0,1);
-    const double yawDenomSquare =  R00Square + R01Square;
-    const double yawDenomFourth = yawDenomSquare * yawDenomSquare;
+    const double yawDenom =  R00Square + R01Square;
+    const double yawDenomSquare = yawDenom * yawDenom;
 
     const double dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
     const double ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
@@ -383,26 +383,26 @@ void ForwardKinematicsSolver::getRPYHessian(Eigen::Array<MatX, 3, 1>& result) co
             const Mat3& ddRdqdq = ddTddq[i][j].R; // so that the code is cleaner
 
             result(0)(i, j) = 
-                dRdqj(1,2) * (dRdqi(2,2) / rollDenomSquare + 
-                              (R(1,2)*R(2,2)*dRdqi(1,2) - dRdqi(2,2) * R12Square)
-                                 * (2.0 / rollDenomFourth)) -
-                dRdqj(2,2) * (dRdqi(1,2) / rollDenomSquare + 
-                              (R(1,2)*R(2,2)*dRdqi(2,2) - dRdqi(1,2) * R22Square)
-                                 * (2.0 / rollDenomFourth)) +
-                (R(1,2) * ddRdqdq(2,2) - R(2,2)*ddRdqdq(1,2)) / rollDenomSquare;
+                dRdqj(1,2) * (dRdqi(2,2) / rollDenom + 
+                              (R(1,2) * R(2,2) * dRdqi(1,2) - dRdqi(2,2) * R12Square)
+                                 * (2.0 / rollDenomSquare)) -
+                dRdqj(2,2) * (dRdqi(1,2) / rollDenom + 
+                              (R(1,2) * R(2,2) * dRdqi(2,2) - dRdqi(1,2) * R22Square)
+                                 * (2.0 / rollDenomSquare)) +
+                (R(1,2) * ddRdqdq(2,2) - R(2,2) * ddRdqdq(1,2)) / rollDenom;
 
             result(1)(i, j) = 
                 ddasinddx * dRdqi(0,2) * dRdqj(0,2) + 
                 dasindx   * ddRdqdq(0,2);
 
             result(2)(i, j) = 
-                dRdqj(0,1) * (dRdqi(0,0) / yawDenomSquare + 
-                              (R(0,1)*R(0,0)*dRdqi(0,1) - dRdqi(0,0) * R01Square)
-                                 * (2.0 / yawDenomFourth)) -
-                dRdqj(0,0) * (dRdqi(0,1) / yawDenomSquare + 
-                              (R(0,1)*R(0,0)*dRdqi(0,0) - dRdqi(0,1) * R00Square)
-                                 * (2.0 / yawDenomFourth)) +
-                (R(0,1) * ddRdqdq(0,0) - R(0,0)*ddRdqdq(0,1)) / yawDenomSquare;
+                dRdqj(0,1) * (dRdqi(0,0) / yawDenom + 
+                              (R(0,1) * R(0,0) * dRdqi(0,1) - dRdqi(0,0) * R01Square)
+                                 * (2.0 / yawDenomSquare)) -
+                dRdqj(0,0) * (dRdqi(0,1) / yawDenom + 
+                              (R(0,1) * R(0,0) * dRdqi(0,0) - dRdqi(0,1) * R00Square)
+                                 * (2.0 / yawDenomSquare)) +
+                (R(0,1) * ddRdqdq(0,0) - R(0,0) * ddRdqdq(0,1)) / yawDenom;
         }
     }
 }
@@ -446,6 +446,153 @@ void ForwardKinematicsSolver::getRotationThirdOrderTensor(Eigen::Tensor<Mat3, 3>
         for (auto j : chain) {
             for (auto k : chain) {
                 result(i, j, k) = dddTdddq[i][j][k].R;
+            }
+        }
+    }
+}
+
+void ForwardKinematicsSolver::getRPYThirdOrderTensor(const VecX& x, Eigen::Array<MatX, 3, 1>& result) const {
+    if (dddTdddq.size() != modelPtr_->nv) {
+        throw std::runtime_error("dddTdddq is not computed yet!");
+    }
+
+    if (x.size() != modelPtr_->nv) {
+        throw std::invalid_argument("x has to be of size modelPtr_->nv");
+    }
+
+    for (int i = 0; i < 3; i++) {
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
+    }
+
+    const Mat3& R = T.R; // so that the code is cleaner
+
+    const double R12Square = R(1,2) * R(1,2);
+    const double R22Square = R(2,2) * R(2,2);
+    const double rollDenom = R12Square + R22Square;
+    const double rollDenomSquare = rollDenom * rollDenom;
+    const double rollDenomThird = rollDenomSquare * rollDenom;
+
+    const double R00Square = R(0,0) * R(0,0);
+    const double R01Square = R(0,1) * R(0,1);
+    const double yawDenom =  R00Square + R01Square;
+    const double yawDenomSquare = yawDenom * yawDenom;
+    const double yawDenomThird = yawDenomSquare * yawDenom;
+
+    const double dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
+    const double ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
+    const double dddasindddx = HigherOrderDerivatives::safedddasindddx(R(0,2));
+
+    for (auto i : chain) {
+        const Mat3& dRdqi = dTdq[i].R; // so that the code is cleaner
+
+        const double temp1 = 2.0 * R(1,2) * dRdqi(1,2) / rollDenomSquare;
+        const double temp2 = 2.0 * R(2,2) * dRdqi(2,2) / rollDenomSquare;
+        const double temp3 = 8.0 * R(1,2) * dRdqi(1,2) * R22Square / rollDenomThird;
+        const double temp4 = 8.0 * R(2,2) * dRdqi(2,2) * R12Square / rollDenomThird;
+        const double temp5 = temp1 - temp2 + temp4 - temp3;
+
+        const double temp6 = 2.0 * R(0,1) * dRdqi(0,1) / yawDenomSquare;
+        const double temp7 = 2.0 * R(0,0) * dRdqi(0,0) / yawDenomSquare;
+        const double temp8 = 8.0 * R(0,1) * dRdqi(0,1) * R00Square / yawDenomThird;
+        const double temp9 = 8.0 * R(0,0) * dRdqi(0,0) * R01Square / yawDenomThird;
+        const double temp10 = temp6 - temp7 + temp9 - temp8;
+
+        for (auto j : chain) {
+            const Mat3& dRdqj = dTdq[j].R; // so that the code is cleaner
+            const Mat3& ddRdqidqj = ddTddq[i][j].R; // so that the code is cleaner
+            for (auto k : chain) {
+                const Mat3& dRdqk = dTdq[k].R; // so that the code is cleaner
+                const Mat3& ddRdqidqk = ddTddq[i][k].R; // so that the code is cleaner
+                const Mat3& ddRdqjdqk = ddTddq[j][k].R; // so that the code is cleaner
+                const Mat3& dddRdqdqdq = dddTdddq[i][j][k].R; // so that the code is cleaner
+
+                const double T0_i_j_k = 
+                    -ddRdqjdqk(2,2) * (R(1,2) * temp2 + dRdqi(1,2) / rollDenom - dRdqi(1,2) * R22Square / rollDenomSquare * 2.0) 
+                    + ddRdqjdqk(1,2) * (R(2,2) * temp1 + dRdqi(2,2) / rollDenom - dRdqi(2,2) * R12Square / rollDenomSquare * 2.0)
+                    + dRdqk(1,2) * (
+                        -dRdqj(1,2) * (
+                            R(1,2) * dRdqi(2,2) / rollDenomSquare * 6.0 
+                            - R(2,2) * dRdqi(1,2) / rollDenomSquare * 2.0 
+                            - (R(1,2) * R(1,2) * R(1,2)) * dRdqi(2,2) / rollDenomThird * 8.0 
+                            + R(2,2) * dRdqi(1,2) * R12Square / rollDenomThird * 8.0
+                        ) 
+                        + dRdqj(2,2) * temp5 
+                        + ddRdqidqj(2,2) / rollDenom 
+                        - ddRdqidqj(2,2) * R12Square / rollDenomSquare * 2.0 
+                        + R(1,2) * R(2,2) * ddRdqidqj(1,2) / rollDenomSquare * 2.0
+                    ) 
+                    - dRdqk(2,2) * (
+                        dRdqj(2,2) * (
+                            R(1,2) * dRdqi(2,2) / rollDenomSquare * 2.0 
+                            - R(2,2) * dRdqi(1,2) / rollDenomSquare * 6.0 
+                            + (R(2,2) * R(2,2) * R(2,2)) * dRdqi(1,2) / rollDenomThird * 8.0 
+                            - R(1,2) * dRdqi(2,2) * R22Square / rollDenomThird * 8.0
+                        ) 
+                        - dRdqj(1,2) * temp5 
+                        + ddRdqidqj(1,2) / rollDenom 
+                        - ddRdqidqj(1,2) * R22Square / rollDenomSquare * 2.0 
+                        + R(1,2) * R(2,2) * ddRdqidqj(2,2) / rollDenomSquare * 2.0
+                    ) 
+                    - ddRdqidqk(1,2) * (
+                        dRdqj(2,2) * (1.0 / rollDenom - R22Square / rollDenomSquare * 2.0) 
+                        - R(1,2) * R(2,2) * dRdqj(1,2) / rollDenomSquare * 2.0
+                    ) 
+                    + ddRdqidqk(2,2) * (
+                        dRdqj(1,2) * (1.0 / rollDenom - R12Square / rollDenomSquare * 2.0) 
+                        - R(1,2) * R(2,2) * dRdqj(2,2) / rollDenomSquare * 2.0
+                    ) 
+                    + R(1,2) * dddRdqdqdq(2,2) / rollDenom 
+                    - R(2,2) * dddRdqdqdq(1,2) / rollDenom;
+
+
+                const double T1_i_j_k = 
+                    dddasindddx * dRdqi(0,2) * dRdqj(0,2) * dRdqk(0,2) +
+                    ddasinddx * ddRdqidqk(0,2) * dRdqj(0,2) +
+                    ddasinddx * ddRdqjdqk(0,2) * dRdqi(0,2) +
+                    ddasinddx * ddRdqidqj(0,2) * dRdqk(0,2) +
+                    dasindx * dddRdqdqdq(0,2);
+
+                const double T2_i_j_k = 
+                    -ddRdqjdqk(0,0) * (R(0,1) * temp7 + dRdqi(0,1) / yawDenom - dRdqi(0,1) * R00Square / yawDenomSquare * 2.0) 
+                    + ddRdqjdqk(0,1) * (R(0,0) * temp6 + dRdqi(0,0) / yawDenom - dRdqi(0,0) * R01Square / yawDenomSquare * 2.0)
+                    + dRdqk(0,1) * (
+                        -dRdqj(0,1) * (
+                            R(0,1) * dRdqi(0,0) / yawDenomSquare * 6.0 
+                            - R(0,0) * dRdqi(0,1) / yawDenomSquare * 2.0 
+                            - (R(0,1) * R(0,1) * R(0,1)) * dRdqi(0,0) / yawDenomThird * 8.0 
+                            + R(0,0) * dRdqi(0,1) * R01Square / yawDenomThird * 8.0
+                        ) 
+                        + dRdqj(0,0) * temp10 
+                        + ddRdqidqj(0,0) / yawDenom 
+                        - ddRdqidqj(0,0) * R01Square / yawDenomSquare * 2.0 
+                        + R(0,1) * R(0,0) * ddRdqidqj(0,1) / yawDenomSquare * 2.0
+                    ) 
+                    - dRdqk(0,0) * (
+                        dRdqj(0,0) * (
+                            R(0,1) * dRdqi(0,0) / yawDenomSquare * 2.0 
+                            - R(0,0) * dRdqi(0,1) / yawDenomSquare * 6.0 
+                            + (R(0,0) * R(0,0) * R(0,0)) * dRdqi(0,1) / yawDenomThird * 8.0 
+                            - R(0,1) * dRdqi(0,0) * R00Square / yawDenomThird * 8.0
+                        ) 
+                        - dRdqj(0,1) * temp10 
+                        + ddRdqidqj(0,1) / yawDenom 
+                        - ddRdqidqj(0,1) * R00Square / yawDenomSquare * 2.0 
+                        + R(0,1) * R(0,0) * ddRdqidqj(0,0) / yawDenomSquare * 2.0
+                    ) 
+                    - ddRdqidqk(0,1) * (
+                        dRdqj(0,0) * (1.0 / yawDenom - R00Square / yawDenomSquare * 2.0) 
+                        - R(0,1) * R(0,0) * dRdqj(0,1) / yawDenomSquare * 2.0
+                    ) 
+                    + ddRdqidqk(0,0) * (
+                        dRdqj(0,1) * (1.0 / yawDenom - R01Square / yawDenomSquare * 2.0) 
+                        - R(0,1) * R(0,0) * dRdqj(0,0) / yawDenomSquare * 2.0
+                    ) 
+                    + R(0,1) * dddRdqdqdq(0,0) / yawDenom 
+                    - R(0,0) * dddRdqdqdq(0,1) / yawDenom;
+
+                result(0)(i, j) += T0_i_j_k * x(k);
+                result(1)(i, j) += T1_i_j_k * x(k);
+                result(2)(i, j) += T2_i_j_k * x(k);
             }
         }
     }

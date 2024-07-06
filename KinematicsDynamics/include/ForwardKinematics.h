@@ -58,6 +58,9 @@ public:
 	void getTranslationThirdOrderTensor(Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>& result) const;
 
 	void getRotationThirdOrderTensor(Eigen::Tensor<Mat3, 3>& result) const;
+
+	// return third-order-tensor * x
+	void getRPYThirdOrderTensor(const VecX& x, Eigen::Array<MatX, 3, 1>& result) const;
 	
     // class members:
 	const Model* modelPtr_ = nullptr;

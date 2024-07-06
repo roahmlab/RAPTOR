@@ -83,17 +83,17 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
-    // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
-    std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
-    std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
-    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
-                                                                               model_input,
-                                                                               jtype_input,
-                                                                               groundCenter,
-                                                                               groundOrientation,
-                                                                               groundSize));   
-    constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+    // // Customized constraints (collision avoidance with ground)
+    // std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
+    // std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
+    // std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
+    // constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
+    //                                                                            model_input,
+    //                                                                            jtype_input,
+    //                                                                            groundCenter,
+    //                                                                            groundOrientation,
+    //                                                                            groundSize));   
+    // constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 
     // check dimensions of regroupMatrix
     if (ridPtr_->Y.cols() != regroupMatrix.rows()) {

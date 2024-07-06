@@ -7,8 +7,8 @@ using namespace Ipopt;
 class FKGradientChecker : public Optimizer {
 public:
     using Model = pinocchio::Model;
-    using VecX = Eigen::VectorXd;
     using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
@@ -68,8 +68,16 @@ public:
 
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-        fkPtr_->compute(0, model.nq, z);
-        Vec3 rpy = fkPtr_->getRPY();
+        // fkPtr_->compute(0, model.nq, z);
+        // Vec3 rpy = fkPtr_->getRPY();
+
+        // obj_value = roll_weight * rpy(0) + 
+        //             pitch_weight * rpy(1) + 
+        //             yaw_weight * rpy(2);
+
+        fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 1);
+        MatX Jrpy = fkPtr_->getRPYJacobian();
+        Vec3 rpy = Jrpy * VecX::Ones(n);
 
         obj_value = roll_weight * rpy(0) + 
                     pitch_weight * rpy(1) + 
@@ -91,13 +99,27 @@ public:
 
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-        fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 1);
-        MatX Jrpy = fkPtr_->getRPYJacobian();
+        // fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 1);
+        // MatX Jrpy = fkPtr_->getRPYJacobian();
+
+        // for ( Index i = 0; i < n; i++ ) {
+        //     grad_f[i] = roll_weight * Jrpy(0, i) + 
+        //                 pitch_weight * Jrpy(1, i) + 
+        //                 yaw_weight * Jrpy(2, i);
+        // }
+
+        fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 2);
+        Eigen::Array<MatX, 3, 1> Hrpy;
+        fkPtr_->getRPYHessian(Hrpy);
+
+        VecX Jr = Hrpy(0) * VecX::Ones(n);
+        VecX Jp = Hrpy(1) * VecX::Ones(n);
+        VecX Jy = Hrpy(2) * VecX::Ones(n);
 
         for ( Index i = 0; i < n; i++ ) {
-            grad_f[i] = roll_weight * Jrpy(0, i) + 
-                        pitch_weight * Jrpy(1, i) + 
-                        yaw_weight * Jrpy(2, i);
+            grad_f[i] = roll_weight * Jr(i) + 
+                        pitch_weight * Jp(i) + 
+                        yaw_weight * Jy(i);
         }
 
         return true;
@@ -116,13 +138,21 @@ public:
 
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-        fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 2);
-        Eigen::Array<MatX, 3, 1> Hrpy;
-        fkPtr_->getRPYHessian(Hrpy);
+        // fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 2);
+        // Eigen::Array<MatX, 3, 1> Hrpy;
+        // fkPtr_->getRPYHessian(Hrpy);
 
-        hess_f = roll_weight * Hrpy(0) + 
-                 pitch_weight * Hrpy(1) + 
-                 yaw_weight * Hrpy(2);
+        // hess_f = roll_weight * Hrpy(0) + 
+        //          pitch_weight * Hrpy(1) + 
+        //          yaw_weight * Hrpy(2);
+
+        fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 3);
+        Eigen::Array<MatX, 3, 1> Trpy;
+        fkPtr_->getRPYThirdOrderTensor(VecX::Ones(n), Trpy);
+
+        hess_f = roll_weight * Trpy(0) + 
+                 pitch_weight * Trpy(1) + 
+                 yaw_weight * Trpy(2);
 
         return true;
     }

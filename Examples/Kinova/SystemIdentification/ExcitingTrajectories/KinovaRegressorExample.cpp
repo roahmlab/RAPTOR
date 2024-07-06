@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     const double T = 10.0;
     const int N = 50;
     const int degree = 5;
-    const double base_frequency = 2.0 * M_PI / T;
+    const double base_frequency = 2.0 * M_PI;
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
