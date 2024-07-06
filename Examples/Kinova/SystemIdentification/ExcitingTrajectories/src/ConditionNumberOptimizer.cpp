@@ -19,7 +19,7 @@ bool ConditionNumberOptimizer::set_parameters(
         const Number T_input,
         const int N_input,
         const int degree_input,
-        const int base_frequency_input,
+        const double base_frequency_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
         const std::string& regroupMatrixFileName,
@@ -27,6 +27,7 @@ bool ConditionNumberOptimizer::set_parameters(
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input
 ) {
+    enable_hessian = false;
     x0 = x0_input;
     regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
 

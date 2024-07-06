@@ -35,7 +35,7 @@ public:
         const double T_input,
         const int N_input,
         const int degree_input,
-        const int base_frequency_input,
+        const double base_frequency_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
         const std::string& regroupMatrixFileName,

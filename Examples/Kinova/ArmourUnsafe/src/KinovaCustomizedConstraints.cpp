@@ -18,6 +18,8 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
                                                                      boxSize_input);
 
     // m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
+
+    collisionAvoidancePtr_->onlyComputeDerivativesForMinimumDistance = true;
     m = trajPtr_->N * NUM_SPHERES;
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);

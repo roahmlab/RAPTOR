@@ -33,16 +33,16 @@ int main(int argc, char* argv[]) {
     // Define trajectory parameters
     const double T = 10.0;
     const int N = 50;
-    const int degree = 4;
-    const int base_frequency = 10;
+    const int degree = 10;
+    const double base_frequency = 2.0 * M_PI / T;
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 2 * 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 1.0;
+    Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 0.1;
     z.block((2 * degree + 1) * model.nv, 0, model.nv, 1) = 
-        2 * 2.0 * Eigen::VectorXd::Random(model.nv).array() - 2.0;
-    z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1) = 
         2 * 1.0 * Eigen::VectorXd::Random(model.nv).array() - 1.0;
+    z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1) = 
+        2 * 0.5 * Eigen::VectorXd::Random(model.nv).array() - 0.5;
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
                               joint_limits_buffer,
                               velocity_limits_buffer,
                               torque_limits_buffer);
+        mynlp->constr_viol_tol = 1e-5;
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
@@ -74,10 +75,9 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-6);
-    app->Options()->SetNumericValue("constr_viol_tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 60.0);
+    app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
+	app->Options()->SetNumericValue("max_wall_time", 100.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    // app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	if (mynlp->enable_hessian) {
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-3);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
 
         if (argc > 1) {
             // const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/";
-            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4_withoutmotordynamics/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d10_withoutmotordynamics/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
             std::ofstream position(outputfolder + "exciting-position-" + std::string(argv[1]) + ".csv");
             std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");
