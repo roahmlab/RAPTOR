@@ -20,16 +20,14 @@ namespace LieSpaceResidual {
 Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                     const Eigen::Vector3d& desiredPosition,
                                     Eigen::MatrixXd* gradientPtr_ = nullptr,
-                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr,
-                                    Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_ = nullptr);
+                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
 
 // You have to make sure that fkPtr_ has already computed the corresponding forward kinematics
 // and its gradient or hessian before using this function!!!
 Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                  const Eigen::Matrix3d& desiredRotation,
                                  Eigen::MatrixXd* gradientPtr_ = nullptr,
-                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr,
-                                 Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_ = nullptr);
+                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
 
 }; // namespace LieSpaceResidual
 }; // namespace IDTO

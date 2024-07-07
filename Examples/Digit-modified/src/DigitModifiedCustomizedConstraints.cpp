@@ -58,7 +58,6 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
     
     const int fk_order = compute_derivatives ? 1 : 0;
-    MatX J_rotation;
 
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {
@@ -70,14 +69,7 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
         fkPtr_->compute(0, swingfoot_id, qi, nullptr, &swingfoot_endT, fk_order);
 
         swingfoot_xyzrpy.col(i).head(3) = fkPtr_->getTranslation();
-        if (compute_derivatives) {
-            swingfoot_xyzrpy.col(i).tail(3) = 
-                LieSpaceResidual::rotationResidual(fkPtr_, swingfoot_T_des.R, &J_rotation);
-        }
-        else {
-            swingfoot_xyzrpy.col(i).tail(3) = 
-                LieSpaceResidual::rotationResidual(fkPtr_, swingfoot_T_des.R);
-        }
+        swingfoot_xyzrpy.col(i).tail(3) = fkPtr_->getRPY();
 
         if (compute_derivatives) {
             pq_pz(i).resize(modelPtr_->nv, trajPtr_->varLength);
@@ -96,7 +88,7 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
 
             pswingfoot_xyzrpy_pz(i).resize(6, trajPtr_->varLength);
             pswingfoot_xyzrpy_pz(i).topRows(3) = fkPtr_->getTranslationJacobian() * pq_pz(i);
-            pswingfoot_xyzrpy_pz(i).bottomRows(3) = J_rotation * pq_pz(i);
+            pswingfoot_xyzrpy_pz(i).bottomRows(3) = fkPtr_->getRPYJacobian() * pq_pz(i);
         }
     }
 
@@ -108,7 +100,7 @@ void DigitModifiedCustomizedConstraints::compute(const VecX& z,
     // (2) swingfoot always flat and points forward
     VecX g2 = swingfoot_xyzrpy.row(3).transpose(); // swingfoot roll
     VecX g3 = swingfoot_xyzrpy.row(4).transpose(); // swingfoot pitch
-    VecX g4 = swingfoot_xyzrpy.row(5).transpose(); // swingfoot yaw
+    VecX g4 = swingfoot_xyzrpy.row(5).transpose().array() + M_PI / 2; // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     VecX g5(4);

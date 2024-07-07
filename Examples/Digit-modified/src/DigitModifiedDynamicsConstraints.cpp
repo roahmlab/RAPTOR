@@ -287,8 +287,8 @@ void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
                     &stance_foot_endT, 
                     0);
 
-    c_translation = LieSpaceResidual::translationResidual(fkPtr_, stance_foot_T_des.p);
-    c_rotation = LieSpaceResidual::rotationResidual(fkPtr_, stance_foot_T_des.R);
+    c_translation = fkPtr_->getTranslation() - stance_foot_T_des.p;
+    c_rotation = fkPtr_->getRPY() - stance_foot_T_des.getRPY();
 
     c = VecX(6);
     c << c_translation, c_rotation;
@@ -305,8 +305,8 @@ void DigitModifiedDynamicsConstraints::get_J(const VecX& q) {
                     &stance_foot_endT, 
                     1);
 
-    LieSpaceResidual::translationResidual(fkPtr_, stance_foot_T_des.p, &J_translation);
-    LieSpaceResidual::rotationResidual(fkPtr_, stance_foot_T_des.R, &J_rotation);
+    J_translation = fkPtr_->getTranslationJacobian();
+    J_rotation = fkPtr_->getRPYJacobian();
 
     J << J_translation, J_rotation;
 }
@@ -322,8 +322,9 @@ void DigitModifiedDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const Ve
                     nullptr, 
                     &stance_foot_endT, 
                     2);
-    LieSpaceResidual::translationResidual(fkPtr_, stance_foot_T_des.p, nullptr, &H_translation);
-    LieSpaceResidual::rotationResidual(fkPtr_, stance_foot_T_des.R, nullptr, &H_rotation);
+
+    fkPtr_->getTranslationHessian(H_translation);
+    fkPtr_->getRPYHessian(H_rotation);
 
     Jx_partial_dq.row(0) = H_translation(0) * x;
     Jx_partial_dq.row(1) = H_translation(1) * x;
@@ -344,8 +345,9 @@ void DigitModifiedDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const V
                     nullptr, 
                     &stance_foot_endT, 
                     2);
-    LieSpaceResidual::translationResidual(fkPtr_, stance_foot_T_des.p, nullptr, &H_translation);
-    LieSpaceResidual::rotationResidual(fkPtr_, stance_foot_T_des.R, nullptr, &H_rotation);
+
+    fkPtr_->getTranslationHessian(H_translation);
+    fkPtr_->getRPYHessian(H_rotation);
 
     JTx_partial_dq.setZero();
     JTx_partial_dq += H_translation(0) * x(0);
@@ -362,20 +364,22 @@ void DigitModifiedDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const V
     assert(Jxy_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
     assert(Jxy_partial_dq.cols() == modelPtr_->nv);
 
-    // // fkPtr_->fk(stance_foot_T, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // // fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // // fkPtr_->fk_hessian(ddTddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    // fkPtr_->fk_thirdorder(dddTdddq, *modelPtr_, jtype, contact_joint_id, 0, q, stance_foot_endT, startT);
-    
-    // Eigen::Array<MatX, 6, 1> TOx_contact;
-    // for (int i = 0; i < 6; i++) {
-    //     TOx_contact(i) = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
-    // }
-    // fkPtr_->Transform2xyzrpyThirdOrder(TOx_contact, x, stance_foot_T, dTdq, ddTddq, dddTdddq);
+    fkPtr_->compute(0, 
+                    contact_joint_id, 
+                    q, 
+                    nullptr, 
+                    &stance_foot_endT, 
+                    3);
 
-    // for (int i = 0; i < 6; i++) {
-    //     Jxy_partial_dq.row(i) = TOx_contact(i) * y;
-    // }
+    fkPtr_->getTranslationThirdOrderTensor(x, TOx_translation);
+    fkPtr_->getRPYThirdOrderTensor(x, TOx_rotation);
+
+    Jxy_partial_dq.row(0) = TOx_translation(0) * y;
+    Jxy_partial_dq.row(1) = TOx_translation(1) * y;
+    Jxy_partial_dq.row(2) = TOx_translation(2) * y;
+    Jxy_partial_dq.row(3) = TOx_rotation(0) * y;
+    Jxy_partial_dq.row(4) = TOx_rotation(1) * y;
+    Jxy_partial_dq.row(5) = TOx_rotation(2) * y;
 }
 
 }; // namespace DigitModified

@@ -1,7 +1,6 @@
 #ifndef FORWARD_KINEMATICS_HPP
 #define FORWARD_KINEMATICS_HPP
 
-#include <unsupported/Eigen/CXX11/Tensor>
 #include "Transform.h"
 #include "HigherOrderDerivatives.h"
 
@@ -55,11 +54,10 @@ public:
 
 	void getRPYHessian(Eigen::Array<MatX, 3, 1>& result) const;
 
-	void getTranslationThirdOrderTensor(Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>& result) const;
+	// return third-order-tensor * x, which is a 2D matrix
+	void getTranslationThirdOrderTensor(const VecX& x, Eigen::Array<MatX, 3, 1>& result) const;
 
-	void getRotationThirdOrderTensor(Eigen::Tensor<Mat3, 3>& result) const;
-
-	// return third-order-tensor * x
+	// return third-order-tensor * x, which is a 2D matrix
 	void getRPYThirdOrderTensor(const VecX& x, Eigen::Array<MatX, 3, 1>& result) const;
 	
     // class members:

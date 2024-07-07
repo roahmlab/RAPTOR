@@ -9,8 +9,7 @@ using namespace IDTO;
 using namespace DigitModified;
 using namespace Ipopt;
 
-using std::cout;
-using std::endl;
+const std::string filepath = "../Examples/Digit-modified/data/";
 
 int main(int argc, char* argv[]) {
     // set openmp number of threads
@@ -45,42 +44,42 @@ int main(int argc, char* argv[]) {
     const int N = 16;
     const TimeDiscretization time_discretization = Chebyshev;
     const int degree = 5;
-    // const std::string output_name = "Chebyshev-N16";
+    const std::string output_name = "Chebyshev-N16";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.27;
     gp.swingfoot_begin_x_des = -0.25;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
-    gp.swingfoot_end_y_des = -0.40;                                  
+    gp.swingfoot_end_y_des = -0.40;                     
 
-    std::ifstream initial_guess("initial-digit-modified-Bezier.txt");
-    // std::ifstream initial_guess("solution-digit-modified-Bezier-" + output_name + ".txt");
+    std::ifstream initial_guess(filepath + "initial-digit-modified-Bezier.txt");
 
-    double temp = 0;
-    std::vector<double> z_array;
-    while (initial_guess >> temp) {
-        z_array.push_back(temp);
-    }
-    initial_guess.close();
-    Eigen::VectorXd z(z_array.size());
-    for (int i = 0; i < z_array.size(); i++) {
-        z(i) = z_array[i];
-    }
+    // double temp = 0;
+    // std::vector<double> z_array;
+    // while (initial_guess >> temp) {
+    //     z_array.push_back(temp);
+    // }
+    // initial_guess.close();
+    // Eigen::VectorXd z(z_array.size());
+    // for (int i = 0; i < z_array.size(); i++) {
+    //     z(i) = z_array[i];
+    // }
+    Eigen::VectorXd z = Eigen::VectorXd::Zero(NUM_INDEPENDENT_JOINTS * (degree + 1) + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
-    // add disturbance to initial guess
-    Eigen::VectorXd disturbance(z_array.size());
-    if (argc > 1) {
-        char* end = nullptr;
-        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-        disturbance.setRandom();
-        disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
-    }
-    else {
-        disturbance.setZero();
-    }
+    // // add disturbance to initial guess
+    // Eigen::VectorXd disturbance(z_array.size());
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    //     disturbance.setRandom();
+    //     disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
+    // }
+    // else {
+    //     disturbance.setZero();
+    // }
 
-    z = z + disturbance;
+    // z = z + disturbance;
     
     SmartPtr<DigitModifiedSingleStepOptimizer> mynlp = new DigitModifiedSingleStepOptimizer();
     try {
@@ -92,31 +91,29 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gp);
+        mynlp->constr_viol_tol = 1e-5;
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 500);
+    app->Options()->SetNumericValue("tol", 1e-4);
+	app->Options()->SetNumericValue("max_wall_time", 60.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
-    // app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    // app->Options()->SetNumericValue("dual_inf_tol", 10);
-    // app->Options()->SetNumericValue("acceptable_constr_viol_tol", 1e-4);
-    // app->Options()->SetNumericValue("acceptable_dual_inf_tol", 10);
+    app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 2000);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking
-    // const std::string outputfilename = "../data/Digit-modified/ipopt_digit-modified-Bezier-" + std::string(argv[1]) + ".out";
-    // app->Options()->SetStringValue("output_file", outputfilename.c_str());
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
@@ -144,19 +141,20 @@ int main(int argc, char* argv[]) {
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
     }
     catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {
-    //     std::ofstream solution("solution-digit-modified-Bezier-" + output_name + ".txt");
+    //     std::ofstream solution(filepath + "solution-digit-modified-Bezier-" + output_name + ".txt");
     //     solution << std::setprecision(20);
     //     for (int i = 0; i < mynlp->numVars; i++) {
     //         solution << mynlp->solution[i] << std::endl;
     //     }
     //     solution.close();
 
-    //     std::ofstream trajectory("trajectory-digit-modified-Bezier-" + output_name + ".txt");
+    //     std::ofstream trajectory(filepath + "trajectory-digit-modified-Bezier-" + output_name + ".txt");
     //     trajectory << std::setprecision(20);
     //     for (int i = 0; i < NUM_JOINTS; i++) {
     //         for (int j = 0; j < N; j++) {
@@ -190,44 +188,6 @@ int main(int argc, char* argv[]) {
     //     }
     //     trajectory.close();
     // }
-
-    // try {
-	//     Number ztry[mynlp->numVars];
-    //     Number g[mynlp->numCons];
-    //     Number obj_value = 0;
-    //     for (int i = 0; i < mynlp->numVars; i++) {
-    //         ztry[i] = z[i];
-    //     }
-    //     mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
-    //     mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
-    //     std::cout << "Objective function value: " << obj_value << std::endl;
-    //     mynlp->summarize_constraints(mynlp->numCons, g);
-    // }
-    // catch (std::exception& e) {
-    //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
-    // }
-
-    // SmartPtr<DigitModifiedSingleStepOptimizer> testnlp = new DigitModifiedSingleStepOptimizer();
-    // testnlp->set_parameters(mynlp->solution,
-    //                         T,
-    //                         2000,
-    //                         Uniform,
-    //                         degree,
-    //                         model,
-    //                         jtype,
-    //                         gp);
-    // status = app->Initialize();
-    // status = app->OptimizeTNLP(testnlp);
-    // Number ztry[testnlp->numVars];
-    // Number g[testnlp->numCons];
-    // Number obj_value = 0;
-    // for (int i = 0; i < testnlp->numVars; i++) {
-    //     ztry[i] = mynlp->solution[i];
-    // }
-    // testnlp->eval_f(testnlp->numVars, ztry, false, obj_value);
-    // testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-    // std::cout << "Objective function value: " << obj_value << std::endl;
-    // testnlp->summarize_constraints(testnlp->numCons, g);
 
     return 0;
 }

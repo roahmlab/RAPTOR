@@ -6,18 +6,13 @@ namespace LieSpaceResidual {
 Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                     const Eigen::Vector3d& desiredPosition,
                                     Eigen::MatrixXd* gradientPtr_,
-                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_,
-                                    Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_) {
+                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
     if (gradientPtr_ != nullptr) {
         *gradientPtr_ = fkPtr_->getTranslationJacobian();
     }
 
     if (hessianPtr_ != nullptr) {
         fkPtr_->getTranslationHessian(*hessianPtr_);
-    }
-
-    if (thridOrderTensorPtr_ != nullptr) {
-        fkPtr_->getTranslationThirdOrderTensor(*thridOrderTensorPtr_);
     }
     
     return fkPtr_->getTranslation() - desiredPosition;
@@ -26,14 +21,10 @@ Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolve
 Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
                                  const Eigen::Matrix3d& desiredRotation,
                                  Eigen::MatrixXd* gradientPtr_,
-                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_,
-                                 Eigen::Array<Eigen::Tensor<double, 3>, 3, 1>* thridOrderTensorPtr_) {
+                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
     bool compute_derivatives = (gradientPtr_ != nullptr) ||
-                               (hessianPtr_ != nullptr) ||
-                               (thridOrderTensorPtr_ != nullptr);
-    bool compute_hessian = (hessianPtr_ != nullptr) ||
-                           (thridOrderTensorPtr_ != nullptr);
-    bool compute_thrid_order_tensor = (thridOrderTensorPtr_ != nullptr);
+                               (hessianPtr_ != nullptr);
+    bool compute_hessian = (hessianPtr_ != nullptr);
 
     // kinematics chain (derivative is only related to these joints)
     const auto& chain = fkPtr_->chain;
@@ -59,19 +50,6 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     ddRddq(i, j) = desiredRotation.transpose() * ddRddq(i, j);
                 }
             }
-
-            if (compute_thrid_order_tensor) {
-                fkPtr_->getRotationThirdOrderTensor(dddRdddq);
-
-                for (auto i : chain) {
-                    for (auto j : chain) {
-                        for (auto k : chain) {
-                            dddRdddq(i, j, k) = desiredRotation.transpose() * dddRdddq(i, j, k);
-                        }
-                    }
-                }
-            
-            }
         }
     }
 
@@ -91,18 +69,6 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
             for (auto i : chain) {
                 for (auto j : chain) {
                     ddtraceRddq(i, j) = ddRddq(i, j).trace();
-                }
-            }
-
-            if (compute_thrid_order_tensor) {
-                dddtraceRdddq.resize(dRdq.size(), dRdq.size(), dRdq.size());
-                dddtraceRdddq.setZero();
-                for (auto i : chain) {
-                    for (auto j : chain) {
-                        for (auto k : chain) {
-                            dddtraceRdddq(i, j, k) = dddRdddq(i, j, k).trace();
-                        }
-                    }
                 }
             }
         }
@@ -130,25 +96,6 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                     ddthetaddq(i, j) = 0.5 * 
                         (0.5 * ddacosddxTraceR * dtraceRdq(i) * dtraceRdq(j) +
                          dacosdxTraceR * ddtraceRddq(i, j));
-                }
-            }
-
-            if (compute_thrid_order_tensor) {
-                const double dddacosdddxTraceR = HigherOrderDerivatives::safedddacosdddx((traceR - 1) / 2);
-
-                dddthetadddq.resize(dRdq.size(), dRdq.size(), dRdq.size());
-                dddthetadddq.setZero();
-                for (auto i : chain) {
-                    for (auto j : chain) {
-                        for (auto k : chain) {
-                            dddthetadddq(i, j, k) = 0.5 * 
-                                (0.25 * dddacosdddxTraceR * dtraceRdq(i) * dtraceRdq(j) * dtraceRdq(k) +
-                                 0.5 * ddacosddxTraceR * ddtraceRddq(i, k) * dtraceRdq(j) +
-                                 0.5 * ddacosddxTraceR * dtraceRdq(i) * ddtraceRddq(j, k) +
-                                 0.5 * ddacosddxTraceR * dtraceRdq(k) * ddtraceRddq(i, j) +
-                                 dacosdxTraceR * dddtraceRdddq(i, j, k));
-                        }
-                    }
                 }
             }
         }

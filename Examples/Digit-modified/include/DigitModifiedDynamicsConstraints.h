@@ -7,7 +7,6 @@
 
 #include "DigitModifiedConstants.h"
 #include "DynamicsConstraints.h"
-#include "KinematicsConstraints.h"
 #include "ForwardKinematics.h"
 
 namespace IDTO {
@@ -156,8 +155,11 @@ public:
     MatX J_translation;
     MatX J_rotation;
 
-    Eigen::Array<Eigen::MatrixXd, 3, 1> H_translation;
-    Eigen::Array<Eigen::MatrixXd, 3, 1> H_rotation;
+    Eigen::Array<MatX, 3, 1> H_translation;
+    Eigen::Array<MatX, 3, 1> H_rotation;
+
+    Eigen::Array<MatX, 3, 1> TOx_translation;
+    Eigen::Array<MatX, 3, 1> TOx_rotation;
 };
 
 }; // namespace DigitModified

@@ -8,6 +8,7 @@ class FKGradientChecker : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
+    using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -27,7 +28,7 @@ public:
         model = model_input;
         jtype = jtype_input;
 
-        fkPtr_ = std::make_shared<ForwardKinematicsSolver>(&model, jtype);
+        fkPtr_ = std::make_unique<ForwardKinematicsSolver>(&model, jtype);
 
         return true;
     }
@@ -168,7 +169,7 @@ public:
     Model model;
     Eigen::VectorXi jtype;
 
-    std::shared_ptr<ForwardKinematicsSolver> fkPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
     const double roll_weight = 1.0;
     const double pitch_weight = 1.0;
