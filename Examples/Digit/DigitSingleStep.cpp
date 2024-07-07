@@ -60,9 +60,9 @@ int main(int argc, char* argv[]) {
     const std::string output_name = "14-5";
 
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.15;
-    gp.swingfoot_begin_y_des = 0.00;
-    gp.swingfoot_end_y_des = -0.00;
+    gp.swingfoot_midstep_z_des = 0.30;
+    gp.swingfoot_begin_y_des = 0.40;
+    gp.swingfoot_end_y_des = -0.40;
     // gp.swingfoot_midstep_z_des = std::atof(argv[2]);
     // gp.swingfoot_begin_y_des = std::atof(argv[1]);
     // gp.swingfoot_end_y_des = - std::atof(argv[1]);
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 	app->Options()->SetNumericValue("max_wall_time", 100.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 2000);
+    app->Options()->SetIntegerValue("max_iter", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");

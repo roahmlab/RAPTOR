@@ -320,7 +320,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
                     &stance_foot_endT, 
                     0);
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
-    q.block(0, 0, 6, 1) = torso_T.getXYZRPY();
+    qcopy.block(0, 0, 6, 1) = torso_T.getXYZRPY();
 
     // gsl multidimensional root-finding
     const gsl_multiroot_fdfsolver_type *T;
@@ -345,6 +345,8 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     s = gsl_multiroot_fdfsolver_alloc(T, n);
     gsl_multiroot_fdfsolver_set(s, &f, x);
 
+    // printf("\nstart gsl iterations:\n");
+
     do {
         iter++;
         status = gsl_multiroot_fdfsolver_iterate(s);
@@ -357,11 +359,14 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
         // for (int i = 0; i < 6; i++) {
         //     printf("%f, ", gsl_vector_get(s->x, i)) ;
         // }
+        // for (int i = 0; i < 6; i++) {
+        //     printf("%f, ", gsl_vector_get(s->f, 18 + i)) ;
+        // }
         // printf("\n");
     }
     while (status == GSL_CONTINUE && iter < 50);
 
-    // printf ("total iter = %ld, status = %s\n", iter, gsl_strerror(status));
+    // printf ("total iter = %ld, status = %s\n\n", iter, gsl_strerror(status));
 
     // the optimal solution found by gsl!
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
