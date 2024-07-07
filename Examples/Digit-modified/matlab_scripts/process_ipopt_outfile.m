@@ -1,8 +1,12 @@
-close all; clear; clc;
+close all; clear;
 
 % Set the print level to 5 in ipopt
 % This script reads iterations, constraint violation, objective value
 % from ipopt.out and visualizes them.
+
+num_instances = 8;
+disturbance = 20;
+discretization = 'Uniform';
 
 num_trails = 100;
 
@@ -13,10 +17,10 @@ data4 = zeros(num_trails,1);
 data5 = zeros(num_trails,1);
 running_time = zeros(num_trails, 1);
 
-%%
+%% 
 for i = 1:num_trails
-%     ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d-N16-20-Chebyshev.out', i);
-    ipopt_filename = sprintf('/home/roahmlab/Documents/TROPIC/examples/digit-modified/data/ipopt-%d-d20.out', i);
+    ipopt_filename = sprintf('ipopt_digit-modified-Bezier-%d-%d-%d-%s.out', i, num_instances, disturbance, discretization);
+%     ipopt_filename = sprintf('/home/roahmlab/Documents/TROPIC/examples/digit-modified/data/ipopt-%d-d20.out', i);
 
     fid = fopen(ipopt_filename, 'r');
     
@@ -51,7 +55,7 @@ for i = 1:num_trails
             constrViolation = [constrViolation, str2double(line_process{3})];
         elseif length(line_process) == 6 && ~isempty(str2double(line_process{end})) && strcmp(line_process{2}, 'seconds')
             running_time(i) = str2double(line_process{end});
-        elseif length(line_process) == 4 && strcmp(line_process{1}, 'Objective')
+        elseif length(line_process) == 3 && strcmp(line_process{1}, 'Objective')
             energy = str2double(line_process{end});
         end
     end
@@ -93,7 +97,7 @@ end
 % title('final constraint violation for 100 experiments (TROPIC)');
 
 %%
-% save('comp-Bezier-N16-50-Uniform.mat', 'data1', "data2", "data3", "data4");
+save(sprintf('comp-Bezier-N%d-%d-%s.mat', num_instances, disturbance, discretization), 'data1', "data2", "data3", "data4");
 
 disp(vpa([median(data4), max(data4)], 6));
 disp([median(data1), max(data1)])

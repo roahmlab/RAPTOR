@@ -67,7 +67,13 @@ int main(int argc, char* argv[]) {
     // gp.swingfoot_begin_y_des = std::atof(argv[1]);
     // gp.swingfoot_end_y_des = - std::atof(argv[1]);
 
+    // std::ifstream initial_guess("initial-digit-Bezier.txt");
+    // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
     std::ifstream initial_guess(filepath + "initial-digit-Bezier-leftstance.txt");
+    if (initial_guess.fail()) {
+        throw std::runtime_error("Error opening initial guess file!");
+    }
+  
     double temp = 0;
     std::vector<double> z_array;
     while (initial_guess >> temp) {
@@ -98,14 +104,14 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-	app->Options()->SetNumericValue("max_wall_time", 100.0);
+	  app->Options()->SetNumericValue("max_wall_time", 100.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 100);
-	app->Options()->SetIntegerValue("print_level", 5);
+	  app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+	  app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking

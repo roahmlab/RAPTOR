@@ -46,38 +46,49 @@ int main(int argc, char* argv[]) {
     const int degree = 5;
     const std::string output_name = "Chebyshev-N16";
 
+    if (argc > 2) {
+        N = std::stoi(argv[2]);
+    }
+    if (argc > 3) {
+        int temp = std::stoi(argv[3]);
+        time_discretization = (temp == 0) ? 
+                                  Uniform : 
+                                  Chebyshev;
+    }
+
+    std::cout << "Experiment settings: " << N << ' ' << time_discretization << std::endl;
+
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.27;
     gp.swingfoot_begin_x_des = -0.25;
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
-    gp.swingfoot_end_y_des = -0.40;                     
+    gp.swingfoot_end_y_des = -0.40;
 
     std::ifstream initial_guess(filepath + "initial-digit-modified-Bezier.txt");
 
-    // double temp = 0;
-    // std::vector<double> z_array;
-    // while (initial_guess >> temp) {
-    //     z_array.push_back(temp);
-    // }
-    // initial_guess.close();
-    // Eigen::VectorXd z(z_array.size());
-    // for (int i = 0; i < z_array.size(); i++) {
-    //     z(i) = z_array[i];
-    // }
-    Eigen::VectorXd z = Eigen::VectorXd::Zero(NUM_INDEPENDENT_JOINTS * (degree + 1) + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+    double temp = 0;
+    std::vector<double> z_array;
+    while (initial_guess >> temp) {
+        z_array.push_back(temp);
+    }
+    initial_guess.close();
+    Eigen::VectorXd z(z_array.size());
+    for (int i = 0; i < z_array.size(); i++) {
+        z(i) = z_array[i];
+    }
 
-    // // add disturbance to initial guess
-    // Eigen::VectorXd disturbance(z_array.size());
-    // if (argc > 1) {
-    //     char* end = nullptr;
-    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-    //     disturbance.setRandom();
-    //     disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
-    // }
-    // else {
-    //     disturbance.setZero();
-    // }
+    // add disturbance to initial guess
+    Eigen::VectorXd disturbance(z.size());
+    if (argc > 1) {
+        char* end = nullptr;
+        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+        disturbance.setRandom();
+        disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
+    }
+    else {
+        disturbance.setZero();
+    }
 
     // z = z + disturbance;
     
@@ -110,7 +121,7 @@ int main(int argc, char* argv[]) {
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    app->Options()->SetStringValue("nlp_scaling_method", "none");
+    // app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
@@ -136,14 +147,16 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        // solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        // solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
+
+    std::cout << "ActualDataYouNeed: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {

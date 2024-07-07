@@ -13,6 +13,8 @@ COPY docker/HSL.zip /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
+    gdb \
+    valgrind \
     libboost-all-dev \
     libeigen3-dev \
     libgsl-dev \

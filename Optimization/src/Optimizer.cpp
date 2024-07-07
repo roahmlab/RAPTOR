@@ -560,12 +560,12 @@ void Optimizer::finalize_solution(
         for( Index i = 0; i < n; i++ ) {
             x_new[i] = solution(i);
         }
-
+        
         // re-evaluate constraints to update values in each constraint instances
         eval_f(n, x_new, true, obj_value_copy);
         eval_g(n, x_new, true, m, g_copy.data());
         summarize_constraints(m, g_copy.data());
-
+        
         std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before" 
                   << " with cost: " << optimalIpoptObjValue
                   << " and constraint violation: " << final_constr_violation << std::endl;
