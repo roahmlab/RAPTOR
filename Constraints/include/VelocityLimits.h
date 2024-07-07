@@ -27,7 +27,9 @@ public:
 
     // class methods:
         // compute constraints
-    virtual void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     virtual void compute_bounds() override;
@@ -35,7 +37,7 @@ public:
         // print violation information
     virtual void print_violation_info() override;
 
-    // class variables:
+    // class members:
     std::shared_ptr<Trajectories> trajPtr_;
 
     VecX lowerLimits;

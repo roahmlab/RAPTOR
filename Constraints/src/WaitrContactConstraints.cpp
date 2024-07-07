@@ -18,13 +18,15 @@ WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<CustomizedInver
     pg_pz.resize(m, idPtr_->trajPtr_->varLength);
 }
 
-void WaitrContactConstraints::compute(const VecX& z, bool compute_derivatives) {
-    if (is_computed(z, compute_derivatives)) {
+void WaitrContactConstraints::compute(const VecX& z, 
+                                      bool compute_derivatives,
+                                      bool compute_hessian) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    if (compute_derivatives) {
-        pg_pz.setZero();
+    if (compute_hessian) {
+        throw std::invalid_argument("WaitrContactConstraints does not support hessian computation");
     }
     
     idPtr_->compute(z, compute_derivatives);

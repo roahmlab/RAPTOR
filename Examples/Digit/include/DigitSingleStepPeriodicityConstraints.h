@@ -50,7 +50,9 @@ public:
     ~DigitSingleStepPeriodicityConstraints() = default;
 
     // class methods
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) override;
 
     void compute_bounds() override;
 

@@ -25,7 +25,7 @@ bool DigitSingleStepOptimizerWithObstacles::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+    const std::vector<Vec3>& zonotopeCenters_input,
     const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
     const VecX& q_act0_input,
     const VecX& q_act_d0_input
@@ -66,13 +66,13 @@ bool DigitSingleStepOptimizerWithObstacles::set_parameters(
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_LOWER_VEC(i) = deg2rad(JOINT_LIMITS_LOWER[i]);
+        JOINT_LIMITS_LOWER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_LOWER[i]);
     }
 
     // convert joint limits from degree to radian   
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
+        JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
     VecX TORQUE_LIMITS_LOWER_VEC(NUM_INDEPENDENT_JOINTS);
@@ -166,10 +166,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, false);
 
@@ -206,10 +203,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_grad_f(
        throw std::runtime_error("*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, true);
 

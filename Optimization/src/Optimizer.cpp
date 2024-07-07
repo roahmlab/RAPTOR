@@ -101,6 +101,8 @@ bool Optimizer::get_starting_point(
     }
 
     if (x0.size() != numVars) {
+        std::cerr << "x0.size() = " << x0.size() << std::endl;
+        std::cerr << "numVars = " << numVars << std::endl;
         THROW_EXCEPTION(IpoptException, "*** Error x0.size() != numVars in get_starting_point!");
     }
 
@@ -131,7 +133,7 @@ bool Optimizer::update_minimal_cost_solution(
         ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
     }
     else { // update currentIpoptSolution
-        if (ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::UNINITIALIZED) {
                 THROW_EXCEPTION(IpoptException, "*** Error ifCurrentIpoptFeasible is not initialized!");
             }
@@ -158,6 +160,20 @@ bool Optimizer::update_minimal_cost_solution(
 }
 // [TNLP_update_minimal_cost_solution]
 
+// [eval_hess_f]
+// returns the hessian of the objective
+bool Optimizer::eval_hess_f(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    MatX&         hess_f
+) 
+{
+    throw std::invalid_argument("Objective function hessian is not implemented! Disable hessian please.");
+    return false;
+}
+// [eval_hess_f]
+
 // [TNLP_eval_g]
 // return the value of the constraints: g(x)
 bool Optimizer::eval_g(
@@ -176,10 +192,7 @@ bool Optimizer::eval_g(
     }
 
     // fill in a Eigen Vector instance of decision variables
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     Index iter = 0;
     bool ifFeasibleCurrIter = true;
@@ -227,7 +240,7 @@ bool Optimizer::eval_g(
                                      OptimizerConstants::FeasibleState::INFEASIBLE;
     }
     else { // update currentIpoptSolution
-        if (ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
             if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
                 THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
             }
@@ -350,7 +363,148 @@ bool Optimizer::eval_h(
    Number*       values
 )
 {
-    return false;
+    if (!enable_hessian) {
+        return false;
+    }
+
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_h!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_h!");
+    }
+    if (nele_hess != n * (n + 1) / 2) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of nele_hess in eval_h!");
+    }
+
+    if (values == NULL) {
+        /* return the structure */
+        /* the hessian for this problem is actually dense */
+        Index iter = 0;
+        for(Index i = 0; i < n; i++){
+            for(Index j = i; j < n; j++){
+                iRow[iter] = i;
+                jCol[iter] = j;
+                iter++;
+            }
+        }
+    }
+    else {
+        // fill in a Eigen Vector instance of decision variables
+        VecX z(n);
+        for ( Index i = 0; i < n; i++ ) {
+            z(i) = x[i];
+        }
+
+        MatX hessian(n, n);
+        hessian.setZero();
+
+        MatX hess_f(n, n);
+        hess_f.setZero();
+
+        if (obj_factor != 0) {
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
+            try {
+                eval_hess_f(n, x, new_x, hess_f);
+            }
+            catch (std::exception& e) {
+                std::cerr << "Error in eval_hess_f: " << std::endl;
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_hess_f compute time is" << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
+            }
+
+            hessian += obj_factor * hess_f;
+        }
+
+        Index iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            // if lambda is zero for this constraint, skip (make CheckDerivative faster)
+            bool lambdaAllZeroForThisConstraint = true;
+            for (Index innerIter = iter; innerIter < iter + constraintsPtrVec_[c]->m; innerIter++) {
+                if (lambda[innerIter] != 0) {
+                    lambdaAllZeroForThisConstraint = false;
+                    break;
+                }
+            }
+            if (lambdaAllZeroForThisConstraint) {
+                iter += constraintsPtrVec_[c]->m;
+                continue;
+            } 
+
+            // compute constraints
+            if (output_computation_time) {
+                start_time = std::chrono::high_resolution_clock::now();
+            }
+
+            try {
+                constraintsPtrVec_[c]->compute(z, true, true);
+            }
+            catch (std::exception& e) {
+                std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
+                std::cout << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error in eval_h in: " + constraintsNameVec_[c] + "! Check previous error message.");
+            }
+
+            if (output_computation_time) {
+                end_time = std::chrono::high_resolution_clock::now();
+                std::cout << "eval_hessian_g compute time for " << constraintsNameVec_[c] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
+            }
+
+            if (constraintsPtrVec_[c]->pg_pz_pz.size() != constraintsPtrVec_[c]->m) {
+                std::cerr << "Error in " 
+                          << constraintsNameVec_[c] 
+                          << ": " 
+                          << constraintsPtrVec_[c]->pg_pz_pz.size() 
+                          << " != "
+                          << constraintsPtrVec_[c]->m << std::endl;
+                THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have wrong sizes!");
+            }
+
+            for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
+                if (constraintsPtrVec_[c]->pg_pz_pz(i).rows() != n || 
+                    constraintsPtrVec_[c]->pg_pz_pz(i).cols() != n) {
+                    std::cerr << "Error in " 
+                              << constraintsNameVec_[c] 
+                              << ": " 
+                              << constraintsPtrVec_[c]->pg_pz_pz(i).rows() 
+                              << "x" 
+                              << constraintsPtrVec_[c]->pg_pz_pz(i).cols() 
+                              << " != " 
+                              << n 
+                              << "x" 
+                              << n << std::endl;
+                    THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ have wrong sizes!");
+                }
+
+                hessian += lambda[iter] * constraintsPtrVec_[c]->pg_pz_pz(i);
+                iter++;
+            }
+        }
+
+        iter = 0;
+        for(Index i = 0; i < n; i++){
+            for(Index j = i; j < n; j++){
+                values[iter] = hessian(i, j);
+                iter++;
+            }
+        }
+
+        // auto end_time = std::chrono::high_resolution_clock::now();
+        // std::cout << "eval_h time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds.\n";
+    }
+
+    return true;
 }
 // [TNLP_eval_h]
 
@@ -406,12 +560,12 @@ void Optimizer::finalize_solution(
         for( Index i = 0; i < n; i++ ) {
             x_new[i] = solution(i);
         }
-
+        
         // re-evaluate constraints to update values in each constraint instances
         eval_f(n, x_new, true, obj_value_copy);
         eval_g(n, x_new, true, m, g_copy.data());
         summarize_constraints(m, g_copy.data());
-
+        
         std::cout << "Solution is not feasible or optimal but we have found one optimal feasible solution before" 
                   << " with cost: " << optimalIpoptObjValue
                   << " and constraint violation: " << final_constr_violation << std::endl;

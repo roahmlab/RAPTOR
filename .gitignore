@@ -38,6 +38,7 @@
 .vscode/
 build/
 data/
+Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/
 
 test_oracle.py
 

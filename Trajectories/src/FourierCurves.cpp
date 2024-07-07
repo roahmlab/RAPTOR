@@ -2,11 +2,15 @@
 
 namespace IDTO {
 
-FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree_input) : 
-    Trajectories(tspan_input, Nact_input),
-    degree(degree_input) {
-    varLength = (2 * degree + 4) * Nact;
-
+FourierCurves::FourierCurves(const VecX& tspan_input, 
+                             int Nact_input, 
+                             int degree_input,
+                             VecX q0_input,
+                             VecX q_d0_input) : 
+    Trajectories((2 * degree_input + 2) * Nact_input, tspan_input, Nact_input),
+    degree(degree_input),
+    q0(q0_input),
+    q_d0(q_d0_input) {
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -20,13 +24,48 @@ FourierCurves::FourierCurves(const VecX& tspan_input, int Nact_input, int degree
 
     pF0_pw = VecX::Zero(2 * degree + 1);
     pdF0_pw = VecX::Zero(2 * degree + 1);
+
+    if (q0.size() == Nact) {
+        optimize_initial_position = false;
+    }
+    else {
+        optimize_initial_position = true;
+        varLength += Nact;
+    }
+    
+    if (q_d0.size() == Nact) {
+        optimize_initial_velocity = false;
+    }
+    else {
+        optimize_initial_velocity = true;
+        varLength += Nact;
+    }
+
+    // varLength is changed so we have to reallocate the memory
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
+    }
 }
 
-FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input) :
-    Trajectories(T_input, N_input, Nact_input, time_discretization),
-    degree(degree_input) {
-    varLength = (2 * degree + 4) * Nact;
-
+FourierCurves::FourierCurves(double T_input, 
+                             int N_input, 
+                             int Nact_input, 
+                             TimeDiscretization time_discretization,
+                             int degree_input,
+                             VecX q0_input,
+                             VecX q_d0_input) :
+    Trajectories((2 * degree_input + 4) * Nact_input, T_input, N_input, Nact_input, time_discretization),
+    degree(degree_input),
+    q0(q0_input),
+    q_d0(q_d0_input) {
     F = VecX::Zero(2 * degree + 1);
     dF = VecX::Zero(2 * degree + 1);
     ddF = VecX::Zero(2 * degree + 1);
@@ -40,20 +79,66 @@ FourierCurves::FourierCurves(double T_input, int N_input, int Nact_input, TimeDi
 
     pF0_pw = VecX::Zero(2 * degree + 1);
     pdF0_pw = VecX::Zero(2 * degree + 1);
+
+    if (q0.size() == Nact) {
+        optimize_initial_position = false;
+    }
+    else {
+        optimize_initial_position = true;
+        varLength += Nact;
+    }
+    
+    if (q_d0.size() == Nact) {
+        optimize_initial_velocity = false;
+    }
+    else {
+        optimize_initial_velocity = true;
+        varLength += Nact;
+    }
+
+    // varLength is changed so we have to reallocate the memory
+    for (int i = 0; i < N; i++) {
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
+    }
 }
 
-void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
+void FourierCurves::compute(const VecX& z, 
+                            bool compute_derivatives,
+                            bool compute_hessian) {
     if (z.size() < varLength) {
+        std::cerr << "function input: z.size() = " << z.size() << std::endl;
+        std::cerr << "desired: varLength = " << varLength << std::endl;
         throw std::invalid_argument("FourierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
+
+    if (compute_hessian) {
+        throw std::invalid_argument("FourierCurves: Hessian computation not implemented");
+    }
 
     Eigen::MatrixXd temp = z.head((2 * degree + 2) * Nact);
-    // MatX coefficients = temp.reshaped(2 * degree + 2, Nact);
-    MatX coefficients = reshape(temp, 2 * degree + 2, Nact);
-    VecX q_act0       = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
-    VecX q_act_d0     = z.block((2 * degree + 2) * Nact + Nact, 0, Nact, 1);
+    MatX coefficients = Utils::reshape(temp, 2 * degree + 2, Nact);
+
+    if (optimize_initial_position) {
+        q0 = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
+    }
+    if (optimize_initial_velocity) {
+        if (optimize_initial_position) {
+            q_d0 = z.block((2 * degree + 2) * Nact + Nact, 0, Nact, 1);
+        }
+        else {
+            q_d0 = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
+        }
+    }
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x);
@@ -129,11 +214,11 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
 
             double q_d_raw = dF.dot(kernel);
             double q_d_raw0 = dF0.dot(kernel);
-            q_d(x)(i) = q_d_raw + (q_act_d0(i) - q_d_raw0);
+            q_d(x)(i) = q_d_raw + (q_d0(i) - q_d_raw0);
 
-            double q_raw = F.dot(kernel) + (q_act_d0(i) - q_d_raw0) * t;
+            double q_raw = F.dot(kernel) + (q_d0(i) - q_d_raw0) * t;
             double q_raw0 = F0.dot(kernel);
-            q(x)(i) = q_raw + (q_act0(i) - q_raw0);
+            q(x)(i) = q_raw + (q0(i) - q_raw0);
 
             if (compute_derivatives) {
                 // pq_pz
@@ -145,11 +230,20 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
                 // derivative with respect to w
                 pq_pz(x)(i, i * (2 * degree + 2) + (2 * degree + 1)) = kernel.dot(pF_pw - pF0_pw - pdF0_pw * tspan(x));
 
-                // derivative with respect to q_act0
-                pq_pz(x)(i, Nact * (2 * degree + 2) + i) = 1; 
+                // derivative with respect to q0
+                if (optimize_initial_position) {
+                    pq_pz(x)(i, Nact * (2 * degree + 2) + i) = 1; 
+                }
 
-                // derivative with respect to q_act_d0
-                pq_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = tspan(x);   
+                // derivative with respect to q_d0
+                if (optimize_initial_velocity) {
+                    if (optimize_initial_position) {
+                        pq_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = tspan(x);   
+                    }
+                    else {
+                        pq_pz(x)(i, Nact * (2 * degree + 2) + i) = tspan(x);
+                    }
+                }
 
                 // pq_d_pz
                 // derivative with respect to a_i
@@ -160,8 +254,15 @@ void FourierCurves::compute(const VecX& z, bool compute_derivatives) {
                 // derivative with respect to w
                 pq_d_pz(x)(i, i * (2 * degree + 2) + (2 * degree + 1)) = kernel.dot(pdF_pw - pdF0_pw);        
 
-                // derivative with respect to q_act_d0
-                pq_d_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = 1;  
+                // derivative with respect to q_d0
+                if (optimize_initial_velocity) {
+                    if (optimize_initial_position) {
+                        pq_d_pz(x)(i, Nact * (2 * degree + 2) + Nact + i) = 1;  
+                    }
+                    else {
+                        pq_d_pz(x)(i, Nact * (2 * degree + 2) + i) = 1;
+                    }
+                }
 
                 // pq_dd_pz
                 // derivative with respect to a_i

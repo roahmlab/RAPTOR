@@ -81,6 +81,8 @@ set(HSL_INCLUDE_DIR /usr/local/include/coin/ThirdParty)
 include_directories(${HSL_INCLUDE_DIR})
 link_directories(${HSL_LIBRARY_DIR})
 
+include_directories(Utils/include)
+
 ## Trajectories library
 add_library(trajlib SHARED
     Trajectories/src/Trajectories.cpp
@@ -94,72 +96,61 @@ add_library(trajlib SHARED
     Trajectories/src/TrajectoryGroup.cpp)
 
 target_include_directories(trajlib PUBLIC
-    Trajectories/include
-    Utils/include)
+    Trajectories/include)
+
+include_directories(Trajectories/include)
 
 ## Inverse dynamics library
 add_library(IDlib SHARED
     KinematicsDynamics/src/InverseDynamics.cpp
     KinematicsDynamics/src/CustomizedInverseDynamics.cpp
+    KinematicsDynamics/src/RegressorInverseDynamics.cpp
     KinematicsDynamics/src/DynamicsConstraints.cpp
     KinematicsDynamics/src/ConstrainedInverseDynamics.cpp
-    KinematicsDynamics/src/InverseDynamicsWithFixedJoints.cpp
     KinematicsDynamics/src/Transform.cpp
     KinematicsDynamics/src/Spatial.cpp
     KinematicsDynamics/src/ForwardKinematics.cpp)
 
 target_include_directories(IDlib PUBLIC
-    KinematicsDynamics/include
-    Trajectories/include
-    Utils/include)
+    KinematicsDynamics/include)
 
-target_compile_options(IDlib PUBLIC
-    ${PINOCCHIO_FLAGS})
+include_directories(KinematicsDynamics/include)
 
 ## Constraints library
 add_library(Conslib SHARED
+    Constraints/src/Constraints.cpp
     Constraints/src/JointLimits.cpp
     Constraints/src/VelocityLimits.cpp
     Constraints/src/ConstrainedJointLimits.cpp
     Constraints/src/TorqueLimits.cpp
     Constraints/src/SurfaceContactConstraints.cpp
     Constraints/src/WaitrContactConstraints.cpp
+    Constraints/src/LieSpaceResidual.cpp
     Constraints/src/KinematicsConstraints.cpp
-    Constraints/src/EndEffectorConstraints.cpp
-    Constraints/src/ZonotopeCollisionAvoidance.cpp
     Constraints/src/BoxCollisionAvoidance.cpp)
+    # Constraints/src/ZonotopeCollisionAvoidance.cpp
     # Constraints/src/fclCollisionAvoidance.cpp)
 
 target_include_directories(Conslib PUBLIC
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Utils/include)
-    # /usr/local/include/libqhullcpp)
-
-target_compile_options(Conslib PUBLIC
-    ${PINOCCHIO_FLAGS})   
+    Constraints/include)
     
-# target_link_libraries(Conslib PRIVATE
-#     ${FCL_LIBRARIES})
+include_directories(Constraints/include)
 
 ## Constraints library
 add_library(Optlib SHARED
     Optimization/src/Optimizer.cpp)
 
 target_include_directories(Optlib PUBLIC
-    Optimization/include
-    Constraints/include
-    Utils/include)
+    Optimization/include)
+
+include_directories(Optimization/include)
 
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
-    Examples/Digit/src/DigitSingleStepOptimizerWithObstacles.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
-    Examples/Digit/src/DigitCustomizedConstraintsWithObstacles.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
 target_link_libraries(Digitlib PRIVATE
@@ -174,15 +165,7 @@ target_link_libraries(Digitlib PRIVATE
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_include_directories(Digitlib PUBLIC
-    Examples/Digit/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
-
-target_compile_options(Digitlib PUBLIC
-    ${PINOCCHIO_FLAGS})
+    Examples/Digit/include)
 
 ## Digit-modified library
 add_library(DigitModifiedlib SHARED
@@ -203,21 +186,16 @@ target_link_libraries(DigitModifiedlib PRIVATE
     ${PKG_PIN_CONFIG_LIBRARIES})
 
 target_include_directories(DigitModifiedlib PUBLIC
-    Examples/Digit-modified/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Digit-modified/include)
 
-target_compile_options(DigitModifiedlib PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-# Kinova library
+# Kinova libraries
 add_library(Kinovalib SHARED
-    Examples/Kinova/src/KinovaOptimizer.cpp
-    Examples/Kinova/src/KinovaWaitrOptimizer.cpp
-    Examples/Kinova/src/KinovaCustomizedConstraints.cpp)
+    Examples/Kinova/InverseKinematics/KinovaIKSolver.cpp
+    Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
+    Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
+    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
+    Examples/Kinova/SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
 target_link_libraries(Kinovalib PRIVATE
     trajlib
@@ -228,18 +206,15 @@ target_link_libraries(Kinovalib PRIVATE
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
-    # ${QHULL_LIBRARIES})
 
 target_include_directories(Kinovalib PUBLIC
-    Examples/Kinova/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
-
-target_compile_options(Kinovalib PUBLIC
-    ${PINOCCHIO_FLAGS})
+    Examples/Kinova
+    Examples/Kinova/InverseKinematics
+    Examples/Kinova/ArmourUnsafe/include
+    Examples/Kinova/WaitrUnsafe/include
+    Examples/Kinova/SystemIdentification/DataFilter/include
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
+    Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
 ## Example scripts
 add_executable(Digit_example 
@@ -272,12 +247,7 @@ add_executable(DigitModified_example
     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
 
 target_include_directories(DigitModified_example PRIVATE
-    Examples/Digit-modified/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Digit-modified/include)
 
 target_link_libraries(DigitModified_example PRIVATE
     trajlib 
@@ -293,16 +263,33 @@ target_link_libraries(DigitModified_example PRIVATE
 target_compile_options(DigitModified_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(KinovaIK_example 
+    Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)
+
+target_include_directories(KinovaIK_example PRIVATE
+    Examples/Kinova
+    Examples/Kinova/InverseKinematics)
+
+target_link_libraries(KinovaIK_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(KinovaIK_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(Kinova_example 
-    Examples/Kinova/KinovaExample.cpp)
+    Examples/Kinova/ArmourUnsafe/KinovaExample.cpp)
 
 target_include_directories(Kinova_example PRIVATE
-    Examples/Kinova/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Kinova
+    Examples/Kinova/ArmourUnsafe/include)
 
 target_link_libraries(Kinova_example PRIVATE
     trajlib 
@@ -314,21 +301,16 @@ target_link_libraries(Kinova_example PRIVATE
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
-    # ${FCL_LIBRARIES})
 
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaWaitr_example 
-    Examples/Kinova/KinovaWaitrExample.cpp)
+    Examples/Kinova/WaitrUnsafe/KinovaWaitrExample.cpp)
 
 target_include_directories(KinovaWaitr_example PRIVATE
-    Examples/Kinova/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Kinova
+    Examples/Kinova/WaitrUnsafe/include)
 
 target_link_libraries(KinovaWaitr_example PRIVATE
     trajlib 
@@ -340,22 +322,59 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
-    # ${FCL_LIBRARIES})
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(KinovaFilter_example 
+    Examples/Kinova/SystemIdentification/DataFilter/KinovaAccelerationEstimator.cpp)
+
+target_include_directories(KinovaFilter_example PRIVATE
+    Examples/Kinova
+    Examples/Kinova/SystemIdentification/DataFilter/include
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
+    Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaFilter_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES})
+
+add_executable(KinovaSysId_example 
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
+
+target_include_directories(KinovaSysId_example PRIVATE
+    Examples/Kinova
+    Examples/Kinova/SystemIdentification/DataFilter/include
+    Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
+    Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaSysId_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(KinovaSysId_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 pybind11_add_module(oracle_pybind SHARED
-    Examples/Kinova/KinovaPybind.cpp
-    Examples/Kinova/src/KinovaPybindWrapper.cpp)
+    Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp
+    Examples/Kinova/ArmourUnsafe/src/KinovaPybindWrapper.cpp)
 
 target_include_directories(oracle_pybind PRIVATE
-    Examples/Kinova/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Kinova
+    Examples/Kinova/ArmourUnsafe/include)
 
 target_link_libraries(oracle_pybind PRIVATE
     trajlib 
@@ -367,7 +386,6 @@ target_link_libraries(oracle_pybind PRIVATE
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES}
-    # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_pybind PUBLIC
@@ -376,16 +394,12 @@ target_compile_options(oracle_pybind PUBLIC
 set_property(TARGET oracle_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 pybind11_add_module(oracle_waitr_pybind SHARED
-    Examples/Kinova/KinovaWaitrPybind.cpp
-    Examples/Kinova/src/KinovaWaitrPybindWrapper.cpp)
+    Examples/Kinova/WaitrUnsafe/KinovaWaitrPybind.cpp
+    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrPybindWrapper.cpp)
 
 target_include_directories(oracle_waitr_pybind PRIVATE
-    Examples/Kinova/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+    Examples/Kinova
+    Examples/Kinova/WaitrUnsafe/include)
 
 target_link_libraries(oracle_waitr_pybind PRIVATE
     trajlib 
@@ -397,7 +411,6 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     coinhsl
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES}
-    # ${FCL_LIBRARIES}
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_waitr_pybind PUBLIC
@@ -405,39 +418,54 @@ target_compile_options(oracle_waitr_pybind PUBLIC
 
 set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+## Test scripts
+add_executable(ForwardKinematics_test 
+    Tests/KinematicsDynamics/TestForwardKinematicsSolver.cpp)
+
+target_link_libraries(ForwardKinematics_test PRIVATE
+    IDlib
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(ForwardKinematics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(ForwardKinematicsGradient_test 
+    Tests/KinematicsDynamics/TestForwardKinematicsRPYDerivatives.cpp)
+
+target_link_libraries(ForwardKinematicsGradient_test PRIVATE
+    IDlib
+    Optlib
+    Conslib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(ForwardKinematicsGradient_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(KinematicsConstraints_test 
+    Tests/Constraints/TestKinematicsConstraints.cpp)
+
+target_link_libraries(KinematicsConstraints_test PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
+
+target_compile_options(KinematicsConstraints_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 ## Install
-install(TARGETS trajlib
+install(TARGETS 
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    Digitlib
+    DigitModifiedlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS IDlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Conslib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Optlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Digitlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Kinovalib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Digit_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS DigitModified_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS Kinova_example
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

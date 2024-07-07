@@ -3,7 +3,8 @@
 #define DIGIT_MODIFIED_CUSTOMIZED_CONSTRAINTS_H
 
 #include "Constraints.h"
-#include "FourierCurves.h"
+#include "LieSpaceResidual.h"
+#include "Trajectories.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
@@ -41,7 +42,9 @@ public:
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
@@ -54,7 +57,7 @@ public:
 
     std::unique_ptr<Model> modelPtr_;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
         // jtype copy
     Eigen::VectorXi jtype;
@@ -63,17 +66,16 @@ public:
     Model::JointIndex swingfoot_id = 0;
 
         // the transform matrix at the beginning and at the end
-    Transform startT;
     Transform swingfoot_endT;
+    Transform swingfoot_T_des;
 
         // updated in compute()
-    Transform jointT;
-    MatX jointTJ;
-
+    // full joint trajectories and derivatives 
+    // including both independent and dependent joints
     MatX q;
-    MatX swingfoot_xyzrpy;
-
     Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
+    
+    MatX swingfoot_xyzrpy;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pswingfoot_xyzrpy_pz;
 
         // forward kinematics derivatives

@@ -42,7 +42,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+        const std::vector<Vec3>& zonotopeCenters_input,
         const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
         const VecX& q_act0_input,
         const VecX& q_act_d0_input 

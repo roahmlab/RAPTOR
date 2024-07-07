@@ -9,6 +9,8 @@ using namespace IDTO;
 using namespace Digit;
 using namespace Ipopt;
 
+const std::string filepath = "../Examples/Digit/data/";
+
 int main(int argc, char* argv[]) {
     // set openmp number of threads
     int num_threads = 32; // this number is currently hardcoded
@@ -55,6 +57,7 @@ int main(int argc, char* argv[]) {
     const int N = 14;
     const int degree = 5;
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
+    const std::string output_name = "14-5";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.30;
@@ -66,11 +69,11 @@ int main(int argc, char* argv[]) {
 
     // std::ifstream initial_guess("initial-digit-Bezier.txt");
     // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
-    std::ifstream initial_guess("../data/Digit/solution-digit-Bezier-0.00-0.15.txt");
+    std::ifstream initial_guess(filepath + "initial-digit-Bezier-leftstance.txt");
     if (initial_guess.fail()) {
         throw std::runtime_error("Error opening initial guess file!");
     }
-
+  
     double temp = 0;
     std::vector<double> z_array;
     while (initial_guess >> temp) {
@@ -81,7 +84,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < z_array.size(); i++) {
         z(i) = z_array[i];
     }
-  
+    
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
 	    mynlp->set_parameters(z,
@@ -92,26 +95,27 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gp);
+        mynlp->constr_viol_tol = 1e-5;
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
     }
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-	app->Options()->SetNumericValue("max_wall_time", 500);
-    app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
-    app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
+	  app->Options()->SetNumericValue("max_wall_time", 100.0);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
+    app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 100);
-	app->Options()->SetIntegerValue("print_level", 5);
+	  app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+	  app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt_digit.out");
+    // app->Options()->SetStringValue("output_file", "ipopt_digit.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
     // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
@@ -134,70 +138,53 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0 << " seconds.\n";
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        // std::ofstream solution("../data/Digit/solution-digit-Bezier-" + output_name + ".txt");
-        // solution << std::setprecision(20);
-        // for (int i = 0; i < mynlp->numVars; i++) {
-        //     solution << mynlp->solution[i] << std::endl;
-        // }
-        // solution.close();
+        std::ofstream solution(filepath + "solution-digit-Bezier-" + output_name + ".txt");
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
 
-        // std::ofstream trajectory("../data/Digit/trajectory-digit-Bezier-" + output_name + ".txt");
-        // trajectory << std::setprecision(20);
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // trajectory.close();
+        std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
+        trajectory << std::setprecision(20);
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        trajectory.close();
     }
-
-    // try {
-	//     Number ztry[mynlp->numVars];
-    //     Number g[mynlp->numCons];
-    //     Number obj_value = 0;
-    //     for (int i = 0; i < mynlp->numVars; i++) {
-    //         ztry[i] = z[i];
-    //     }
-    //     mynlp->eval_f(mynlp->numVars, ztry, false, obj_value);
-    //     mynlp->eval_g(mynlp->numVars, ztry, false, mynlp->numCons, g);
-    //     std::cout << "Objective function value: " << obj_value << std::endl;
-    //     mynlp->summarize_constraints(mynlp->numCons, g);
-    // }
-    // catch (int errorCode) {
-    //     throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
-    // }
-    
 
     return 0;
 }

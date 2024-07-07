@@ -28,6 +28,7 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     const GaitParameters& gp_input
  ) 
 {
+    enable_hessian = false;
     x0 = x0_input;
 
     // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
@@ -61,13 +62,13 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_LOWER_VEC(i) = deg2rad(JOINT_LIMITS_LOWER[i]);
+        JOINT_LIMITS_LOWER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_LOWER[i]);
     }
 
     // convert joint limits from degree to radian   
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_UPPER_VEC(i) = deg2rad(JOINT_LIMITS_UPPER[i]);
+        JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
     // Joint limits
@@ -85,7 +86,7 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
-    // kinematics constraints
+    // Kinematics constraints related to different gait behavior
     constraintsPtrVec_.push_back(std::make_unique<DigitModifiedCustomizedConstraints>(model_input, 
                                                                                       jtype_input, 
                                                                                       trajPtr_, 
@@ -93,7 +94,7 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
                                                                                       gp_input));    
     constraintsNameVec_.push_back("customized constraints");            
 
-    // periodic reset map constraints
+    // Periodic reset map constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
                                                                                                  cidPtr_,
                                                                                                  FRICTION_PARAMS));    
@@ -124,7 +125,7 @@ bool DigitModifiedSingleStepOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_jac_g = n * m;
-    nnz_h_lag = n * n;
+    nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -143,13 +144,10 @@ bool DigitModifiedSingleStepOptimizer::eval_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, false);
 
@@ -176,13 +174,10 @@ bool DigitModifiedSingleStepOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_grad_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
-    VecX z(n);
-    for ( Index i = 0; i < n; i++ ) {
-        z(i) = x[i];
-    }
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     cidPtr_->compute(z, true);
 

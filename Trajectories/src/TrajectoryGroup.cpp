@@ -44,34 +44,44 @@ void TrajectoryGroup::gather_trajectories_information() {
     q_d.resize(1, N);
     q_dd.resize(1, N);
 
-    for (size_t i = 0; i < N; i++) {
-        q(i) = VecX::Zero(Nact);
-        q_d(i) = VecX::Zero(Nact);
-        q_dd(i) = VecX::Zero(Nact);
-    }
-
     pq_pz.resize(1, N);
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
 
-    for (size_t i = 0; i < N; i++) {
+    pq_pz_pz.resize(Nact, N);
+    pq_d_pz_pz.resize(Nact, N);
+    pq_dd_pz_pz.resize(Nact, N);
+
+    for (int i = 0; i < N; i++) {
+        q(i) = VecX::Zero(Nact);
+        q_d(i) = VecX::Zero(Nact);
+        q_dd(i) = VecX::Zero(Nact);
+
         pq_pz(i) = MatX::Zero(Nact, varLength);
         pq_d_pz(i) = MatX::Zero(Nact, varLength);
         pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
     }
 }
 
-void TrajectoryGroup::compute(const VecX& z, bool compute_derivatives) {
+void TrajectoryGroup::compute(const VecX& z, 
+                              bool compute_derivatives,
+                              bool compute_hessian) {
     for (const auto& it : trajectories) {
         const size_t trajectory_offset = trajectory_locations[it.first].first;
         const size_t variable_offset = variable_locations[it.first].first;
 
         const VecX& z_segment = z.segment(variable_offset, 
                                           variable_locations[it.first].second - variable_offset);
-        it.second->compute(z_segment, compute_derivatives);
+        it.second->compute(z_segment, compute_derivatives, compute_hessian);
 
         // copy the computed values of each trajectory to the local variables in TrajectoryGroup
-        for (size_t i = 0; i < it.second->N; i++) {
+        for (int i = 0; i < it.second->N; i++) {
             q(trajectory_offset + i) = it.second->q(i);
             q_d(trajectory_offset + i) = it.second->q_d(i);
             q_dd(trajectory_offset + i) = it.second->q_dd(i);
@@ -80,6 +90,14 @@ void TrajectoryGroup::compute(const VecX& z, bool compute_derivatives) {
                 pq_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_pz(i);
                 pq_d_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_d_pz(i);
                 pq_dd_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_dd_pz(i);
+            }
+
+            if (compute_hessian) {
+                for (int j = 0; j < Nact; j++) {
+                    pq_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_pz_pz(j, i);
+                    pq_d_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_d_pz_pz(j, i);
+                    pq_dd_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_dd_pz_pz(j, i);
+                }
             }
         }
     }

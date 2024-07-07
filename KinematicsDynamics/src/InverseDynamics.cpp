@@ -19,17 +19,55 @@ InverseDynamics::InverseDynamics(const Model& model_input,
     prnea_pa = MatX::Zero(modelPtr_->nv, modelPtr_->nv);
 }
 
+bool InverseDynamics::is_computed(const VecX& z, bool compute_derivatives, bool compute_hessian) {
+    if (compute_hessian && !compute_derivatives) {
+        throw std::invalid_argument("compute_derivatives needs to be true when compute_hessian is true.");
+        return false;
+    }
+                            
+    if (!Utils::ifTwoVectorEqual(current_z, z, 0)) {
+        current_z = z;
+        if_compute_derivatives = compute_derivatives;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    if (compute_derivatives != if_compute_derivatives) {
+        current_z = z;
+        if_compute_derivatives = compute_derivatives;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    if (compute_hessian != if_compute_hessian) {
+        current_z = z;
+        if_compute_derivatives = compute_derivatives;
+        if_compute_hessian = compute_hessian;
+        return false;
+    }
+
+    // current_z = z;  
+    if_compute_derivatives = compute_derivatives;
+    if_compute_hessian = compute_hessian;
+    return true;
+}
+
 void InverseDynamics::compute(const VecX& z,
-                              bool compute_derivatives) {
+                              bool compute_derivatives,
+                              bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }   
 
-    if (is_computed(z, compute_derivatives)) {
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
-    trajPtr_->compute(z, compute_derivatives);                            
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);     
+
+    if (compute_hessian) {
+        throw std::invalid_argument("InverseDynamics: Hessian not implemented yet");
+    }                       
 
     for (int i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
@@ -48,6 +86,7 @@ void InverseDynamics::compute(const VecX& z,
         tau(i) = dataPtr_->tau + 
                  modelPtr_->damping.cwiseProduct(v) + 
                  modelPtr_->rotorInertia.cwiseProduct(a);
+        // TODO: add friction here!!!
                 
         if (compute_derivatives) {
             // prnea_pa is just the inertia matrix.

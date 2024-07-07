@@ -22,7 +22,9 @@ public:
                 TimeDiscretization time_discretization, 
                 int degree_input);
 
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
     int degree = 0; // degree of the polynomial
 

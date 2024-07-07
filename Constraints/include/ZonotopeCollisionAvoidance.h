@@ -2,7 +2,6 @@
 #define ZONOTOPE_COLLISION_AVOIDANCE_H
 
 #include "CollisionAvoidance.h"
-#include <vector>
 
 // DEPRECATED
 // DEPRECATED
@@ -58,7 +57,7 @@ public:
     // Constructor
     ZonotopeCollisionAvoidance() = default;
 
-    ZonotopeCollisionAvoidance(const Eigen::Array<Vec3, 1, Eigen::Dynamic>& zonotopeCenters_input,
+    ZonotopeCollisionAvoidance(const std::vector<Vec3>& zonotopeCenters_input,
                                const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input);
 
     // Destructor
@@ -79,7 +78,7 @@ public:
 
     // class members:
         // zonotope centers and generators
-    Eigen::Array<Vec3, 1, Eigen::Dynamic> zonotopeCenters;
+    std::vector<Vec3> zonotopeCenters;
     Eigen::Array<MatX, 1, Eigen::Dynamic> zonotopeGenerators;
 
         // hyperplane representation

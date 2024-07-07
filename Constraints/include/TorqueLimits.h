@@ -3,7 +3,6 @@
 
 #include "Constraints.h"
 #include "InverseDynamics.h"
-#include "ConstrainedInverseDynamics.h"
 
 namespace IDTO {
 
@@ -23,15 +22,14 @@ public:
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
-        // print violation information
-    void print_violation_info() override;
-
-    // class variables:
+    // class members:
     std::shared_ptr<Trajectories> trajPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;
     

@@ -54,7 +54,13 @@ DigitSingleStepPeriodicityConstraints::DigitSingleStepPeriodicityConstraints(std
     }
 }
 
-void DigitSingleStepPeriodicityConstraints::compute(const VecX& z, bool compute_derivatives) {
+void DigitSingleStepPeriodicityConstraints::compute(const VecX& z, 
+                                                    bool compute_derivatives,
+                                                    bool compute_hessian) {
+    if (compute_hessian) {
+        throw std::invalid_argument("DigitSingleStepPeriodicityConstraints does not support hessian computation");
+    }
+
     // We assume that surface contact constraints always come after torque limits constraints for now
     // The following line has been called in TorqueLimits::compute() already
     // So we directly pull out the lambda values from idPtr_

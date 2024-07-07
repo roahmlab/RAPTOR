@@ -53,14 +53,38 @@ PiecewiseBezierCurves::PiecewiseBezierCurves(double T_input,
     pq_pz.resize(1, N);
     pq_d_pz.resize(1, N);
     pq_dd_pz.resize(1, N);
+
+    pq_pz_pz.resize(Nact, N);
+    pq_d_pz_pz.resize(Nact, N);
+    pq_dd_pz_pz.resize(Nact, N);
+
+    for (int i = 0; i < N; i++) {
+        q(i) = VecX::Zero(Nact);
+        q_d(i) = VecX::Zero(Nact);
+        q_dd(i) = VecX::Zero(Nact);
+
+        pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_d_pz(i) = MatX::Zero(Nact, varLength);
+        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
+
+        for (int j = 0; j < Nact; j++) {
+            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
+        }
+    }
 }
 
-void PiecewiseBezierCurves::compute(const VecX& z, bool compute_derivatives) {
+void PiecewiseBezierCurves::compute(const VecX& z, 
+                                    bool compute_derivatives,
+                                    bool compute_hessian) {
     if (z.size() != varLength) {
+        std::cerr << "function input: z.size() = " << z.size() << std::endl;
+        std::cerr << "desired: varLength = " << varLength << std::endl;
         throw std::invalid_argument("PiecewiseBezierCurves: decision variable vector has wrong size");
     }
 
-    if (if_computed(z, compute_derivatives)) return;
+    if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     const int seg_size = N / (degree + 1);
     const double localT = T / (degree + 1);
@@ -243,6 +267,14 @@ void PiecewiseBezierCurves::compute(const VecX& z, bool compute_derivatives) {
                     pq_dd_pz(x)(i, id * 3 * Nact + i + Nact) = -ddB(3) * 2.0 * velocity_factor - ddB(4) * velocity_factor;
                     pq_dd_pz(x)(i, id * 3 * Nact + i + 2 * Nact) = ddB(3) * acceleration_factor;
                 }
+            }
+        }
+
+        if (compute_hessian) {
+            for (int i = 0; i < Nact; i++) {
+                pq_pz_pz(i, x).setZero(); 
+                pq_d_pz_pz(i, x).setZero(); 
+                pq_dd_pz_pz(i, x).setZero(); 
             }
         }
     }

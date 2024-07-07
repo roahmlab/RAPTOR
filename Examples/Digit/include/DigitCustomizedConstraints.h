@@ -41,7 +41,9 @@ public:
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
@@ -54,7 +56,7 @@ public:
 
     std::unique_ptr<Model> modelPtr_;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
         // jtype copy
     Eigen::VectorXi jtype;

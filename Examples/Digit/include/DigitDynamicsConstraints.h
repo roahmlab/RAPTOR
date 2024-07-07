@@ -149,7 +149,7 @@ public:
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_ = nullptr;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_ = nullptr;
 
         // dep/indep joint indeces
     int dependentJointIds[NUM_DEPENDENT_JOINTS] = {0};
@@ -162,13 +162,13 @@ public:
     Model::JointIndex contact_joint_id = 0;
 
         // forward kinematics derivatives
-    std::vector<Transform> dTdq;
-    std::vector<std::vector<Transform>> ddTddq;
-    std::vector<std::vector<std::vector<Transform>>> dddTdddq;
+    Eigen::Array<MatX, 3, 1> H_translation;
+    Eigen::Array<MatX, 3, 1> H_rotation;
+
+    Eigen::Array<MatX, 3, 1> TOx_translation;
+    Eigen::Array<MatX, 3, 1> TOx_rotation;
 
         // contact foot transforms
-    Transform startT;
-
     char stanceLeg = 'L';
 
     Transform stance_foot_T;

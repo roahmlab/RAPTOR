@@ -1,72 +1,83 @@
+
 #ifndef KINEMATICS_CONSTRAINTS_H
 #define KINEMATICS_CONSTRAINTS_H
 
 #include "Constraints.h"
 #include "Trajectories.h"
-#include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
+#include "LieSpaceResidual.h"
 
 namespace IDTO {
 
 class KinematicsConstraints : public Constraints {
 public:
     using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
+    using Vec3 = Eigen::Vector3d;
+    using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     // Constructor
     KinematicsConstraints() = default;
 
-    // Constructor
-    KinematicsConstraints(const Model& model_input,
+    KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                          const Model* model_input,
                           const Eigen::VectorXi& jtype_input,
-                          std::shared_ptr<Trajectories>& trajPtr_input,
-                          const std::string joint_name_input,
-                          const MatX& lowerLimits_input,
-                          const MatX& upperLimits_input,
-                          const Transform startT_input = Transform(),
-                          const Transform endT_input = Transform(),
-                          std::shared_ptr<DynamicsConstraints> dcPtr_input = nullptr);
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Transform& desiredTransform_input,
+                          const Transform endT_input = Transform());
+
+    KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                          const Model* model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Vec3& desiredPosition_input,
+                          const Transform endT_input = Transform());
+
+    KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
+                          const Model* model_input,
+                          const Eigen::VectorXi& jtype_input,
+                          const size_t joint_id_input,
+                          const size_t time_id_input,
+                          const Mat3& desiredRotation_input,
+                          const Transform endT_input = Transform());
 
     // Destructor
     ~KinematicsConstraints() = default;
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
 
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
-    // class variables:
-    std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<DynamicsConstraints> dcPtr_;
+    void print_violation_info() override;
 
-    std::unique_ptr<Model> modelPtr_;
+    // class members:
+    std::shared_ptr<Trajectories>& trajPtr_;
 
-    std::unique_ptr<ForwardKinematicsHighOrderDerivative> fkhofPtr_;
-
-        // jtype copy
+    const Model* modelPtr_ = nullptr;
     Eigen::VectorXi jtype;
 
-        // the joint index of the joint we want to constrain
-    Model::JointIndex joint_id = 0;
+    std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
+
+    Vec3 desiredPosition;
+    Mat3 desiredRotation;
+
+    bool constrainPosition = false;
+    bool constrainRotation = false;
+
+    size_t joint_id = 0;
+    size_t time_id = 0;
 
         // the transform matrix at the beginning and at the end
     Transform startT;
     Transform endT;
-
-        // updated in compute()
-    Transform jointT;
-    MatX jointTJ;
-    MatX pq_pz;
-
-        // forward kinematics derivatives
-    std::vector<Transform> dTdq;
-
-    MatX lowerLimits;
-    MatX upperLimits;
 };
 
 }; // namespace IDTO
