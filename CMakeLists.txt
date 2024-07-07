@@ -145,27 +145,27 @@ target_include_directories(Optlib PUBLIC
 
 include_directories(Optimization/include)
 
-# ## Digit library
-# add_library(Digitlib SHARED
-#     Examples/Digit/src/DigitDynamicsConstraints.cpp
-#     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
-#     Examples/Digit/src/DigitSingleStepOptimizer.cpp
-#     Examples/Digit/src/DigitCustomizedConstraints.cpp
-#     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
+## Digit library
+add_library(Digitlib SHARED
+    Examples/Digit/src/DigitDynamicsConstraints.cpp
+    Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
+    Examples/Digit/src/DigitSingleStepOptimizer.cpp
+    Examples/Digit/src/DigitCustomizedConstraints.cpp
+    Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
-# target_link_libraries(Digitlib PRIVATE
-#     trajlib
-#     IDlib
-#     Conslib
-#     Optlib
-#     ipopt
-#     coinhsl
-#     ${GSL_LIBRARIES}
-#     ${BOOST_LIBRARIES} 
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_link_libraries(Digitlib PRIVATE
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_include_directories(Digitlib PUBLIC
-#     Examples/Digit/include)
+target_include_directories(Digitlib PUBLIC
+    Examples/Digit/include)
 
 ## Digit-modified library
 add_library(DigitModifiedlib SHARED
@@ -217,31 +217,31 @@ target_include_directories(Kinovalib PUBLIC
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
 ## Example scripts
-# add_executable(Digit_example 
-#     Examples/Digit/DigitSingleStep.cpp)
+add_executable(Digit_example 
+    Examples/Digit/DigitSingleStep.cpp)
 
-# target_include_directories(Digit_example PRIVATE
-#     Examples/Digit/include
-#     KinematicsDynamics/include
-#     Trajectories/include
-#     Constraints/include
-#     Optimization/include
-#     Utils/include)
+target_include_directories(Digit_example PRIVATE
+    Examples/Digit/include
+    KinematicsDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
 
-# target_link_libraries(Digit_example PRIVATE
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     Digitlib
-#     ipopt
-#     coinhsl
-#     ${GSL_LIBRARIES}
-#     ${BOOST_LIBRARIES} 
-#     ${PKG_PIN_CONFIG_LIBRARIES})
+target_link_libraries(Digit_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Digitlib
+    ipopt
+    coinhsl
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES} 
+    ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_compile_options(Digit_example PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_compile_options(Digit_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
@@ -459,26 +459,13 @@ target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
 ## Install
-install(TARGETS trajlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS IDlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Conslib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(TARGETS Optlib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-# install(TARGETS Digitlib
-#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-# )
-
-install(TARGETS Kinovalib
+install(TARGETS 
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    Digitlib
+    DigitModifiedlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

@@ -59,10 +59,12 @@ void DigitCustomizedConstraints::compute(const VecX& z,
 
         fkPtr_->compute(0, swingfoot_id, qi, nullptr, &swingfoot_endT, fk_order);
 
-        swingfoot_xyzrpy.col(i) = fkPtr_->Transform2xyzrpy(jointT);
+        swingfoot_xyzrpy.col(i).head(3) = fkPtr_->getTranslation();
+        swingfoot_xyzrpy.col(i).tail(3) = fkPtr_->getRPY();
 
         if (compute_derivatives) {
             pq_pz(i).resize(modelPtr_->nv, trajPtr_->varLength);
+            
             // fill in independent joints derivatives directly
             for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
                 int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
@@ -75,21 +77,21 @@ void DigitCustomizedConstraints::compute(const VecX& z,
                 pq_pz(i).row(denpendentJointIndex) = pq_dep_pz.row(j);
             }
 
-            fkPtr_->fk_jacobian(dTdq, *modelPtr_, jtype, swingfoot_id, 0, qi, swingfoot_endT, startT);
-            fkPtr_->Transform2xyzrpyJacobian(jointTJ, jointT, dTdq);
-            pswingfoot_xyzrpy_pz(i) = jointTJ * pq_pz(i);
+            pswingfoot_xyzrpy_pz(i).resize(6, trajPtr_->varLength);
+            pswingfoot_xyzrpy_pz(i).topRows(3) = fkPtr_->getTranslationJacobian() * pq_pz(i);
+            pswingfoot_xyzrpy_pz(i).bottomRows(3) = fkPtr_->getRPYJacobian() * pq_pz(i);
         }
     }
 
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    VecX g1 = swingfoot_xyzrpy.row(2).transpose();
+    VecX g1 = swingfoot_xyzrpy.row(2);
 
     // (2) swingfoot always flat and points forward
-    VecX g2 = swingfoot_xyzrpy.row(3).transpose(); // swingfoot roll
-    VecX g3 = swingfoot_xyzrpy.row(4).transpose(); // swingfoot pitch
-    VecX g4 = swingfoot_xyzrpy.row(5).transpose().array() + M_PI / 2; // swingfoot yaw
+    VecX g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
+    VecX g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
+    VecX g4 = Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     VecX g5(4);
@@ -98,10 +100,10 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     // (4) torso height always larger than 1 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    VecX g6 = q.row(2).transpose(); // torso height
-    VecX g7 = q.row(3).transpose(); // torso roll
-    VecX g8 = q.row(4).transpose(); // torso pitch
-    VecX g9 = q.row(5).transpose().array() + M_PI / 2; // torso yaw
+    VecX g6 = q.row(2); // torso height
+    VecX g7 = Utils::wrapToPi(q.row(3)); // torso roll
+    VecX g8 = Utils::wrapToPi(q.row(4)); // torso pitch
+    VecX g9 = Utils::wrapToPi(q.row(5).array() + M_PI / 2); // torso yaw
 
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 

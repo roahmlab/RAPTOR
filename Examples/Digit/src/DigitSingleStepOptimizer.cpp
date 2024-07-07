@@ -72,15 +72,8 @@ bool DigitSingleStepOptimizer::set_parameters(
         JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
-    VecX TORQUE_LIMITS_LOWER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
-    }
-
-    VecX TORQUE_LIMITS_UPPER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
-    }
+    VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
+    VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);
 
     constraintsPtrVec_.clear();
     // Joint limits
