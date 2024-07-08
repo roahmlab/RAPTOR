@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 	app->Options()->SetNumericValue("max_wall_time", 100.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetStringValue("linear_solver", "ma86");
 	if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
     }

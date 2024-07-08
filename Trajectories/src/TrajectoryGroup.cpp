@@ -87,16 +87,28 @@ void TrajectoryGroup::compute(const VecX& z,
             q_dd(trajectory_offset + i) = it.second->q_dd(i);
 
             if (compute_derivatives) {
-                pq_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_pz(i);
-                pq_d_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_d_pz(i);
-                pq_dd_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_dd_pz(i);
+                pq_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_pz(i);
+                pq_d_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_d_pz(i);
+                pq_dd_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_dd_pz(i);
             }
 
             if (compute_hessian) {
                 for (int j = 0; j < Nact; j++) {
-                    pq_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_pz_pz(j, i);
-                    pq_d_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_d_pz_pz(j, i);
-                    pq_dd_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_dd_pz_pz(j, i);
+                    pq_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_pz_pz(j, i);
+                    pq_d_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_d_pz_pz(j, i);
+                    pq_dd_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_dd_pz_pz(j, i);
                 }
             }
         }

@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     const int N = 14;
     const int degree = 5;
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
-    const std::string output_name = "14-5";
+    const std::string output_name = "14-5-Uniform";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.30;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 
     // std::ifstream initial_guess("initial-digit-Bezier.txt");
     // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
-    std::ifstream initial_guess(filepath + "initial-digit-Bezier-leftstance.txt");
+    std::ifstream initial_guess(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
     if (initial_guess.fail()) {
         throw std::runtime_error("Error opening initial guess file!");
     }
@@ -110,9 +110,9 @@ int main(int argc, char* argv[]) {
     app->Options()->SetNumericValue("max_wall_time", 100.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 1000);
+    app->Options()->SetIntegerValue("max_iter", 200);
     app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("nlp_scaling_method", "none");
