@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <cstdio>
+#include <memory>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -47,6 +48,15 @@ public:
     bool is_computed(const VecX& z, 
                      bool compute_derivatives,
                      bool compute_hessian);
+
+    // these methods are defined in TrajectoryGroup
+    virtual void add_trajectory(const std::string& name,    
+                        std::shared_ptr<Trajectories> trajectory){
+        throw std::runtime_error("add_trajectory is not implemented in Trajectories class");
+    }
+    virtual void gather_trajectories_information(const bool print_info = false) {
+        throw std::runtime_error("gather_trajectories_information is not implemented in Trajectories class");
+    }
 
     // class members:
     double T = 0; // total time of the trajectory

@@ -1,23 +1,21 @@
-#include "DigitSingleStepOptimizerWithObstacles.h"
+#include "DigitMultipleStepOptimizer.h"
 
 namespace IDTO {
 namespace Digit {
 
-using std::cout;
-using std::endl;
-
 // // constructor
-// DigitSingleStepOptimizerWithObstacles::DigitSingleStepOptimizerWithObstacles()
+// DigitMultipleStepOptimizer::DigitMultipleStepOptimizer()
 // {
 // }
 
 
 // // destructor
-// DigitSingleStepOptimizerWithObstacles::~DigitSingleStepOptimizerWithObstacles()
+// DigitMultipleStepOptimizer::~DigitMultipleStepOptimizer()
 // {
 // }
 
-bool DigitSingleStepOptimizerWithObstacles::set_parameters(
+bool DigitMultipleStepOptimizer::set_parameters(
+    const int NSteps_input,
     const VecX& x0_input,
     const double T_input,
     const int N_input,
@@ -25,32 +23,29 @@ bool DigitSingleStepOptimizerWithObstacles::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const std::vector<Vec3>& zonotopeCenters_input,
-    const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
-    const VecX& q_act0_input,
-    const VecX& q_act_d0_input
+    const GaitParameters& gp_input
  ) 
 {
     x0 = x0_input;
+                                          
+    trajGroupPtr_ = std::make_shared<TrajectoryGroup>();
+    trajPtr_ = trajGroupPtr_; // convert to base class
 
-    // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
-    //                                            N_input, 
-    //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            Chebyshev, 
-    //                                            degree_input);
-    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-    //                                                          N_input, 
-    //                                                          NUM_INDEPENDENT_JOINTS, 
-    //                                                          Chebyshev, 
-    //                                                          degree_input);                                           
-    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
-                                              N_input, 
-                                              NUM_INDEPENDENT_JOINTS, 
-                                              time_discretization_input, 
-                                              degree_input);                                   
-    
-    // add v_reset and lambda_reset to the end of the decision variables                                         
-    trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    for (int i = 0; i < NSteps_input; i++) {
+        // add a new walking step to the trajectory group
+        const std::string gait_name = "gait" + std::to_string(i);
+        trajGroupPtr_->add_trajectory(gait_name,
+                                      std::make_shared<BezierCurves>(T_input, 
+                                                                     N_input, 
+                                                                     NUM_INDEPENDENT_JOINTS, 
+                                                                     time_discretization_input, 
+                                                                     degree_input));
+
+        // manually add v_reset and lambda_reset to the end of the decision variables                                         
+        trajGroupPtr_->trajectories[gait_name]->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    }
+    // update trajectories information
+    trajPtr_->gather_trajectories_information(true);
     
     // stance foot is left foot by default
     char stanceLeg = 'L';
@@ -75,57 +70,51 @@ bool DigitSingleStepOptimizerWithObstacles::set_parameters(
         JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
     }
 
-    VecX TORQUE_LIMITS_LOWER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_LOWER_VEC(i) = TORQUE_LIMITS_LOWER[i];
-    }
+    VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
+    VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);
 
-    VecX TORQUE_LIMITS_UPPER_VEC(NUM_INDEPENDENT_JOINTS);
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        TORQUE_LIMITS_UPPER_VEC(i) = TORQUE_LIMITS_UPPER[i];
-    }
-
-    constraintsPtrVec_.clear();
-    // Joint limits
-        // convert to their base class pointers
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                                  
-
+    constraintsPtrVec_.clear();  
+     
     // Torque limits
-        // convert to their base class pointers
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));        
-    constraintsNameVec_.push_back("torque limits");                                                                                                                         
+    constraintsNameVec_.push_back("torque limits");
+
+    // Joint limits
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          cidPtr_->dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits");                                                                                                                           
 
     // Surface contact constraints
-        // convert to their base class pointers
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
-    // kinematics constraints and obstacle avoidance constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraintsWithObstacles>(model_input, 
-                                                                                           jtype_input, 
-                                                                                           trajPtr_, 
-                                                                                           cidPtr_->dcPtr_,
-                                                                                           zonotopeCenters_input,
-                                                                                           zonotopeGenerators_input,
-                                                                                           q_act0_input,
-                                                                                           q_act_d0_input));    
-    constraintsNameVec_.push_back("customized constraints");          
+    // kinematics constraints
+    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
+                                                                              jtype_input, 
+                                                                              trajPtr_, 
+                                                                              cidPtr_->dcPtr_,
+                                                                              gp_input));    
+    constraintsNameVec_.push_back("customized constraints");            
+
+    // periodic reset map constraints
+    constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
+                                                                                         cidPtr_,
+                                                                                         FRICTION_PARAMS));    
+    constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
 }
 // [TNLP_set_parameters]
 
 // [TNLP_get_nlp_info]
-bool DigitSingleStepOptimizerWithObstacles::get_nlp_info(
+bool DigitMultipleStepOptimizer::get_nlp_info(
    Index&          n,
    Index&          m,
    Index&          nnz_jac_g,
@@ -145,6 +134,7 @@ bool DigitSingleStepOptimizerWithObstacles::get_nlp_info(
     m = numCons;
 
     nnz_jac_g = n * m;
+    nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -155,7 +145,7 @@ bool DigitSingleStepOptimizerWithObstacles::get_nlp_info(
 
 // [TNLP_eval_f]
 // returns the value of the objective function
-bool DigitSingleStepOptimizerWithObstacles::eval_f(
+bool DigitMultipleStepOptimizer::eval_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -163,7 +153,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -186,13 +176,15 @@ bool DigitSingleStepOptimizerWithObstacles::eval_f(
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
 
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
     return true;
 }
 // [TNLP_eval_f]
 
 // [TNLP_eval_grad_f]
 // return the gradient of the objective function grad_{x} f(x)
-bool DigitSingleStepOptimizerWithObstacles::eval_grad_f(
+bool DigitMultipleStepOptimizer::eval_grad_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -200,7 +192,7 @@ bool DigitSingleStepOptimizerWithObstacles::eval_grad_f(
 )
 {
     if(n != numVars){
-       throw std::runtime_error("*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);

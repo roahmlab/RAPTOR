@@ -3,9 +3,6 @@
 namespace IDTO {
 namespace DigitModified {
 
-using std::cout;
-using std::endl;
-
 // // constructor
 // DigitModifiedSingleStepOptimizer::DigitModifiedSingleStepOptimizer()
 // {

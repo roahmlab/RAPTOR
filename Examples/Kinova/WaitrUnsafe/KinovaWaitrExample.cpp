@@ -9,9 +9,6 @@ using namespace IDTO;
 using namespace Kinova;
 using namespace Ipopt;
 
-using std::cout;
-using std::endl;
-
 int main() {
     // set openmp number of threads
     int num_threads = 32; // this number is currently hardcoded

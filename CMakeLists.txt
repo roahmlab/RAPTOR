@@ -150,6 +150,7 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
+    Examples/Digit/src/DigitMultipleStepOptimizer.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 

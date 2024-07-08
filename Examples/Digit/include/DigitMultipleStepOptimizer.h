@@ -1,11 +1,11 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_WITHOBSTACLES_H
-#define DIGITSINGLESTEPOPTIMIZER_WITHOBSTACLES_H
+#ifndef DIGITMULTIPLESTEPOPTIMIZER_H
+#define DIGITMULTIPLESTEPOPTIMIZER_H
 
 #include "Optimizer.h"
 
-#include "FourierCurves.h"
-#include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
+#include "TrajectoryGroup.h"
+
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
 #include "Utils.h"
@@ -13,28 +13,29 @@
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
 #include "SurfaceContactConstraints.h"
-#include "DigitCustomizedConstraintsWithObstacles.h"
+#include "DigitCustomizedConstraints.h"
+#include "DigitSingleStepPeriodicityConstraints.h"
 
 namespace IDTO {
 namespace Digit {
 
 using namespace Ipopt;
 
-class DigitSingleStepOptimizerWithObstacles : public Optimizer {
+class DigitMultipleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DigitSingleStepOptimizerWithObstacles() = default;
+    DigitMultipleStepOptimizer() = default;
 
     /** Default destructor */
-    ~DigitSingleStepOptimizerWithObstacles() = default;
+    ~DigitMultipleStepOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
+        const int NSteps_input,
         const VecX& x0_input,
         const double T_input,
         const int N_input,
@@ -42,10 +43,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const std::vector<Vec3>& zonotopeCenters_input,
-        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input,
-        const VecX& q_act0_input,
-        const VecX& q_act_d0_input 
+        const GaitParameters& gp_input
     );
 
     /**@name Overloaded from TNLP */
@@ -57,7 +55,7 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
-    ) override;
+    ) final override;
 
     /** Method to return the objective value */
     bool eval_f(
@@ -65,7 +63,7 @@ public:
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) override;
+    ) final override;
 
     /** Method to return the gradient of the objective */
     bool eval_grad_f(
@@ -73,7 +71,7 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) override;
+    ) final override;
 
     /**@name Methods to block default compiler methods.
     *
@@ -86,15 +84,16 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitSingleStepOptimizerWithObstacles(
-       const DigitSingleStepOptimizerWithObstacles&
+    DigitMultipleStepOptimizer(
+       const DigitMultipleStepOptimizer&
     );
 
-    DigitSingleStepOptimizerWithObstacles& operator=(
-       const DigitSingleStepOptimizerWithObstacles&
+    DigitMultipleStepOptimizer& operator=(
+       const DigitMultipleStepOptimizer&
     );
 
     std::shared_ptr<Trajectories> trajPtr_; 
+    std::shared_ptr<TrajectoryGroup> trajGroupPtr_;
 
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
 };
@@ -102,4 +101,4 @@ public:
 }; // namespace Digit
 }; // namespace IDTO
 
-#endif // DIGITSINGLESTEPOPTIMIZER_WITHOBSTACLES_H
+#endif // DIGITMULTIPLESTEPOPTIMIZER_H
