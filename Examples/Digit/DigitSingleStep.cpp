@@ -84,6 +84,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < z_array.size(); i++) {
         z(i) = z_array[i];
     }
+
+    // z.setRandom();
+    // z = z * 0.05;
     
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
@@ -95,7 +98,7 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gp);
-        mynlp->constr_viol_tol = 1e-5;
+        mynlp->constr_viol_tol = 1e-4;
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
@@ -104,14 +107,14 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-	  app->Options()->SetNumericValue("max_wall_time", 100.0);
-    app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
+    app->Options()->SetNumericValue("max_wall_time", 100.0);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 100);
-	  app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetIntegerValue("max_iter", 1000);
+    app->Options()->SetIntegerValue("print_level", 5);
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
-	  app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking

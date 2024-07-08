@@ -31,16 +31,6 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     enable_hessian = false;
     x0 = x0_input;
 
-    // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
-    //                                            N_input, 
-    //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            time_discretization_input, 
-    //                                            degree_input);
-    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-    //                                                          N_input, 
-    //                                                          NUM_INDEPENDENT_JOINTS, 
-    //                                                          time_discretization_input, 
-    //                                                          degree_input);
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
@@ -69,22 +59,20 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
-    }
-
-    // Joint limits
-        // convert to their base class pointers
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                                  
+    }                                                                                                                              
 
     // Surface contact constraints
-        // convert to their base class pointers
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
+
+    // Joint limits
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          cidPtr_->dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits"); 
 
     // Kinematics constraints related to different gait behavior
     constraintsPtrVec_.push_back(std::make_unique<DigitModifiedCustomizedConstraints>(model_input, 

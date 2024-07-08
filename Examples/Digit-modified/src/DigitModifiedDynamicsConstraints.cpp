@@ -244,6 +244,10 @@ void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX&
 }
 
 void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
+    if (recoverSavedData(q, compute_derivatives)) {
+        return;
+    }
+
     // fill in dependent joint positions 
     fkPtr_->compute(modelPtr_->getJointId("Rz"), 
                     contact_joint_id, 
@@ -277,6 +281,8 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
 
         pq_dep_pq_indep = P_dep;
     }
+
+    updateQueue(q, compute_derivatives);      
 }
 
 void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {

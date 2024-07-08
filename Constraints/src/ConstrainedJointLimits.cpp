@@ -36,9 +36,9 @@ ConstrainedJointLimits::ConstrainedJointLimits(std::shared_ptr<Trajectories>& tr
 void ConstrainedJointLimits::compute(const VecX& z, 
                                      bool compute_derivatives,
                                      bool compute_hessian) {
-    // if (is_computed(z, compute_derivatives, compute_hessian)) {
-    //     return;
-    // }
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
+        return;
+    }
 
     if (compute_hessian) {
         throw std::invalid_argument("ConstrainedJointLimits does not support hessian computation");

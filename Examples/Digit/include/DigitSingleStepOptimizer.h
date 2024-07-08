@@ -3,9 +3,8 @@
 
 #include "Optimizer.h"
 
-#include "FourierCurves.h"
-#include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
+
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
 #include "Utils.h"

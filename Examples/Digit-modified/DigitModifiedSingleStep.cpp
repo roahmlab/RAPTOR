@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
     pinocchio::Data data(model);
 
     const double T = 0.4;
-    const int N = 16;
-    const TimeDiscretization time_discretization = Chebyshev;
+    int N = 16;
+    TimeDiscretization time_discretization = Chebyshev;
     const int degree = 5;
     const std::string output_name = "Chebyshev-N16";
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
         disturbance.setZero();
     }
 
-    // z = z + disturbance;
+    z = z + disturbance;
     
     SmartPtr<DigitModifiedSingleStepOptimizer> mynlp = new DigitModifiedSingleStepOptimizer();
     try {
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gp);
-        mynlp->constr_viol_tol = 1e-5;
+        mynlp->constr_viol_tol = 1e-4;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 2000);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 

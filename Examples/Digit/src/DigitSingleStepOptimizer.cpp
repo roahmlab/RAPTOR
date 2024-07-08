@@ -29,17 +29,7 @@ bool DigitSingleStepOptimizer::set_parameters(
  ) 
 {
     x0 = x0_input;
-
-    // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
-    //                                            N_input, 
-    //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            Chebyshev, 
-    //                                            degree_input);
-    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-    //                                                          N_input, 
-    //                                                          NUM_INDEPENDENT_JOINTS, 
-    //                                                          Chebyshev, 
-    //                                                          degree_input);                                           
+                                          
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
@@ -75,25 +65,23 @@ bool DigitSingleStepOptimizer::set_parameters(
     VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
     VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);
 
-    constraintsPtrVec_.clear();
-    // Joint limits
-        // convert to their base class pointers
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                                  
-
+    constraintsPtrVec_.clear();  
+     
     // Torque limits
-        // convert to their base class pointers
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));        
-    constraintsNameVec_.push_back("torque limits");                                                                                                                         
+    constraintsNameVec_.push_back("torque limits");
+
+    // Joint limits
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          cidPtr_->dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits");                                                                                                                           
 
     // Surface contact constraints
-        // convert to their base class pointers
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                              FRICTION_PARAMS));

@@ -244,6 +244,10 @@ void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
+    if (recoverSavedData(q, compute_derivatives)) {
+        return;
+    }
+    
     qcopy = q;
 
     // fill in dependent joint positions 
@@ -396,6 +400,8 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
 
         pq_dep_pq_indep = P_dep;
     }
+
+    updateQueue(q, compute_derivatives);
 }
 
 int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f) {

@@ -2,14 +2,37 @@
 #define DYNAMICSCONSTRAINTS_H
 
 #include "InverseDynamics.h"
+#include <deque>
 
 namespace IDTO {
+
+constexpr int MAX_BUFFER_SIZE = 32;
 
 class DynamicsConstraints {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using QRSolver = Eigen::ColPivHouseholderQR<MatX>;
+
+    struct BufferData {
+        VecX q;
+        VecX v;
+        VecX a;
+        bool compute_derivatives = false;
+
+        // used outside of this class, so we need to save it
+        MatX J_dep;
+        MatX J_indep;
+        QRSolver J_dep_qr;
+        QRSolver J_dep_T_qr;
+
+        MatX pq_dep_pq_indep;
+        MatX pv_dep_pq;
+        MatX pv_dep_pv_indep;
+        MatX pa_dep_pq;
+        MatX pa_dep_pv;
+        MatX pa_dep_pa_indep;
+    };
 
     // Constructor
     DynamicsConstraints() = default;
@@ -102,6 +125,24 @@ public:
     // where x and y are vectors that are not dependent on q
     virtual void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) = 0;
 
+    // The functions above are very expensive, we save the results in a queue 
+    // and return the data if it is saved before
+    virtual bool recoverSavedData(VecX& q, bool compute_derivatives);
+    virtual bool recoverSavedData(VecX& q, VecX& v, VecX& a, bool compute_derivatives);
+
+    virtual void updateQueue(const VecX& q, bool compute_derivatives);
+    virtual void updateQueue(const VecX& q, const VecX& v, const VecX& a, bool compute_derivatives);
+
+    bool ifIndependentPartEqual(const VecX& a, const VecX& b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+
+        return Utils::ifTwoVectorEqual(get_independent_vector(a), 
+                                       get_independent_vector(b),
+                                       0);
+    }
+
     // class members:
     int numJoints = 0;
     int numDependentJoints = 0;
@@ -121,13 +162,15 @@ public:
     MatX pa_dep_pv;
     MatX pa_dep_pa_indep;
 
-        // updated in setupJointPositionVelocityAcceleration()
-    QRSolver J_dep_qr;
-    QRSolver J_dep_T_qr;
+    std::deque<BufferData> bufferDataQueue;
 
         // updated in setupJointPositionVelocityAcceleration()
     MatX J_dep;
     MatX J_indep;
+
+        // updated in setupJointPositionVelocityAcceleration()
+    QRSolver J_dep_qr;
+    QRSolver J_dep_T_qr;
 
         // temporary variables updated in setupJointPositionVelocityAcceleration()
     MatX P_dep;
