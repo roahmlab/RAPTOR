@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     app->Options()->SetNumericValue("max_wall_time", 100.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 200);
+    app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
