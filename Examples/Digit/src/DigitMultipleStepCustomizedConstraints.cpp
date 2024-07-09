@@ -1,44 +1,27 @@
-#include "DigitCustomizedConstraints.h"
+#include "DigitMultipleStepCustomizedConstraints.h"
 
 namespace IDTO {
 namespace Digit {
 
-DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
-                                                       const Eigen::VectorXi& jtype_input,
-                                                       std::shared_ptr<Trajectories>& trajPtr_input,
-                                                       std::shared_ptr<DigitDynamicsConstraints>& ddcPtr_input,
-                                                       const GaitParameters& gp_input) : 
-    jtype(jtype_input),
-    trajPtr_(trajPtr_input),
-    ddcPtr_(ddcPtr_input),
-    gp(gp_input) {
-    modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
-
-    leftfoot_endT.R << 0,             1, 0,
-                       -0.5,          0, sin(M_PI / 3),
-                       sin(M_PI / 3), 0, 0.5;
-    leftfoot_endT.p << 0, -0.05456, -0.0315;
-
-    rightfoot_endT.R << 0,             -1, 0,
-                        0.5,           0,  -sin(M_PI / 3),
-                        sin(M_PI / 3), 0,  0.5;
-    rightfoot_endT.p << 0, 0.05456, -0.0315;
-
-    q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
-    pq_pz.resize(1, trajPtr_->N);
-    swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
-    pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
-
-    m = trajPtr_->N * 8 + 4;
+DigitMultipleStepCustomizedConstraints::DigitMultipleStepCustomizedConstraints(const Model& model_input,
+                                                                               const Eigen::VectorXi& jtype_input,
+                                                                               std::shared_ptr<Trajectories>& trajPtr_input,
+                                                                               std::shared_ptr<DigitDynamicsConstraints>& ddcPtr_input,
+                                                                               const GaitParameters& gp_input,
+                                                                               const int N_input,
+                                                                               const int NSteps_input) : 
+    DigitCustomizedConstraints(model_input, jtype_input, trajPtr_input, ddcPtr_input, gp_input),
+    N(N_input),
+    NSteps(NSteps_input) {
+    m = trajPtr_->N * 8 + NSteps * 4;
     initialize_memory(m, trajPtr_->varLength);
 }
 
-void DigitCustomizedConstraints::compute(const VecX& z, 
-                                         bool compute_derivatives,
-                                         bool compute_hessian) {
+void DigitMultipleStepCustomizedConstraints::compute(const VecX& z, 
+                                                     bool compute_derivatives,
+                                                     bool compute_hessian) {
     if (compute_hessian) {
-        throw std::invalid_argument("DigitCustomizedConstraints does not support hessian computation");
+        throw std::invalid_argument("DigitMultipleStepCustomizedConstraints does not support hessian computation");
     }
 
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
@@ -145,7 +128,7 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     }
 }
 
-void DigitCustomizedConstraints::compute_bounds() {
+void DigitMultipleStepCustomizedConstraints::compute_bounds() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle

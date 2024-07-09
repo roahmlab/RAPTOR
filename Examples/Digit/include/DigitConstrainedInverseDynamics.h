@@ -33,10 +33,16 @@ public:
                                     char stanceLeg, 
                                     const Transform& stance_foot_T_des_input,
                                     const int N_input,
-                                    const int num_steps_input);
+                                    const int NSteps_input);
 
     // Destructor
     ~DigitConstrainedInverseDynamics() = default;
+
+    // a pointer type of DigitDynamicsConstraints, 
+    // that shares the same memory with dcPtr_ defined in base class ConstrainedInverseDynamics
+    // so that other Digit-related class can access specific field in DigitDynamicsConstraints
+    // such as stanceLeg, stance_foot_T_des, etc.
+    std::shared_ptr<DigitDynamicsConstraints> ddcPtr_;
 };
 
 }; // namespace Digit

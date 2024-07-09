@@ -24,7 +24,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
     const GaitParameters& gp_input
- ) 
+) 
 {
     x0 = x0_input;
                                           
@@ -50,15 +50,16 @@ bool DigitMultipleStepOptimizer::set_parameters(
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    cidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
-                                                                trajPtr_,
-                                                                NUM_DEPENDENT_JOINTS, 
-                                                                jtype_input, 
-                                                                stanceLeg, 
-                                                                stance_foot_T_des,
-                                                                N_input,
-                                                                NSteps_input);
-    
+    dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
+                                                                 trajPtr_,
+                                                                 NUM_DEPENDENT_JOINTS, 
+                                                                 jtype_input, 
+                                                                 stanceLeg, 
+                                                                 stance_foot_T_des,
+                                                                 N_input,
+                                                                 NSteps_input);
+    cidPtr_ = dcidPtr_; // convert to base class
+
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS));
     VecX JOINT_LIMITS_UPPER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
@@ -88,11 +89,11 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
-    // kinematics constraints
+    // Kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
                                                                               jtype_input, 
                                                                               trajPtr_, 
-                                                                              cidPtr_->dcPtr_,
+                                                                              dcidPtr_->ddcPtr_,
                                                                               gp_input));    
     constraintsNameVec_.push_back("customized constraints");
 

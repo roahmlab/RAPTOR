@@ -400,7 +400,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
 
         pq_dep_pq_indep = P_dep;
     }
-
+    
     updateQueue(q, compute_derivatives);
 }
 

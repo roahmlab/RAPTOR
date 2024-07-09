@@ -26,7 +26,7 @@ public:
                                          char stanceLeg, 
                                          const Transform& stance_foot_T_des_input,
                                          const int N_input,
-                                         const int num_steps_input);
+                                         const int NSteps_input);
 
     // Destructor
     ~DigitMultipleStepDynamicsConstraints() = default;
@@ -39,7 +39,7 @@ public:
     int N = 0; 
 
         // number of walking steps in the gait optimization problem
-    int num_steps = 0;
+    int NSteps = 0;
 
         // counter to record the number of times setupJointPosition is called
     int counter = 0;

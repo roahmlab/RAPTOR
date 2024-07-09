@@ -50,12 +50,13 @@ int main(int argc, char* argv[]) {
     model.rotorInertia(model.getJointId("right_toe_A") - 1) = 0.036089475;
     model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
+    const int NSteps = 2;
     const double T = 0.4;
     const TimeDiscretization time_discretization = Uniform;
-    const int N = 14;
+    const int N = 8;
     const int degree = 5;
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
-    const std::string output_name = "14-5-Uniform";
+    const std::string output_name = "Two-8-5-Uniform";
 
     GaitParameters gp;
     gp.swingfoot_midstep_z_des = 0.15;
@@ -65,11 +66,12 @@ int main(int argc, char* argv[]) {
     // gp.swingfoot_begin_y_des = std::atof(argv[1]);
     // gp.swingfoot_end_y_des = - std::atof(argv[1]);
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
-    
-    SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
+
+    SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
-	    mynlp->set_parameters(z,
+	    mynlp->set_parameters(NSteps,
+                              z,
                               T,
                               N,
                               time_discretization,
@@ -87,7 +89,7 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-    app->Options()->SetNumericValue("max_wall_time", 100.0);
+    app->Options()->SetNumericValue("max_wall_time", 1e-4);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 100);
@@ -119,7 +121,9 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0 << " seconds.\n";
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -127,48 +131,48 @@ int main(int argc, char* argv[]) {
     }
 
     // Print the solution
-    if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution(filepath + "solution-digit-Bezier-" + output_name + ".txt");
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+    // if (mynlp->solution.size() == mynlp->numVars) {
+        // std::ofstream solution(filepath + "solution-digit-Bezier-" + output_name + ".txt");
+        // solution << std::setprecision(20);
+        // for (int i = 0; i < mynlp->numVars; i++) {
+        //     solution << mynlp->solution[i] << std::endl;
+        // }
+        // solution.close();
 
         std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
+            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
                 trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
+            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
                 trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
+            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
                 trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
+            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
                 trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
+            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
                 trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
             }
             trajectory << std::endl;
         }
         trajectory.close();
-    }
+    // }
 
     return 0;
 }

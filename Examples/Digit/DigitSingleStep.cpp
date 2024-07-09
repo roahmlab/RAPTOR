@@ -119,7 +119,9 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Total solve time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0 << " seconds.\n";
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

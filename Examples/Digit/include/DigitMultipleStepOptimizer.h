@@ -95,6 +95,7 @@ public:
     std::shared_ptr<Trajectories> trajPtr_; 
     std::shared_ptr<TrajectoryGroup> trajGroupPtr_;
 
+    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
 };
 

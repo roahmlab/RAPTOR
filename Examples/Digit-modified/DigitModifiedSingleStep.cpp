@@ -134,16 +134,15 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        // solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
+
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
-
-    std::cout << "ActualDataYouNeed: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {

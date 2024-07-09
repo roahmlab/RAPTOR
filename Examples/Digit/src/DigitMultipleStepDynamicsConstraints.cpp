@@ -8,26 +8,29 @@ DigitMultipleStepDynamicsConstraints::DigitMultipleStepDynamicsConstraints(const
                                                                            char stanceLeg, 
                                                                            const Transform& stance_foot_T_des_input,
                                                                            const int N_input,
-                                                                           const int num_steps_input) :
+                                                                           const int NSteps_input) :
     DigitDynamicsConstraints(modelPtr_input, jtype_input, stanceLeg, stance_foot_T_des_input),
     N(N_input),
-    num_steps(num_steps_input) {
+    NSteps(NSteps_input) {
 }
 
 void DigitMultipleStepDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
     DigitDynamicsConstraints::setupJointPosition(q, compute_derivatives);
 
     // record the number that this function has been called 
+    // std::cout << "DEBUG: " << counter << std::endl;
     counter++;
 
     // reinitialize the counter if it reaches the number of evaluation in one walking step,
     // in other words, it already reaches the next walking step and should switch stance foot
-    if (counter == N) {
+    if (counter % N == 0) {
+        // std::cout << "reinitialize! " << counter << std::endl;
         reinitialize();
     }
 
     // clear the counter if it reaches the number of evaluation in all walking steps
-    if (counter == N * num_steps) {
+    if (counter == N * NSteps) {
+        // std::cout << "clear! " << counter << std::endl;
         counter = 0;
     }
 }
