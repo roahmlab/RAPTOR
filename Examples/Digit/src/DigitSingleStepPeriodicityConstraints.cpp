@@ -99,13 +99,14 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
 
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
-        // this is terrible coding unfortunately
+        const double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
         dcidPtr_->modelPtr_->gravity.linear()(2) = 0;
-        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), q_minus, zeroVec, v_plus - v_minus,
+        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), 
+                                          q_minus, zeroVec, v_plus - v_minus,
                                           prnea_pq, prnea_pv, prnea_pa);
 
         // restore gravity
-        dcidPtr_->modelPtr_->gravity.linear()(2) = -9.806;
+        dcidPtr_->modelPtr_->gravity.linear()(2) = original_gravity;
 
         dcidPtr_->dcPtr_->get_JTx_partial_dq(q_minus, lambda);
         const MatX& JTx_partial_dq = dcidPtr_->dcPtr_->JTx_partial_dq;
@@ -208,12 +209,6 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
     // combine all constraints together
     g << g1, g2, g3, g4, g5;
 
-    // std::cout << g1.transpose() << std::endl;
-    // std::cout << g2.transpose() << std::endl;
-    // std::cout << g3.transpose() << std::endl;
-    // std::cout << g4.transpose() << std::endl;
-    // std::cout << g5.transpose() << std::endl;
-
     if (compute_derivatives) {
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
     }
@@ -221,6 +216,7 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
 
 void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // everything before this are equality constraints, so just zeros
+    // and g_lb, g_ub are already initialized to zeros in the constructor
 
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;

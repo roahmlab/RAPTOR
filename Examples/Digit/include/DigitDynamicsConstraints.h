@@ -16,7 +16,6 @@
 namespace IDTO {
 namespace Digit {
 
-
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
                                        {"Px",
                                         "Py",
@@ -80,73 +79,73 @@ public:
 
     // class methods:
         // swap the stance leg for reset map constraint evaluation
-    void reinitialize() override;
+    virtual void reinitialize() override;
 
         // return the index of id th dependent joint
-    int return_dependent_joint_index(const int id) override;
+    virtual int return_dependent_joint_index(const int id) override;
 
         // return the index of id th independent joint
-    int return_independent_joint_index(const int id) override;
+    virtual int return_independent_joint_index(const int id) override;
 
         // fill in dependent indeces in a vector
-    void fill_dependent_vector(VecX& r, const VecX& v, const bool setZero = false) override;
+    virtual void fill_dependent_vector(VecX& r, const VecX& v, const bool setZero = false) override;
 
         // fill in independent indeces in a vector
-    void fill_independent_vector(VecX& r, const VecX& v, const bool setZero = false) override;
+    virtual void fill_independent_vector(VecX& r, const VecX& v, const bool setZero = false) override;
 
         // fill in dependent columns in a matrix
-    void fill_dependent_columns(MatX& r, const MatX& m, const bool setZero = false) override;
+    virtual void fill_dependent_columns(MatX& r, const MatX& m, const bool setZero = false) override;
 
         // fill in independent columns in a matrix
-    void fill_independent_columns(MatX& r, const MatX& m, const bool setZero = false) override;
+    virtual void fill_independent_columns(MatX& r, const MatX& m, const bool setZero = false) override;
 
         // fill in dependent rows in a matrix
-    void fill_dependent_rows(MatX& r, const MatX& m, const bool setZero = false) override;
+    virtual void fill_dependent_rows(MatX& r, const MatX& m, const bool setZero = false) override;
 
         // fill in independent rows in a matrix
-    void fill_independent_rows(MatX& r, const MatX& m, const bool setZero = false) override;
+    virtual void fill_independent_rows(MatX& r, const MatX& m, const bool setZero = false) override;
 
         // return dependent indeces in a vector
-    VecX get_dependent_vector(const VecX& v) override;
+    virtual VecX get_dependent_vector(const VecX& v) override;
 
         // return independent indeces in a vector
-    VecX get_independent_vector(const VecX& v) override;
+    virtual VecX get_independent_vector(const VecX& v) override;
 
         // return dependent columns in a matrix
-    void get_dependent_columns(MatX& r, const MatX& m) override;
+    virtual void get_dependent_columns(MatX& r, const MatX& m) override;
 
         // return independent columns in a matrix
-    void get_independent_columns(MatX& r, const MatX& m) override;
+    virtual void get_independent_columns(MatX& r, const MatX& m) override;
 
         // return dependent rows in a matrix
-    void get_dependent_rows(MatX& r, const MatX& m) override;
+    virtual void get_dependent_rows(MatX& r, const MatX& m) override;
 
         // return independent rows in a matrix
-    void get_independent_rows(MatX& r, const MatX& m) override;
+    virtual void get_independent_rows(MatX& r, const MatX& m) override;
 
         // fill in dependent joint positions in the full joint vector q
         // that satisfies the constraints
         // This usually involves solving inverse kinematics. 
         // You need to implement this method in your derived class!!!
-    void setupJointPosition(VecX& q, bool compute_derivatives = true) override;
+    virtual void setupJointPosition(VecX& q, bool compute_derivatives = true) override;
 
         // constraint c(q)
-    void get_c(const VecX& q) override;
+    virtual void get_c(const VecX& q) override;
 
         // J = jacobian(c, q)
-    void get_J(const VecX& q) override;
+    virtual void get_J(const VecX& q) override;
     
         // Jx_partial_dq = jacobian(J * x, q)
         // where x is a vector that is not dependent on q
-    void get_Jx_partial_dq(const VecX& q, const VecX& x) override;
+    virtual void get_Jx_partial_dq(const VecX& q, const VecX& x) override;
 
         // JTx_partial_dq = jacobian(J^T * x, q)
         // where x is a vector that is not dependent on q
-    void get_JTx_partial_dq(const VecX& q, const VecX& x) override;
+    virtual void get_JTx_partial_dq(const VecX& q, const VecX& x) override;
 
         // Jxy_partial_dq = jacobian(jacobian(J * x, q) * y, q)
         // where x and y are vectors that are not dependent on q
-    void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) override;
+    virtual void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) override;
 
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;

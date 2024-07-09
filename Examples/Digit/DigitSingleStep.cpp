@@ -60,33 +60,14 @@ int main(int argc, char* argv[]) {
     const std::string output_name = "14-5-Uniform";
 
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.30;
-    gp.swingfoot_begin_y_des = 0.40;
-    gp.swingfoot_end_y_des = -0.40;
+    gp.swingfoot_midstep_z_des = 0.15;
+    gp.swingfoot_begin_y_des = 0.00;
+    gp.swingfoot_end_y_des = -0.00;
     // gp.swingfoot_midstep_z_des = std::atof(argv[2]);
     // gp.swingfoot_begin_y_des = std::atof(argv[1]);
     // gp.swingfoot_end_y_des = - std::atof(argv[1]);
-
-    // std::ifstream initial_guess("initial-digit-Bezier.txt");
-    // std::ifstream initial_guess("solution-digit-Bezier-Uniform-N14.txt");
-    std::ifstream initial_guess(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
-    if (initial_guess.fail()) {
-        throw std::runtime_error("Error opening initial guess file!");
-    }
-  
-    double temp = 0;
-    std::vector<double> z_array;
-    while (initial_guess >> temp) {
-        z_array.push_back(temp);
-    }
-    initial_guess.close();
-    Eigen::VectorXd z(z_array.size());
-    for (int i = 0; i < z_array.size(); i++) {
-        z(i) = z_array[i];
-    }
-
-    // z.setRandom();
-    // z = z * 0.05;
+    
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
     
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {

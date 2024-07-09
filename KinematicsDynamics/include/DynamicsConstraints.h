@@ -6,7 +6,7 @@
 
 namespace IDTO {
 
-constexpr int MAX_BUFFER_SIZE = 32;
+constexpr int MAX_BUFFER_SIZE = 128;
 
 class DynamicsConstraints {
 public:

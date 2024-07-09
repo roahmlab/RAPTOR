@@ -64,19 +64,8 @@ int main(int argc, char* argv[]) {
     gp.swingfoot_begin_y_des = 0.40;
     gp.swingfoot_end_x_des = -0.25;
     gp.swingfoot_end_y_des = -0.40;
-
-    std::ifstream initial_guess(filepath + "initial-digit-modified-Bezier.txt");
-
-    double temp = 0;
-    std::vector<double> z_array;
-    while (initial_guess >> temp) {
-        z_array.push_back(temp);
-    }
-    initial_guess.close();
-    Eigen::VectorXd z(z_array.size());
-    for (int i = 0; i < z_array.size(); i++) {
-        z(i) = z_array[i];
-    }
+    
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-modified-Bezier.txt");
 
     // add disturbance to initial guess
     Eigen::VectorXd disturbance(z.size());

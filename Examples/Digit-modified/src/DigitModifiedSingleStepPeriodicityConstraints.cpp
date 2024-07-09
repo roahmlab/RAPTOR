@@ -101,8 +101,7 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
 
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
-        // this is terrible coding unfortunately
-        double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
+        const double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
         dcidPtr_->modelPtr_->gravity.linear()(2) = 0;
         pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), 
                                           q_minus, zeroVec, v_plus - v_minus,
