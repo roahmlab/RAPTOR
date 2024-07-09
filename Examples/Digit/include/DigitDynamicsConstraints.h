@@ -61,6 +61,8 @@ class DigitDynamicsConstraints : public DynamicsConstraints {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
+    using Vec3 = Eigen::Vector3d;
+    using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -175,6 +177,30 @@ public:
     Transform stance_foot_endT;
 
     Transform stance_foot_T_des;
+
+        // closed loop related transforms
+        // you can find all of these numbers in digit-v3.xml
+    const Transform left_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
+    const Transform left_toeA_anchor_endT = Transform(Vec3(0.0179, -0.009551, -0.054164));
+
+    const Transform left_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
+    const Transform left_toeB_anchor_endT = Transform(Vec3(-0.0181, -0.009551, -0.054164));
+
+    const Transform left_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
+    const Transform left_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(4.47, 0.32, 155.8)), 
+                                                      Vec3(-0.01766, -0.029456, 0.00104)) * 
+                                            Transform(Vec3(0.113789, -0.011056, 0));
+
+    const Transform right_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
+    const Transform right_toeA_anchor_endT = Transform(Vec3(0.0179, 0.009551, -0.054164));
+
+    const Transform right_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
+    const Transform right_toeB_anchor_endT = Transform(Vec3(-0.0181, 0.009551, -0.054164));
+    
+    const Transform right_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
+    const Transform right_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(-4.47, 0.32, -155.8)), 
+                                                       Vec3(-0.01766, 0.029456, 0.00104)) *
+                                             Transform(Vec3(0.113789, 0.011056, 0));
 
     VecX qcopy;
 };
