@@ -1,4 +1,4 @@
-#include "DigitSingleStepOptimizer.h"
+#include "DigitMultipleStepOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"

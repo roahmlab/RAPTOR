@@ -55,20 +55,13 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                                                 NUM_DEPENDENT_JOINTS, 
                                                                 jtype_input, 
                                                                 stanceLeg, 
-                                                                stance_foot_T_des);                                                          
-
+                                                                stance_foot_T_des,
+                                                                N_input,
+                                                                NSteps_input);
     
     // convert joint limits from degree to radian
-    VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_LOWER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_LOWER[i]);
-    }
-
-    // convert joint limits from degree to radian   
-    VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
-    }
+    VecX JOINT_LIMITS_LOWER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS));
+    VecX JOINT_LIMITS_UPPER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
 
     VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
     VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);
@@ -87,7 +80,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                                                           cidPtr_->dcPtr_, 
                                                                           JOINT_LIMITS_LOWER_VEC, 
                                                                           JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                           
+    constraintsNameVec_.push_back("joint limits");                                                                                                         
 
     // Surface contact constraints
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
@@ -101,13 +94,13 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                                                               trajPtr_, 
                                                                               cidPtr_->dcPtr_,
                                                                               gp_input));    
-    constraintsNameVec_.push_back("customized constraints");            
+    constraintsNameVec_.push_back("customized constraints");
 
-    // periodic reset map constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                         cidPtr_,
-                                                                                         FRICTION_PARAMS));    
-    constraintsNameVec_.push_back("reset map constraints");     
+    // // periodic reset map constraints
+    // constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
+    //                                                                                      cidPtr_,
+    //                                                                                      FRICTION_PARAMS));    
+    // constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
 }

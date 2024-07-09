@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(num_threads);
 
     // Define robot model
-    const std::string urdf_filename = "../Examples/Digit-modified/digit-v3-modified.urdf";
+    const std::string urdf_filename = "../Robots/digit-v3-modified/digit-v3-modified.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -37,8 +37,6 @@ int main(int argc, char* argv[]) {
     model.rotorInertia.setZero();
     model.damping.setZero();
     model.friction.setZero();
-
-    pinocchio::Data data(model);
 
     const double T = 0.4;
     int N = 16;
