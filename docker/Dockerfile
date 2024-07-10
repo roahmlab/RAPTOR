@@ -9,6 +9,12 @@ SHELL ["/bin/bash", "-c"]
 # Copy the HSL source code folder into the Docker image
 COPY docker/HSL.zip /app
 
+# Copy the pardiso libraries into the Docker image
+COPY docker/pardiso/include/pardiso.h /usr/local/include/pardiso.h
+COPY docker/pardiso/lib/libpardiso.so /usr/local/lib/libpardiso.so
+COPY docker/pardiso/lib/libpardiso_no_deps.so /usr/local/lib/libpardiso_no_deps.so
+COPY docker/pardiso/panua.lic /app/panua.lic
+
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -61,7 +67,6 @@ ENV PKG_CONFIG_PATH /opt/openrobots/lib/pkgconfig
 ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib
 ENV PYTHONPATH /opt/openrobots/lib/python3.10/site-packages
 ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local
-
 
 # Set the entry point to VSCode's default command
 CMD ["/bin/bash"]
