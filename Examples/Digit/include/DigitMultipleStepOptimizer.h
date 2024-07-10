@@ -13,7 +13,7 @@
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
 #include "SurfaceContactConstraints.h"
-#include "DigitCustomizedConstraints.h"
+#include "DigitMultipleStepCustomizedConstraints.h"
 #include "DigitSingleStepPeriodicityConstraints.h"
 
 namespace IDTO {

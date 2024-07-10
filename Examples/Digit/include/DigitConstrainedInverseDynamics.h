@@ -38,6 +38,7 @@ public:
     // Destructor
     ~DigitConstrainedInverseDynamics() = default;
 
+    // class members:
     // a pointer type of DigitDynamicsConstraints, 
     // that shares the same memory with dcPtr_ defined in base class ConstrainedInverseDynamics
     // so that other Digit-related class can access specific field in DigitDynamicsConstraints

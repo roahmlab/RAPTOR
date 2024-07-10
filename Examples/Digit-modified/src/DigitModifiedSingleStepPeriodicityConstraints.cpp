@@ -4,7 +4,7 @@ namespace IDTO {
 namespace DigitModified {
 
 DigitModifiedSingleStepPeriodicityConstraints::DigitModifiedSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                                                                             std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_input,
+                                                                                             std::shared_ptr<DigitModifiedConstrainedInverseDynamics> dcidPtr_input,
                                                                                              const frictionParams& fp_input) : 
     trajPtr_(trajPtr_input),
     dcidPtr_(dcidPtr_input),
@@ -81,7 +81,7 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
     const VecX& lambda = z.tail(NUM_DEPENDENT_JOINTS);
 
     // swap stance leg for reset map
-    dcidPtr_->dcPtr_->reinitialize();
+    dcidPtr_->ddcPtr_->reinitialize();
 
     // re-evaluate constraint jacobian
     dcidPtr_->dcPtr_->get_c(q_minus);
@@ -206,7 +206,7 @@ void DigitModifiedSingleStepPeriodicityConstraints::compute(const VecX& z,
     }
 
     // swap back for next round evaluation
-    dcidPtr_->dcPtr_->reinitialize();
+    dcidPtr_->ddcPtr_->reinitialize();
 
     // combine all constraints together
     g << g1, g2, g3, g4, g5;

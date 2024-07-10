@@ -44,10 +44,6 @@ public:
     ~DynamicsConstraints() = default;
 
     // class methods:
-        // helper function to reinitialize the results
-        // useful for multiple-step humanoid gait optimization
-    virtual void reinitialize() {};
-
     // You need to implement all following methods in your derived class!!!
         // return the index of id th dependent joint
     virtual int return_dependent_joint_index(const int id) = 0;

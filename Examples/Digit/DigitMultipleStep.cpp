@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     const int NSteps = 2;
     const double T = 0.4;
     const TimeDiscretization time_discretization = Uniform;
-    const int N = 8;
+    const int N = 2;
     const int degree = 5;
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     const std::string output_name = "Two-8-5-Uniform";
@@ -100,12 +100,12 @@ int main(int argc, char* argv[]) {
     app->Options()->SetStringValue("nlp_scaling_method", "none");
 
     // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt_digit.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
-    // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    app->Options()->SetStringValue("output_file", "ipopt_digit.out");
+    app->Options()->SetStringValue("derivative_test", "first-order");
+    app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
+    // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

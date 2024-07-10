@@ -6,6 +6,8 @@
 namespace IDTO {
 namespace Digit {
 
+// We always assume that the number of walking steps is even here!!!
+// We always assume that the first step is left stance and the last step is right stance here!!!
 class DigitMultipleStepCustomizedConstraints : public DigitCustomizedConstraints {
 public:
     using Model = pinocchio::Model;

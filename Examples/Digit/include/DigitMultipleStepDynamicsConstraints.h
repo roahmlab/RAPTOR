@@ -34,6 +34,8 @@ public:
     // class methods:
     void setupJointPosition(VecX& q, bool compute_derivatives = true) final override;
 
+    void setupJointPositionVelocityAcceleration(VecX& q, VecX& v, VecX& a, bool compute_derivatives = true) final override;
+
     // class members:
         // number of time instances to evaluate constraints for each walking step
     int N = 0; 
@@ -42,7 +44,11 @@ public:
     int NSteps = 0;
 
         // counter to record the number of times setupJointPosition is called
-    int counter = 0;
+    int counter1 = 0;
+    int counter2 = 0;
+    
+        // flag to indicate the first call of setupJointPosition
+    bool firstCall = true;
 };
 
 int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f);

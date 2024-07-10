@@ -43,7 +43,7 @@ public:
 
     // Constructor
     DigitSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                          std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_input,
+                                          std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
                                           const frictionParams& fp_input);
 
     // Destructor
@@ -58,7 +58,7 @@ public:
 
     // class members
     std::shared_ptr<Trajectories>& trajPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_;
+    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 
     frictionParams fp;
 

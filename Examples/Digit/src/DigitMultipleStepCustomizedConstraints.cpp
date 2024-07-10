@@ -82,8 +82,13 @@ void DigitMultipleStepCustomizedConstraints::compute(const VecX& z,
 
     // (3) swingfoot xy equal to desired value 
     //     at the beginning and at the end of each walking step
-    VecX g5(4);
-    g5 << swingfoot_xyzrpy.topLeftCorner(2, 1), swingfoot_xyzrpy.topRightCorner(2, 1);
+    VecX g5(NSteps * 4);
+    for (int i = 0; i < NSteps; i++) {
+        g5(4 * i + 0) = swingfoot_xyzrpy(0, i * N + 0); // beginning of the walking step
+        g5(4 * i + 1) = swingfoot_xyzrpy(1, i * N + 0);
+        g5(4 * i + 2) = swingfoot_xyzrpy(0, (i + 1) * N - 1); // end of the walking step
+        g5(4 * i + 3) = swingfoot_xyzrpy(1, (i + 1) * N - 1);
+    }
 
     // (4) torso height always larger than 1 meter
     //           roll and pitch always close to 0
@@ -134,9 +139,11 @@ void DigitMultipleStepCustomizedConstraints::compute_bounds() {
     //               height higher than the desired value in the middle
     VecX g1_lb = VecX::Zero(trajPtr_->N);
     VecX g1_ub = VecX::Constant(trajPtr_->N, 1e19);
-    g1_lb(trajPtr_->N / 2) = gp.swingfoot_midstep_z_des;
-    g1_ub(0) = 0;
-    g1_ub(trajPtr_->N - 1) = 0;
+    for (int i = 0; i < NSteps; i++) {
+        g1_lb(i * N + N / 2) = gp.swingfoot_midstep_z_des;
+        g1_ub(i * N + 0) = 0;
+        g1_ub((i + 1) * N - 1) = 0;
+    }
 
     // (2) swingfoot always flat and points forward
     VecX g2_lb = VecX::Zero(trajPtr_->N);
@@ -147,14 +154,27 @@ void DigitMultipleStepCustomizedConstraints::compute_bounds() {
     VecX g4_ub = VecX::Zero(trajPtr_->N);
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
-    VecX g5_lb(4);
-    VecX g5_ub(4);
-    g5_lb << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
-    g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
+    VecX g5_lb(NSteps * 4);
+    VecX g5_ub(NSteps * 4);
+    for (int i = 0; i < NSteps; i++) {
+        if (i % 2 == 0) { // left stance
+            g5_lb(4 * i + 0) = gp.swingfoot_begin_x_des;
+            g5_lb(4 * i + 1) = gp.swingfoot_begin_y_des;
+            g5_lb(4 * i + 2) = gp.swingfoot_end_x_des;
+            g5_lb(4 * i + 3) = gp.swingfoot_end_y_des;
+        }
+        else { // right stance
+            g5_lb(4 * i + 0) = -gp.swingfoot_begin_x_des;
+            g5_lb(4 * i + 1) = gp.swingfoot_begin_y_des;
+            g5_lb(4 * i + 2) = -gp.swingfoot_end_x_des;
+            g5_lb(4 * i + 3) = gp.swingfoot_end_y_des;
+        }
+    }
+    g5_ub = g5_lb;
 
     // (4) torso height always larger than 1 meter
-    //           roll and pitch always close to 0
-    //           yaw always close to 0 when walking forward
+    //     roll and pitch always close to 0
+    //     yaw always close to 0 when walking forward
     VecX g6_lb = VecX::Constant(trajPtr_->N, 1);
     VecX g6_ub = VecX::Constant(trajPtr_->N, 1e19);
     VecX g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);

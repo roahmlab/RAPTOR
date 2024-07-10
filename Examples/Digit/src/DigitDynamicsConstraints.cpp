@@ -72,26 +72,14 @@ void DigitDynamicsConstraints::reinitialize() {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        if (modelPtr_->existJointName("left_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("left_toe_roll");
-        }
-        else {
-            throw std::runtime_error("Can not find joint: left_toe_roll");
-        }
-
+        contact_joint_id = modelPtr_->getJointId("left_toe_roll");
         stance_foot_endT.R << 0,             1, 0,
                               -0.5,          0, sin(M_PI / 3),
                               sin(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
-        if (modelPtr_->existJointName("right_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("right_toe_roll");
-        }
-        else {
-            throw std::runtime_error("Can not find joint: right_toe_roll");
-        }
-
+        contact_joint_id = modelPtr_->getJointId("right_toe_roll");
         stance_foot_endT.R << 0,             -1, 0,
                               0.5,           0,  -sin(M_PI / 3),
                               sin(M_PI / 3), 0,  0.5;
@@ -397,7 +385,6 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
         assert(J_dep_T_qr.rank() == J_dep.rows() && J_dep_T_qr.rank() == J_dep.cols());
 
         P_dep = -J_dep_qr.solve(J_indep);
-
         pq_dep_pq_indep = P_dep;
     }
     
@@ -851,7 +838,7 @@ void DigitDynamicsConstraints::get_J(const VecX& q) {
                     nullptr, 
                     &stance_foot_endT, 
                     1);
-
+                    
     J.block(18, 0, 3, modelPtr_->nv) = fkPtr_->getTranslationJacobian();
     J.block(21, 0, 3, modelPtr_->nv) = fkPtr_->getRPYJacobian();
 }

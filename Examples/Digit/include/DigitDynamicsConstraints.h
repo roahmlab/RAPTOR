@@ -79,7 +79,7 @@ public:
 
     // class methods:
         // swap the stance leg for reset map constraint evaluation
-    virtual void reinitialize() final override;
+    void reinitialize();
 
         // return the index of id th dependent joint
     virtual int return_dependent_joint_index(const int id) final override;

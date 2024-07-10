@@ -170,8 +170,8 @@ void DigitCustomizedConstraints::compute_bounds() {
     g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
 
     // (4) torso height always larger than 1 meter
-    //           roll and pitch always close to 0
-    //           yaw always close to 0 when walking forward
+    //     roll and pitch always close to 0
+    //     yaw always close to 0 when walking forward
     VecX g6_lb = VecX::Constant(trajPtr_->N, 1);
     VecX g6_ub = VecX::Constant(trajPtr_->N, 1e19);
     VecX g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);

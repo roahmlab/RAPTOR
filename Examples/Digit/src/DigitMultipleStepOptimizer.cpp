@@ -48,8 +48,8 @@ bool DigitMultipleStepOptimizer::set_parameters(
     trajPtr_->gather_trajectories_information(true);
     
     // stance foot is left foot by default
-    char stanceLeg = 'L';
-    Transform stance_foot_T_des(3, -M_PI / 2);
+    const char stanceLeg = 'L';
+    const Transform stance_foot_T_des(3, -M_PI / 2);
     dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
@@ -76,26 +76,28 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));        
     constraintsNameVec_.push_back("torque limits");
 
-    // Joint limits
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                         
+    // // Joint limits
+    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+    //                                                                       cidPtr_->dcPtr_, 
+    //                                                                       JOINT_LIMITS_LOWER_VEC, 
+    //                                                                       JOINT_LIMITS_UPPER_VEC));      
+    // constraintsNameVec_.push_back("joint limits");                                                                                                         
 
-    // Surface contact constraints
-    const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
-    constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
-                                                                             FRICTION_PARAMS));
-    constraintsNameVec_.push_back("contact constraints");
+    // // Surface contact constraints
+    // const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
+    // constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
+    //                                                                          FRICTION_PARAMS));
+    // constraintsNameVec_.push_back("contact constraints");
 
-    // Kinematics constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
-                                                                              jtype_input, 
-                                                                              trajPtr_, 
-                                                                              dcidPtr_->ddcPtr_,
-                                                                              gp_input));    
-    constraintsNameVec_.push_back("customized constraints");
+    // // Kinematics constraints
+    // constraintsPtrVec_.push_back(std::make_unique<DigitMultipleStepCustomizedConstraints>(model_input, 
+    //                                                                                       jtype_input, 
+    //                                                                                       trajPtr_, 
+    //                                                                                       dcidPtr_->ddcPtr_,
+    //                                                                                       gp_input,
+    //                                                                                       N_input,
+    //                                                                                       NSteps_input));    
+    // constraintsNameVec_.push_back("customized constraints");
 
     // // periodic reset map constraints
     // constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
