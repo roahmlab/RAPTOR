@@ -21,7 +21,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_subdirectory(extern/pybind)
 
 # Find Boost library
-find_package(Boost REQUIRED COMPONENTS
+find_package(Boost REQUIRED COMPONENTS 
     system
     filesystem
     serialization
@@ -38,15 +38,9 @@ link_directories(${GSL_LIBRARY_DIRS})
 find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-# Find Pinocchio library
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PKG_PIN_CONFIG REQUIRED 
-    pinocchio
-    hpp-fcl
-    urdfdom
-    console_bridge)
-include_directories(${PKG_PIN_CONFIG_INCLUDE_DIRS})
-link_directories(${PKG_PIN_CONFIG_LIBRARY_DIRS})
+find_package(pinocchio REQUIRED)
+include_directories(${PINOCCHIO_INCLUDE_DIRS})
+link_directories(${PINOCCHIO_LIBRARY_DIRS})
 
 set(PINOCCHIO_FLAGS
   ${pinocchio_CFLAGS_OTHER}
@@ -154,7 +148,7 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
-target_link_libraries(Digitlib PRIVATE
+target_link_libraries(Digitlib PUBLIC
     trajlib
     IDlib
     Conslib
@@ -163,7 +157,7 @@ target_link_libraries(Digitlib PRIVATE
     coinhsl
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_include_directories(Digitlib PUBLIC
     Examples/Digit/include)
@@ -176,7 +170,7 @@ add_library(DigitModifiedlib SHARED
     Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
     Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
 
-target_link_libraries(DigitModifiedlib PRIVATE
+target_link_libraries(DigitModifiedlib PUBLIC
     trajlib
     IDlib
     Conslib
@@ -184,7 +178,7 @@ target_link_libraries(DigitModifiedlib PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_include_directories(DigitModifiedlib PUBLIC
     Examples/Digit-modified/include)
@@ -198,7 +192,7 @@ add_library(Kinovalib SHARED
     Examples/Kinova/SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
-target_link_libraries(Kinovalib PRIVATE
+target_link_libraries(Kinovalib PUBLIC
     trajlib
     IDlib
     Conslib
@@ -206,7 +200,7 @@ target_link_libraries(Kinovalib PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova
@@ -221,7 +215,7 @@ target_include_directories(Kinovalib PUBLIC
 add_executable(Digit_example 
     Examples/Digit/DigitSingleStep.cpp)
 
-target_include_directories(Digit_example PRIVATE
+target_include_directories(Digit_example PUBLIC
     Examples/Digit/include
     KinematicsDynamics/include
     Trajectories/include
@@ -229,7 +223,7 @@ target_include_directories(Digit_example PRIVATE
     Optimization/include
     Utils/include)
 
-target_link_libraries(Digit_example PRIVATE
+target_link_libraries(Digit_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -239,7 +233,7 @@ target_link_libraries(Digit_example PRIVATE
     coinhsl
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -247,10 +241,10 @@ target_compile_options(Digit_example PUBLIC
 add_executable(DigitModified_example 
     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
 
-target_include_directories(DigitModified_example PRIVATE
+target_include_directories(DigitModified_example PUBLIC
     Examples/Digit-modified/include)
 
-target_link_libraries(DigitModified_example PRIVATE
+target_link_libraries(DigitModified_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -259,7 +253,7 @@ target_link_libraries(DigitModified_example PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(DigitModified_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -267,11 +261,11 @@ target_compile_options(DigitModified_example PUBLIC
 add_executable(KinovaIK_example 
     Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)
 
-target_include_directories(KinovaIK_example PRIVATE
+target_include_directories(KinovaIK_example PUBLIC
     Examples/Kinova
     Examples/Kinova/InverseKinematics)
 
-target_link_libraries(KinovaIK_example PRIVATE
+target_link_libraries(KinovaIK_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -280,7 +274,7 @@ target_link_libraries(KinovaIK_example PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -288,11 +282,11 @@ target_compile_options(KinovaIK_example PUBLIC
 add_executable(Kinova_example 
     Examples/Kinova/ArmourUnsafe/KinovaExample.cpp)
 
-target_include_directories(Kinova_example PRIVATE
+target_include_directories(Kinova_example PUBLIC
     Examples/Kinova
     Examples/Kinova/ArmourUnsafe/include)
 
-target_link_libraries(Kinova_example PRIVATE
+target_link_libraries(Kinova_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -301,7 +295,7 @@ target_link_libraries(Kinova_example PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -309,11 +303,11 @@ target_compile_options(Kinova_example PUBLIC
 add_executable(KinovaWaitr_example 
     Examples/Kinova/WaitrUnsafe/KinovaWaitrExample.cpp)
 
-target_include_directories(KinovaWaitr_example PRIVATE
+target_include_directories(KinovaWaitr_example PUBLIC
     Examples/Kinova
     Examples/Kinova/WaitrUnsafe/include)
 
-target_link_libraries(KinovaWaitr_example PRIVATE
+target_link_libraries(KinovaWaitr_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -322,7 +316,7 @@ target_link_libraries(KinovaWaitr_example PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -330,13 +324,13 @@ target_compile_options(KinovaWaitr_example PUBLIC
 add_executable(KinovaFilter_example 
     Examples/Kinova/SystemIdentification/DataFilter/KinovaAccelerationEstimator.cpp)
 
-target_include_directories(KinovaFilter_example PRIVATE
+target_include_directories(KinovaFilter_example PUBLIC
     Examples/Kinova
     Examples/Kinova/SystemIdentification/DataFilter/include
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
-target_link_libraries(KinovaFilter_example PRIVATE
+target_link_libraries(KinovaFilter_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -349,13 +343,13 @@ target_link_libraries(KinovaFilter_example PRIVATE
 add_executable(KinovaSysId_example 
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
 
-target_include_directories(KinovaSysId_example PRIVATE
+target_include_directories(KinovaSysId_example PUBLIC
     Examples/Kinova
     Examples/Kinova/SystemIdentification/DataFilter/include
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
-target_link_libraries(KinovaSysId_example PRIVATE
+target_link_libraries(KinovaSysId_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -364,7 +358,7 @@ target_link_libraries(KinovaSysId_example PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -373,11 +367,11 @@ pybind11_add_module(oracle_pybind SHARED
     Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp
     Examples/Kinova/ArmourUnsafe/src/KinovaPybindWrapper.cpp)
 
-target_include_directories(oracle_pybind PRIVATE
+target_include_directories(oracle_pybind PUBLIC
     Examples/Kinova
     Examples/Kinova/ArmourUnsafe/include)
 
-target_link_libraries(oracle_pybind PRIVATE
+target_link_libraries(oracle_pybind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -386,7 +380,7 @@ target_link_libraries(oracle_pybind PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES}
+    pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_pybind PUBLIC
@@ -398,11 +392,11 @@ pybind11_add_module(oracle_waitr_pybind SHARED
     Examples/Kinova/WaitrUnsafe/KinovaWaitrPybind.cpp
     Examples/Kinova/WaitrUnsafe/src/KinovaWaitrPybindWrapper.cpp)
 
-target_include_directories(oracle_waitr_pybind PRIVATE
+target_include_directories(oracle_waitr_pybind PUBLIC
     Examples/Kinova
     Examples/Kinova/WaitrUnsafe/include)
 
-target_link_libraries(oracle_waitr_pybind PRIVATE
+target_link_libraries(oracle_waitr_pybind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -411,7 +405,7 @@ target_link_libraries(oracle_waitr_pybind PRIVATE
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES}
+    pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 
 target_compile_options(oracle_waitr_pybind PUBLIC
@@ -423,10 +417,10 @@ set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_executable(ForwardKinematics_test 
     Tests/KinematicsDynamics/TestForwardKinematicsSolver.cpp)
 
-target_link_libraries(ForwardKinematics_test PRIVATE
+target_link_libraries(ForwardKinematics_test PUBLIC
     IDlib
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(ForwardKinematics_test PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -434,14 +428,14 @@ target_compile_options(ForwardKinematics_test PUBLIC
 add_executable(ForwardKinematicsGradient_test 
     Tests/KinematicsDynamics/TestForwardKinematicsRPYDerivatives.cpp)
 
-target_link_libraries(ForwardKinematicsGradient_test PRIVATE
+target_link_libraries(ForwardKinematicsGradient_test PUBLIC
     IDlib
     Optlib
     Conslib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(ForwardKinematicsGradient_test PUBLIC
     ${PINOCCHIO_FLAGS})
@@ -449,12 +443,12 @@ target_compile_options(ForwardKinematicsGradient_test PUBLIC
 add_executable(KinematicsConstraints_test 
     Tests/Constraints/TestKinematicsConstraints.cpp)
 
-target_link_libraries(KinematicsConstraints_test PRIVATE
+target_link_libraries(KinematicsConstraints_test PUBLIC
     trajlib
     IDlib
     Conslib
     ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    pinocchio::pinocchio)
 
 target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
