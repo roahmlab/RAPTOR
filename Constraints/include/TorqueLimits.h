@@ -29,6 +29,9 @@ public:
         // compute constraints lower bounds and upper bounds
     void compute_bounds() override;
 
+        // print violation information
+    virtual void print_violation_info() override;
+
     // class members:
     std::shared_ptr<Trajectories> trajPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;

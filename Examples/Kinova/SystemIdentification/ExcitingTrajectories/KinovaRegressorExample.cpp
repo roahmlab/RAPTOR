@@ -136,6 +136,11 @@ int main(int argc, char* argv[]) {
             std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");
             std::ofstream acceleration(outputfolder + "exciting-acceleration-" + std::string(argv[1]) + ".csv");
 
+            solution << std::setprecision(16);
+            position << std::setprecision(16);
+            velocity << std::setprecision(16);
+            acceleration << std::setprecision(16);
+
             for (int i = 0; i < traj->N; i++) {
                 position << traj->q(i).transpose() << std::endl;
                 velocity << traj->q_d(i).transpose() << std::endl;

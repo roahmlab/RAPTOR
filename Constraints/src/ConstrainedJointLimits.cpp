@@ -60,14 +60,6 @@ void ConstrainedJointLimits::compute(const VecX& z,
                 pg_pz.row(i * NB + indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
             }
 
-            // // quick sanity check
-            // if (dcPtr_->pq_dep_pq_indep.cols() != dcPtr_->numIndependentJoints) {
-            //     throw std::runtime_error("pq_dep_pq_indep must have the same number of columns as the number of independent joints");
-            // }
-            // if (dcPtr_->pq_dep_pq_indep.rows() != dcPtr_->numDependentJoints) {
-            //     throw std::runtime_error("pq_dep_pq_indep must have the same number of rows as the number of dependent joints");
-            // }
-
             // compute and fill in dependent joints derivatives
             MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
             for (int j = 0; j < dcPtr_->numDependentJoints; j++) {

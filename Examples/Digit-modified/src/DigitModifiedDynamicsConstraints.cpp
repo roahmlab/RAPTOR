@@ -258,7 +258,7 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
 
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
     q.block(0, 0, 6, 1) = torso_T.getXYZRPY();
-
+    
     if (compute_derivatives) {
         get_c(q);
         get_J(q);
@@ -278,7 +278,6 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
         }
 
         P_dep = -J_dep_qr.solve(J_indep);
-
         pq_dep_pq_indep = P_dep;
     }
 

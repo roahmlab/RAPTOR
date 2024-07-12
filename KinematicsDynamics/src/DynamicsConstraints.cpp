@@ -38,27 +38,32 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
         return;
     }
 
-    setupJointPosition(q);
+    setupJointPosition(q, compute_derivatives);
 
-    get_c(q); // c is updated
-    get_J(q); // J is updated
+    if (!compute_derivatives) {
+        get_c(q); // c is updated
+        get_J(q); // J is updated
 
-    get_dependent_columns(J_dep, J);
-    get_independent_columns(J_indep, J);
+        get_dependent_columns(J_dep, J);
+        get_independent_columns(J_indep, J);
 
-    J_dep_qr = QRSolver(J_dep);
-    J_dep_T_qr = QRSolver(J_dep.transpose());
+        J_dep_qr = QRSolver(J_dep);
+        J_dep_T_qr = QRSolver(J_dep.transpose());
 
-    // sanity check on uniqueness (these two arguments are actually equivalent)
-    if (J_dep_qr.rank()   != J_dep.rows() || 
-        J_dep_qr.rank()   != J_dep.cols() ||
-        J_dep_T_qr.rank() != J_dep.rows() || 
-        J_dep_T_qr.rank() != J_dep.cols()) {
-        throw std::runtime_error("constraint jacobian is not full rank!");
+        // sanity check on uniqueness (these two arguments are actually equivalent)
+        if (J_dep_qr.rank()   != J_dep.rows() || 
+            J_dep_qr.rank()   != J_dep.cols() ||
+            J_dep_T_qr.rank() != J_dep.rows() || 
+            J_dep_T_qr.rank() != J_dep.cols()) {
+            throw std::runtime_error("constraint jacobian is not full rank!");
+        }
+
+        // get the dependent columns of the projection matrix
+        P_dep = -J_dep_qr.solve(J_indep);
     }
-
-    // get the dependent columns of the projection matrix
-    P_dep = -J_dep_qr.solve(J_indep);
+    // else {
+    //     // should have been called in setupJointPosition
+    // }
 
     // fill in depuated joints velocities
     fill_dependent_vector(v, P_dep * get_independent_vector(v));

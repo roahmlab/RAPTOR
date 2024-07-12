@@ -46,4 +46,33 @@ void TorqueLimits::compute_bounds() {
     }
 }
 
+void TorqueLimits::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < trajPtr_->Nact; j++) {
+            if (g(i * trajPtr_->Nact + j) <= lowerLimits(j)) {
+                std::cout << "        TorqueLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i
+                          << " is below lower limit: "
+                          << g(i * trajPtr_->Nact + j) 
+                          << " < " 
+                          << lowerLimits(j) 
+                          << std::endl;
+            } 
+            else if (g(i * trajPtr_->Nact + j) >= upperLimits(j)) {
+                std::cout << "        TorqueLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * trajPtr_->Nact + j) 
+                          << " > " 
+                          << upperLimits(j) 
+                          << std::endl;
+            }
+        }
+    }
+}
+
 }; // namespace IDTO

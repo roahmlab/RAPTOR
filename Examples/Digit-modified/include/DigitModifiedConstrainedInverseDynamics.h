@@ -25,6 +25,13 @@ public:
 
     // Destructor
     ~DigitModifiedConstrainedInverseDynamics() = default;
+
+    // class members:
+    // a pointer type of DigitModifiedDynamicsConstraints, 
+    // that shares the same memory with dcPtr_ defined in base class ConstrainedInverseDynamics
+    // so that other Digit-related class can access specific field in DigitModifiedDynamicsConstraints
+    // such as stanceLeg, stance_foot_T_des, etc.
+    std::shared_ptr<DigitModifiedDynamicsConstraints> ddcPtr_;
 };
 
 }; // namespace DigitModified

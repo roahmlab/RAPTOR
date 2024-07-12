@@ -7,12 +7,11 @@ using namespace IDTO;
 
 int main() {
     // Define robot model
-    // const std::string urdf_filename = "../Examples/Digit/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    // const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::Data data(model);
 
     // manually define the joint axis of rotation
     // 1 for Rx, 2 for Ry, 3 for Rz

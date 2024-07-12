@@ -1,7 +1,6 @@
 #ifndef TRAJECTORY_GROUP_H
 #define TRAJECTORY_GROUP_H
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include "Trajectories.h"
@@ -20,11 +19,11 @@ public:
     ~TrajectoryGroup() = default;
 
     // class methods:
-    void add_trajectory(const std::string& name,    
-                        std::shared_ptr<Trajectories> trajectory);
+    virtual void add_trajectory(const std::string& name,    
+                                std::shared_ptr<Trajectories> trajectory) final override;
 
         // update original information in Trajectories class
-    void gather_trajectories_information();
+    virtual void gather_trajectories_information(const bool print_info = false) final override;
 
     virtual void compute(const VecX& z, 
                          bool compute_derivatives = true,

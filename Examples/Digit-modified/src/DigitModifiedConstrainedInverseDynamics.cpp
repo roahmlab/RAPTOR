@@ -10,10 +10,11 @@ DigitModifiedConstrainedInverseDynamics::DigitModifiedConstrainedInverseDynamics
                                                                                  char stanceLeg_input, 
                                                                                  const Transform& stance_foot_T_des_input) :
     ConstrainedInverseDynamics(model_input, trajPtr_input, NUM_DEPENDENT_JOINTS_input) {
-    dcPtr_ = std::make_shared<DigitModifiedDynamicsConstraints>(modelPtr_, 
-                                                                jtype_input, 
-                                                                stanceLeg_input,
-                                                                stance_foot_T_des_input);
+    ddcPtr_ = std::make_shared<DigitModifiedDynamicsConstraints>(modelPtr_, 
+                                                                 jtype_input, 
+                                                                 stanceLeg_input,
+                                                                 stance_foot_T_des_input);
+    dcPtr_ = ddcPtr_; // convert to base class
 }
 
 }; // namespace DigitModified

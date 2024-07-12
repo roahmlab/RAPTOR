@@ -30,6 +30,10 @@ public:
     Transform(const Mat3& R_in, 
               const Vec3& p_in, 
               const bool i_in = false);
+              
+    // Constructor
+    Transform(const Vec3& rpy_in,
+              const Vec3& p_in);
 
     // Constructor
     Transform(const Vec3& p_in);

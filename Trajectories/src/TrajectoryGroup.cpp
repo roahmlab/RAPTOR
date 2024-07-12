@@ -8,13 +8,14 @@ void TrajectoryGroup::add_trajectory(const std::string& name,
     gather_trajectories_information();
 }
 
-void TrajectoryGroup::gather_trajectories_information() {
+void TrajectoryGroup::gather_trajectories_information(const bool print_info) {
     T = 0;
     N = 0;
     Nact = trajectories.begin()->second->Nact;
     varLength = 0;
 
-    std::cout << "Trajectory group information: " << std::endl;
+    if (print_info) std::cout << "Trajectory group information: " << std::endl;
+    
     size_t index = 0;
     for (const auto& it : trajectories) {
         T += it.second->T;
@@ -29,13 +30,15 @@ void TrajectoryGroup::gather_trajectories_information() {
         variable_locations[it.first] = std::make_pair(varLength, varLength + it.second->varLength);
         varLength += it.second->varLength;
 
-        std::cout << "Trajectory " << index << ": " << it.first << std::endl;
-        std::cout << "    trajectory location: [" 
-                  << trajectory_locations[it.first].first << ", " 
-                  << trajectory_locations[it.first].second << "]" << std::endl;
-        std::cout << "    variable location: ["
-                  << variable_locations[it.first].first << ", "
-                  << variable_locations[it.first].second << "]" << std::endl;
+        if (print_info) {
+            std::cout << "Trajectory " << index << ": " << it.first << std::endl;
+            std::cout << "    trajectory location: [" 
+                      << trajectory_locations[it.first].first << ", " 
+                      << trajectory_locations[it.first].second << "]" << std::endl;
+            std::cout << "    variable location: ["
+                      << variable_locations[it.first].first << ", "
+                      << variable_locations[it.first].second << "]" << std::endl;
+        }
 
         index++;
     }

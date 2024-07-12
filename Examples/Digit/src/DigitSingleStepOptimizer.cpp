@@ -3,9 +3,6 @@
 namespace IDTO {
 namespace Digit {
 
-using std::cout;
-using std::endl;
-
 // // constructor
 // DigitSingleStepOptimizer::DigitSingleStepOptimizer()
 // {
@@ -34,21 +31,20 @@ bool DigitSingleStepOptimizer::set_parameters(
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
                                               time_discretization_input, 
-                                              degree_input);                                   
-    
+                                              degree_input);       
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
-    
+
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    cidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
-                                                                trajPtr_,
-                                                                NUM_DEPENDENT_JOINTS, 
-                                                                jtype_input, 
-                                                                stanceLeg, 
-                                                                stance_foot_T_des);                                                          
-
+    dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
+                                                                 trajPtr_,
+                                                                 NUM_DEPENDENT_JOINTS, 
+                                                                 jtype_input, 
+                                                                 stanceLeg, 
+                                                                 stance_foot_T_des);                                                          
+    cidPtr_ = dcidPtr_; // convert to base class
     
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
@@ -91,13 +87,13 @@ bool DigitSingleStepOptimizer::set_parameters(
     constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
                                                                               jtype_input, 
                                                                               trajPtr_, 
-                                                                              cidPtr_->dcPtr_,
+                                                                              dcidPtr_->ddcPtr_,
                                                                               gp_input));    
     constraintsNameVec_.push_back("customized constraints");            
 
     // periodic reset map constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                         cidPtr_,
+                                                                                         dcidPtr_,
                                                                                          FRICTION_PARAMS));    
     constraintsNameVec_.push_back("reset map constraints");     
 

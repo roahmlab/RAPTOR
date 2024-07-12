@@ -52,9 +52,6 @@ set(PINOCCHIO_FLAGS
 
 # Find YAML library
 find_package(yaml-cpp REQUIRED)
-# have to manually set the include and library directories for yaml-cpp for now
-set(YAML_CPP_INCLUDE_DIR /usr/include)
-set(YAML_CPP_LIBRARY_DIR /usr/lib/x86_64-linux-gnu/)
 include_directories(${YAML_CPP_INCLUDE_DIR})
 link_directories(${YAML_CPP_LIBRARY_DIR})
 
@@ -231,6 +228,7 @@ target_link_libraries(Digit_example PUBLIC
     Digitlib
     ipopt
     coinhsl
+    yaml-cpp
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
@@ -252,6 +250,7 @@ target_link_libraries(DigitModified_example PUBLIC
     DigitModifiedlib
     ipopt
     coinhsl
+    yaml-cpp
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 

@@ -1,4 +1,4 @@
-name: DigitSingleStep
+name: DigitModifiedSingleStep
 
 ### Trajectory settings
   # number of time nodes to evaluate constraints

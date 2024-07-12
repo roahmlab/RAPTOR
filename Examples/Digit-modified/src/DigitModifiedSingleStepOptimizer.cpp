@@ -3,9 +3,6 @@
 namespace IDTO {
 namespace DigitModified {
 
-using std::cout;
-using std::endl;
-
 // // constructor
 // DigitModifiedSingleStepOptimizer::DigitModifiedSingleStepOptimizer()
 // {
@@ -42,12 +39,13 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    cidPtr_ = std::make_shared<DigitModifiedConstrainedInverseDynamics>(model_input, 
-                                                                        trajPtr_,
-                                                                        NUM_DEPENDENT_JOINTS, 
-                                                                        jtype_input, 
-                                                                        stanceLeg, 
-                                                                        stance_foot_T_des);                                                          
+    dcidPtr_ = std::make_shared<DigitModifiedConstrainedInverseDynamics>(model_input, 
+                                                                         trajPtr_,
+                                                                         NUM_DEPENDENT_JOINTS, 
+                                                                         jtype_input, 
+                                                                         stanceLeg, 
+                                                                         stance_foot_T_des);                                                          
+    cidPtr_ = dcidPtr_; // convert to base class
 
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
@@ -84,7 +82,7 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
 
     // Periodic reset map constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                                 cidPtr_,
+                                                                                                 dcidPtr_,
                                                                                                  FRICTION_PARAMS));    
     constraintsNameVec_.push_back("reset map constraints");     
 

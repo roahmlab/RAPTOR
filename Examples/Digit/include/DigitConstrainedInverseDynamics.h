@@ -3,6 +3,7 @@
 #define DIGIT_CONSTRAINED_INVERSE_DYNAMICS_H
 
 #include "ConstrainedInverseDynamics.h"
+
 #include "DigitDynamicsConstraints.h"
 
 namespace IDTO {
@@ -15,7 +16,7 @@ public:
     // Constructor
     DigitConstrainedInverseDynamics() = default;
 
-    // Constructor
+    // Constructor (for single step optimization)
     DigitConstrainedInverseDynamics(const Model& model_input, 
                                     std::shared_ptr<Trajectories>& trajPtr_input,
                                     int numDependentJoints_input,
@@ -25,6 +26,13 @@ public:
 
     // Destructor
     ~DigitConstrainedInverseDynamics() = default;
+
+    // class members:
+    // a pointer type of DigitDynamicsConstraints, 
+    // that shares the same memory with dcPtr_ defined in base class ConstrainedInverseDynamics
+    // so that other Digit-related class can access specific field in DigitDynamicsConstraints
+    // such as stanceLeg, stance_foot_T_des, etc.
+    std::shared_ptr<DigitDynamicsConstraints> ddcPtr_;
 };
 
 }; // namespace Digit
