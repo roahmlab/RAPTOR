@@ -140,12 +140,9 @@ include_directories(Optimization/include)
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
-    Examples/Digit/src/DigitMultipleStepDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
-    Examples/Digit/src/DigitMultipleStepOptimizer.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
-    Examples/Digit/src/DigitMultipleStepCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
 target_link_libraries(Digitlib PUBLIC
@@ -237,32 +234,6 @@ target_link_libraries(Digit_example PUBLIC
     pinocchio::pinocchio)
 
 target_compile_options(Digit_example PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-add_executable(DigitMultipleStep_example 
-    Examples/Digit/DigitMultipleStep.cpp)
-
-target_include_directories(DigitMultipleStep_example PRIVATE
-    Examples/Digit/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
-
-target_link_libraries(DigitMultipleStep_example PRIVATE
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Digitlib
-    ipopt
-    coinhsl
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
-
-target_compile_options(DigitMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 

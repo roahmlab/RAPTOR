@@ -5,7 +5,7 @@
 #include "ConstrainedInverseDynamics.h"
 
 #include "DigitDynamicsConstraints.h"
-#include "DigitMultipleStepDynamicsConstraints.h"
+#include "DigitDynamicsConstraints.h"
 
 namespace IDTO {
 namespace Digit {
