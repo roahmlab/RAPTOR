@@ -31,11 +31,10 @@ bool DigitSingleStepOptimizer::set_parameters(
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
                                               time_discretization_input, 
-                                              degree_input);                                   
-    
+                                              degree_input);       
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
-    
+
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
