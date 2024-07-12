@@ -25,16 +25,6 @@ public:
                                     char stanceLeg, 
                                     const Transform& stance_foot_T_des_input);
 
-    // Constructor (for multiple step optimization)
-    DigitConstrainedInverseDynamics(const Model& model_input, 
-                                    std::shared_ptr<Trajectories>& trajPtr_input,
-                                    int numDependentJoints_input,
-                                    const Eigen::VectorXi& jtype_input, 
-                                    char stanceLeg, 
-                                    const Transform& stance_foot_T_des_input,
-                                    const int N_input,
-                                    const int NSteps_input);
-
     // Destructor
     ~DigitConstrainedInverseDynamics() = default;
 
