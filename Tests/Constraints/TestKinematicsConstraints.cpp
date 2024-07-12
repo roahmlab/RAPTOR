@@ -1,6 +1,7 @@
 #include "KinematicsConstraints.h"
 // #include "Plain.h"
 #include "Polynomials.h"
+#include <chrono>
 
 using namespace IDTO;
 
