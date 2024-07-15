@@ -104,6 +104,7 @@ int main() {
     app->Options()->SetIntegerValue("max_iter", 50);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
     }

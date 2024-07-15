@@ -2,13 +2,13 @@ name: DigitSingleStep
 
 ### Trajectory settings
   # number of time nodes to evaluate constraints
-N: 14
+N: 26
 
   # distribution of the time nodes
 time_discretization: Chebyshev # Chebyshev, Uniform
 
   # degree of the Bezier curve (as the desired trajectory)
-degree: 5
+degree: 8
 
 ### Gait behavior settings
   # step height (in the middle of the gait)
@@ -44,7 +44,7 @@ constr_viol_tol: 1e-4
 max_wall_time: 1000.0
 
   # terminal condition 4: maximum number of iterations
-max_iter: 500
+max_iter: 100
 
   # scale the objective function
 obj_scaling_factor: 1e-3
@@ -53,7 +53,7 @@ obj_scaling_factor: 1e-3
 print_level: 5 # 0: no output, 5: detailed output that is usually enough for tuning parameters
 
   # mu_strategy
-mu_strategy: monotone # adaptive for more aggressive attempts, monotone for more conservative convergence
+mu_strategy: adaptive # "adaptive" for more aggressive attempts, "monotone" for more conservative convergence
 
   # linear solver (HSL)
 linear_solver: ma86 # ma27, ma57, ma86, ma97, pardiso

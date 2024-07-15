@@ -210,7 +210,9 @@ target_include_directories(Kinovalib PUBLIC
 
 ## Example scripts
 add_executable(Digit_example 
-    Examples/Digit/DigitSingleStep.cpp)
+    # Examples/Digit/DigitSingleStep.cpp)
+    Examples/Digit/DigitSingleStepSpeedTest.cpp)
+    # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
 
 target_include_directories(Digit_example PUBLIC
     Examples/Digit/include
