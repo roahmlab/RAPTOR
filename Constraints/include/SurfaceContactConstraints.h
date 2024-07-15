@@ -30,7 +30,7 @@ public:
     SurfaceContactConstraints() = default;
 
     // Constructor
-    SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& idPtr_input,
+    SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
                               const frictionParams& fp_input);
 
     // Destructor
@@ -46,7 +46,7 @@ public:
     void compute_bounds() override;
 
     // class variables:
-    std::shared_ptr<ConstrainedInverseDynamics> idPtr_;
+    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
 
     frictionParams fp;
 };
