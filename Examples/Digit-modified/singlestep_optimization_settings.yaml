@@ -2,13 +2,13 @@ name: DigitModifiedSingleStep
 
 ### Trajectory settings
   # number of time nodes to evaluate constraints
-N: 28
+N: 16
 
   # distribution of the time nodes
 time_discretization: Chebyshev # Chebyshev, Uniform
 
   # degree of the Bezier curve (as the desired trajectory)
-degree: 8
+degree: 5
 
 ### Gait behavior settings
   # step height (in the middle of the gait)
