@@ -210,8 +210,8 @@ target_include_directories(Kinovalib PUBLIC
 
 ## Example scripts
 add_executable(Digit_example 
-    # Examples/Digit/DigitSingleStep.cpp)
-    Examples/Digit/DigitSingleStepSpeedTest.cpp)
+    Examples/Digit/DigitSingleStep.cpp)
+    # Examples/Digit/DigitSingleStepSpeedTest.cpp)
     # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
 
 target_include_directories(Digit_example PUBLIC
@@ -239,9 +239,9 @@ target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
-    # Examples/Digit-modified/DigitModifiedSingleStep.cpp)
+    Examples/Digit-modified/DigitModifiedSingleStep.cpp)
     # Examples/Digit-modified/DigitModifiedSingleStepSpeedTest.cpp)
-    Examples/Digit-modified/DigitModifiedSingleStepRobustnessTest.cpp)
+    # Examples/Digit-modified/DigitModifiedSingleStepRobustnessTest.cpp)
 
 target_include_directories(DigitModified_example PUBLIC
     Examples/Digit-modified/include)

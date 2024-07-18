@@ -171,16 +171,16 @@ int main(int argc, char* argv[]) {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution(filepath + 
-                               "robustness_test_solution_" + 
-                               std::to_string(degree) + 
-                               ".txt");
+        // std::ofstream solution(filepath + 
+        //                        "robustness_test_solution_" + 
+        //                        std::to_string(degree) + 
+        //                        ".txt");
 
-        solution << std::setprecision(20);
-        for (int i = 0; i < mynlp->numVars; i++) {
-            solution << mynlp->solution[i] << std::endl;
-        }
-        solution.close();
+        // solution << std::setprecision(20);
+        // for (int i = 0; i < mynlp->numVars; i++) {
+        //     solution << mynlp->solution[i] << std::endl;
+        // }
+        // solution.close();
 
         // std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
         // trajectory << std::setprecision(20);

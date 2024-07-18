@@ -47,9 +47,12 @@ Run the following commands for a Digit-v3 example:
 mkdir build
 cd build
 cmake ..
-make
+make -j
 ./Digit_example
 ```
+
+More settings are included in [Examples/Digit/singlestep_optimization_settings.yaml](Examples/Digit/singlestep_optimization_settings.yaml).
+You can change gait behavior or Ipopt settings there.
 
 ## Credits
 Bohao Zhang (jimzhang@umich.edu)

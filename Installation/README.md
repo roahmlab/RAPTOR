@@ -1,19 +1,25 @@
 # Installation of required packages
 
+First clone the repository with its submodules (pybind11)
+```
+git clone --recurse-submodules https://github.com/roahmlab/IDTO.git
+```
+
 ## Install Through Docker (Recommended)
 We strongly suggest you use docker.
 We have provided a docker file.
-In Visual Studio Code, simply click "ctrl+shift+P" and search "Dev Containers: Rebuild Container",
-it will build the environment automatically for you so that you don't need to follow the steps below.
 
 We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
-
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
 To be more specific, you need to get HSL library from its official [website](https://www.hsl.rl.ac.uk/), 
-and then put the folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL).
-Rename this folder as "HSL" and compress it so that you get a "HSL.zip".
+and then put the HSL folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is a wrapper for easier compilation of HSL.
+Rename the HSL wrapper folder as "HSL" and compress it so that you get a "HSL.zip".
 Put the "HSL.zip" in `docker/` so that dockerfile can find it.
 This zip file will later be 'unzip'ed and built inside the docker container.
+You need to do this BEFORE you build the docker image.
+
+Finally, in Visual Studio Code, simply click "ctrl+shift+P" and search "Dev Containers: Rebuild Container",
+it will build the environment automatically for you from [docker/Dockerfile](../docker/Dockerfile) so that you don't need to follow the steps below.
 
 ## Install Independently
 All of the following instructions are assuming that the packages are installed to root directories,
@@ -29,7 +35,7 @@ sudo apt-get install libgsl-dev
 
 ### Boost
 ```
-sudo apt-get install libboost-dev
+sudo apt-get install libboost-all-dev
 ```
 
 ### urdfdom

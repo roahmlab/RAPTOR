@@ -58,21 +58,16 @@ int main(int argc, char* argv[]) {
     app->Options()->SetNumericValue("tol", 1e-5);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-5);
     app->Options()->SetNumericValue("max_wall_time", 200.0);
-    app->Options()->SetIntegerValue("max_iter", 200);
+    app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
     app->Options()->SetIntegerValue("print_level", 0);
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    std::ofstream experiment_output(filepath + "speed_test.txt", std::ofstream::out | std::ofstream::app);
+    std::ofstream experiment_output(filepath + "speed_test.txt");
 
-    // char* end = nullptr;
-    // int degree_choice = std::strtoul(argv[1], &end, 10);
-    // int mu_strategy_choice = std::strtoul(argv[2], &end, 10);
-    // int discretization_choice = std::strtoul(argv[3], &end, 10);
-
-    for (int degree_choice = 3; degree_choice < 4; degree_choice++) {
+    for (int degree_choice = 0; degree_choice < 4; degree_choice++) {
         for (int mu_strategy_choice = 0; mu_strategy_choice < 2; mu_strategy_choice++) {
             for (int discretization_choice = 0; discretization_choice < 2; discretization_choice++) {
                 degree = degree_range[degree_choice];
