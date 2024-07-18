@@ -28,7 +28,7 @@ int main() {
     jtype << 3, 3, 3, 3, 3, 3, 3;
 
     // Define obstacles
-    const int num_obstacles = 0;
+    const int num_obstacles = 5;
     std::vector<Eigen::Vector3d> boxCenters;
     std::vector<Eigen::Vector3d> boxOrientation;
     std::vector<Eigen::Vector3d> boxSize;

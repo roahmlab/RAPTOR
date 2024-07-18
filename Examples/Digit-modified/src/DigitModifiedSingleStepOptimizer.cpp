@@ -81,10 +81,10 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     constraintsNameVec_.push_back("customized constraints");            
 
     // Periodic reset map constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                                 dcidPtr_,
-                                                                                                 FRICTION_PARAMS));    
-    constraintsNameVec_.push_back("reset map constraints");     
+    // constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
+    //                                                                                              dcidPtr_,
+    //                                                                                              FRICTION_PARAMS));    
+    // constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
 }

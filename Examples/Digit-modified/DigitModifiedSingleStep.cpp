@@ -64,26 +64,32 @@ int main(int argc, char* argv[]) {
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
     }
-
-    std::cout << gp.swingfoot_begin_y_des << std::endl;
-    std::cout << gp.swingfoot_end_y_des << std::endl;
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-modified-Bezier.txt");
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-modified-Bezier.txt");
 
-    // add disturbance to initial guess
-    Eigen::VectorXd disturbance(z.size());
+    // // add disturbance to initial guess
+    // Eigen::VectorXd disturbance(z.size());
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    //     disturbance.setRandom();
+    //     disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
+    // }
+    // else {
+    //     disturbance.setZero();
+    // }
+
+    // z = z + disturbance;
+
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-        disturbance.setRandom();
-        disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
     }
     else {
-        disturbance.setZero();
+        std::srand(std::time(nullptr));
     }
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
 
-    z = z + disturbance;
-    
     SmartPtr<DigitModifiedSingleStepOptimizer> mynlp = new DigitModifiedSingleStepOptimizer();
     try {
 	    mynlp->set_parameters(z,
@@ -169,7 +175,7 @@ int main(int argc, char* argv[]) {
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {
-    //     std::ofstream solution(filepath + "solution-digit-modified-Bezier-" + output_name + ".txt");
+    //     std::ofstream solution(filepath + "solution-digit-modified-initial.txt");
     //     solution << std::setprecision(20);
     //     for (int i = 0; i < mynlp->numVars; i++) {
     //         solution << mynlp->solution[i] << std::endl;

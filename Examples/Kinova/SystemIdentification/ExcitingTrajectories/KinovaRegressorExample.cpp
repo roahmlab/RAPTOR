@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     const double T = 10.0;
     const int N = 50;
     const int degree = 5;
-    const double base_frequency = 2.0 * M_PI;
+    const double base_frequency = 2.0 * M_PI / T;
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-	app->Options()->SetNumericValue("max_wall_time", 100.0);
+	app->Options()->SetNumericValue("max_wall_time", 60.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -113,6 +113,10 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
+
+        const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv);
+        mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv) =
+            Utils::wrapToPi(initial_position_part);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -130,8 +134,7 @@ int main(int argc, char* argv[]) {
         traj->compute(mynlp->solution, false);
 
         if (argc > 1) {
-            // const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d4/";
-            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
             std::ofstream position(outputfolder + "exciting-position-" + std::string(argv[1]) + ".csv");
             std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");
@@ -151,6 +154,7 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
             }
+            solution << base_frequency << std::endl;
         }
         else {
             std::ofstream solution("exciting-solution.csv");
@@ -169,56 +173,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
-
-
-    // std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(1.0, 
-    //                                                                                    5, 
-    //                                                                                    model.nv, 
-    //                                                                                    TimeDiscretization::Uniform, 
-    //                                                                                    4);
-
-    // RegressorInverseDynamics rid(model, jtype, traj);
-    // InverseDynamics id(model, traj);
-
-    // Eigen::VectorXd z = Eigen::VectorXd::Random(traj->varLength);
-
-    // auto start = std::chrono::high_resolution_clock::now();
-    // rid.compute(z, true);
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    // std::cout << "Regressor Inverse Dynamics: " << duration.count() << " microseconds" << std::endl;
-
-    // start = std::chrono::high_resolution_clock::now();
-    // id.compute(z, false);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    // std::cout << "Inverse Dynamics: " << duration.count() << " microseconds" << std::endl;
-
-    // for (int i = 0; i < rid.tau.size(); i++) {
-    //     std::cout << rid.tau(i).transpose() - id.tau(i).transpose() << std::endl;
-    // }
-
-    // // compute numerical gradient by central finite difference
-    // for (int j = 0; j < traj->N; j++) {
-    //     for (int i = 0; i < z.size(); i++) {
-    //         Eigen::VectorXd z_plus = z;
-    //         Eigen::VectorXd z_minus = z;
-    //         z_plus(i) += 1e-8;
-    //         z_minus(i) -= 1e-8;
-
-    //         rid.compute(z_plus, false);
-    //         Eigen::VectorXd tau_plus = rid.tau(j);
-
-    //         rid.compute(z_minus, false);
-    //         Eigen::VectorXd tau_minus = rid.tau(j);
-
-    //         Eigen::VectorXd grad = (tau_plus - tau_minus) / 2e-8;
-    //         std::cout << (grad - rid.ptau_pz(j).col(i)).norm() << std::endl;
-    //         // std::cout <<  << std::endl;
-    //     }
-    //     std::cout << std::endl;
-    // }
 
     return 0;
 }

@@ -12,7 +12,7 @@ using namespace Ipopt;
 const std::string filepath = "../Examples/Digit-modified/data/robustness_test/";
 
 const int degree_range[] = {5, 6, 7, 8};
-const int N_range[] = {14, 18, 22, 26};
+const int N_range[] = {16, 20, 24, 28};
 const std::string mu_strategy_str[] = {"adaptive", "monotone"};
 const std::string linear_solver_str[] = {"ma27", "ma57", "ma86"};
 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
     app->Options()->SetNumericValue("tol", 1e-5);
-    app->Options()->SetNumericValue("constr_viol_tol", 1e-5);
+    app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
     app->Options()->SetNumericValue("max_wall_time", 200.0);
     app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         N = N_range[degree_choice];
         for (int mu_strategy_choice = 0; mu_strategy_choice < 2; mu_strategy_choice++) {
             app->Options()->SetStringValue("mu_strategy", mu_strategy_str[mu_strategy_choice].c_str());
-            for (int linear_solver_choice = 0; linear_solver_choice < 2; linear_solver_choice++) {
+            for (int linear_solver_choice = 0; linear_solver_choice < 3; linear_solver_choice++) {
                 app->Options()->SetStringValue("linear_solver", linear_solver_str[linear_solver_choice].c_str());
 
                 std::cerr << "EXPERIMENT: Degree: " << degree << ", mu_strategy: " << mu_strategy_str[mu_strategy_choice] << ", linear_solver: " << linear_solver_str[linear_solver_choice] << std::endl;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
                                               model,
                                               jtype,
                                               gp);
-                        mynlp->constr_viol_tol = 1e-5;
+                        mynlp->constr_viol_tol = 1e-4;
                     }
                     catch (std::exception& e) {
                         std::cerr << e.what() << std::endl;
