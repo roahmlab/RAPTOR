@@ -23,87 +23,33 @@ bool DigitMultipleStepOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const GaitParameters& gp_input
+    const std::vector<GaitParameters>& gps_input
 ) 
 {
-    x0 = x0_input;
-                                          
-    trajGroupPtr_ = std::make_shared<TrajectoryGroup>();
-    trajPtr_ = trajGroupPtr_; // convert to base class
-
-    for (int i = 0; i < NSteps_input; i++) {
-        // add a new walking step to the trajectory group
-        const std::string gait_name = "gait" + std::to_string(i);
-        trajGroupPtr_->add_trajectory(gait_name,
-                                      std::make_shared<BezierCurves>(T_input, 
-                                                                     N_input, 
-                                                                     NUM_INDEPENDENT_JOINTS, 
-                                                                     time_discretization_input, 
-                                                                     degree_input));
-
-        // manually add v_reset and lambda_reset to the end of the decision variables                                         
-        trajGroupPtr_->trajectories[gait_name]->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
+    if (gps_input.size() != NSteps_input) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong size of gps_input in set_parameters!");
     }
-    // update trajectories information
-    trajPtr_->gather_trajectories_information(true);
+
+    x0 = x0_input;
     
-    // stance foot is left foot by default
-    const char stanceLeg = 'L';
-    const Transform stance_foot_T_des(3, -M_PI / 2);
-    dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
-                                                                 trajPtr_,
-                                                                 NUM_DEPENDENT_JOINTS, 
-                                                                 jtype_input, 
-                                                                 stanceLeg, 
-                                                                 stance_foot_T_des,
-                                                                 N_input,
-                                                                 NSteps_input);
-    cidPtr_ = dcidPtr_; // convert to base class
+    stepOptVec_.reserve(NSteps_input);
+    for (int i = 0; i < NSteps_input; i++) {
+        stepOptVec_.push_back(std::make_shared<DigitSingleStepOptimizer>());
 
-    // convert joint limits from degree to radian
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS));
-    VecX JOINT_LIMITS_UPPER_VEC = Utils::deg2rad(Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
+        char stanceLeg = (i % 2 == 0) ? 'L' : 'R';
 
-    VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
-    VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);
-
-    constraintsPtrVec_.clear();  
-     
-    // Torque limits
-    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-                                                                cidPtr_, 
-                                                                TORQUE_LIMITS_LOWER_VEC, 
-                                                                TORQUE_LIMITS_UPPER_VEC));        
-    constraintsNameVec_.push_back("torque limits");
-
-    // // Joint limits
-    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-    //                                                                       cidPtr_->dcPtr_, 
-    //                                                                       JOINT_LIMITS_LOWER_VEC, 
-    //                                                                       JOINT_LIMITS_UPPER_VEC));      
-    // constraintsNameVec_.push_back("joint limits");                                                                                                         
-
-    // // Surface contact constraints
-    // const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
-    // constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
-    //                                                                          FRICTION_PARAMS));
-    // constraintsNameVec_.push_back("contact constraints");
-
-    // // Kinematics constraints
-    // constraintsPtrVec_.push_back(std::make_unique<DigitMultipleStepCustomizedConstraints>(model_input, 
-    //                                                                                       jtype_input, 
-    //                                                                                       trajPtr_, 
-    //                                                                                       dcidPtr_->ddcPtr_,
-    //                                                                                       gp_input,
-    //                                                                                       N_input,
-    //                                                                                       NSteps_input));    
-    // constraintsNameVec_.push_back("customized constraints");
-
-    // // periodic reset map constraints
-    // constraintsPtrVec_.push_back(std::make_unique<DigitSingleStepPeriodicityConstraints>(trajPtr_, 
-    //                                                                                      cidPtr_,
-    //                                                                                      FRICTION_PARAMS));    
-    // constraintsNameVec_.push_back("reset map constraints");     
+        stepOptVec_[i]->set_parameters(x0_input,
+                                       T_input,
+                                       N_input,
+                                       time_discretization_input,
+                                       degree_input,
+                                       model_input, 
+                                       jtype_input,
+                                       gps_input[i],
+                                       stanceLeg,
+                                       Transform(3, -M_PI / 2),
+                                       false);
+    }
 
     return true;
 }
@@ -118,15 +64,19 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
    IndexStyleEnum& index_style
 )
 {
-    // number of decision variables
-    numVars = trajPtr_->varLength;
-    n = numVars;
-
-    // number of inequality constraint
+    numVars = 0;
     numCons = 0;
-    for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
-        numCons += constraintsPtrVec_[i]->m;
+
+    n_local.resize(stepOptVec_.size());
+    m_local.resize(stepOptVec_.size());
+
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        stepOptVec_[i]->get_nlp_info(n_local[i], m_local[i], nnz_jac_g, nnz_h_lag, index_style);
+        numVars += n_local[i];
+        numCons += m_local[i];
     }
+
+    n = numVars;
     m = numCons;
 
     nnz_jac_g = n * m;
@@ -138,6 +88,42 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
     return true;
 }
 // [TNLP_get_nlp_info]
+
+// [TNLP_get_bounds_info]
+// returns the variable bounds
+bool DigitMultipleStepOptimizer::get_bounds_info(
+    Index   n,
+    Number* x_l,
+    Number* x_u,
+    Index   m,
+    Number* g_l,
+    Number* g_u
+) 
+{
+    // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
+    // If desired, we could assert to make sure they are what we think they are.
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
+    }
+
+    Index n_offset = 0;
+    Index m_offset = 0;
+
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        std::cout << "gait " << i << " bounds infomation:" << std::endl;
+        stepOptVec_[i]->get_bounds_info(n_local[i], x_l + n_offset, x_u + n_offset, 
+                                        m_local[i], g_l + m_offset, g_u + m_offset);
+
+        n_offset += n_local[i]; 
+        m_offset += m_local[i];
+    }
+
+    return true;
+}
+// [TNLP_get_bounds_info]
 
 // [TNLP_eval_f]
 // returns the value of the objective function
@@ -152,26 +138,18 @@ bool DigitMultipleStepOptimizer::eval_f(
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    cidPtr_->compute(z, false);
-
     obj_value = 0;
+    Index n_offset = 0;
 
-    // minimize control torque
-    for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        Number obj_value_local;
+        stepOptVec_[i]->eval_f(n_local[i], x + n_offset, new_x, obj_value_local);
+
+        obj_value += obj_value_local;
+        n_offset += n_local[i];
     }
-    obj_value /= cidPtr_->N;
 
-    // minimize initial velocity
-    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    obj_value += 40 * sqrt(initial_velocity.dot(initial_velocity));
-
-    // minimize initial acceleration
-    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
-
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
     return true;
@@ -191,43 +169,150 @@ bool DigitMultipleStepOptimizer::eval_grad_f(
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    Index n_offset = 0;
 
-    cidPtr_->compute(z, true);
-
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] = 0;
-    }
-
-    for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
-        double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
-
-        for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j) / norm;
-        }
-    }
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] /= cidPtr_->N;
-    }
-
-    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
-    const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 40 * initial_velocity_pz(i) / initial_velocity_norm;
-    }
-
-    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
-    const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        stepOptVec_[i]->eval_grad_f(n_local[i], x + n_offset, new_x, grad_f + n_offset);
+        n_offset += n_local[i];
     }
 
     return true;
 }
 // [TNLP_eval_grad_f]
+
+// [TNLP_eval_g]
+// return the value of the constraints: g(x)
+bool DigitMultipleStepOptimizer::eval_g(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    Index         m,
+    Number*       g
+)
+{
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_g!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_g!");
+    }
+
+    Index n_offset = 0;
+    Index m_offset = 0;
+
+    ifFeasibleCurrIter = false;
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        stepOptVec_[i]->eval_g(n_local[i], x + n_offset, new_x, m_local[i], g + m_offset);
+        ifFeasibleCurrIter = ifFeasibleCurrIter & stepOptVec_[i]->ifFeasibleCurrIter;
+
+        n_offset += n_local[i];
+        m_offset += m_local[i];
+    }
+
+    // the following code is for updating the optimal solution, directly copied from Optimizer.cpp
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    // update status of the current solution
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
+    }
+
+    return true;
+}
+// [TNLP_eval_g]
+
+// [TNLP_eval_jac_g]
+// return the structure or values of the Jacobian
+bool DigitMultipleStepOptimizer::eval_jac_g(
+   Index         n,
+   const Number* x,
+   bool          new_x,
+   Index         m,
+   Index         nele_jac,
+   Index*        iRow,
+   Index*        jCol,
+   Number*       values
+)
+{
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_jac_g!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_jac_g!");
+    }
+        
+    if( values == NULL ) {
+        // return the structure of the Jacobian
+        // this particular Jacobian is dense in blocks
+        Index n_offset = 0;
+        Index m_offset = 0;
+        Index idx = 0;
+        for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+            for ( Index j = 0; j < m_local[i]; j++ ) {
+                for ( Index k = 0; k < n_local[i]; k++ ) {
+                    iRow[idx] = m_offset + j;
+                    jCol[idx] = n_offset + k;
+                    idx++;
+                }
+            }
+            n_offset += n_local[i];
+            m_offset += m_local[i];
+        }
+    }
+    else {
+        Index n_offset = 0;
+        Index m_offset = 0;
+        Index v_offset = 0;
+
+        for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+            stepOptVec_[i]->eval_jac_g(n_local[i], 
+                                       x + n_offset, 
+                                       new_x, 
+                                       m_local[i], 
+                                       n_local[i] * m_local[i], 
+                                       nullptr, 
+                                       nullptr,
+                                       values + v_offset);
+
+            n_offset += n_local[i];
+            m_offset += m_local[i];
+            v_offset += n_local[i] * m_local[i];
+        }
+    }
+
+    return true;
+}
+// [TNLP_eval_jac_g]
 
 }; // namespace Digit
 }; // namespace IDTO

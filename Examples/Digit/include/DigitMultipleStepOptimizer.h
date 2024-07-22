@@ -1,20 +1,7 @@
 #ifndef DIGITMULTIPLESTEPOPTIMIZER_H
 #define DIGITMULTIPLESTEPOPTIMIZER_H
 
-#include "Optimizer.h"
-
-#include "BezierCurves.h"
-#include "TrajectoryGroup.h"
-
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
-#include "Utils.h"
-
-#include "ConstrainedJointLimits.h"
-#include "TorqueLimits.h"
-#include "SurfaceContactConstraints.h"
-#include "DigitMultipleStepCustomizedConstraints.h"
-#include "DigitSingleStepPeriodicityConstraints.h"
+#include "DigitSingleStepOptimizer.h"
 
 namespace IDTO {
 namespace Digit {
@@ -43,7 +30,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const GaitParameters& gp_input
+        const std::vector<GaitParameters>& gps_input
     );
 
     /**@name Overloaded from TNLP */
@@ -55,6 +42,16 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
+    ) final override;
+
+    /** Method to return the bounds for my problem */
+    bool get_bounds_info(
+        Index   n,
+        Number* x_l,
+        Number* x_u,
+        Index   m,
+        Number* g_l,
+        Number* g_u
     ) final override;
 
     /** Method to return the objective value */
@@ -71,6 +68,30 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
+    ) final override;
+
+    /** Method to return the constraint residuals */
+    bool eval_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Number*       g
+    ) final override;
+
+    /** Method to return:
+    *   1) The structure of the jacobian (if "values" is NULL)
+    *   2) The values of the jacobian (if "values" is not NULL)
+    */
+    bool eval_jac_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Index         nele_jac,
+        Index*        iRow,
+        Index*        jCol,
+        Number*       values
     ) final override;
 
     /**@name Methods to block default compiler methods.
@@ -92,11 +113,16 @@ public:
        const DigitMultipleStepOptimizer&
     );
 
-    std::shared_ptr<Trajectories> trajPtr_; 
-    std::shared_ptr<TrajectoryGroup> trajGroupPtr_;
+    // std::shared_ptr<Trajectories> trajPtr_; 
+    // std::shared_ptr<TrajectoryGroup> trajGroupPtr_;
 
-    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+    // std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
+    // std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+
+    std::vector<std::shared_ptr<DigitSingleStepOptimizer>> stepOptVec_;
+    std::vector<Index> n_local;
+    std::vector<Index> m_local;
+    bool ifFeasibleCurrIter = false;
 };
 
 }; // namespace Digit

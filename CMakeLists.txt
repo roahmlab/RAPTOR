@@ -140,12 +140,12 @@ include_directories(Optimization/include)
 ## Digit library
 add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
-    Examples/Digit/src/DigitMultipleStepDynamicsConstraints.cpp
+    # Examples/Digit/src/DigitMultipleStepDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
     Examples/Digit/src/DigitMultipleStepOptimizer.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
-    Examples/Digit/src/DigitMultipleStepCustomizedConstraints.cpp
+    # Examples/Digit/src/DigitMultipleStepCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp)
 
 target_link_libraries(Digitlib PUBLIC
@@ -262,8 +262,8 @@ target_link_libraries(DigitMultipleStep_example PRIVATE
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
 
-target_compile_options(DigitMultipleStep_example PUBLIC
-    ${PINOCCHIO_FLAGS})
+# target_compile_options(DigitMultipleStep_example PUBLIC
+#     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
     Examples/Digit-modified/DigitModifiedSingleStep.cpp)

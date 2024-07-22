@@ -53,20 +53,20 @@ int main(int argc, char* argv[]) {
     const int NSteps = 2;
     const double T = 0.4;
     const TimeDiscretization time_discretization = Uniform;
-    const int N = 2;
+    const int N = 14;
     const int degree = 5;
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     const std::string output_name = "Two-8-5-Uniform";
 
-    GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.15;
-    gp.swingfoot_begin_y_des = 0.00;
-    gp.swingfoot_end_y_des = -0.00;
-    // gp.swingfoot_midstep_z_des = std::atof(argv[2]);
-    // gp.swingfoot_begin_y_des = std::atof(argv[1]);
-    // gp.swingfoot_end_y_des = - std::atof(argv[1]);
+    std::vector<GaitParameters> gps(NSteps);
+    for (int i = 0; i < NSteps; i++) {
+        gps[i].swingfoot_midstep_z_des = 0.15;
+        gps[i].swingfoot_begin_y_des = 0.00;
+        gps[i].swingfoot_end_y_des = -0.00;
+    }
     
     Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
                               degree,
                               model,
                               jtype,
-                              gp);
+                              gps);
         mynlp->constr_viol_tol = 1e-4;
     }
     catch (std::exception& e) {
@@ -89,23 +89,22 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-    app->Options()->SetNumericValue("max_wall_time", 1e-4);
+    app->Options()->SetNumericValue("max_wall_time", 100.0);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 100);
+    app->Options()->SetIntegerValue("max_iter", 200);
     app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-    app->Options()->SetStringValue("nlp_scaling_method", "none");
 
-    // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt_digit.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
-    // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    // // For gradient checking
+    // app->Options()->SetStringValue("output_file", "ipopt_digit.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
+    // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -139,39 +138,39 @@ int main(int argc, char* argv[]) {
         // }
         // solution.close();
 
-        std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
-                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
-                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
-                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
-                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < mynlp->cidPtr_->N; j++) {
-                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
+        // std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
+        // trajectory << std::setprecision(20);
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < mynlp->cidPtr_->N; j++) {
+        //         trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < mynlp->cidPtr_->N; j++) {
+        //         trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < mynlp->cidPtr_->N; j++) {
+        //         trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < mynlp->cidPtr_->N; j++) {
+        //         trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < mynlp->cidPtr_->N; j++) {
+        //         trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // trajectory.close();
     // }
 
     return 0;
