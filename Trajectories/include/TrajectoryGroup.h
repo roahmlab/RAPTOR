@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class TrajectoryGroup : public Trajectories {
 public:
@@ -45,6 +45,6 @@ public:
     std::unordered_map<std::string, std::pair<size_t, size_t>> variable_locations;
 };
 
-}; // namespace IDTO    
+}; // namespace RAPTOR    
 
 #endif // TRAJECTORIES_H

@@ -5,7 +5,7 @@
 #include "ConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 class DigitModifiedConstrainedInverseDynamics : public ConstrainedInverseDynamics {
@@ -35,6 +35,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIED_CONSTRAINED_INVERSE_DYNAMICS_H

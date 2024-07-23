@@ -6,7 +6,7 @@
 #include "ConstrainedInverseDynamics.h"
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 typedef struct frictionParams_  {
     double mu = 0.7;
@@ -51,6 +51,6 @@ public:
     frictionParams fp;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONTACT_CONSTRAINTS_H

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 /*
@@ -98,6 +98,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // KINOVA_CUSTOMIZED_CONSTRAINTS_H

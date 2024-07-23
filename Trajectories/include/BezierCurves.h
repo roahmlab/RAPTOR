@@ -3,7 +3,7 @@
 
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class BezierCurves : public Trajectories {
 public:
@@ -35,6 +35,6 @@ public:
     VecX Bionomials;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // BEZIER_CURVES_H

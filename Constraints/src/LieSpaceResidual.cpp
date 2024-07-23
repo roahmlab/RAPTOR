@@ -1,6 +1,6 @@
 #include "LieSpaceResidual.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace LieSpaceResidual {
 
 Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
@@ -161,4 +161,4 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
 }
 
 }; // namespace LieSpaceResidual
-}; // namespace IDTO
+}; // namespace RAPTOR

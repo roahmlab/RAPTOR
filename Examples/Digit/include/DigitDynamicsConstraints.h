@@ -13,7 +13,7 @@
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
@@ -211,6 +211,6 @@ int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J);
 int fillDependent_fdf(const gsl_vector* x, void *params, gsl_vector* f, gsl_matrix* J);
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_CONSTRAINTS_H

@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {    
 
 // ... ==> ... 
@@ -90,6 +90,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIED_SINGLE_STEP_PERIODICITY_CONSTRAINTS_H

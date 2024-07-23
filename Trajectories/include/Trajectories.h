@@ -10,7 +10,7 @@
 #include <vector>
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 enum TimeDiscretization {
     Uniform = 0, 
@@ -87,6 +87,6 @@ public:
     bool if_compute_hessian = false;
 };
 
-}; // namespace IDTO    
+}; // namespace RAPTOR    
 
 #endif // TRAJECTORIES_H

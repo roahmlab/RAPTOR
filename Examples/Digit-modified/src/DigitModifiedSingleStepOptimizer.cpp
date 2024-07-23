@@ -1,6 +1,6 @@
 #include "DigitModifiedSingleStepOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 // // constructor
@@ -189,4 +189,4 @@ bool DigitModifiedSingleStepOptimizer::eval_grad_f(
 // [TNLP_eval_grad_f]
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR

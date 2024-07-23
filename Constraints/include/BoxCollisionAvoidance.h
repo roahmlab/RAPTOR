@@ -4,7 +4,7 @@
 #include "CollisionAvoidance.h"
 #include <vector>
 
-namespace IDTO {
+namespace RAPTOR {
 
 #define PROJECT_POINT_ON_FACE_THRESHOLD 1e-4
 
@@ -85,6 +85,6 @@ public:
     Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> vertices; //!< Vertices of the box
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // BOX_COLLISION_AVOIDANCE_H

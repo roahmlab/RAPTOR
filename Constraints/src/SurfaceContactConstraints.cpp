@@ -1,6 +1,6 @@
 #include "SurfaceContactConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 SurfaceContactConstraints::SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
                                                      const frictionParams& fp_input) : 
@@ -124,4 +124,4 @@ void SurfaceContactConstraints::compute_bounds() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

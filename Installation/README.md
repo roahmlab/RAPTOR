@@ -2,7 +2,7 @@
 
 First clone the repository with its submodules (pybind11)
 ```
-git clone --recurse-submodules https://github.com/roahmlab/IDTO.git
+git clone --recurse-submodules https://github.com/roahmlab/RAPTOR.git
 ```
 
 ## Install Through Docker (Recommended)

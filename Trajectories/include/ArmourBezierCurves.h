@@ -3,7 +3,7 @@
 
 #include "BezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 /*
 This class implements a special type of Bezier curves used in [armour](https://arxiv.org/abs/2301.13308)
@@ -46,6 +46,6 @@ public:
     MatX coefficients;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // ARMOUR_BEZIER_CURVES_H

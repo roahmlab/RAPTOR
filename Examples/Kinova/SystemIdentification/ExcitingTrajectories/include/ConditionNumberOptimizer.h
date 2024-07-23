@@ -13,7 +13,7 @@
 #include "TorqueLimits.h"
 #include "KinovaCustomizedConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 class ConditionNumberOptimizer : public Optimizer {
@@ -98,6 +98,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONDITION_NUMBER_OPTIMIZER_H

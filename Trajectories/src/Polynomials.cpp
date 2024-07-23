@@ -1,6 +1,6 @@
 #include "Polynomials.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Polynomials::Polynomials(const VecX& tspan_input, 
                          int Nact_input, 
@@ -90,5 +90,5 @@ void Polynomials::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

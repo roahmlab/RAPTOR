@@ -1,6 +1,6 @@
 #include "KinematicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                              const Model* model_input,
@@ -211,4 +211,4 @@ void KinematicsConstraints::print_violation_info() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

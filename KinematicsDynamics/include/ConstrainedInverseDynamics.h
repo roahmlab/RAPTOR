@@ -3,7 +3,7 @@
 
 #include "DynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // Class declaration
 class ConstrainedInverseDynamics : public InverseDynamics {
@@ -72,6 +72,6 @@ public:
     MatX JTlambda_partial_dq_indep;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONSTRAINEDINVERSEDYNAMICS_H

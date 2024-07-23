@@ -4,7 +4,7 @@
 #include "Constraints.h"
 #include "InverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class TorqueLimits : public Constraints {
 public:
@@ -40,6 +40,6 @@ public:
     VecX upperLimits;
 };
 
-} // namespace IDTO
+} // namespace RAPTOR
 
 #endif // TORQUE_LIMITS_H

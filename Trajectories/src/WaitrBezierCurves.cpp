@@ -1,6 +1,6 @@
 #include "WaitrBezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 WaitrBezierCurves::WaitrBezierCurves(const VecX& tspan_input, 
                                      int Nact_input, 
@@ -134,4 +134,4 @@ void WaitrBezierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

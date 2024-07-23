@@ -1,7 +1,7 @@
 #include "ForwardKinematics.h"
 #include <chrono>
 
-using namespace IDTO;
+using namespace RAPTOR;
 
 int main() {
     // Define robot model
@@ -37,16 +37,16 @@ int main() {
     int start = 0;
     int end = model.getJointId("left_toe_B");
 
-    // compute forward kinematics using IDTO
+    // compute forward kinematics using RAPTOR
     start_clock = std::chrono::high_resolution_clock::now();
     fkSolver.compute(start, end, q);
     stop_clock = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
-    std::cout << "IDTO FK: " << duration.count() << " nanoseconds" << std::endl;
+    std::cout << "RAPTOR FK: " << duration.count() << " nanoseconds" << std::endl;
 
     // compare the results
     std::cout << "Pinocchio: " << data.oMi[model.getJointId("left_toe_B")].translation().transpose() << std::endl;
-    std::cout << "IDTO: " << fkSolver.getTranslation().transpose() << std::endl;
+    std::cout << "RAPTOR: " << fkSolver.getTranslation().transpose() << std::endl;
 
     return 0;
 }

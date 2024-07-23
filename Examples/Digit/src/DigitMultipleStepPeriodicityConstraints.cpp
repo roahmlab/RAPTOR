@@ -1,6 +1,6 @@
 #include "DigitMultipleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitMultipleStepPeriodicityConstraints::DigitMultipleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& currTrajPtr_input,
@@ -313,4 +313,4 @@ void DigitMultipleStepPeriodicityConstraints::print_violation_info() {
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -6,7 +6,7 @@
 #include <iostream>
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // This is the base (abstract) class for all constraints
 class Constraints {
@@ -60,6 +60,6 @@ public:
     // define the variables that stores the results here
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONSTRAINTS_H

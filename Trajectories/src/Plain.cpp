@@ -1,6 +1,6 @@
 #include "Plain.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Plain::Plain(const int Nact_input) {
     N = 1;
@@ -104,5 +104,5 @@ void Plain::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

@@ -1,6 +1,6 @@
 #include "VelocityLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 VelocityLimits::VelocityLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                                const VecX& lowerLimits_input, 
@@ -81,4 +81,4 @@ void VelocityLimits::print_violation_info() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

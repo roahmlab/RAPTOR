@@ -7,7 +7,7 @@
 #include <fstream>
 #include <Eigen/Dense>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Utils {
 
 inline double deg2rad(const double deg) {
@@ -279,6 +279,6 @@ inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat,
 }
 
 }; // namespace Utils
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // UTILS_H

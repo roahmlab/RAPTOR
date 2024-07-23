@@ -4,7 +4,7 @@
 #include "InverseDynamics.h"
 #include <deque>
 
-namespace IDTO {
+namespace RAPTOR {
 
 constexpr int MAX_BUFFER_SIZE = 128;
 
@@ -177,6 +177,6 @@ public:
     MatX temp3;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DYNAMICSCONSTRAINTS_H

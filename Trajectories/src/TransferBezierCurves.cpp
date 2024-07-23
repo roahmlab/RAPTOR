@@ -1,6 +1,6 @@
 #include "TransferBezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 TransferBezierCurves::TransferBezierCurves(double T_input, 
                                            int N_input, 
@@ -132,4 +132,4 @@ void TransferBezierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

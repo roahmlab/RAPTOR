@@ -1,6 +1,6 @@
 #include "DataFilterOptimizer.h" 
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace Kinova;
 using namespace Ipopt;
 

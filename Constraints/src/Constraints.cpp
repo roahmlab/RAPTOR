@@ -1,6 +1,6 @@
 #include "Constraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Constraints::Constraints(int m_input,
                          int varLength) {
@@ -55,4 +55,4 @@ void Constraints::initialize_memory(const int m_input,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

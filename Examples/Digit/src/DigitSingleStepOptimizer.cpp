@@ -1,6 +1,6 @@
 #include "DigitSingleStepOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 // // constructor
@@ -224,4 +224,4 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 // [TNLP_eval_grad_f]
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -3,7 +3,7 @@
 
 #include "Spatial.h"
 
-namespace IDTO {
+namespace RAPTOR {
  
 // [Xj,S] = jcalc( jtyp, q )
 void jcalc(Matrix6d& Xj, 
@@ -431,6 +431,6 @@ Matrix6d crf(const Vector6d& v) {
     return -vcross.transpose();
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // SPATIAL_CPP

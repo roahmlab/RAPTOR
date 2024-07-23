@@ -3,7 +3,7 @@
 
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class Polynomials : public Trajectories {
 public:
@@ -33,6 +33,6 @@ public:
     VecX ddP;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // POLYNOMIALS_H

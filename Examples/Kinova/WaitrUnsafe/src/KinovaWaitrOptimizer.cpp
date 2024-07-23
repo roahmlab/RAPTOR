@@ -1,6 +1,6 @@
 #include "KinovaWaitrOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
@@ -208,4 +208,4 @@ bool KinovaWaitrOptimizer::eval_grad_f(
 // [TNLP_eval_grad_f]
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

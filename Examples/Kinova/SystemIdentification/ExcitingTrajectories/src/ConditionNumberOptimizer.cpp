@@ -1,6 +1,6 @@
 #include "ConditionNumberOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
@@ -202,4 +202,4 @@ bool ConditionNumberOptimizer::eval_grad_f(
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

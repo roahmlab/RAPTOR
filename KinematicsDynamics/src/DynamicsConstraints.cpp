@@ -1,6 +1,6 @@
 #include "DynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 DynamicsConstraints::DynamicsConstraints(const int numJoints_input, int numDependentJoints_input) :
     numJoints(numJoints_input),
@@ -204,4 +204,4 @@ void DynamicsConstraints::updateQueue(const VecX& q, const VecX& v, const VecX& 
     bufferDataQueue.push_back(newData);
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

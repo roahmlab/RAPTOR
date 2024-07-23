@@ -1,6 +1,6 @@
 #include "DigitMultipleStepOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 // // constructor
@@ -486,4 +486,4 @@ void DigitMultipleStepOptimizer::summarize_constraints(
 // [TNLP_summarize_constraints]
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

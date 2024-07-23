@@ -1,6 +1,6 @@
 #include "BoxCollisionAvoidance.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 namespace Box{ 
 void TensorProduct(const Eigen::Matrix3d& R, 
@@ -474,4 +474,4 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 	}
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

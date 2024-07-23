@@ -4,7 +4,7 @@
 #include "DigitSingleStepOptimizer.h"
 #include "DigitMultipleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 using namespace Ipopt;
@@ -131,6 +131,6 @@ public:
 };
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGITMULTIPLESTEPOPTIMIZER_H

@@ -1,6 +1,6 @@
 #include "WaitrContactConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 WaitrContactConstraints::WaitrContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
                                                  const contactSurfaceParams& csp_input) :
@@ -151,5 +151,5 @@ void WaitrContactConstraints::print_violation_info() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

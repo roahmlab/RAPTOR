@@ -1,6 +1,6 @@
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Trajectories::Trajectories(const int varLength_input,
                            const VecX& tspan_input, 
@@ -159,5 +159,5 @@ void Trajectories::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

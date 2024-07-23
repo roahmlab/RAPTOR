@@ -9,7 +9,7 @@
 
 #include "BoxCollisionAvoidance.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 struct customizedUserDataForSphere {
     customizedUserDataForSphere() {}
@@ -121,6 +121,6 @@ public:
     CustomizedDistanceData distanceData; //!< Data for customized distance computation.
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // FCL_COLLISION_AVOIDANCE_H

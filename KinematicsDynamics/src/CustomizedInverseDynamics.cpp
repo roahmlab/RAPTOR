@@ -1,6 +1,6 @@
 #include "CustomizedInverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input, 
                                                      const Eigen::VectorXi& jtype_input,
@@ -259,5 +259,5 @@ void CustomizedInverseDynamics::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

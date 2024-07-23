@@ -17,7 +17,7 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace IDTO {
+namespace RAPTOR {
 
 // Compute inverse dynamics using tau = Y * phi,
 // where Y is the n x 10*n regressor matrix and 
@@ -79,6 +79,6 @@ public:
     MatX Ycurrent;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // REGRESSOR_INVERSEDYNAMICS_H

@@ -1,6 +1,6 @@
 #include "ConstrainedJointLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 ConstrainedJointLimits::ConstrainedJointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
                                                std::shared_ptr<DynamicsConstraints>& dcPtr_input, 
@@ -77,4 +77,4 @@ void ConstrainedJointLimits::compute_bounds() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

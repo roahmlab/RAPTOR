@@ -1,6 +1,6 @@
 #include "DigitConstrainedInverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitConstrainedInverseDynamics::DigitConstrainedInverseDynamics(const Model& model_input, 
@@ -18,4 +18,4 @@ DigitConstrainedInverseDynamics::DigitConstrainedInverseDynamics(const Model& mo
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

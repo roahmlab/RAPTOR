@@ -1,6 +1,6 @@
 #include "DigitCustomizedConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
@@ -190,4 +190,4 @@ void DigitCustomizedConstraints::compute_bounds() {
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

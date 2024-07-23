@@ -1,5 +1,4 @@
-# IDTO
-Trajectory Optimization based on Inverse Dynamics
+# RAPTOR: RAPid and Robust Trajectory Optimization for Robots
 
 We aim to solve a trajectory optimization problem formulated as below
 

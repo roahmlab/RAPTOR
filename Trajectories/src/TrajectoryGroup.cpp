@@ -1,6 +1,6 @@
 #include "TrajectoryGroup.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 void TrajectoryGroup::add_trajectory(const std::string& name,    
                                      std::shared_ptr<Trajectories> trajectory) {
@@ -118,4 +118,4 @@ void TrajectoryGroup::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

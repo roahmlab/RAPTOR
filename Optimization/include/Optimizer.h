@@ -13,7 +13,7 @@
 #include "Utils.h"
 #include "Constraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 using namespace Ipopt;
 
@@ -232,6 +232,6 @@ public:
     Number constr_viol_tol = 1e-4;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // OPTIMIZER_H

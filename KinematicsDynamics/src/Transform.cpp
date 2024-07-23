@@ -1,6 +1,6 @@
 #include "Transform.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Transform::Transform() {
     R.setIdentity();
@@ -343,4 +343,4 @@ std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
     return os;
 }
 
-}  // namespace IDTO
+}  // namespace RAPTOR

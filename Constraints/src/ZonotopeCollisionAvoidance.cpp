@@ -7,7 +7,7 @@
 // DEPRECATED
 // DEPRECATED
 
-namespace IDTO {
+namespace RAPTOR {
 
 ZonotopeCollisionAvoidance::ZonotopeCollisionAvoidance(const std::vector<Vec3>& zonotopeCenters_input,
                                                        const Eigen::Array<MatX, 1, Eigen::Dynamic>& zonotopeGenerators_input) :
@@ -411,4 +411,4 @@ void ZonotopeCollisionAvoidance::computeDistance(const Vec3& point, const MatX& 
 	}
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

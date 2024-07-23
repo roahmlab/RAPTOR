@@ -10,7 +10,7 @@
 #include "JointLimits.h"
 #include "KinematicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 class KinovaIKSolver : public Optimizer {
@@ -102,6 +102,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // KINOVA_IK_SOLVER_H

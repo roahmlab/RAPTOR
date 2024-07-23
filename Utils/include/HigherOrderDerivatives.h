@@ -4,7 +4,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace HigherOrderDerivatives {
 
 inline double safeasin(const double x,
@@ -199,6 +199,6 @@ inline double safedddxSinxdddx(const double x,
 }
 
 }; // namespace HigherOrderDerivatives
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // HIGHER_ORDER_DERIVATIVES_H

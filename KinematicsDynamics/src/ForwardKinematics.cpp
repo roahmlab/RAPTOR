@@ -1,6 +1,6 @@
 #include "ForwardKinematics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // ForwardKinematicsSolver::ForwardKinematicsSolver() {
 //     q_copy = VecX::Zero(0);
@@ -578,4 +578,4 @@ void ForwardKinematicsSolver::getRPYThirdOrderTensor(const VecX& x, Eigen::Array
     }
 }
 
-}  // namespace IDTO
+}  // namespace RAPTOR

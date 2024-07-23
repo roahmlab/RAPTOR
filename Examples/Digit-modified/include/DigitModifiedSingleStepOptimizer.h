@@ -15,7 +15,7 @@
 #include "DigitModifiedCustomizedConstraints.h"
 #include "DigitModifiedSingleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 using namespace Ipopt;
@@ -99,6 +99,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIEDSINGLESTEPOPTIMIZER_H

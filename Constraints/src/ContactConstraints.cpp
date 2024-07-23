@@ -1,6 +1,6 @@
 #include "ContactConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 ContactConstraints::ContactConstraints(std::shared_ptr<CustomizedInverseDynamics>& idPtr_input,
                                        const contactSurfaceParams& csp_input) :
@@ -113,5 +113,5 @@ void ContactConstraints::compute_bounds() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

@@ -1,6 +1,6 @@
 #include "ConstrainedInverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 ConstrainedInverseDynamics::ConstrainedInverseDynamics(const Model& model_input, 
                                                        std::shared_ptr<Trajectories>& trajPtr_input,
@@ -190,5 +190,5 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

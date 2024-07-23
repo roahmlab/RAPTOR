@@ -7,7 +7,7 @@
 #include "Trajectories.h"
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class VelocityLimits : public Constraints {
 public:
@@ -44,6 +44,6 @@ public:
     VecX upperLimits;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // VELOCITYLIMITS_H

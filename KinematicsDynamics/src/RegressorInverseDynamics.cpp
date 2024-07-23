@@ -1,6 +1,6 @@
 #include "RegressorInverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input, 
                                                    const Eigen::VectorXi& jtype_input,
@@ -346,4 +346,4 @@ void RegressorInverseDynamics::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

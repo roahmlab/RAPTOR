@@ -22,7 +22,7 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace IDTO {
+namespace RAPTOR {
 
 class InverseDynamics {
 public:
@@ -75,6 +75,6 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pz;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // INVERSEDYNAMICS_H

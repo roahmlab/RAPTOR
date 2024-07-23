@@ -9,7 +9,7 @@
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
@@ -163,6 +163,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIED_CONSTRAINTS_H

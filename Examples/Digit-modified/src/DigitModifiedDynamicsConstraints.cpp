@@ -1,6 +1,6 @@
 #include "DigitModifiedDynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
@@ -388,4 +388,4 @@ void DigitModifiedDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const V
 }
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -3,7 +3,7 @@
 #include "Polynomials.h"
 #include <chrono>
 
-using namespace IDTO;
+using namespace RAPTOR;
 
 int main() {
     // Define robot model

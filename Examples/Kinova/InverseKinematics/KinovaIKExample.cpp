@@ -3,7 +3,7 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace Kinova;
 using namespace Ipopt;
 

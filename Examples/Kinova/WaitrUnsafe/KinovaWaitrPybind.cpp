@@ -5,7 +5,7 @@
 
 namespace py = pybind11;
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace Kinova;
 
 PYBIND11_MODULE(oracle_waitr_pybind, m) {

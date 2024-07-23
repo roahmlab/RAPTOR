@@ -9,7 +9,7 @@
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 typedef struct GaitParameters_ {
@@ -83,6 +83,6 @@ public:
 };
 
 } // namespace DigitModified
-} // namespace IDTO
+} // namespace RAPTOR
 
 #endif // DIGIT_MODIFIED_CUSTOMIZED_CONSTRAINTS_H

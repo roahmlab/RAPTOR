@@ -1,6 +1,6 @@
 #include "Optimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // [TNLP_get_bounds_info]
 // returns the variable bounds
@@ -628,4 +628,4 @@ void Optimizer::summarize_constraints(
 }
 // [TNLP_summarize_constraints]
 
-}; // namespace IDTO
+}; // namespace RAPTOR

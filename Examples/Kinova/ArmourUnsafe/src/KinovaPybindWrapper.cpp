@@ -1,6 +1,6 @@
 #include "KinovaPybindWrapper.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename) {
@@ -259,4 +259,4 @@ py::tuple KinovaPybindWrapper::optimize() {
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -1,6 +1,6 @@
 #include "TorqueLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
                            std::shared_ptr<InverseDynamics> idPtr_input,
@@ -76,4 +76,4 @@ void TorqueLimits::print_violation_info() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

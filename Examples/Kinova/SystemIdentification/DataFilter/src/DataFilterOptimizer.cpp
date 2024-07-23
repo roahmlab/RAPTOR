@@ -1,6 +1,6 @@
 #include "DataFilterOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 bool DataFilterOptimizer::set_parameters(
@@ -297,4 +297,4 @@ bool DataFilterOptimizer::eval_hess_f(
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
