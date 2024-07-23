@@ -464,7 +464,7 @@ void DigitMultipleStepOptimizer::summarize_constraints(
                           << "], value: "   << periodConsVec_[i]->g(max_constr_violation_id) << std::endl;
             }
 
-            periodConsVec_[i]->print_violation_info();
+            if (verbose) periodConsVec_[i]->print_violation_info();
                     
             ifFeasible = false;
         }

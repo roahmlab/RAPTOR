@@ -230,12 +230,6 @@ void DigitMultipleStepPeriodicityConstraints::compute_bounds() {
 }
 
 void DigitMultipleStepPeriodicityConstraints::print_violation_info() {
-    std::cout << g1.transpose() << std::endl;
-    std::cout << g2.transpose() << std::endl;
-    std::cout << g3.transpose() << std::endl;
-    std::cout << g4.transpose() << std::endl;
-    std::cout << g5.transpose() << std::endl;
-
     // (1) H * (v+ - v-) = J * lambda
     for (int i = 0; i < NUM_JOINTS; i++) {
         if (abs(g1(i)) >= 1e-4) {

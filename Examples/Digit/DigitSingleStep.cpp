@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     const double T = 0.4;
     TimeDiscretization time_discretization = Uniform;
-    int N = 16;
+    int N = 14;
     int degree = 5;
     
     GaitParameters gp;

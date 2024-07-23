@@ -142,6 +142,7 @@ add_library(Digitlib SHARED
     Examples/Digit/src/DigitDynamicsConstraints.cpp
     Examples/Digit/src/DigitConstrainedInverseDynamics.cpp
     Examples/Digit/src/DigitSingleStepOptimizer.cpp
+    Examples/Digit/src/DigitMultipleStepOptimizer.cpp
     Examples/Digit/src/DigitCustomizedConstraints.cpp
     Examples/Digit/src/DigitSingleStepPeriodicityConstraints.cpp
     Examples/Digit/src/DigitMultipleStepPeriodicityConstraints)
@@ -258,12 +259,13 @@ target_link_libraries(DigitMultipleStep_example PRIVATE
     Digitlib
     ipopt
     coinhsl
+    yaml-cpp
     ${GSL_LIBRARIES}
     ${BOOST_LIBRARIES} 
     ${PKG_PIN_CONFIG_LIBRARIES})
 
-# target_compile_options(DigitMultipleStep_example PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_compile_options(DigitMultipleStep_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 
     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
