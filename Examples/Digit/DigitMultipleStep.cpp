@@ -93,7 +93,8 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Four-5.txt");
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
     // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();

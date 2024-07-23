@@ -121,7 +121,7 @@ public:
        const DigitMultipleStepOptimizer&
     );
 
-    std::vector<std::shared_ptr<DigitSingleStepOptimizer>> stepOptVec_;
+    std::vector<SmartPtr<DigitSingleStepOptimizer>> stepOptVec_;
     std::vector<std::shared_ptr<DigitMultipleStepPeriodicityConstraints>> periodConsVec_;
     std::vector<Index> n_local;
     std::vector<Index> n_position; // record the position of decision variables of each walking step in the full decision vector

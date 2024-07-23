@@ -34,7 +34,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
     
     stepOptVec_.reserve(NSteps_input);
     for (int i = 0; i < NSteps_input; i++) {
-        stepOptVec_.push_back(std::make_shared<DigitSingleStepOptimizer>());
+        stepOptVec_.push_back(new DigitSingleStepOptimizer());
 
         char stanceLeg = (i % 2 == 0) ? 
             'L' : 
@@ -85,41 +85,45 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
 {
     numVars = 0;
     numCons = 0;
+    nnz_jac_g = 0;
 
     n_local.resize(stepOptVec_.size());
     n_position.resize(stepOptVec_.size() + 1);
-    m_local.resize(stepOptVec_.size());
-    m_position.resize(stepOptVec_.size() + 1);
+    m_local.resize(2 * stepOptVec_.size() - 1);
+    m_position.resize(2 * stepOptVec_.size());
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
-        stepOptVec_[i]->get_nlp_info(n_local[i], m_local[i], nnz_jac_g, nnz_h_lag, index_style);
+        Index nnz_jac_g_local;
+        stepOptVec_[i]->get_nlp_info(n_local[i], m_local[i], nnz_jac_g_local, nnz_h_lag, index_style);
 
         n_position[i] = numVars;
         m_position[i] = numCons;
 
         numVars += n_local[i];
         numCons += m_local[i];
-
-        n_position[i + 1] = numVars;
-        m_position[i + 1] = numCons;
+        nnz_jac_g += nnz_jac_g_local;
     }
 
     for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
         m_position[stepOptVec_.size() + i] = numCons;
 
+        m_local[stepOptVec_.size() + i] = periodConsVec_[i]->m;
         numCons += periodConsVec_[i]->m;
-
-        m_position[stepOptVec_.size() + i + 1] = numCons;
+        nnz_jac_g += periodConsVec_[i]->m * n_local[i] +
+                     NUM_INDEPENDENT_JOINTS * n_local[i] +
+                     NUM_INDEPENDENT_JOINTS * n_local[i + 1];
     }
+    m_position[2 * stepOptVec_.size() - 1] = numCons;
 
     n = numVars;
     m = numCons;
 
-    nnz_jac_g = n * m;
     nnz_h_lag = n * (n + 1) / 2;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
+
+    std::cout << "n = " << n << ", m = " << m << ", nnz_jac_g = " << nnz_jac_g << ", nnz_h_lag = " << nnz_h_lag << std::endl;
 
     return true;
 }
