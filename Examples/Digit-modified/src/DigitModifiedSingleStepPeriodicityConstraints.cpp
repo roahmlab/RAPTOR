@@ -15,7 +15,7 @@ DigitModifiedSingleStepPeriodicityConstraints::DigitModifiedSingleStepPeriodicit
         NUM_INDEPENDENT_JOINTS +  // velocity reset
         7;                        // lambda contact constraints
 
-    initialize_memory(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength, false);
 
     // initialize intermediate variables
     prnea_pq = MatX::Zero(dcidPtr_->modelPtr_->nv, dcidPtr_->modelPtr_->nv);

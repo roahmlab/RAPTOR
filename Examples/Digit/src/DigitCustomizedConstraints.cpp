@@ -31,7 +31,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-    initialize_memory(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength, false);
 }
 
 void DigitCustomizedConstraints::compute(const VecX& z, 
@@ -95,7 +95,9 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     // (2) swingfoot always flat and points forward
     VecX g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
     VecX g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
-    VecX g4 = Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2); // swingfoot yaw
+    VecX g4 = (ddcPtr_->stanceLeg == 'L') ? 
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2) :
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() - M_PI / 2); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value 
     //     at the beginning and at the end of each walking step
@@ -108,7 +110,9 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     VecX g6 = q.row(2); // torso height
     VecX g7 = Utils::wrapToPi(q.row(3)); // torso roll
     VecX g8 = Utils::wrapToPi(q.row(4)); // torso pitch
-    VecX g9 = Utils::wrapToPi(q.row(5).array() + M_PI / 2); // torso yaw
+    VecX g9 = (ddcPtr_->stanceLeg == 'L') ?
+        Utils::wrapToPi(q.row(5).array() + M_PI / 2) :
+        Utils::wrapToPi(q.row(5).array() - M_PI / 2); // torso yaw
 
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 

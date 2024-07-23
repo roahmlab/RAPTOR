@@ -12,7 +12,8 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
     upperLimits = upperLimits_input;
     
     initialize_memory(trajPtr_->N * trajPtr_->Nact, 
-                      trajPtr_->varLength);
+                      trajPtr_->varLength,
+                      false);
 }
 
 void TorqueLimits::compute(const VecX& z, 

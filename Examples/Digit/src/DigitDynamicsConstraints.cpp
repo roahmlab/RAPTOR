@@ -61,13 +61,23 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
     stance_foot_T_des = stance_foot_T_des_input;
 }
 
-void DigitDynamicsConstraints::reinitialize() {
-    // swap the stance leg
-    if (stanceLeg == 'L' || stanceLeg == 'l') {
-        stanceLeg = 'R';
+void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
+    if (stanceLeg_input == 0) { // swap the stance leg if there's no input
+        if (stanceLeg == 'L' || stanceLeg == 'l') {
+            stanceLeg = 'R';
+        }
+        else {
+            stanceLeg = 'L';
+        }
     }
     else {
-        stanceLeg = 'L';
+        if (stanceLeg_input != 'L' && 
+            stanceLeg_input != 'R' && 
+            stanceLeg_input != 'l' && 
+            stanceLeg_input != 'r') {
+            throw std::runtime_error("Invalid stance leg input");
+        }
+        stanceLeg = stanceLeg_input;
     }
 
     // reinitialize the stance leg end effector transformation matrix
@@ -193,8 +203,8 @@ Eigen::VectorXd DigitDynamicsConstraints::get_independent_vector(const VecX& v) 
 
 void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
-    assert(r.cols() == NUM_DEPENDENT_JOINTS);
-    assert(m.rows() == r.rows());
+    
+    r.resize(m.rows(), NUM_DEPENDENT_JOINTS);
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         r.col(i) = m.col(dependentJointIds[i]);
@@ -203,8 +213,8 @@ void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
-    assert(r.cols() == NUM_INDEPENDENT_JOINTS);
-    assert(m.rows() == r.rows());
+    
+    r.resize(m.rows(), NUM_INDEPENDENT_JOINTS);
 
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
         r.col(i) = m.col(independentJointIds[i]);
@@ -213,8 +223,8 @@ void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
-    assert(r.rows() == NUM_DEPENDENT_JOINTS);
-    assert(m.cols() == r.cols());
+
+    r.resize(NUM_DEPENDENT_JOINTS, m.cols());
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         r.row(i) = m.row(dependentJointIds[i]);
@@ -223,8 +233,8 @@ void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
-    assert(r.rows() == NUM_INDEPENDENT_JOINTS);
-    assert(m.cols() == r.cols());
+
+    r.resize(NUM_INDEPENDENT_JOINTS, m.cols());
 
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
         r.row(i) = m.row(independentJointIds[i]);

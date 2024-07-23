@@ -210,6 +210,7 @@ public:
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;
 
+    bool ifFeasibleCurrIter = false;
     VecX currentIpoptSolution;
     Number currentIpoptObjValue = std::numeric_limits<Number>::max();
     OptimizerConstants::FeasibleState ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;

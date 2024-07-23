@@ -36,7 +36,8 @@ bool Constraints::is_computed(const VecX& z,
 }
 
 void Constraints::initialize_memory(const int m_input, 
-                                    const int varLength) {
+                                    const int varLength,
+                                    bool initialize_hessian) {
     m = m_input;
 
     g = VecX::Zero(m);
@@ -46,9 +47,11 @@ void Constraints::initialize_memory(const int m_input,
 
     pg_pz = MatX::Zero(m, varLength);
 
-    pg_pz_pz.resize(m);
-    for (int i = 0; i < m; i++) {
-        pg_pz_pz(i) = MatX::Zero(varLength, varLength);
+    if (initialize_hessian) {
+        pg_pz_pz.resize(m);
+        for (int i = 0; i < m; i++) {
+            pg_pz_pz(i) = MatX::Zero(varLength, varLength);
+        }
     }
 }
 
