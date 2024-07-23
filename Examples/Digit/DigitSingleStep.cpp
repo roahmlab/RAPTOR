@@ -111,6 +111,7 @@ int main(int argc, char* argv[]) {
         app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
         app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
+        app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 
         if (mynlp->enable_hessian) {
             app->Options()->SetStringValue("hessian_approximation", "exact");

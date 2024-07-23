@@ -324,46 +324,44 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
     if( values == NULL ) {
         // return the structure of the Jacobian
         // this particular Jacobian is dense in blocks
-        Index n_offset = 0;
-        Index m_offset = 0;
         Index idx = 0;
         for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
             for ( Index j = 0; j < m_local[i]; j++ ) {
                 for ( Index k = 0; k < n_local[i]; k++ ) {
-                    iRow[idx] = m_offset + j;
-                    jCol[idx] = n_offset + k;
+                    iRow[idx] = m_position[i] + j;
+                    jCol[idx] = n_position[i] + k;
                     idx++;
                 }
             }
-            n_offset += n_local[i];
-            m_offset += m_local[i];
         }
 
-        n_offset = 0;
         for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) { 
+            const Index start_pos = m_position[stepOptVec_.size() + i];
+            const Index end_pos = m_position[stepOptVec_.size() + i + 1];
+
             for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
                 for ( Index k = 0; k < n_local[i]; k++ ) {
-                    iRow[idx] = m_offset + j;
-                    jCol[idx] = n_offset + k;
+                    iRow[idx] = start_pos + j;
+                    jCol[idx] = n_position[i] + k;
                     idx++;
                 }
             }
-            n_offset += n_local[i];
-            m_offset += periodConsVec_[i]->m;
 
-            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
-            //         values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
-            //         idx++;
-            //     }
-            // }
+            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                    iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + j;
+                    jCol[idx] = n_position[i + 1] + k;
+                    idx++;
+                }
+            }
 
-            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
-            //         values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
-            //         idx++;
-            //     }
-            // }
+            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                    iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + NUM_INDEPENDENT_JOINTS + j;
+                    jCol[idx] = n_position[i + 1] + k;
+                    idx++;
+                }
+            }
         }
     }
     else {
@@ -392,19 +390,19 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
                 }
             }
 
-            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
-            //         values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
-            //         idx++;
-            //     }
-            // }
+            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                    values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
+                    idx++;
+                }
+            }
 
-            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
-            //         values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
-            //         idx++;
-            //     }
-            // }
+            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                    values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
+                    idx++;
+                }
+            }
         }
     }
 

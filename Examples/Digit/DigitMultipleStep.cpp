@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<GaitParameters> gps(NSteps);
     for (int i = 0; i < NSteps; i++) {
-        gps[i].swingfoot_midstep_z_des = 0.15;
+        gps[i].swingfoot_midstep_z_des = 0.30;
         gps[i].swingfoot_begin_y_des = 0.00;
         gps[i].swingfoot_end_y_des = -0.00;
     }
@@ -89,13 +89,14 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-    app->Options()->SetNumericValue("max_wall_time", 1e-4);
-    app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
+    app->Options()->SetNumericValue("max_wall_time", 100.0);
+    app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 200);
     app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // // For gradient checking
