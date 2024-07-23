@@ -38,7 +38,8 @@ public:
                      bool compute_hessian);
 
     void initialize_memory(const int m_input, 
-                           const int varLength);
+                           const int varLength,
+                           bool initialize_hessian = true);
 
     // class members:
     int m = 0; // number of constraints

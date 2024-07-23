@@ -52,9 +52,11 @@ public:
     // class methods
     void compute(const VecX& z, 
                  bool compute_derivatives = true,
-                 bool compute_hessian = false) override;
+                 bool compute_hessian = false) final override;
 
-    void compute_bounds() override;
+    void compute_bounds() final override;
+
+    void print_violation_info() final override;
 
     // class members
     std::shared_ptr<Trajectories>& trajPtr_;

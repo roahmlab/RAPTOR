@@ -2,6 +2,7 @@
 #define DIGITMULTIPLESTEPOPTIMIZER_H
 
 #include "DigitSingleStepOptimizer.h"
+#include "DigitMultipleStepPeriodicityConstraints.h"
 
 namespace IDTO {
 namespace Digit {
@@ -94,6 +95,13 @@ public:
         Number*       values
     ) final override;
 
+    /** This method summarizes constraint violation for each type of constraints */
+    void summarize_constraints(
+        Index                      m,
+        const Number*              g,
+        const bool                 verbose = true
+    ) final override;
+
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -113,15 +121,12 @@ public:
        const DigitMultipleStepOptimizer&
     );
 
-    // std::shared_ptr<Trajectories> trajPtr_; 
-    // std::shared_ptr<TrajectoryGroup> trajGroupPtr_;
-
-    // std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
-    // std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
-
     std::vector<std::shared_ptr<DigitSingleStepOptimizer>> stepOptVec_;
+    std::vector<std::shared_ptr<DigitMultipleStepPeriodicityConstraints>> periodConsVec_;
     std::vector<Index> n_local;
+    std::vector<Index> n_position; // record the position of decision variables of each walking step in the full decision vector
     std::vector<Index> m_local;
+    std::vector<Index> m_position; // record the position of constraints of each walking step in the full constraint vector
     bool ifFeasibleCurrIter = false;
 };
 

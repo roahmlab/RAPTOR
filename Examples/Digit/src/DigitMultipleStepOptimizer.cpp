@@ -36,7 +36,12 @@ bool DigitMultipleStepOptimizer::set_parameters(
     for (int i = 0; i < NSteps_input; i++) {
         stepOptVec_.push_back(std::make_shared<DigitSingleStepOptimizer>());
 
-        char stanceLeg = (i % 2 == 0) ? 'L' : 'R';
+        char stanceLeg = (i % 2 == 0) ? 
+            'L' : 
+            'R';
+        Transform stance_foot_T_des = (i % 2 == 0) ? 
+            Transform(3, -M_PI / 2) : 
+            Transform(3, M_PI / 2);
 
         stepOptVec_[i]->set_parameters(x0_input,
                                        T_input,
@@ -47,8 +52,22 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                        jtype_input,
                                        gps_input[i],
                                        stanceLeg,
-                                       Transform(3, -M_PI / 2),
+                                       stance_foot_T_des,
                                        false);
+    }
+
+    const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
+
+    periodConsVec_.reserve(NSteps_input);
+    for (int i = 0; i < NSteps_input - 1; i++) {
+        periodConsVec_.push_back(
+            std::make_shared<DigitMultipleStepPeriodicityConstraints>(
+                stepOptVec_[i]->trajPtr_,
+                stepOptVec_[i + 1]->trajPtr_,
+                stepOptVec_[i]->dcidPtr_,
+                stepOptVec_[i + 1]->dcidPtr_,
+                FRICTION_PARAMS
+            ));
     }
 
     return true;
@@ -68,12 +87,29 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
     numCons = 0;
 
     n_local.resize(stepOptVec_.size());
+    n_position.resize(stepOptVec_.size() + 1);
     m_local.resize(stepOptVec_.size());
+    m_position.resize(stepOptVec_.size() + 1);
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
         stepOptVec_[i]->get_nlp_info(n_local[i], m_local[i], nnz_jac_g, nnz_h_lag, index_style);
+
+        n_position[i] = numVars;
+        m_position[i] = numCons;
+
         numVars += n_local[i];
         numCons += m_local[i];
+
+        n_position[i + 1] = numVars;
+        m_position[i + 1] = numCons;
+    }
+
+    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+        m_position[stepOptVec_.size() + i] = numCons;
+
+        numCons += periodConsVec_[i]->m;
+
+        m_position[stepOptVec_.size() + i + 1] = numCons;
     }
 
     n = numVars;
@@ -109,16 +145,26 @@ bool DigitMultipleStepOptimizer::get_bounds_info(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
     }
 
-    Index n_offset = 0;
-    Index m_offset = 0;
-
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
         std::cout << "gait " << i << " bounds infomation:" << std::endl;
-        stepOptVec_[i]->get_bounds_info(n_local[i], x_l + n_offset, x_u + n_offset, 
-                                        m_local[i], g_l + m_offset, g_u + m_offset);
+        stepOptVec_[i]->get_bounds_info(n_local[i], x_l + n_position[i], x_u + n_position[i], 
+                                        m_local[i], g_l + m_position[i], g_u + m_position[i]);
+    }
 
-        n_offset += n_local[i]; 
-        m_offset += m_local[i];
+    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+        const Index start_pos = m_position[stepOptVec_.size() + i];
+        const Index end_pos = m_position[stepOptVec_.size() + i + 1];
+
+        std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: "
+                  << periodConsVec_[i]->m 
+                  << " [" << start_pos << " " << end_pos << "]" << std::endl;
+
+        periodConsVec_[i]->compute_bounds();
+
+        for ( Index j = start_pos; j < end_pos; j++ ) {
+            g_l[j] = periodConsVec_[i]->g_lb(j - start_pos);
+            g_u[j] = periodConsVec_[i]->g_ub(j - start_pos);
+        }
     }
 
     return true;
@@ -139,14 +185,12 @@ bool DigitMultipleStepOptimizer::eval_f(
     }
 
     obj_value = 0;
-    Index n_offset = 0;
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
         Number obj_value_local;
-        stepOptVec_[i]->eval_f(n_local[i], x + n_offset, new_x, obj_value_local);
+        stepOptVec_[i]->eval_f(n_local[i], x + n_position[i], new_x, obj_value_local);
 
         obj_value += obj_value_local;
-        n_offset += n_local[i];
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -169,11 +213,8 @@ bool DigitMultipleStepOptimizer::eval_grad_f(
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
-    Index n_offset = 0;
-
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
-        stepOptVec_[i]->eval_grad_f(n_local[i], x + n_offset, new_x, grad_f + n_offset);
-        n_offset += n_local[i];
+        stepOptVec_[i]->eval_grad_f(n_local[i], x + n_position[i], new_x, grad_f + n_position[i]);
     }
 
     return true;
@@ -197,16 +238,25 @@ bool DigitMultipleStepOptimizer::eval_g(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_g!");
     }
 
-    Index n_offset = 0;
-    Index m_offset = 0;
-
     ifFeasibleCurrIter = false;
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
-        stepOptVec_[i]->eval_g(n_local[i], x + n_offset, new_x, m_local[i], g + m_offset);
+        stepOptVec_[i]->eval_g(n_local[i], x + n_position[i], new_x, m_local[i], g + m_position[i]);
         ifFeasibleCurrIter = ifFeasibleCurrIter & stepOptVec_[i]->ifFeasibleCurrIter;
+    }
 
-        n_offset += n_local[i];
-        m_offset += m_local[i];
+    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+        VecX z_curr = Utils::initializeEigenVectorFromArray(x + n_position[i], n_local[i]);
+        periodConsVec_[i]->compute(z_curr, false);
+
+        const Index start_pos = m_position[stepOptVec_.size() + i];
+        for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
+            g[start_pos + j] = periodConsVec_[i]->g(j);
+
+            if (g[start_pos + j] < periodConsVec_[i]->g_lb(j) - constr_viol_tol || 
+                g[start_pos + j] > periodConsVec_[i]->g_ub(j) + constr_viol_tol) {
+                ifFeasibleCurrIter = false;
+            }
+        }
     }
 
     // the following code is for updating the optimal solution, directly copied from Optimizer.cpp
@@ -288,31 +338,143 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
             n_offset += n_local[i];
             m_offset += m_local[i];
         }
+
+        n_offset = 0;
+        for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) { 
+            for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
+                for ( Index k = 0; k < n_local[i]; k++ ) {
+                    iRow[idx] = m_offset + j;
+                    jCol[idx] = n_offset + k;
+                    idx++;
+                }
+            }
+            n_offset += n_local[i];
+            m_offset += periodConsVec_[i]->m;
+
+            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
+            //         values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
+            //         idx++;
+            //     }
+            // }
+
+            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
+            //         values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
+            //         idx++;
+            //     }
+            // }
+        }
     }
     else {
-        Index n_offset = 0;
-        Index m_offset = 0;
-        Index v_offset = 0;
-
+        Index idx = 0;
         for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
             stepOptVec_[i]->eval_jac_g(n_local[i], 
-                                       x + n_offset, 
+                                       x + n_position[i], 
                                        new_x, 
                                        m_local[i], 
                                        n_local[i] * m_local[i], 
                                        nullptr, 
                                        nullptr,
-                                       values + v_offset);
+                                       values + idx);
 
-            n_offset += n_local[i];
-            m_offset += m_local[i];
-            v_offset += n_local[i] * m_local[i];
+            idx += n_local[i] * m_local[i];
+        }
+
+        for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) { 
+            VecX z_curr = Utils::initializeEigenVectorFromArray(x + n_position[i], n_local[i]);
+            periodConsVec_[i]->compute(z_curr, true);
+
+            for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
+                for ( Index k = 0; k < n_local[i]; k++ ) {
+                    values[idx] = periodConsVec_[i]->pg_pz(j, k);
+                    idx++;
+                }
+            }
+
+            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
+            //         values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
+            //         idx++;
+            //     }
+            // }
+
+            // for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+            //     for ( Index k = 0; k < stepOptVec_[i + 1]->numVars; k++ ) {
+            //         values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
+            //         idx++;
+            //     }
+            // }
         }
     }
 
     return true;
 }
 // [TNLP_eval_jac_g]
+
+// [TNLP_summarize_constraints]
+void DigitMultipleStepOptimizer::summarize_constraints(
+    Index                      m,
+    const Number*              g,
+    const bool                 verbose
+) 
+{
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
+    }
+
+    if (verbose) std::cout << "Constraint violation report:" << std::endl;
+
+    ifFeasible = true;
+    final_constr_violation = 0;
+
+    for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        stepOptVec_[i]->summarize_constraints(m_local[i], g + m_position[i], verbose);
+
+        ifFeasible = ifFeasible & stepOptVec_[i]->ifFeasible;
+        final_constr_violation = std::max(final_constr_violation, stepOptVec_[i]->final_constr_violation);
+    }
+
+    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+        VecX z_curr = solution.segment(n_position[i], n_local[i]);
+        periodConsVec_[i]->compute(z_curr, false);
+
+        Number max_constr_violation = 0;
+        Index max_constr_violation_id = 0;
+        const Index start_pos = m_position[stepOptVec_.size() + i];
+        for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
+            Number constr_violation = std::max(periodConsVec_[i]->g_lb(j) - periodConsVec_[i]->g(j), 
+                                               periodConsVec_[i]->g(j) - periodConsVec_[i]->g_ub(j));
+
+            if (constr_violation > max_constr_violation) {
+                max_constr_violation_id = j;
+                max_constr_violation = constr_violation;
+            }
+
+            if (constr_violation > final_constr_violation) {
+                final_constr_violation = constr_violation;
+            }
+        }
+
+        if (max_constr_violation > constr_viol_tol) {
+            if (verbose) {
+                std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: " 
+                          << max_constr_violation << std::endl;
+                std::cout << "    range: [" << periodConsVec_[i]->g_lb[max_constr_violation_id] 
+                                            << ", " 
+                                            << periodConsVec_[i]->g_ub[max_constr_violation_id] 
+                          << "], value: "   << periodConsVec_[i]->g(max_constr_violation_id) << std::endl;
+            }
+
+            periodConsVec_[i]->print_violation_info();
+                    
+            ifFeasible = false;
+        }
+    }
+
+    if (verbose) std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+}
+// [TNLP_summarize_constraints]
 
 }; // namespace Digit
 }; // namespace IDTO

@@ -225,5 +225,88 @@ void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
 }
 
+void DigitSingleStepPeriodicityConstraints::print_violation_info() {
+    // (1) H * (v+ - v-) = J * lambda
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        if (abs(g1(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: H * (v+ - v-) = J * lambda: dim " 
+                      << i 
+                      << " is violated: "
+                      << g(i) 
+                      << std::endl;
+        }
+    }
+
+    // (2) J * v+ = 0
+    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        if (abs(g2(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: J * v+ = 0: dim " 
+                      << i
+                      << " is violated: "
+                      << g2(i)
+                      << std::endl;
+        }
+    }
+
+    // (3) position reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g3(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: position reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g3(i)
+                      << std::endl;
+        }
+    }
+
+    // (4) velocity reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g4(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: velocity reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g4(i)
+                      << std::endl;
+        }
+    }
+
+    // (5) contact constraints
+    if (g5(0) <= -1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: positive contact force is violated: " 
+                  << g5(0)
+                  << std::endl;
+    }
+    if (g5(1) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: translation friction cone is violated: " 
+                  << g5(1)
+                  << std::endl;
+    }
+    if (g5(2) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: rotation friction cone is violated: " 
+                  << g5(2)
+                  << std::endl;
+    }
+    if (g5(3) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(3)
+                  << std::endl;
+    }
+    if (g5(4) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(4)
+                  << std::endl;
+    }
+    if (g5(5) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(5)
+                  << std::endl;
+    }
+    if (g5(6) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(6)
+                  << std::endl;
+    }
+}
+
 }; // namespace Digit
 }; // namespace IDTO

@@ -61,13 +61,23 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
     stance_foot_T_des = stance_foot_T_des_input;
 }
 
-void DigitDynamicsConstraints::reinitialize() {
-    // swap the stance leg
-    if (stanceLeg == 'L' || stanceLeg == 'l') {
-        stanceLeg = 'R';
+void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
+    if (stanceLeg_input == 0) { // swap the stance leg if there's no input
+        if (stanceLeg == 'L' || stanceLeg == 'l') {
+            stanceLeg = 'R';
+        }
+        else {
+            stanceLeg = 'L';
+        }
     }
     else {
-        stanceLeg = 'L';
+        if (stanceLeg_input != 'L' && 
+            stanceLeg_input != 'R' && 
+            stanceLeg_input != 'l' && 
+            stanceLeg_input != 'r') {
+            throw std::runtime_error("Invalid stance leg input");
+        }
+        stanceLeg = stanceLeg_input;
     }
 
     // reinitialize the stance leg end effector transformation matrix

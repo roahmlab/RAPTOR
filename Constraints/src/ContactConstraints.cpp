@@ -11,7 +11,8 @@ ContactConstraints::ContactConstraints(std::shared_ptr<CustomizedInverseDynamics
     // (3, 4) ZMP on one axis
     // (5, 6) ZMP on the other axis
     initialize_memory(idPtr_->trajPtr_->N * 6, 
-                      idPtr_->trajPtr_->varLength);
+                      idPtr_->trajPtr_->varLength,
+                      false);
 }
 
 void ContactConstraints::compute(const VecX& z, 

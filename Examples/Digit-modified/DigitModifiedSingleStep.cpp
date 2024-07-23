@@ -64,9 +64,6 @@ int main(int argc, char* argv[]) {
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
     }
-
-    std::cout << gp.swingfoot_begin_y_des << std::endl;
-    std::cout << gp.swingfoot_end_y_des << std::endl;
     
     Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-modified-Bezier.txt");
 

@@ -31,7 +31,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-    initialize_memory(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength, false);
 }
 
 void DigitCustomizedConstraints::compute(const VecX& z, 

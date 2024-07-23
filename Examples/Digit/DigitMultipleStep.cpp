@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-    app->Options()->SetNumericValue("max_wall_time", 100.0);
+    app->Options()->SetNumericValue("max_wall_time", 1e-4);
     app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
     app->Options()->SetIntegerValue("max_iter", 200);

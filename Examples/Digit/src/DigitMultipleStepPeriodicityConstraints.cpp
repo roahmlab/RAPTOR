@@ -3,27 +3,34 @@
 namespace IDTO {
 namespace Digit {
 
-DigitMultipleStepPeriodicityConstraints::DigitMultipleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                                                                 std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
+DigitMultipleStepPeriodicityConstraints::DigitMultipleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& currTrajPtr_input,
+                                                                                 std::shared_ptr<Trajectories>& nextTrajPtr_input,
+                                                                                 std::shared_ptr<DigitConstrainedInverseDynamics> currDcidPtr_input,
+                                                                                 std::shared_ptr<DigitConstrainedInverseDynamics> nextDcidPtr_input,
                                                                                  const frictionParams& fp_input) : 
-    trajPtr_(trajPtr_input),
-    dcidPtr_(dcidPtr_input),
+    currTrajPtr_(currTrajPtr_input),
+    nextTrajPtr_(nextTrajPtr_input),
+    currDcidPtr_(currDcidPtr_input),
+    nextDcidPtr_(nextDcidPtr_input),
     fp(fp_input) {
+    if (currTrajPtr_->varLength != nextTrajPtr_->varLength) {
+        throw std::invalid_argument("DigitMultipleStepPeriodicityConstraints: currTrajPtr_ and nextTrajPtr_ should have the same varLength");
+    }
+
     m = NUM_JOINTS +              // H * (v+ - v-) = J * lambda 
         NUM_DEPENDENT_JOINTS +    // J*v+ = 0
         NUM_INDEPENDENT_JOINTS +  // position reset
         NUM_INDEPENDENT_JOINTS +  // velocity reset
         7;                        // lambda contact constraints
-    g = VecX::Zero(m);
-    g_lb = VecX::Zero(m);
-    g_ub = VecX::Zero(m);
-    pg_pz.resize(m, trajPtr_->varLength);
+    
+    initialize_memory(m, currTrajPtr_->varLength, false);
 
     // initialize intermediate variables
-    prnea_pq = MatX::Zero(dcidPtr_->modelPtr_->nv, dcidPtr_->modelPtr_->nv);
-    prnea_pv = MatX::Zero(dcidPtr_->modelPtr_->nv, dcidPtr_->modelPtr_->nv);
-    prnea_pa = MatX::Zero(dcidPtr_->modelPtr_->nv, dcidPtr_->modelPtr_->nv);
-    zeroVec = VecX::Zero(dcidPtr_->modelPtr_->nv);
+    const Model& model = *(currDcidPtr_->modelPtr_);
+    prnea_pq = MatX::Zero(model.nv, model.nv);
+    prnea_pv = MatX::Zero(model.nv, model.nv);
+    prnea_pa = MatX::Zero(model.nv, model.nv);
+    zeroVec = VecX::Zero(model.nv);
 
     g1 = VecX::Zero(NUM_JOINTS);
     g2 = VecX::Zero(NUM_DEPENDENT_JOINTS);
@@ -31,26 +38,22 @@ DigitMultipleStepPeriodicityConstraints::DigitMultipleStepPeriodicityConstraints
     g4 = VecX::Zero(NUM_INDEPENDENT_JOINTS);
     g5 = VecX::Zero(7);
 
-    pg1_pz = MatX::Zero(NUM_JOINTS, trajPtr_->varLength);
-    pg2_pz = MatX::Zero(NUM_DEPENDENT_JOINTS, trajPtr_->varLength);
-    pg3_pz = MatX::Zero(NUM_INDEPENDENT_JOINTS, trajPtr_->varLength);
-    pg4_pz = MatX::Zero(NUM_INDEPENDENT_JOINTS, trajPtr_->varLength);
-    pg5_pz = MatX::Zero(7, trajPtr_->varLength);
+    pg1_pz = MatX::Zero(NUM_JOINTS, currTrajPtr_->varLength);
+    pg2_pz = MatX::Zero(NUM_DEPENDENT_JOINTS, currTrajPtr_->varLength);
+    pg3_pz = MatX::Zero(NUM_INDEPENDENT_JOINTS, currTrajPtr_->varLength);
+    pg3_pz2 = MatX::Zero(NUM_INDEPENDENT_JOINTS, nextTrajPtr_->varLength);
+    pg4_pz = MatX::Zero(NUM_INDEPENDENT_JOINTS, currTrajPtr_->varLength);
+    pg4_pz2 = MatX::Zero(NUM_INDEPENDENT_JOINTS, nextTrajPtr_->varLength);
+    pg5_pz = MatX::Zero(7, currTrajPtr_->varLength);
 
-    // the following are going to be constant
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        joint_id1[i] = dcidPtr_->modelPtr_->getJointId(JOINT_MAP[i][0]) - 1;
-        joint_id2[i] = dcidPtr_->modelPtr_->getJointId(JOINT_MAP[i][1]) - 1;
-    }
-
-    pv_plus_pz = MatX::Zero(NUM_JOINTS, trajPtr_->varLength);
+    pv_plus_pz = MatX::Zero(NUM_JOINTS, currTrajPtr_->varLength);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        pv_plus_pz(i, trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS + i) = 1;
+        pv_plus_pz(i, currTrajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS + i) = 1;
     }
 
-    plambda_pz = MatX::Zero(NUM_DEPENDENT_JOINTS, trajPtr_->varLength);
+    plambda_pz = MatX::Zero(NUM_DEPENDENT_JOINTS, currTrajPtr_->varLength);
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        plambda_pz(i, trajPtr_->varLength - NUM_DEPENDENT_JOINTS + i) = 1;
+        plambda_pz(i, currTrajPtr_->varLength - NUM_DEPENDENT_JOINTS + i) = 1;
     }
 }
 
@@ -61,92 +64,93 @@ void DigitMultipleStepPeriodicityConstraints::compute(const VecX& z,
         throw std::invalid_argument("DigitMultipleStepPeriodicityConstraints does not support hessian computation");
     }
 
-    // We assume that surface contact constraints always come after torque limits constraints for now
-    // The following line has been called in TorqueLimits::compute() already
-    // So we directly pull out the lambda values from idPtr_
-    // dcidPtr_->compute(z, compute_derivatives);
+    Model& model = *(currDcidPtr_->modelPtr_);
+    Data& data = *(currDcidPtr_->dataPtr_);
+    std::shared_ptr<DigitDynamicsConstraints> nextDdcPtr_ = nextDcidPtr_->ddcPtr_;
 
-    const int lastIdx = trajPtr_->N - 1;
+    const int lastIdx = currTrajPtr_->N - 1;
 
-    const VecX& q_minus = dcidPtr_->q(lastIdx);
-    const VecX& v_minus = dcidPtr_->v(lastIdx);
+    const VecX& q_minus = currDcidPtr_->q(lastIdx);
+    const MatX& pq_minus_pz = currDcidPtr_->pq_pz(lastIdx);
+    
+    const VecX& v_minus = currDcidPtr_->v(lastIdx);
+    const MatX& pv_minus_pz = currDcidPtr_->pv_pz(lastIdx);
 
-    const VecX& v_plus = z.block(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, 0, NUM_JOINTS, 1);
+    const VecX& v_plus = z.segment(currTrajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
+    // MatX pv_plus_pz is constant and has been defined in the constructor
 
-    const VecX& q_0 = dcidPtr_->q(0);
-    const VecX& v_0 = dcidPtr_->v(0);
+    const VecX& q_next = nextDcidPtr_->q(0);
+    const MatX& pq_next_pz2 = nextDcidPtr_->pq_pz(0);
+
+    const VecX& v_next = nextDcidPtr_->v(0);
+    const MatX& pv_next_pz2 = nextDcidPtr_->pv_pz(0);
 
     const VecX& lambda = z.tail(NUM_DEPENDENT_JOINTS);
 
-    // swap stance leg for reset map
-    dcidPtr_->ddcPtr_->reinitialize();
-
-    // re-evaluate constraint jacobian
-    dcidPtr_->dcPtr_->get_c(q_minus);
-    dcidPtr_->dcPtr_->get_J(q_minus);
+    // evaluate constraint jacobian using next step
+    nextDdcPtr_->get_c(q_minus);
+    nextDdcPtr_->get_J(q_minus);
 
     // (1) H * (v+ - v-) = J * lambda
-    crba(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), q_minus);
+    crba(model, data, q_minus);
 
-    MatX H = dcidPtr_->dataPtr_->M;
-    for (size_t j = 0; j < dcidPtr_->modelPtr_->nv; j++) {
-        for (size_t k = j + 1; k < dcidPtr_->modelPtr_->nv; k++) {
+    MatX H = data.M;
+    for (size_t j = 0; j < model.nv; j++) {
+        for (size_t k = j + 1; k < model.nv; k++) {
             H(k, j) = H(j, k);
         }
     }
 
-    g1 = H * (v_plus - v_minus) - dcidPtr_->dcPtr_->J.transpose() * lambda;
+    g1 = H * (v_plus - v_minus) - nextDdcPtr_->J.transpose() * lambda;
 
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
-        const double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
-        dcidPtr_->modelPtr_->gravity.linear()(2) = 0;
-        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), 
+        const double original_gravity = model.gravity.linear()(2);
+        model.gravity.linear()(2) = 0;
+        pinocchio::computeRNEADerivatives(model, data, 
                                           q_minus, zeroVec, v_plus - v_minus,
                                           prnea_pq, prnea_pv, prnea_pa);
 
         // restore gravity
-        dcidPtr_->modelPtr_->gravity.linear()(2) = original_gravity;
+        model.gravity.linear()(2) = original_gravity;
 
-        dcidPtr_->dcPtr_->get_JTx_partial_dq(q_minus, lambda);
-        const MatX& JTx_partial_dq = dcidPtr_->dcPtr_->JTx_partial_dq;
+        nextDdcPtr_->get_JTx_partial_dq(q_minus, lambda);
+        const MatX& JTx_partial_dq = nextDdcPtr_->JTx_partial_dq;
 
-        pg1_pz = (prnea_pq - JTx_partial_dq) * dcidPtr_->pq_pz(lastIdx) + 
-                 H * (pv_plus_pz - dcidPtr_->pv_pz(lastIdx)) - 
-                 dcidPtr_->dcPtr_->J.transpose() * plambda_pz;
+        pg1_pz = (prnea_pq - JTx_partial_dq) * pq_minus_pz + 
+                 H * (pv_plus_pz - pv_minus_pz) - 
+                 nextDdcPtr_->J.transpose() * plambda_pz;
     }
 
     // (2) J * v+ = 0
-    g2 = dcidPtr_->dcPtr_->J * v_plus;
+    g2 = nextDdcPtr_->J * v_plus;
 
     if (compute_derivatives) {
-        dcidPtr_->dcPtr_->get_Jx_partial_dq(q_minus, v_plus);
-        const MatX& Jx_partial_dq = dcidPtr_->dcPtr_->Jx_partial_dq;
+        nextDdcPtr_->get_Jx_partial_dq(q_minus, v_plus);
+        const MatX& Jx_partial_dq = nextDdcPtr_->Jx_partial_dq;
 
-        pg2_pz = Jx_partial_dq * dcidPtr_->pq_pz(lastIdx) + 
-                 dcidPtr_->dcPtr_->J * pv_plus_pz;
+        pg2_pz = Jx_partial_dq * pq_minus_pz + 
+                 nextDdcPtr_->J * pv_plus_pz;
     }
 
     // (3) position reset
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        g3(i) = q_0(joint_id1[i]) + q_minus(joint_id2[i]);
-    }
+    g3 = nextDdcPtr_->get_independent_vector(q_next) - 
+         nextDdcPtr_->get_independent_vector(q_minus);
 
     if (compute_derivatives) {
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            pg3_pz.row(i) = dcidPtr_->pq_pz(0).row(joint_id1[i]) + dcidPtr_->pq_pz(lastIdx).row(joint_id2[i]);
-        }
+        nextDdcPtr_->get_independent_rows(pg3_pz2, pq_next_pz2);
+        nextDdcPtr_->get_independent_rows(pg3_pz, pq_minus_pz);
+        pg3_pz = -pg3_pz;
     }
 
     // (4) velocity reset
-    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        g4(i) = v_0(joint_id1[i]) + v_plus(joint_id2[i]);
-    }
+    g4 = nextDdcPtr_->get_independent_vector(v_next) - 
+         nextDdcPtr_->get_independent_vector(v_plus);
 
     if (compute_derivatives) {
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            pg4_pz.row(i) = dcidPtr_->pv_pz(0).row(joint_id1[i]) + pv_plus_pz.row(joint_id2[i]);
-        }
+        nextDdcPtr_->get_independent_rows(pg4_pz2, pv_next_pz2);
+        nextDdcPtr_->get_independent_rows(pg4_pz, pv_plus_pz);
+        pg4_pz = -pg4_pz;
     }
 
     // (5) contact constraints
@@ -203,14 +207,14 @@ void DigitMultipleStepPeriodicityConstraints::compute(const VecX& z,
         pg5_pz.row(6) = -fp.Ly * pcontactLambda_pz.row(2) - pcontactLambda_pz.row(4);
     }
 
-    // swap back for next round evaluation
-    dcidPtr_->ddcPtr_->reinitialize();
-
     // combine all constraints together
     g << g1, g2, g3, g4, g5;
 
     if (compute_derivatives) {
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
+
+        // pg3_pz2, pg4_pz2 is for the next walking step
+        // they are directly extracted from this class and then composed to the values passed to ipopt
     }
 }
 
@@ -221,8 +225,97 @@ void DigitMultipleStepPeriodicityConstraints::compute_bounds() {
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;
 
-    g_lb.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setConstant(-1e19);
-    // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
+    g_lb.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setConstant(-1e19);
+    // g_ub.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setZero();
+}
+
+void DigitMultipleStepPeriodicityConstraints::print_violation_info() {
+    std::cout << g1.transpose() << std::endl;
+    std::cout << g2.transpose() << std::endl;
+    std::cout << g3.transpose() << std::endl;
+    std::cout << g4.transpose() << std::endl;
+    std::cout << g5.transpose() << std::endl;
+
+    // (1) H * (v+ - v-) = J * lambda
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        if (abs(g1(i)) >= 1e-4) {
+            std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: H * (v+ - v-) = J * lambda: dim " 
+                      << i 
+                      << " is violated: "
+                      << g(i) 
+                      << std::endl;
+        }
+    }
+
+    // (2) J * v+ = 0
+    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        if (abs(g2(i)) >= 1e-4) {
+            std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: J * v+ = 0: dim " 
+                      << i
+                      << " is violated: "
+                      << g2(i)
+                      << std::endl;
+        }
+    }
+
+    // (3) position reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g3(i)) >= 1e-4) {
+            std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: position reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g3(i)
+                      << std::endl;
+        }
+    }
+
+    // (4) velocity reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g4(i)) >= 1e-4) {
+            std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: velocity reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g4(i)
+                      << std::endl;
+        }
+    }
+
+    // (5) contact constraints
+    if (g5(0) <= -1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: positive contact force is violated: " 
+                  << g5(0)
+                  << std::endl;
+    }
+    if (g5(1) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: translation friction cone is violated: " 
+                  << g5(1)
+                  << std::endl;
+    }
+    if (g5(2) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: rotation friction cone is violated: " 
+                  << g5(2)
+                  << std::endl;
+    }
+    if (g5(3) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(3)
+                  << std::endl;
+    }
+    if (g5(4) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(4)
+                  << std::endl;
+    }
+    if (g5(5) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(5)
+                  << std::endl;
+    }
+    if (g5(6) >= 1e-4) {
+        std::cout << "        DigitMultipleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(6)
+                  << std::endl;
+    }
 }
 
 }; // namespace Digit
