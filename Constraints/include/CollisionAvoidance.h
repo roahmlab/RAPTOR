@@ -3,7 +3,7 @@
 
 #include "Constraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 /*
 CollisionAvoidance class is one special class that does not inherit from Constraints class.
@@ -46,6 +46,6 @@ public:
     bool onlyComputeDerivativesForMinimumDistance = false;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // COLLISION_AVOIDANCE_H

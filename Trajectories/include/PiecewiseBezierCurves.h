@@ -3,7 +3,7 @@
 
 #include "BezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class PiecewiseBezierCurves : public BezierCurves {
 public:
@@ -54,6 +54,6 @@ public:
     size_t end_position_offset = 0;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // BEZIER_CURVES_H

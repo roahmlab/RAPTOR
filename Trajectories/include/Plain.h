@@ -4,7 +4,7 @@
 
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class Plain : public Trajectories {
 public:
@@ -27,6 +27,6 @@ public:
                          bool compute_hessian = false);
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // PLAIN_H

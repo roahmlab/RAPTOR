@@ -11,7 +11,7 @@
 #include "TorqueLimits.h"
 #include "WaitrContactConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 class KinovaWaitrOptimizer : public Optimizer {
@@ -102,6 +102,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // KINOVA_WAITR_OPTIMIZER_H

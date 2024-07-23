@@ -3,9 +3,8 @@
 
 #include "Optimizer.h"
 
-#include "FourierCurves.h"
-#include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
+
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
 #include "Utils.h"
@@ -16,7 +15,7 @@
 #include "DigitCustomizedConstraints.h"
 #include "DigitSingleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 using namespace Ipopt;
@@ -42,7 +41,10 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const GaitParameters& gp_input
+        const GaitParameters& gp_input,
+        const char stanceLeg = 'L', // stance foot is left foot by default
+        const Transform& stance_foot_T_des = Transform(3, -M_PI / 2),
+        bool periodic = true
     );
 
     /**@name Overloaded from TNLP */
@@ -93,10 +95,11 @@ public:
 
     std::shared_ptr<Trajectories> trajPtr_; 
 
+    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
 };
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGITSINGLESTEPOPTIMIZER_H

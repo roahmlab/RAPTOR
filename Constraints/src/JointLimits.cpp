@@ -1,6 +1,6 @@
 #include "JointLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                          const VecX& lowerLimits_input, 
@@ -82,4 +82,4 @@ void JointLimits::print_violation_info() {
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

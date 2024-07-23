@@ -1,6 +1,6 @@
 #include "TorqueLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
                            std::shared_ptr<InverseDynamics> idPtr_input,
@@ -12,7 +12,8 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
     upperLimits = upperLimits_input;
     
     initialize_memory(trajPtr_->N * trajPtr_->Nact, 
-                      trajPtr_->varLength);
+                      trajPtr_->varLength,
+                      false);
 }
 
 void TorqueLimits::compute(const VecX& z, 
@@ -46,4 +47,33 @@ void TorqueLimits::compute_bounds() {
     }
 }
 
-}; // namespace IDTO
+void TorqueLimits::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < trajPtr_->Nact; j++) {
+            if (g(i * trajPtr_->Nact + j) <= lowerLimits(j)) {
+                std::cout << "        TorqueLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i
+                          << " is below lower limit: "
+                          << g(i * trajPtr_->Nact + j) 
+                          << " < " 
+                          << lowerLimits(j) 
+                          << std::endl;
+            } 
+            else if (g(i * trajPtr_->Nact + j) >= upperLimits(j)) {
+                std::cout << "        TorqueLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * trajPtr_->Nact + j) 
+                          << " > " 
+                          << upperLimits(j) 
+                          << std::endl;
+            }
+        }
+    }
+}
+
+}; // namespace RAPTOR

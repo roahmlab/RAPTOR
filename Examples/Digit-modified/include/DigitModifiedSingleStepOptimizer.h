@@ -3,10 +3,8 @@
 
 #include "Optimizer.h"
 
-#include "FourierCurves.h"
-#include "FixedFrequencyFourierCurves.h"
 #include "BezierCurves.h"
-#include "Plain.h"
+
 #include "DigitModifiedConstrainedInverseDynamics.h"
 #include "DigitModifiedDynamicsConstraints.h"
 #include "Utils.h"
@@ -17,7 +15,7 @@
 #include "DigitModifiedCustomizedConstraints.h"
 #include "DigitModifiedSingleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 using namespace Ipopt;
@@ -93,8 +91,6 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_; 
-    std::shared_ptr<FourierCurves> fcPtr_;
-    // std::shared_ptr<BezierCurves> bcPtr_;
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;
@@ -103,6 +99,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIEDSINGLESTEPOPTIMIZER_H

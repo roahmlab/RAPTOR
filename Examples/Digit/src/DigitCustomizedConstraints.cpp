@@ -1,42 +1,37 @@
 #include "DigitCustomizedConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
                                                        const Eigen::VectorXi& jtype_input,
                                                        std::shared_ptr<Trajectories>& trajPtr_input,
-                                                       std::shared_ptr<DynamicsConstraints>& dcPtr_input,
+                                                       std::shared_ptr<DigitDynamicsConstraints>& ddcPtr_input,
                                                        const GaitParameters& gp_input) : 
     jtype(jtype_input),
     trajPtr_(trajPtr_input),
-    dcPtr_(dcPtr_input),
+    ddcPtr_(ddcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
 
-    if (modelPtr_->existJointName("right_toe_roll")) {
-        swingfoot_id = modelPtr_->getJointId("right_toe_roll");
-    }
-    else {
-        throw std::runtime_error("Can not find joint: right_toe_roll");
-    }
+    leftfoot_endT.R << 0,             1, 0,
+                       -0.5,          0, sin(M_PI / 3),
+                       sin(M_PI / 3), 0, 0.5;
+    leftfoot_endT.p << 0, -0.05456, -0.0315;
 
-    // This is right foot end transform
-    // This only applies when stance foot is left foot!!!
-    swingfoot_endT.R << 0,             -1, 0,
+    rightfoot_endT.R << 0,             -1, 0,
                         0.5,           0,  -sin(M_PI / 3),
                         sin(M_PI / 3), 0,  0.5;
-    swingfoot_endT.p << 0, 0.05456, -0.0315;
+    rightfoot_endT.p << 0, 0.05456, -0.0315;
 
-    jointTJ = MatX::Zero(6, modelPtr_->nv);
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
-    swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
+    swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-    initialize_memory(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength, false);
 }
 
 void DigitCustomizedConstraints::compute(const VecX& z, 
@@ -52,9 +47,18 @@ void DigitCustomizedConstraints::compute(const VecX& z,
 
     // compute full joint trajectories and swing foot forward kinematics
     for (int i = 0; i < trajPtr_->N; i++) {
+        if (ddcPtr_->stanceLeg == 'L') {
+            swingfoot_endT = rightfoot_endT;
+            swingfoot_id = modelPtr_->getJointId("right_toe_roll");
+        }
+        else {
+            swingfoot_endT = leftfoot_endT;
+            swingfoot_id = modelPtr_->getJointId("left_toe_roll");
+        }
+        
         VecX qi(modelPtr_->nq);
-        dcPtr_->fill_independent_vector(qi, trajPtr_->q(i));
-        dcPtr_->setupJointPosition(qi, compute_derivatives);
+        ddcPtr_->fill_independent_vector(qi, trajPtr_->q(i));
+        ddcPtr_->setupJointPosition(qi, compute_derivatives);
         q.col(i) = qi;
 
         fkPtr_->compute(0, swingfoot_id, qi, nullptr, &swingfoot_endT, fk_order);
@@ -66,14 +70,14 @@ void DigitCustomizedConstraints::compute(const VecX& z,
             pq_pz(i).resize(modelPtr_->nv, trajPtr_->varLength);
             
             // fill in independent joints derivatives directly
-            for (int j = 0; j < dcPtr_->numIndependentJoints; j++) {
-                int indenpendentJointIndex = dcPtr_->return_independent_joint_index(j);
+            for (int j = 0; j < ddcPtr_->numIndependentJoints; j++) {
+                int indenpendentJointIndex = ddcPtr_->return_independent_joint_index(j);
                 pq_pz(i).row(indenpendentJointIndex) = trajPtr_->pq_pz(i).row(j);
             }
             // compute and fill in dependent joints derivatives
-            MatX pq_dep_pz = dcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
-            for (int j = 0; j < dcPtr_->numDependentJoints; j++) {
-                int denpendentJointIndex = dcPtr_->return_dependent_joint_index(j);
+            MatX pq_dep_pz = ddcPtr_->pq_dep_pq_indep * trajPtr_->pq_pz(i);
+            for (int j = 0; j < ddcPtr_->numDependentJoints; j++) {
+                int denpendentJointIndex = ddcPtr_->return_dependent_joint_index(j);
                 pq_pz(i).row(denpendentJointIndex) = pq_dep_pz.row(j);
             }
 
@@ -91,9 +95,12 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     // (2) swingfoot always flat and points forward
     VecX g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
     VecX g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
-    VecX g4 = Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2); // swingfoot yaw
+    VecX g4 = (ddcPtr_->stanceLeg == 'L') ? 
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2) :
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() - M_PI / 2); // swingfoot yaw
 
-    // (3) swingfoot xy equal to desired value at the beginning and at the end
+    // (3) swingfoot xy equal to desired value 
+    //     at the beginning and at the end of each walking step
     VecX g5(4);
     g5 << swingfoot_xyzrpy.topLeftCorner(2, 1), swingfoot_xyzrpy.topRightCorner(2, 1);
 
@@ -103,7 +110,9 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     VecX g6 = q.row(2); // torso height
     VecX g7 = Utils::wrapToPi(q.row(3)); // torso roll
     VecX g8 = Utils::wrapToPi(q.row(4)); // torso pitch
-    VecX g9 = Utils::wrapToPi(q.row(5).array() + M_PI / 2); // torso yaw
+    VecX g9 = (ddcPtr_->stanceLeg == 'L') ?
+        Utils::wrapToPi(q.row(5).array() + M_PI / 2) :
+        Utils::wrapToPi(q.row(5).array() - M_PI / 2); // torso yaw
 
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 
@@ -165,8 +174,8 @@ void DigitCustomizedConstraints::compute_bounds() {
     g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
 
     // (4) torso height always larger than 1 meter
-    //           roll and pitch always close to 0
-    //           yaw always close to 0 when walking forward
+    //     roll and pitch always close to 0
+    //     yaw always close to 0 when walking forward
     VecX g6_lb = VecX::Constant(trajPtr_->N, 1);
     VecX g6_ub = VecX::Constant(trajPtr_->N, 1e19);
     VecX g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
@@ -181,4 +190,4 @@ void DigitCustomizedConstraints::compute_bounds() {
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -1,6 +1,6 @@
 #include "DigitDynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
@@ -39,7 +39,7 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
             throw std::runtime_error("Can not find joint: left_toe_roll");
         }
 
-        stance_foot_endT.R << 0,            1, 0,
+        stance_foot_endT.R << 0,             1, 0,
                               -0.5,          0, sin(M_PI / 3),
                               sin(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
@@ -61,37 +61,35 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
     stance_foot_T_des = stance_foot_T_des_input;
 }
 
-void DigitDynamicsConstraints::reinitialize() {
-    // swap the stance leg
-    if (stanceLeg == 'L' || stanceLeg == 'l') {
-        stanceLeg = 'R';
+void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
+    if (stanceLeg_input == 0) { // swap the stance leg if there's no input
+        if (stanceLeg == 'L' || stanceLeg == 'l') {
+            stanceLeg = 'R';
+        }
+        else {
+            stanceLeg = 'L';
+        }
     }
     else {
-        stanceLeg = 'L';
+        if (stanceLeg_input != 'L' && 
+            stanceLeg_input != 'R' && 
+            stanceLeg_input != 'l' && 
+            stanceLeg_input != 'r') {
+            throw std::runtime_error("Invalid stance leg input");
+        }
+        stanceLeg = stanceLeg_input;
     }
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        if (modelPtr_->existJointName("left_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("left_toe_roll");
-        }
-        else {
-            throw std::runtime_error("Can not find joint: left_toe_roll");
-        }
-
-        stance_foot_endT.R << 0,            1, 0,
+        contact_joint_id = modelPtr_->getJointId("left_toe_roll");
+        stance_foot_endT.R << 0,             1, 0,
                               -0.5,          0, sin(M_PI / 3),
                               sin(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
-        if (modelPtr_->existJointName("right_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("right_toe_roll");
-        }
-        else {
-            throw std::runtime_error("Can not find joint: right_toe_roll");
-        }
-
+        contact_joint_id = modelPtr_->getJointId("right_toe_roll");
         stance_foot_endT.R << 0,             -1, 0,
                               0.5,           0,  -sin(M_PI / 3),
                               sin(M_PI / 3), 0,  0.5;
@@ -205,8 +203,8 @@ Eigen::VectorXd DigitDynamicsConstraints::get_independent_vector(const VecX& v) 
 
 void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
-    assert(r.cols() == NUM_DEPENDENT_JOINTS);
-    assert(m.rows() == r.rows());
+    
+    r.resize(m.rows(), NUM_DEPENDENT_JOINTS);
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         r.col(i) = m.col(dependentJointIds[i]);
@@ -215,8 +213,8 @@ void DigitDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
-    assert(r.cols() == NUM_INDEPENDENT_JOINTS);
-    assert(m.rows() == r.rows());
+    
+    r.resize(m.rows(), NUM_INDEPENDENT_JOINTS);
 
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
         r.col(i) = m.col(independentJointIds[i]);
@@ -225,8 +223,8 @@ void DigitDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
-    assert(r.rows() == NUM_DEPENDENT_JOINTS);
-    assert(m.cols() == r.cols());
+
+    r.resize(NUM_DEPENDENT_JOINTS, m.cols());
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         r.row(i) = m.row(dependentJointIds[i]);
@@ -235,8 +233,8 @@ void DigitDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
 
 void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
-    assert(r.rows() == NUM_INDEPENDENT_JOINTS);
-    assert(m.cols() == r.cols());
+
+    r.resize(NUM_INDEPENDENT_JOINTS, m.cols());
 
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
         r.row(i) = m.row(independentJointIds[i]);
@@ -244,6 +242,10 @@ void DigitDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
 }
 
 void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
+    if (recoverSavedData(q, compute_derivatives)) {
+        return;
+    }
+    
     qcopy = q;
 
     // fill in dependent joint positions 
@@ -393,9 +395,10 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
         assert(J_dep_T_qr.rank() == J_dep.rows() && J_dep_T_qr.rank() == J_dep.cols());
 
         P_dep = -J_dep_qr.solve(J_indep);
-
         pq_dep_pq_indep = P_dep;
     }
+    
+    updateQueue(q, compute_derivatives);
 }
 
 int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f) {
@@ -845,7 +848,7 @@ void DigitDynamicsConstraints::get_J(const VecX& q) {
                     nullptr, 
                     &stance_foot_endT, 
                     1);
-
+                    
     J.block(18, 0, 3, modelPtr_->nv) = fkPtr_->getTranslationJacobian();
     J.block(21, 0, 3, modelPtr_->nv) = fkPtr_->getRPYJacobian();
 }
@@ -3015,4 +3018,4 @@ void DigitDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const VecX& x, 
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -7,7 +7,7 @@
 #include "Trajectories.h"
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class JointLimits : public Constraints {
 public:
@@ -44,6 +44,6 @@ public:
     VecX upperLimits;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // JOINTLIMITS_H

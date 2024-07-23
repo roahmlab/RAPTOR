@@ -1,6 +1,6 @@
 #include "DigitModifiedCustomizedConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Model& model_input,
@@ -41,7 +41,7 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
     m = trajPtr_->N * 8 + 4;
-    initialize_memory(m, trajPtr_->varLength);
+    initialize_memory(m, trajPtr_->varLength, false);
 }
 
 void DigitModifiedCustomizedConstraints::compute(const VecX& z, 
@@ -190,4 +190,4 @@ void DigitModifiedCustomizedConstraints::compute_bounds() {
 }
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -10,7 +10,7 @@
 
 #include "JointLimits.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 class DataFilterOptimizer : public Optimizer {
@@ -111,6 +111,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONDITION_NUMBER_OPTIMIZER_H

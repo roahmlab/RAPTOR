@@ -1,6 +1,6 @@
 #include "TrajectoryGroup.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 void TrajectoryGroup::add_trajectory(const std::string& name,    
                                      std::shared_ptr<Trajectories> trajectory) {
@@ -8,13 +8,14 @@ void TrajectoryGroup::add_trajectory(const std::string& name,
     gather_trajectories_information();
 }
 
-void TrajectoryGroup::gather_trajectories_information() {
+void TrajectoryGroup::gather_trajectories_information(const bool print_info) {
     T = 0;
     N = 0;
     Nact = trajectories.begin()->second->Nact;
     varLength = 0;
 
-    std::cout << "Trajectory group information: " << std::endl;
+    if (print_info) std::cout << "Trajectory group information: " << std::endl;
+    
     size_t index = 0;
     for (const auto& it : trajectories) {
         T += it.second->T;
@@ -29,13 +30,15 @@ void TrajectoryGroup::gather_trajectories_information() {
         variable_locations[it.first] = std::make_pair(varLength, varLength + it.second->varLength);
         varLength += it.second->varLength;
 
-        std::cout << "Trajectory " << index << ": " << it.first << std::endl;
-        std::cout << "    trajectory location: [" 
-                  << trajectory_locations[it.first].first << ", " 
-                  << trajectory_locations[it.first].second << "]" << std::endl;
-        std::cout << "    variable location: ["
-                  << variable_locations[it.first].first << ", "
-                  << variable_locations[it.first].second << "]" << std::endl;
+        if (print_info) {
+            std::cout << "Trajectory " << index << ": " << it.first << std::endl;
+            std::cout << "    trajectory location: [" 
+                      << trajectory_locations[it.first].first << ", " 
+                      << trajectory_locations[it.first].second << "]" << std::endl;
+            std::cout << "    variable location: ["
+                      << variable_locations[it.first].first << ", "
+                      << variable_locations[it.first].second << "]" << std::endl;
+        }
 
         index++;
     }
@@ -87,20 +90,32 @@ void TrajectoryGroup::compute(const VecX& z,
             q_dd(trajectory_offset + i) = it.second->q_dd(i);
 
             if (compute_derivatives) {
-                pq_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_pz(i);
-                pq_d_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_d_pz(i);
-                pq_dd_pz(trajectory_offset + i).block(0, variable_offset, Nact, it.second->varLength) = it.second->pq_dd_pz(i);
+                pq_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_pz(i);
+                pq_d_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_d_pz(i);
+                pq_dd_pz(trajectory_offset + i)
+                    .block(0, variable_offset, Nact, it.second->varLength) 
+                        = it.second->pq_dd_pz(i);
             }
 
             if (compute_hessian) {
                 for (int j = 0; j < Nact; j++) {
-                    pq_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_pz_pz(j, i);
-                    pq_d_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_d_pz_pz(j, i);
-                    pq_dd_pz_pz(j, trajectory_offset + i).block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) = it.second->pq_dd_pz_pz(j, i);
+                    pq_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_pz_pz(j, i);
+                    pq_d_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_d_pz_pz(j, i);
+                    pq_dd_pz_pz(j, trajectory_offset + i)
+                        .block(variable_offset, variable_offset, it.second->varLength, it.second->varLength) 
+                            = it.second->pq_dd_pz_pz(j, i);
                 }
             }
         }
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

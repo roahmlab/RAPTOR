@@ -6,7 +6,7 @@
 #include "CustomizedInverseDynamics.h"
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 typedef struct contactSurfaceParams_  {
     double mu = 0.7; // friction coefficient
@@ -59,6 +59,6 @@ public:
     contactSurfaceParams csp;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONTACT_CONSTRAINTS_H

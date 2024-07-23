@@ -4,7 +4,7 @@
 #include "JointLimits.h"
 #include "DynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class ConstrainedJointLimits : public JointLimits {
 public:
@@ -37,6 +37,6 @@ public:
     std::shared_ptr<DynamicsConstraints> dcPtr_;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONSTRAINEDJOINTLIMITS_H

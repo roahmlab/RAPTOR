@@ -1,7 +1,7 @@
 #include "Optimizer.h"
 #include "ForwardKinematics.h"
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace Ipopt;
 
 class FKGradientChecker : public Optimizer {

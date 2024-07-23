@@ -1,6 +1,6 @@
 #include "FourierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 FourierCurves::FourierCurves(const VecX& tspan_input, 
                              int Nact_input, 
@@ -277,5 +277,5 @@ void FourierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

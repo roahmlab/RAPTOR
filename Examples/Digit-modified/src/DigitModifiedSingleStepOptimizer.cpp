@@ -1,10 +1,7 @@
 #include "DigitModifiedSingleStepOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
-
-using std::cout;
-using std::endl;
 
 // // constructor
 // DigitModifiedSingleStepOptimizer::DigitModifiedSingleStepOptimizer()
@@ -31,16 +28,6 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     enable_hessian = false;
     x0 = x0_input;
 
-    // trajPtr_ = std::make_shared<FourierCurves>(T_input, 
-    //                                            N_input, 
-    //                                            NUM_INDEPENDENT_JOINTS, 
-    //                                            time_discretization_input, 
-    //                                            degree_input);
-    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-    //                                                          N_input, 
-    //                                                          NUM_INDEPENDENT_JOINTS, 
-    //                                                          time_discretization_input, 
-    //                                                          degree_input);
     trajPtr_ = std::make_shared<BezierCurves>(T_input, 
                                               N_input, 
                                               NUM_INDEPENDENT_JOINTS, 
@@ -52,12 +39,13 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     // stance foot is left foot by default
     char stanceLeg = 'L';
     Transform stance_foot_T_des(3, -M_PI / 2);
-    cidPtr_ = std::make_shared<DigitModifiedConstrainedInverseDynamics>(model_input, 
-                                                                        trajPtr_,
-                                                                        NUM_DEPENDENT_JOINTS, 
-                                                                        jtype_input, 
-                                                                        stanceLeg, 
-                                                                        stance_foot_T_des);                                                          
+    dcidPtr_ = std::make_shared<DigitModifiedConstrainedInverseDynamics>(model_input, 
+                                                                         trajPtr_,
+                                                                         NUM_DEPENDENT_JOINTS, 
+                                                                         jtype_input, 
+                                                                         stanceLeg, 
+                                                                         stance_foot_T_des);                                                          
+    cidPtr_ = dcidPtr_; // convert to base class
 
     // convert joint limits from degree to radian
     VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
@@ -69,22 +57,20 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
         JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
-    }
-
-    // Joint limits
-        // convert to their base class pointers
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                                  
+    }                                                                                                                              
 
     // Surface contact constraints
-        // convert to their base class pointers
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
+
+    // Joint limits
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          cidPtr_->dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits"); 
 
     // Kinematics constraints related to different gait behavior
     constraintsPtrVec_.push_back(std::make_unique<DigitModifiedCustomizedConstraints>(model_input, 
@@ -95,10 +81,10 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
     constraintsNameVec_.push_back("customized constraints");            
 
     // Periodic reset map constraints
-    constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
-                                                                                                 cidPtr_,
-                                                                                                 FRICTION_PARAMS));    
-    constraintsNameVec_.push_back("reset map constraints");     
+    // constraintsPtrVec_.push_back(std::make_unique<DigitModifiedSingleStepPeriodicityConstraints>(trajPtr_, 
+    //                                                                                              dcidPtr_,
+    //                                                                                              FRICTION_PARAMS));    
+    // constraintsNameVec_.push_back("reset map constraints");     
 
     return true;
 }
@@ -203,4 +189,4 @@ bool DigitModifiedSingleStepOptimizer::eval_grad_f(
 // [TNLP_eval_grad_f]
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -1,6 +1,6 @@
 #include "Transform.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 Transform::Transform() {
     R.setIdentity();
@@ -14,6 +14,15 @@ Transform::Transform(const Mat3& R_in,
     R(R_in),
     p(p_in), 
     ifDerivative(i_in) {
+}
+
+Transform::Transform(const Vec3& rpy_in,
+                     const Vec3& p_in) :
+    p(p_in) {
+    R = Eigen::AngleAxisd(rpy_in(0), Eigen::Vector3d::UnitX()) * 
+        Eigen::AngleAxisd(rpy_in(1), Eigen::Vector3d::UnitY()) * 
+        Eigen::AngleAxisd(rpy_in(2), Eigen::Vector3d::UnitZ());
+    ifDerivative = false;
 }
 
 Transform::Transform(const Vec3& p_in) :
@@ -306,7 +315,7 @@ Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp) {
 
 Transform Transform::inverse() const {
     assert(!ifDerivative);
-    return Transform(R.transpose(), -R.transpose() * p);
+    return Transform(R.transpose(), -R.transpose() * p, false);
 }
 
 Eigen::Vector3d Transform::getRPY() const {
@@ -334,4 +343,4 @@ std::ostream& operator<<(std::ostream& os, const Transform& sRp) {
     return os;
 }
 
-}  // namespace IDTO
+}  // namespace RAPTOR

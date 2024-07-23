@@ -1,6 +1,6 @@
 #include "BezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 BezierCurves::BezierCurves(const VecX& tspan_input, 
                            int Nact_input, 
@@ -113,5 +113,5 @@ void BezierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

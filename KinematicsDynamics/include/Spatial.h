@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-namespace IDTO {
+namespace RAPTOR {
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
@@ -40,6 +40,6 @@ Matrix6d crm(const Vector6d& v);
 
 Matrix6d crf(const Vector6d& v);
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // SPATIAL_HPP

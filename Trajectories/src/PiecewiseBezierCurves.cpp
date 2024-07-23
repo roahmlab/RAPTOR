@@ -1,6 +1,6 @@
 #include "PiecewiseBezierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 PiecewiseBezierCurves::PiecewiseBezierCurves(double T_input, 
                                              int N_input, 
@@ -280,4 +280,4 @@ void PiecewiseBezierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

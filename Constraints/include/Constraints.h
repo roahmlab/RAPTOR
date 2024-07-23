@@ -6,7 +6,7 @@
 #include <iostream>
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // This is the base (abstract) class for all constraints
 class Constraints {
@@ -38,7 +38,8 @@ public:
                      bool compute_hessian);
 
     void initialize_memory(const int m_input, 
-                           const int varLength);
+                           const int varLength,
+                           bool initialize_hessian = true);
 
     // class members:
     int m = 0; // number of constraints
@@ -59,6 +60,6 @@ public:
     // define the variables that stores the results here
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONSTRAINTS_H

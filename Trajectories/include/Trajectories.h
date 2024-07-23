@@ -4,12 +4,13 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <cstdio>
+#include <memory>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 #include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 enum TimeDiscretization {
     Uniform = 0, 
@@ -48,6 +49,15 @@ public:
                      bool compute_derivatives,
                      bool compute_hessian);
 
+    // these methods are defined in TrajectoryGroup
+    virtual void add_trajectory(const std::string& name,    
+                        std::shared_ptr<Trajectories> trajectory){
+        throw std::runtime_error("add_trajectory is not implemented in Trajectories class");
+    }
+    virtual void gather_trajectories_information(const bool print_info = false) {
+        throw std::runtime_error("gather_trajectories_information is not implemented in Trajectories class");
+    }
+
     // class members:
     double T = 0; // total time of the trajectory
     int N = 0;    // number of time instances in tspan
@@ -77,6 +87,6 @@ public:
     bool if_compute_hessian = false;
 };
 
-}; // namespace IDTO    
+}; // namespace RAPTOR    
 
 #endif // TRAJECTORIES_H

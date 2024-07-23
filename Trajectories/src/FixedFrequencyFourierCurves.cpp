@@ -1,6 +1,6 @@
 #include "FixedFrequencyFourierCurves.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input, 
                                                          int Nact_input, 
@@ -238,5 +238,5 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

@@ -8,7 +8,7 @@
 #include "HigherOrderDerivatives.h"
 #include "ForwardKinematics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // This namespace contains functions to compute the residual of the Lie space
 // including the translation and rotation part in SE(3) space, with their derivatives
@@ -30,6 +30,6 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
                                  Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_ = nullptr);
 
 }; // namespace LieSpaceResidual
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // LIE_SPACE_RESIDUAL_H

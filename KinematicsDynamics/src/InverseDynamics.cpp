@@ -1,6 +1,6 @@
 #include "InverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 InverseDynamics::InverseDynamics(const Model& model_input, 
                                  const std::shared_ptr<Trajectories>& trajPtr_input) :
@@ -114,5 +114,5 @@ void InverseDynamics::compute(const VecX& z,
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 

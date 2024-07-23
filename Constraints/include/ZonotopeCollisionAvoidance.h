@@ -34,7 +34,7 @@
 // DEPRECATED
 // DEPRECATED
 
-namespace IDTO {
+namespace RAPTOR {
 
 namespace ZonotopeParams {
     constexpr int MAX_OBSTACLE_GENERATOR_NUM = 3;
@@ -91,6 +91,6 @@ public:
     double* v = nullptr;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // ZONOTOPE_COLLISION_AVOIDANCE_H

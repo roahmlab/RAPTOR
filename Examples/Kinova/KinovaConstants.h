@@ -1,4 +1,4 @@
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 constexpr int NUM_JOINTS = 7;
@@ -16,4 +16,4 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, 
 constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

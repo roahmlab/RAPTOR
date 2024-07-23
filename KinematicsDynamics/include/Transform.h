@@ -14,7 +14,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-namespace IDTO {
+namespace RAPTOR {
 
 // 6x6 spatial transform matrix
 class Transform {
@@ -30,6 +30,10 @@ public:
     Transform(const Mat3& R_in, 
               const Vec3& p_in, 
               const bool i_in = false);
+              
+    // Constructor
+    Transform(const Vec3& rpy_in,
+              const Vec3& p_in);
 
     // Constructor
     Transform(const Vec3& p_in);
@@ -72,6 +76,6 @@ Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp);
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp);
 
-}  // namespace IDTO
+}  // namespace RAPTOR
 
 #endif

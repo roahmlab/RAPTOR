@@ -1,4 +1,4 @@
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 // constants related to digit-v3
@@ -127,4 +127,4 @@ constexpr double FOOT_WIDTH = 0.04; // (m)
 constexpr double FOOT_LENGTH = 0.1175; // (m)
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

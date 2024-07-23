@@ -3,9 +3,10 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
+#include <yaml-cpp/yaml.h>
 #include <iomanip>
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace DigitModified;
 using namespace Ipopt;
 
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(num_threads);
 
     // Define robot model
-    const std::string urdf_filename = "../Examples/Digit-modified/digit-v3-modified.urdf";
+    const std::string urdf_filename = "../Robots/digit-v3-modified/digit-v3-modified.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -38,60 +39,57 @@ int main(int argc, char* argv[]) {
     model.damping.setZero();
     model.friction.setZero();
 
-    pinocchio::Data data(model);
+    // load settings
+    YAML::Node config;
 
     const double T = 0.4;
-    const int N = 16;
-    const TimeDiscretization time_discretization = Chebyshev;
-    const int degree = 5;
-    const std::string output_name = "Chebyshev-N16";
-
-    if (argc > 2) {
-        N = std::stoi(argv[2]);
-    }
-    if (argc > 3) {
-        int temp = std::stoi(argv[3]);
-        time_discretization = (temp == 0) ? 
-                                  Uniform : 
-                                  Chebyshev;
-    }
-
-    std::cout << "Experiment settings: " << N << ' ' << time_discretization << std::endl;
-
+    TimeDiscretization time_discretization = Uniform;
+    int N = 16;
+    int degree = 5;
+    
     GaitParameters gp;
-    gp.swingfoot_midstep_z_des = 0.27;
-    gp.swingfoot_begin_x_des = -0.25;
-    gp.swingfoot_begin_y_des = 0.40;
-    gp.swingfoot_end_x_des = -0.25;
-    gp.swingfoot_end_y_des = -0.40;
 
-    std::ifstream initial_guess(filepath + "initial-digit-modified-Bezier.txt");
+    try {
+        config = YAML::LoadFile("../Examples/Digit-modified/singlestep_optimization_settings.yaml");
 
-    double temp = 0;
-    std::vector<double> z_array;
-    while (initial_guess >> temp) {
-        z_array.push_back(temp);
+        N = config["N"].as<int>();
+        degree = config["degree"].as<int>();
+        std::string time_discretization_str = config["time_discretization"].as<std::string>();
+        time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
+
+        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
+        gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<double>();
+        gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<double>();
+    } 
+    catch (std::exception& e) {
+        std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
     }
-    initial_guess.close();
-    Eigen::VectorXd z(z_array.size());
-    for (int i = 0; i < z_array.size(); i++) {
-        z(i) = z_array[i];
-    }
+    
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-modified-Bezier.txt");
 
-    // add disturbance to initial guess
-    Eigen::VectorXd disturbance(z.size());
+    // // add disturbance to initial guess
+    // Eigen::VectorXd disturbance(z.size());
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    //     disturbance.setRandom();
+    //     disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
+    // }
+    // else {
+    //     disturbance.setZero();
+    // }
+
+    // z = z + disturbance;
+
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-        disturbance.setRandom();
-        disturbance = disturbance * (0.2 * z.norm()) / disturbance.norm();
     }
     else {
-        disturbance.setZero();
+        std::srand(std::time(nullptr));
     }
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
 
-    // z = z + disturbance;
-    
     SmartPtr<DigitModifiedSingleStepOptimizer> mynlp = new DigitModifiedSingleStepOptimizer();
     try {
 	    mynlp->set_parameters(z,
@@ -102,7 +100,7 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gp);
-        mynlp->constr_viol_tol = 1e-5;
+        mynlp->constr_viol_tol = 1e-4;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -111,25 +109,43 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-4);
-	app->Options()->SetNumericValue("max_wall_time", 60.0);
-    app->Options()->SetNumericValue("obj_scaling_factor", 1e-4);
-    app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-    app->Options()->SetIntegerValue("max_iter", 2000);
-	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma57");
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    try {
+        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
+        app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+        app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
+        app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
+        app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
+        app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 
-    // app->Options()->SetStringValue("nlp_scaling_method", "none");
+        if (mynlp->enable_hessian) {
+            app->Options()->SetStringValue("hessian_approximation", "exact");
+        }
+        else {
+            app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+        }
+        // app->Options()->SetStringValue("nlp_scaling_method", "none");
+    }
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        throw std::runtime_error("Error setting optimization options! Check previous error message!");
+    }
 
-    // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
-    // // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    if (config["gredient_check"].as<bool>()) {
+        app->Options()->SetStringValue("output_file", "ipopt.out");
+        if (mynlp->enable_hessian) {
+            app->Options()->SetStringValue("derivative_test", "second-order");
+        }
+        else {
+            app->Options()->SetStringValue("derivative_test", "first-order");
+        }
+        app->Options()->SetNumericValue("point_perturbation_radius", 1e-2);
+        // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+        app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    }
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -147,20 +163,19 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        // solve_time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
         std::cout << "Total solve time: " << solve_time << " seconds.\n";
+
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
-
-    std::cout << "ActualDataYouNeed: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     
     // Print the solution
     // if (mynlp->solution.size() == mynlp->numVars) {
-    //     std::ofstream solution(filepath + "solution-digit-modified-Bezier-" + output_name + ".txt");
+    //     std::ofstream solution(filepath + "solution-digit-modified-initial.txt");
     //     solution << std::setprecision(20);
     //     for (int i = 0; i < mynlp->numVars; i++) {
     //         solution << mynlp->solution[i] << std::endl;

@@ -1,10 +1,10 @@
 #include "DigitSingleStepPeriodicityConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitSingleStepPeriodicityConstraints::DigitSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                                                             std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_input,
+                                                                             std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
                                                                              const frictionParams& fp_input) : 
     trajPtr_(trajPtr_input),
     dcidPtr_(dcidPtr_input),
@@ -79,7 +79,7 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
     const VecX& lambda = z.tail(NUM_DEPENDENT_JOINTS);
 
     // swap stance leg for reset map
-    dcidPtr_->dcPtr_->reinitialize();
+    dcidPtr_->ddcPtr_->reinitialize();
 
     // re-evaluate constraint jacobian
     dcidPtr_->dcPtr_->get_c(q_minus);
@@ -99,13 +99,14 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
 
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
-        // this is terrible coding unfortunately
+        const double original_gravity = dcidPtr_->modelPtr_->gravity.linear()(2);
         dcidPtr_->modelPtr_->gravity.linear()(2) = 0;
-        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), q_minus, zeroVec, v_plus - v_minus,
+        pinocchio::computeRNEADerivatives(*(dcidPtr_->modelPtr_), *(dcidPtr_->dataPtr_), 
+                                          q_minus, zeroVec, v_plus - v_minus,
                                           prnea_pq, prnea_pv, prnea_pa);
 
         // restore gravity
-        dcidPtr_->modelPtr_->gravity.linear()(2) = -9.806;
+        dcidPtr_->modelPtr_->gravity.linear()(2) = original_gravity;
 
         dcidPtr_->dcPtr_->get_JTx_partial_dq(q_minus, lambda);
         const MatX& JTx_partial_dq = dcidPtr_->dcPtr_->JTx_partial_dq;
@@ -203,16 +204,10 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
     }
 
     // swap back for next round evaluation
-    dcidPtr_->dcPtr_->reinitialize();
+    dcidPtr_->ddcPtr_->reinitialize();
 
     // combine all constraints together
     g << g1, g2, g3, g4, g5;
-
-    // std::cout << g1.transpose() << std::endl;
-    // std::cout << g2.transpose() << std::endl;
-    // std::cout << g3.transpose() << std::endl;
-    // std::cout << g4.transpose() << std::endl;
-    // std::cout << g5.transpose() << std::endl;
 
     if (compute_derivatives) {
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
@@ -221,6 +216,7 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
 
 void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // everything before this are equality constraints, so just zeros
+    // and g_lb, g_ub are already initialized to zeros in the constructor
 
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;
@@ -229,5 +225,88 @@ void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
 }
 
+void DigitSingleStepPeriodicityConstraints::print_violation_info() {
+    // (1) H * (v+ - v-) = J * lambda
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        if (abs(g1(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: H * (v+ - v-) = J * lambda: dim " 
+                      << i 
+                      << " is violated: "
+                      << g(i) 
+                      << std::endl;
+        }
+    }
+
+    // (2) J * v+ = 0
+    for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        if (abs(g2(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: J * v+ = 0: dim " 
+                      << i
+                      << " is violated: "
+                      << g2(i)
+                      << std::endl;
+        }
+    }
+
+    // (3) position reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g3(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: position reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g3(i)
+                      << std::endl;
+        }
+    }
+
+    // (4) velocity reset
+    for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        if (abs(g4(i)) > 1e-5) {
+            std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: velocity reset: dim " 
+                      << i
+                      << " is violated: "
+                      << g4(i)
+                      << std::endl;
+        }
+    }
+
+    // (5) contact constraints
+    if (g5(0) <= -1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: positive contact force is violated: " 
+                  << g5(0)
+                  << std::endl;
+    }
+    if (g5(1) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: translation friction cone is violated: " 
+                  << g5(1)
+                  << std::endl;
+    }
+    if (g5(2) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: rotation friction cone is violated: " 
+                  << g5(2)
+                  << std::endl;
+    }
+    if (g5(3) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(3)
+                  << std::endl;
+    }
+    if (g5(4) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on one axis is violated: " 
+                  << g5(4)
+                  << std::endl;
+    }
+    if (g5(5) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(5)
+                  << std::endl;
+    }
+    if (g5(6) >= 1e-4) {
+        std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: ZMP on the other axis is violated: " 
+                  << g5(6)
+                  << std::endl;
+    }
+}
+
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

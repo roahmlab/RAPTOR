@@ -3,12 +3,9 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-using namespace IDTO;
+using namespace RAPTOR;
 using namespace Kinova;
 using namespace Ipopt;
-
-using std::cout;
-using std::endl;
 
 int main() {
     // set openmp number of threads
@@ -64,6 +61,7 @@ int main() {
     app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
     }

@@ -4,7 +4,7 @@
 #include "Transform.h"
 #include "HigherOrderDerivatives.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class ForwardKinematicsSolver {
 public:
@@ -84,6 +84,6 @@ public:
 	// std::vector<std::vector<std::vector<Transform>>> dddTdddq_copy;
 };
 
-}  // namespace IDTO
+}  // namespace RAPTOR
 
 #endif

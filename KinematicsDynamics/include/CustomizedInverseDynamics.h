@@ -18,7 +18,7 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace IDTO {
+namespace RAPTOR {
 
 // rewrite the inverse dynamics using the original Roy Featherstone's algorithm
 // so that we can get the force and the gradient of the force on the fixed joint
@@ -68,6 +68,6 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> plambda_pz;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CUSTOMIZED_INVERSEDYNAMICS_H

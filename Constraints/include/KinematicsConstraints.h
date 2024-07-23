@@ -7,7 +7,7 @@
 #include "ForwardKinematics.h"
 #include "LieSpaceResidual.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class KinematicsConstraints : public Constraints {
 public:
@@ -80,6 +80,6 @@ public:
     Transform endT;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // KINEMATICS_CONSTRAINTS_H

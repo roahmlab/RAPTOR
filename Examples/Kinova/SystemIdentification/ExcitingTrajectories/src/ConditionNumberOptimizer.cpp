@@ -1,6 +1,6 @@
 #include "ConditionNumberOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
@@ -84,16 +84,16 @@ bool ConditionNumberOptimizer::set_parameters(
     constraintsNameVec_.push_back("torque limits"); 
 
     // // Customized constraints (collision avoidance with ground)
-    // std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
-    // std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
-    // std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
-    // constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
-    //                                                                            model_input,
-    //                                                                            jtype_input,
-    //                                                                            groundCenter,
-    //                                                                            groundOrientation,
-    //                                                                            groundSize));   
-    // constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
+    std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
+    std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
+    constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
+                                                                               model_input,
+                                                                               jtype_input,
+                                                                               groundCenter,
+                                                                               groundOrientation,
+                                                                               groundSize));   
+    constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 
     // check dimensions of regroupMatrix
     if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
@@ -202,4 +202,4 @@ bool ConditionNumberOptimizer::eval_grad_f(
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {    
 
 // ... ==> ... 
@@ -43,7 +43,7 @@ public:
 
     // Constructor
     DigitSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
-                                          std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_input,
+                                          std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_input,
                                           const frictionParams& fp_input);
 
     // Destructor
@@ -52,13 +52,15 @@ public:
     // class methods
     void compute(const VecX& z, 
                  bool compute_derivatives = true,
-                 bool compute_hessian = false) override;
+                 bool compute_hessian = false) final override;
 
-    void compute_bounds() override;
+    void compute_bounds() final override;
+
+    void print_violation_info() final override;
 
     // class members
     std::shared_ptr<Trajectories>& trajPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> dcidPtr_;
+    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
 
     frictionParams fp;
 
@@ -88,6 +90,6 @@ public:
 };
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_SINGLE_STEP_PERIODICITY_CONSTRAINTS_H

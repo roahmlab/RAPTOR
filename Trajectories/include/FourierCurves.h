@@ -3,7 +3,7 @@
 
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class FourierCurves : public Trajectories {
 public:
@@ -52,6 +52,6 @@ public:
     bool optimize_initial_velocity = true;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // FOURIERCURVES_H

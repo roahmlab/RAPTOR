@@ -1,6 +1,6 @@
 #include "KinovaCustomizedConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
@@ -131,4 +131,4 @@ void KinovaCustomizedConstraints::print_violation_info() {
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

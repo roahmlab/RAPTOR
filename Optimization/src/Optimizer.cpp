@@ -1,6 +1,6 @@
 #include "Optimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 // [TNLP_get_bounds_info]
 // returns the variable bounds
@@ -195,7 +195,7 @@ bool Optimizer::eval_g(
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     Index iter = 0;
-    bool ifFeasibleCurrIter = true;
+    ifFeasibleCurrIter = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // compute constraints
         if (output_computation_time) {
@@ -271,7 +271,6 @@ bool Optimizer::eval_g(
 }
 // [TNLP_eval_g]
 
-
 // [TNLP_eval_jac_g]
 // return the structure or values of the Jacobian
 bool Optimizer::eval_jac_g(
@@ -304,10 +303,7 @@ bool Optimizer::eval_jac_g(
     }
     else {
         // fill in a Eigen Vector instance of decision variables
-        VecX z(n);
-        for ( Index i = 0; i < n; i++ ) {
-            z(i) = x[i];
-        }
+        VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
         Index iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
@@ -345,7 +341,6 @@ bool Optimizer::eval_jac_g(
     return true;
 }
 // [TNLP_eval_jac_g]
-
 
 // [TNLP_eval_h]
 //return the structure or values of the Hessian
@@ -391,10 +386,7 @@ bool Optimizer::eval_h(
     }
     else {
         // fill in a Eigen Vector instance of decision variables
-        VecX z(n);
-        for ( Index i = 0; i < n; i++ ) {
-            z(i) = x[i];
-        }
+        VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
         MatX hessian(n, n);
         hessian.setZero();
@@ -636,4 +628,4 @@ void Optimizer::summarize_constraints(
 }
 // [TNLP_summarize_constraints]
 
-}; // namespace IDTO
+}; // namespace RAPTOR

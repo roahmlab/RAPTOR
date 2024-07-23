@@ -9,7 +9,7 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 namespace py = pybind11;
@@ -97,6 +97,6 @@ public:
 };
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // KINOVA_WAITR_PYBIND_WRAPPER_H

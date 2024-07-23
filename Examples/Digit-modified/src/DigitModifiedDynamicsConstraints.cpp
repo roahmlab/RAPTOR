@@ -1,6 +1,6 @@
 #include "DigitModifiedDynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
@@ -244,6 +244,10 @@ void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX&
 }
 
 void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
+    if (recoverSavedData(q, compute_derivatives)) {
+        return;
+    }
+
     // fill in dependent joint positions 
     fkPtr_->compute(modelPtr_->getJointId("Rz"), 
                     contact_joint_id, 
@@ -254,7 +258,7 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
 
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
     q.block(0, 0, 6, 1) = torso_T.getXYZRPY();
-
+    
     if (compute_derivatives) {
         get_c(q);
         get_J(q);
@@ -274,9 +278,10 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
         }
 
         P_dep = -J_dep_qr.solve(J_indep);
-
         pq_dep_pq_indep = P_dep;
     }
+
+    updateQueue(q, compute_derivatives);      
 }
 
 void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
@@ -383,4 +388,4 @@ void DigitModifiedDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const V
 }
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR

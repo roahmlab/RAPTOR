@@ -1,6 +1,6 @@
 #include "fclCollisionAvoidance.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1, 
                                 fcl::CollisionObjectd* o2, 
@@ -280,4 +280,4 @@ void fclCollisionAvoidance::computeDistance(const std::shared_ptr<fclCollisionAv
     }
 }
 
-}; // namespace IDTO
+}; // namespace RAPTOR

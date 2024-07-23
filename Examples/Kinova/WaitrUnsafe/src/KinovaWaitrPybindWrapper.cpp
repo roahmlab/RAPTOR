@@ -1,6 +1,6 @@
 #include "KinovaWaitrPybindWrapper.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filename) {
@@ -86,6 +86,7 @@ void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
     app->Options()->SetIntegerValue("print_level", print_level);
     app->Options()->SetStringValue("mu_strategy", mu_strategy);
     app->Options()->SetStringValue("linear_solver", linear_solver);
+    app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 
     if (gradient_check) {
         app->Options()->SetStringValue("output_file", "ipopt.out");
@@ -265,4 +266,4 @@ py::tuple KinovaWaitrPybindWrapper::optimize() {
 }
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

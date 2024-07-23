@@ -1,6 +1,6 @@
 #include "KinovaOptimizer.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
@@ -239,4 +239,4 @@ bool KinovaOptimizer::eval_hess_f(
 // [TNLP_eval_hess_f]
 
 }; // namespace Kinova
-}; // namespace IDTO
+}; // namespace RAPTOR

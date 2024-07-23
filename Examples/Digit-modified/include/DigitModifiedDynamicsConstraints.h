@@ -9,7 +9,7 @@
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace DigitModified {
 
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] =
@@ -59,7 +59,7 @@ public:
 
     // class methods:
         // swap the stance leg for reset map constraint evaluation
-    void reinitialize() final override;
+    void reinitialize();
 
         // return the index of id th dependent joint
     int return_dependent_joint_index(const int id) final override;
@@ -163,6 +163,6 @@ public:
 };
 
 }; // namespace DigitModified
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // DIGIT_MODIFIED_CONSTRAINTS_H

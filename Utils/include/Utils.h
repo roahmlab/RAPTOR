@@ -7,7 +7,7 @@
 #include <fstream>
 #include <Eigen/Dense>
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Utils {
 
 inline double deg2rad(const double deg) {
@@ -15,6 +15,22 @@ inline double deg2rad(const double deg) {
 }
 
 inline double rad2deg(const double rad) {
+    return rad * 180.0 / M_PI;
+}
+
+inline Eigen::Vector3d deg2rad(const Eigen::Vector3d& deg) {
+    return deg * M_PI / 180.0;
+}
+
+inline Eigen::Vector3d rad2deg(const Eigen::Vector3d& rad) {
+    return rad * 180.0 / M_PI;
+}
+
+inline Eigen::VectorXd deg2rad(const Eigen::VectorXd& deg) {
+    return deg * M_PI / 180.0;
+}
+
+inline Eigen::VectorXd rad2deg(const Eigen::VectorXd& rad) {
     return rad * 180.0 / M_PI;
 }
 
@@ -263,6 +279,6 @@ inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat,
 }
 
 }; // namespace Utils
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // UTILS_H
