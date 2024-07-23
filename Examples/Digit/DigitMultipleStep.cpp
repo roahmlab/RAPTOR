@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Four-5.txt");
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Six-5.txt");
     // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
     // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
                               model,
                               jtype,
                               gps);
-        mynlp->constr_viol_tol = 1e-4;
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -179,51 +179,51 @@ int main(int argc, char* argv[]) {
     }
 
     // Print the solution
-    // if (mynlp->solution.size() == mynlp->numVars) {
-    //     std::ofstream solution(filepath + "solution-digit-Bezier-multiple-step.txt");
-    //     solution << std::setprecision(20);
-    //     for (int i = 0; i < mynlp->numVars; i++) {
-    //         solution << mynlp->solution[i] << std::endl;
-    //     }
-    //     solution.close();
+    if (mynlp->solution.size() == mynlp->numVars) {
+        std::ofstream solution(filepath + "solution-digit-Bezier-multiple-step.txt");
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
 
-    //     for (int p = 0; p < NSteps; p++) {
-    //         std::ofstream trajectory(filepath + "trajectory-digit-Bezier-multiple-step-" + std::to_string(p) + ".txt");
-    //         trajectory << std::setprecision(20);
-    //         const auto& cidPtr_ = mynlp->stepOptVec_[p]->cidPtr_;
-    //         for (int i = 0; i < NUM_JOINTS; i++) {
-    //             for (int j = 0; j < cidPtr_->N; j++) {
-    //                 trajectory << cidPtr_->q(j)(i) << ' ';
-    //             }
-    //             trajectory << std::endl;
-    //         }
-    //         for (int i = 0; i < NUM_JOINTS; i++) {
-    //             for (int j = 0; j < cidPtr_->N; j++) {
-    //                 trajectory << cidPtr_->v(j)(i) << ' ';
-    //             }
-    //             trajectory << std::endl;
-    //         }
-    //         for (int i = 0; i < NUM_JOINTS; i++) {
-    //             for (int j = 0; j < cidPtr_->N; j++) {
-    //                 trajectory << cidPtr_->a(j)(i) << ' ';
-    //             }
-    //             trajectory << std::endl;
-    //         }
-    //         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-    //             for (int j = 0; j < cidPtr_->N; j++) {
-    //                 trajectory << cidPtr_->tau(j)(i) << ' ';
-    //             }
-    //             trajectory << std::endl;
-    //         }
-    //         for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-    //             for (int j = 0; j < cidPtr_->N; j++) {
-    //                 trajectory << cidPtr_->lambda(j)(i) << ' ';
-    //             }
-    //             trajectory << std::endl;
-    //         }
-    //         trajectory.close();
-    //     }
-    // }
+        for (int p = 0; p < NSteps; p++) {
+            std::ofstream trajectory(filepath + "trajectory-digit-Bezier-multiple-step-" + std::to_string(p) + ".txt");
+            trajectory << std::setprecision(20);
+            const auto& cidPtr_ = mynlp->stepOptVec_[p]->cidPtr_;
+            for (int i = 0; i < NUM_JOINTS; i++) {
+                for (int j = 0; j < cidPtr_->N; j++) {
+                    trajectory << cidPtr_->q(j)(i) << ' ';
+                }
+                trajectory << std::endl;
+            }
+            for (int i = 0; i < NUM_JOINTS; i++) {
+                for (int j = 0; j < cidPtr_->N; j++) {
+                    trajectory << cidPtr_->v(j)(i) << ' ';
+                }
+                trajectory << std::endl;
+            }
+            for (int i = 0; i < NUM_JOINTS; i++) {
+                for (int j = 0; j < cidPtr_->N; j++) {
+                    trajectory << cidPtr_->a(j)(i) << ' ';
+                }
+                trajectory << std::endl;
+            }
+            for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+                for (int j = 0; j < cidPtr_->N; j++) {
+                    trajectory << cidPtr_->tau(j)(i) << ' ';
+                }
+                trajectory << std::endl;
+            }
+            for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+                for (int j = 0; j < cidPtr_->N; j++) {
+                    trajectory << cidPtr_->lambda(j)(i) << ' ';
+                }
+                trajectory << std::endl;
+            }
+            trajectory.close();
+        }
+    }
 
     return 0;
 }

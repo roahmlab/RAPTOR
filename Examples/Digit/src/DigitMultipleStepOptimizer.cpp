@@ -197,6 +197,8 @@ bool DigitMultipleStepOptimizer::eval_f(
         obj_value += obj_value_local;
     }
 
+    obj_value /= stepOptVec_.size();
+
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -221,6 +223,10 @@ bool DigitMultipleStepOptimizer::eval_grad_f(
         stepOptVec_[i]->eval_grad_f(n_local[i], x + n_position[i], new_x, grad_f + n_position[i]);
     }
 
+    for ( Index i = 0; i < n; i++) {
+        grad_f[i] /= stepOptVec_.size();
+    }
+
     return true;
 }
 // [TNLP_eval_grad_f]
@@ -242,7 +248,7 @@ bool DigitMultipleStepOptimizer::eval_g(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_g!");
     }
 
-    ifFeasibleCurrIter = false;
+    ifFeasibleCurrIter = true;
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
         stepOptVec_[i]->eval_g(n_local[i], x + n_position[i], new_x, m_local[i], g + m_position[i]);
         ifFeasibleCurrIter = ifFeasibleCurrIter & stepOptVec_[i]->ifFeasibleCurrIter;
@@ -431,6 +437,7 @@ void DigitMultipleStepOptimizer::summarize_constraints(
     final_constr_violation = 0;
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
+        if (verbose) std::cout << "gait " << i << " ";
         stepOptVec_[i]->summarize_constraints(m_local[i], g + m_position[i], verbose);
 
         ifFeasible = ifFeasible & stepOptVec_[i]->ifFeasible;
