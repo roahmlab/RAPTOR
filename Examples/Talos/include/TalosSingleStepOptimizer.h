@@ -40,7 +40,9 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const GaitParameters& gp_input
+        const GaitParameters& gp_input,
+        const char stanceLeg = 'L', // stance foot is left foot by default
+        const Transform stance_foot_T_des = Transform()
     );
 
     /**@name Overloaded from TNLP */

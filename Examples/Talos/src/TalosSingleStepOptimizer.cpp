@@ -22,7 +22,9 @@ bool TalosSingleStepOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const GaitParameters& gp_input
+    const GaitParameters& gp_input,
+    const char stanceLeg,
+    const Transform stance_foot_T_des
  ) 
 {
     enable_hessian = false;
@@ -37,8 +39,6 @@ bool TalosSingleStepOptimizer::set_parameters(
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
     
     // stance foot is left foot by default
-    char stanceLeg = 'L';
-    Transform stance_foot_T_des;
     dcidPtr_ = std::make_shared<TalosConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
@@ -84,13 +84,7 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                               trajPtr_, 
                                                                               dcidPtr_->ddcPtr_,
                                                                               gp_input));    
-    constraintsNameVec_.push_back("customized constraints");               
-
-    // Periodic reset map constraints
-    // constraintsPtrVec_.push_back(std::make_unique<TalosSingleStepPeriodicityConstraints>(trajPtr_, 
-    //                                                                                              dcidPtr_,
-    //                                                                                              FRICTION_PARAMS));    
-    // constraintsNameVec_.push_back("reset map constraints");     
+    constraintsNameVec_.push_back("customized constraints");
 
     return true;
 }

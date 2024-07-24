@@ -1,6 +1,9 @@
-name: TalosSingleStep
+name: TalosMultipleStep
 
 ### Trajectory settings
+  # number of steps in the gait
+NSteps: 2
+
   # number of time nodes to evaluate constraints
 N: 16
 
@@ -12,13 +15,13 @@ degree: 5
 
 ### Gait behavior settings
   # step height (in the middle of the gait)
-swingfoot_midstep_z_des: 0.2
+swingfoot_midstep_z_des: [0.1, 0.1]
 
   # position with respect to the forward direction of the robot at the beginning
-swingfoot_begin_x_des: -0.40
+swingfoot_begin_x_des: [-0.30, -0.30]
 
   # position with respect to the forward direction of the robot at the end
-swingfoot_end_x_des: 0.40  
+swingfoot_end_x_des: [0.30, 0.30]
 
   # examples:
   # 1. swingfoot_begin_x_des/swingfoot_end_x_des being positive 
@@ -47,7 +50,7 @@ max_wall_time: 100.0
 max_iter: 100
 
   # scale the objective function
-obj_scaling_factor: 1e-3
+obj_scaling_factor: 1e-1
 
   # print level
 print_level: 5 # 0: no output, 5: detailed output that is usually enough for tuning parameters

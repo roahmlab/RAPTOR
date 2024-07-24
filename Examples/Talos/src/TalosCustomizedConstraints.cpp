@@ -83,25 +83,47 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    VecX g1 = swingfoot_xyzrpy.row(2);
+    g1 = swingfoot_xyzrpy.row(2);
 
     // (2) swingfoot always flat and points forward
-    VecX g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
-    VecX g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
-    VecX g4 = Utils::wrapToPi(swingfoot_xyzrpy.row(5)); // swingfoot yaw
+    g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
+    g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
+    g4 = Utils::wrapToPi(swingfoot_xyzrpy.row(5)); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value 
     //     at the beginning and at the end of each walking step
-    VecX g5(4);
-    g5 << swingfoot_xyzrpy.topLeftCorner(2, 1), swingfoot_xyzrpy.topRightCorner(2, 1);
+    g5 = VecX::Zero(4);
+    if (ddcPtr_->stanceLeg == 'L') {
+        g5 << swingfoot_xyzrpy(0, 0)               - gp.swingfoot_begin_x_des,
+              swingfoot_xyzrpy(1, 0)               - gp.swingfoot_begin_y_des,
+              swingfoot_xyzrpy(0, trajPtr_->N - 1) - gp.swingfoot_end_x_des,
+              swingfoot_xyzrpy(1, trajPtr_->N - 1) - gp.swingfoot_end_y_des;
+    }
+    else {
+        g5 << swingfoot_xyzrpy(0, 0)               - gp.swingfoot_begin_x_des,
+              swingfoot_xyzrpy(1, 0)               + gp.swingfoot_begin_y_des,
+              swingfoot_xyzrpy(0, trajPtr_->N - 1) - gp.swingfoot_end_x_des,
+              swingfoot_xyzrpy(1, trajPtr_->N - 1) + gp.swingfoot_end_y_des;
+    }
 
     // (4) torso height always larger than 1 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    VecX g6 = q.row(2); // torso height
-    VecX g7 = Utils::wrapToPi(q.row(3)); // torso roll
-    VecX g8 = Utils::wrapToPi(q.row(4)); // torso pitch
-    VecX g9 = Utils::wrapToPi(q.row(5)); // torso yaw
+    g6 = q.row(2); // torso height
+    g7 = Utils::wrapToPi(q.row(3)); // torso roll
+    g8 = Utils::wrapToPi(q.row(4)); // torso pitch
+    g9 = Utils::wrapToPi(q.row(5)); // torso yaw
+
+    // std::cout << g1.transpose() << std::endl;
+    // std::cout << g2.transpose() << std::endl;
+    // std::cout << g3.transpose() << std::endl;
+    // std::cout << g4.transpose() << std::endl;
+    // std::cout << g5.transpose() << std::endl;
+    // std::cout << g6.transpose() << std::endl;
+    // std::cout << g7.transpose() << std::endl;
+    // std::cout << g8.transpose() << std::endl;
+    // std::cout << g9.transpose() << std::endl;
+    // std::cout << std::endl;
 
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 
@@ -142,37 +164,35 @@ void TalosCustomizedConstraints::compute_bounds() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    VecX g1_lb = VecX::Zero(trajPtr_->N);
-    VecX g1_ub = VecX::Constant(trajPtr_->N, 1e19);
+    g1_lb = VecX::Zero(trajPtr_->N);
+    g1_ub = VecX::Constant(trajPtr_->N, 1e19);
     g1_lb(trajPtr_->N / 2) = gp.swingfoot_midstep_z_des;
     g1_ub(0) = 0;
     g1_ub(trajPtr_->N - 1) = 0;
 
     // (2) swingfoot always flat and points forward
-    VecX g2_lb = VecX::Zero(trajPtr_->N);
-    VecX g2_ub = VecX::Zero(trajPtr_->N);
-    VecX g3_lb = VecX::Zero(trajPtr_->N);
-    VecX g3_ub = VecX::Zero(trajPtr_->N);
-    VecX g4_lb = VecX::Zero(trajPtr_->N);
-    VecX g4_ub = VecX::Zero(trajPtr_->N);
+    g2_lb = VecX::Zero(trajPtr_->N);
+    g2_ub = VecX::Zero(trajPtr_->N);
+    g3_lb = VecX::Zero(trajPtr_->N);
+    g3_ub = VecX::Zero(trajPtr_->N);
+    g4_lb = VecX::Zero(trajPtr_->N);
+    g4_ub = VecX::Zero(trajPtr_->N);
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
-    VecX g5_lb(4);
-    VecX g5_ub(4);
-    g5_lb << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
-    g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
+    g5_lb = VecX::Zero(4);
+    g5_ub = VecX::Zero(4);
 
-    // (4) torso height always larger than 1 meter
+    // (4) torso height always larger than 0.9 meter
     //     roll and pitch always close to 0
     //     yaw always close to 0 when walking forward
-    VecX g6_lb = VecX::Constant(trajPtr_->N, 1);
-    VecX g6_ub = VecX::Constant(trajPtr_->N, 1e19);
-    VecX g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
-    VecX g8_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g8_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
-    VecX g9_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g9_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g6_lb = VecX::Constant(trajPtr_->N, 0.9);
+    g6_ub = VecX::Constant(trajPtr_->N, 1e19);
+    g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g8_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g8_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g9_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g9_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
 
     g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb;
     g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub;

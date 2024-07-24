@@ -166,7 +166,9 @@ add_library(Taloslib SHARED
     Examples/Talos/src/TalosDynamicsConstraints.cpp
     Examples/Talos/src/TalosConstrainedInverseDynamics.cpp
     Examples/Talos/src/TalosCustomizedConstraints.cpp
-    Examples/Talos/src/TalosSingleStepOptimizer.cpp)
+    Examples/Talos/src/TalosSingleStepOptimizer.cpp
+    Examples/Talos/src/TalosMultipleStepOptimizer.cpp
+    Examples/Talos/src/TalosMultipleStepPeriodicityConstraints)
 
 target_link_libraries(Taloslib PUBLIC
     trajlib
@@ -309,10 +311,36 @@ target_link_libraries(DigitMultipleStep_example PRIVATE
     coinhsl
     yaml-cpp
     ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES} 
-    ${PKG_PIN_CONFIG_LIBRARIES})
+    ${BOOST_LIBRARIES}
+    pinocchio::pinocchio)
 
 target_compile_options(DigitMultipleStep_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(TalosMultipleStep_example 
+    Examples/Talos/TalosMultipleStep.cpp)
+
+target_include_directories(TalosMultipleStep_example PRIVATE
+    Examples/Talos/include
+    KinematicsDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(TalosMultipleStep_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Taloslib
+    ipopt
+    coinhsl
+    yaml-cpp
+    ${BOOST_LIBRARIES}
+    pinocchio::pinocchio)
+
+target_compile_options(TalosMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(DigitModified_example 

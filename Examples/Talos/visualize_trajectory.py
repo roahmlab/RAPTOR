@@ -31,6 +31,8 @@ for tid in range(0, data.shape[1]):
     base_quat = p.getQuaternionFromEuler(base_rpy)
     pos = data[6:18, tid]
     
+    print(pos)
+    
     p.resetBasePositionAndOrientation(robot, base_xyz, base_quat)
     
     id = 0
