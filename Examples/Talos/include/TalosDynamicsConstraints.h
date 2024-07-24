@@ -1,16 +1,15 @@
-
-#ifndef DIGIT_MODIFIED_CONSTRAINTS_H
-#define DIGIT_MODIFIED_CONSTRAINTS_H
+#ifndef TALOS_CONSTRAINTS_H
+#define TALOS_CONSTRAINTS_H
 
 #include <string>
 #include <vector>
 
-#include "DigitModifiedConstants.h"
+#include "TalosConstants.h"
 #include "DynamicsConstraints.h"
 #include "ForwardKinematics.h"
 
 namespace RAPTOR {
-namespace DigitModified {
+namespace Talos {
 
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] = {
     "Px",
@@ -20,25 +19,23 @@ const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] = {
     "Ry",
     "Rz"
 };
-                                        
+
 const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] = {
-    "left_hip_roll",
-    "left_hip_yaw",
-    "left_hip_pitch",
-    "left_knee",
-    "left_tarsus",
-    "left_toe_pitch",
-    "left_toe_roll",
-    "right_hip_roll",
-    "right_hip_yaw",
-    "right_hip_pitch",
-    "right_knee",
-    "right_tarsus",
-    "right_toe_pitch",
-    "right_toe_roll"
+    "leg_left_1_joint",
+    "leg_left_2_joint",
+    "leg_left_3_joint",
+    "leg_left_4_joint",
+    "leg_left_5_joint",
+    "leg_left_6_joint",
+    "leg_right_1_joint",
+    "leg_right_2_joint",
+    "leg_right_3_joint",
+    "leg_right_4_joint",
+    "leg_right_5_joint",
+    "leg_right_6_joint"
 };
 
-class DigitModifiedDynamicsConstraints : public DynamicsConstraints {
+class TalosDynamicsConstraints : public DynamicsConstraints {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
@@ -48,16 +45,16 @@ public:
     using MatX = Eigen::MatrixXd;
 
     // Constructor
-    DigitModifiedDynamicsConstraints() = default;
+    TalosDynamicsConstraints() = default;
 
     // Constructor
-    DigitModifiedDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
-                                     const Eigen::VectorXi& jtype_input, 
-                                     char stanceLeg, 
-                                     const Transform& stance_foot_T_des_input);
+    TalosDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
+                             const Eigen::VectorXi& jtype_input, 
+                             char stanceLeg, 
+                             const Transform& stance_foot_T_des_input);
 
     // Destructor
-    ~DigitModifiedDynamicsConstraints() = default;
+    ~TalosDynamicsConstraints() = default;
 
     // class methods:
         // swap the stance leg for reset map constraint evaluation
@@ -164,7 +161,7 @@ public:
     Eigen::Array<MatX, 3, 1> TOx_rotation;
 };
 
-}; // namespace DigitModified
+}; // namespace Talos
 }; // namespace RAPTOR
 
-#endif // DIGIT_MODIFIED_CONSTRAINTS_H
+#endif // TALOS_CONSTRAINTS_H

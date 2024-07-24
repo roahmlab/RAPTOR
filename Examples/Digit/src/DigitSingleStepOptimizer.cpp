@@ -47,16 +47,12 @@ bool DigitSingleStepOptimizer::set_parameters(
     cidPtr_ = dcidPtr_; // convert to base class
     
     // convert joint limits from degree to radian
-    VecX JOINT_LIMITS_LOWER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_LOWER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_LOWER[i]);
-    }
-
-    // convert joint limits from degree to radian   
-    VecX JOINT_LIMITS_UPPER_VEC(NUM_JOINTS);
-    for (int i = 0; i < NUM_JOINTS; i++) {
-        JOINT_LIMITS_UPPER_VEC(i) = Utils::deg2rad(JOINT_LIMITS_UPPER[i]);
-    }
+    VecX JOINT_LIMITS_LOWER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS));    
+    VecX JOINT_LIMITS_UPPER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
 
     VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);
     VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);

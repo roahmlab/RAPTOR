@@ -161,6 +161,26 @@ target_link_libraries(Digitlib PUBLIC
 target_include_directories(Digitlib PUBLIC
     Examples/Digit/include)
 
+## Talos library
+add_library(Taloslib SHARED
+    Examples/Talos/src/TalosDynamicsConstraints.cpp
+    Examples/Talos/src/TalosConstrainedInverseDynamics.cpp
+    Examples/Talos/src/TalosCustomizedConstraints.cpp
+    Examples/Talos/src/TalosSingleStepOptimizer.cpp)
+
+target_link_libraries(Taloslib PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_include_directories(Taloslib PUBLIC
+    Examples/Talos/include)
+
 ## Digit-modified library
 add_library(DigitModifiedlib SHARED
     Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
@@ -493,6 +513,7 @@ install(TARGETS
     Optlib
     Kinovalib
     Digitlib
+    Taloslib
     DigitModifiedlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

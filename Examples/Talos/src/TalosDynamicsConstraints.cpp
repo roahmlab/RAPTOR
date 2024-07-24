@@ -1,12 +1,12 @@
-#include "DigitModifiedDynamicsConstraints.h"
+#include "TalosDynamicsConstraints.h"
 
 namespace RAPTOR {
-namespace DigitModified {
+namespace Talos {
 
-DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
-                                                                   const Eigen::VectorXi& jtype_input,
-                                                                   char stanceLeg_input, 
-                                                                   const Transform& stance_foot_T_des_input) :
+TalosDynamicsConstraints::TalosDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
+                                                   const Eigen::VectorXi& jtype_input,
+                                                   char stanceLeg_input, 
+                                                   const Transform& stance_foot_T_des_input) :
     modelPtr_(modelPtr_input),
     jtype(jtype_input),
     stanceLeg(stanceLeg_input),
@@ -32,26 +32,18 @@ DigitModifiedDynamicsConstraints::DigitModifiedDynamicsConstraints(const std::sh
     }
 
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("left_toe_roll");
-
-        stance_foot_endT.R << 0,             1, 0,
-                              -0.5,          0, sin(M_PI / 3),
-                              sin(M_PI / 3), 0, 0.5;
-        stance_foot_endT.p << 0, 0, 0;
+        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("right_toe_roll");
-
-        stance_foot_endT.R << 0,             -1, 0,
-                              0.5,           0,  -sin(M_PI / 3),
-                              sin(M_PI / 3), 0,  0.5;
-        stance_foot_endT.p << 0, 0, 0;
+        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        stance_foot_endT.p << 0, 0, -0.107;
     }
 
     stance_foot_T_des = stance_foot_T_des_input;
 }
 
-void DigitModifiedDynamicsConstraints::reinitialize() {
+void TalosDynamicsConstraints::reinitialize() {
     // swap the stance leg
     if (stanceLeg == 'L' || stanceLeg == 'l') {
         stanceLeg = 'R';
@@ -62,34 +54,26 @@ void DigitModifiedDynamicsConstraints::reinitialize() {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("left_toe_roll");
-
-        stance_foot_endT.R << 0,             1, 0,
-                              -0.5,          0, sin(M_PI / 3),
-                              sin(M_PI / 3), 0, 0.5;
-        stance_foot_endT.p << 0, 0, 0;
+        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("right_toe_roll");
-
-        stance_foot_endT.R << 0,            -1, 0,
-                              0.5,           0, -sin(M_PI / 3),
-                              sin(M_PI / 3), 0, 0.5;
-        stance_foot_endT.p << 0, 0, 0;
+        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        stance_foot_endT.p << 0, 0, -0.107;
     }
 }
 
-int DigitModifiedDynamicsConstraints::return_dependent_joint_index(const int id) {
+int TalosDynamicsConstraints::return_dependent_joint_index(const int id) {
     assert(0 <= id && id < NUM_DEPENDENT_JOINTS);
     return dependentJointIds[id];
 }
 
-int DigitModifiedDynamicsConstraints::return_independent_joint_index(const int id) {
+int TalosDynamicsConstraints::return_independent_joint_index(const int id) {
     assert(0 <= id && id < NUM_INDEPENDENT_JOINTS);
     return independentJointIds[id];
 }
 
-void DigitModifiedDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX& v, const bool setZero) {
+void TalosDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX& v, const bool setZero) {
     assert(r.size() == modelPtr_->nv);
     assert(v.size() == NUM_DEPENDENT_JOINTS);
 
@@ -100,7 +84,7 @@ void DigitModifiedDynamicsConstraints::fill_dependent_vector(VecX& r, const VecX
     }
 }
 
-void DigitModifiedDynamicsConstraints::fill_independent_vector(VecX& r, const VecX& v, const bool setZero) {
+void TalosDynamicsConstraints::fill_independent_vector(VecX& r, const VecX& v, const bool setZero) {
     assert(r.size() == modelPtr_->nv);
     assert(v.size() == NUM_INDEPENDENT_JOINTS);
 
@@ -111,7 +95,7 @@ void DigitModifiedDynamicsConstraints::fill_independent_vector(VecX& r, const Ve
     }
 }
 
-void DigitModifiedDynamicsConstraints::fill_dependent_columns(MatX& r, const MatX& m, const bool setZero) {
+void TalosDynamicsConstraints::fill_dependent_columns(MatX& r, const MatX& m, const bool setZero) {
     assert(m.cols() == NUM_DEPENDENT_JOINTS);
     assert(r.cols() == modelPtr_->nv);
     assert(m.rows() == r.rows());
@@ -123,7 +107,7 @@ void DigitModifiedDynamicsConstraints::fill_dependent_columns(MatX& r, const Mat
     }
 }
 
-void DigitModifiedDynamicsConstraints::fill_independent_columns(MatX& r, const MatX& m, const bool setZero) {
+void TalosDynamicsConstraints::fill_independent_columns(MatX& r, const MatX& m, const bool setZero) {
     assert(m.cols() == NUM_INDEPENDENT_JOINTS);
     assert(r.cols() == modelPtr_->nv);
     assert(m.rows() == r.rows());
@@ -135,7 +119,7 @@ void DigitModifiedDynamicsConstraints::fill_independent_columns(MatX& r, const M
     }
 }
 
-void DigitModifiedDynamicsConstraints::fill_dependent_rows(MatX& r, const MatX& m, const bool setZero) {
+void TalosDynamicsConstraints::fill_dependent_rows(MatX& r, const MatX& m, const bool setZero) {
     assert(m.rows() == NUM_DEPENDENT_JOINTS);
     assert(r.rows() == modelPtr_->nv);
     assert(m.cols() == r.cols());
@@ -147,7 +131,7 @@ void DigitModifiedDynamicsConstraints::fill_dependent_rows(MatX& r, const MatX& 
     }
 }
 
-void DigitModifiedDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, const bool setZero) {
+void TalosDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, const bool setZero) {
     assert(m.rows() == NUM_INDEPENDENT_JOINTS);
     assert(r.rows() == modelPtr_->nv);
     assert(m.cols() == r.cols());
@@ -159,7 +143,7 @@ void DigitModifiedDynamicsConstraints::fill_independent_rows(MatX& r, const MatX
     }
 }
 
-Eigen::VectorXd DigitModifiedDynamicsConstraints::get_dependent_vector(const VecX& v) {
+Eigen::VectorXd TalosDynamicsConstraints::get_dependent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_DEPENDENT_JOINTS);
@@ -171,7 +155,7 @@ Eigen::VectorXd DigitModifiedDynamicsConstraints::get_dependent_vector(const Vec
     return r;
 }
 
-Eigen::VectorXd DigitModifiedDynamicsConstraints::get_independent_vector(const VecX& v) {
+Eigen::VectorXd TalosDynamicsConstraints::get_independent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_INDEPENDENT_JOINTS);
@@ -183,7 +167,7 @@ Eigen::VectorXd DigitModifiedDynamicsConstraints::get_independent_vector(const V
     return r;
 }
 
-void DigitModifiedDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
+void TalosDynamicsConstraints::get_dependent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
     assert(r.cols() == NUM_DEPENDENT_JOINTS);
     assert(m.rows() == r.rows());
@@ -193,7 +177,7 @@ void DigitModifiedDynamicsConstraints::get_dependent_columns(MatX& r, const MatX
     }
 }
 
-void DigitModifiedDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
+void TalosDynamicsConstraints::get_independent_columns(MatX& r, const MatX& m) {
     assert(m.cols() == modelPtr_->nv);
     assert(r.cols() == NUM_INDEPENDENT_JOINTS);
     assert(m.rows() == r.rows());
@@ -203,7 +187,7 @@ void DigitModifiedDynamicsConstraints::get_independent_columns(MatX& r, const Ma
     }
 }
 
-void DigitModifiedDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
+void TalosDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
     assert(r.rows() == NUM_DEPENDENT_JOINTS);
     assert(m.cols() == r.cols());
@@ -213,7 +197,7 @@ void DigitModifiedDynamicsConstraints::get_dependent_rows(MatX& r, const MatX& m
     }
 }
 
-void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
+void TalosDynamicsConstraints::get_independent_rows(MatX& r, const MatX& m) {
     assert(m.rows() == modelPtr_->nv);
     assert(r.rows() == NUM_INDEPENDENT_JOINTS);
     assert(m.cols() == r.cols());
@@ -223,7 +207,7 @@ void DigitModifiedDynamicsConstraints::get_independent_rows(MatX& r, const MatX&
     }
 }
 
-void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
+void TalosDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives) {
     if (recoverSavedData(q, compute_derivatives)) {
         return;
     }
@@ -264,7 +248,7 @@ void DigitModifiedDynamicsConstraints::setupJointPosition(VecX& q, bool compute_
     updateQueue(q, compute_derivatives);      
 }
 
-void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
+void TalosDynamicsConstraints::get_c(const VecX& q) {
     fkPtr_->compute(0, 
                     contact_joint_id, 
                     q, 
@@ -279,7 +263,7 @@ void DigitModifiedDynamicsConstraints::get_c(const VecX& q) {
     c << c_translation, c_rotation;
 }
 
-void DigitModifiedDynamicsConstraints::get_J(const VecX& q) {
+void TalosDynamicsConstraints::get_J(const VecX& q) {
     assert(J.rows() == NUM_DEPENDENT_JOINTS);
     assert(J.cols() == modelPtr_->nv);
 
@@ -296,7 +280,7 @@ void DigitModifiedDynamicsConstraints::get_J(const VecX& q) {
     J << J_translation, J_rotation;
 }
 
-void DigitModifiedDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
+void TalosDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const VecX& x) {
     assert(x.size() == modelPtr_->nv);
     assert(Jx_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
     assert(Jx_partial_dq.cols() == modelPtr_->nv);
@@ -319,7 +303,7 @@ void DigitModifiedDynamicsConstraints::get_Jx_partial_dq(const VecX& q, const Ve
     Jx_partial_dq.row(5) = H_rotation(2) * x;
 }
 
-void DigitModifiedDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const VecX& x) {
+void TalosDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const VecX& x) {
     assert(x.size() == NUM_DEPENDENT_JOINTS);
     assert(JTx_partial_dq.rows() == modelPtr_->nv);
     assert(JTx_partial_dq.cols() == modelPtr_->nv);
@@ -343,7 +327,7 @@ void DigitModifiedDynamicsConstraints::get_JTx_partial_dq(const VecX& q, const V
     JTx_partial_dq += H_rotation(2) * x(5);
 }
 
-void DigitModifiedDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) {
+void TalosDynamicsConstraints::get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) {
     assert(x.size() == modelPtr_->nv);
     assert(y.size() == modelPtr_->nv);
     assert(Jxy_partial_dq.rows() == NUM_DEPENDENT_JOINTS);
