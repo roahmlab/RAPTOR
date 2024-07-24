@@ -13,10 +13,10 @@ namespace Talos {
 typedef struct GaitParameters_ {
     double eps_torso_angle = Utils::deg2rad(3); // 3 degrees
     double swingfoot_midstep_z_des = 0.15; // meters
-    double swingfoot_begin_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_begin_y_des = 0.00; // meters
-    double swingfoot_end_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_end_y_des = 0.00; // meters
+    double swingfoot_begin_x_des = 0.00; // meters 
+    double swingfoot_begin_y_des = -0.17; // meters
+    double swingfoot_end_x_des = 0.00; // meters
+    double swingfoot_end_y_des = -0.17; // meters
 } GaitParameters;
 
 class TalosCustomizedConstraints : public Constraints {

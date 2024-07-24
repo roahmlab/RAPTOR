@@ -40,11 +40,11 @@ bool TalosSingleStepOptimizer::set_parameters(
     char stanceLeg = 'L';
     Transform stance_foot_T_des;
     dcidPtr_ = std::make_shared<TalosConstrainedInverseDynamics>(model_input, 
-                                                                         trajPtr_,
-                                                                         NUM_DEPENDENT_JOINTS, 
-                                                                         jtype_input, 
-                                                                         stanceLeg, 
-                                                                         stance_foot_T_des);                                                          
+                                                                 trajPtr_,
+                                                                 NUM_DEPENDENT_JOINTS, 
+                                                                 jtype_input, 
+                                                                 stanceLeg, 
+                                                                 stance_foot_T_des);                                                          
     cidPtr_ = dcidPtr_; // convert to base class
 
     // convert joint limits from degree to radian

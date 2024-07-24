@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
 
     # install python packages
 RUN pip install --upgrade pip && \
-    pip install numpy scipy matplotlib pyyaml pybullet torch
+    pip install scipy matplotlib pyyaml torch pybullet==3.2.5 numpy==1.25.2
 
     # Install pinochio dependencies
 RUN --mount=type=cache,target=/var/cache/apt \

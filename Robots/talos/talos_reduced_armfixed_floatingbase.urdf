@@ -16,6 +16,95 @@
   <material name="FlatBlack">
     <color rgba="0.1 0.1 0.1 1"/>
   </material>
+
+  <!-- floating base -->
+  <link name = "ground">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+  <link name = "Px">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+  <link name = "Py">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+  <link name = "Pz">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+  <link name = "Rx">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+  <link name = "Ry">
+    <inertial>
+      <origin xyz = "0 0 0" rpy = "0 0 0" />
+      <mass value = "0"/>
+      <inertia ixx = "0" ixy = "0" ixz = "0" iyy = "0" iyz = "0" izz = "0"/>
+    </inertial>
+  </link>
+
+  <!-- floating base -->
+  <joint name = "Px" type = "prismatic">
+    <parent link = "ground" />
+    <child link = "Px" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "1 0 0" />
+    <limit effort="1000" lower="-2" upper="2" velocity="1000"/>
+  </joint>
+  <joint name = "Py" type = "prismatic">
+    <parent link = "Px" />
+    <child link = "Py" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "0 1 0" />
+    <limit effort="1000" lower="-2" upper="2" velocity="1000"/>
+  </joint>
+  <joint name = "Pz" type = "prismatic">
+    <parent link = "Py" />
+    <child link = "Pz" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "0 0 1" />
+    <limit effort="1000" lower="-2" upper="2" velocity="1000"/>
+  </joint>
+  <joint name = "Rx" type = "revolute">
+    <parent link = "Pz" />
+    <child link = "Rx" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "1 0 0" />
+    <limit effort="1000" lower="-1000" upper="1000" velocity="1000"/>
+  </joint>
+  <joint name = "Ry" type = "revolute">
+    <parent link = "Rx" />
+    <child link = "Ry" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "0 1 0" />
+    <limit effort="1000" lower="-1000" upper="1000" velocity="1000"/>
+  </joint>    
+  <joint name = "Rz" type = "revolute">
+    <parent link = "Ry" />
+    <child link = "base_link" />
+    <origin xyz = "0 0 0" />
+    <axis xyz = "0 0 1" />
+    <limit effort="1000" lower="-1000" upper="1000" velocity="1000"/>
+  </joint> 
+
   <!--File includes-->
   <!--Constant parameters-->
   <!--File includes-->

@@ -260,6 +260,34 @@ target_link_libraries(Digit_example PUBLIC
 target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(Talos_example 
+    Examples/Talos/TalosSingleStep.cpp)
+    # Examples/Talos/TalosSingleStepSpeedTest.cpp)
+    # Examples/Talos/TalosSingleStepRobustnessTest.cpp)
+
+target_include_directories(Talos_example PUBLIC
+    Examples/Talos/include
+    KinematicsDynamics/include
+    Trajectories/include
+    Constraints/include
+    Optimization/include
+    Utils/include)
+
+target_link_libraries(Talos_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Taloslib
+    ipopt
+    coinhsl
+    yaml-cpp
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(Talos_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(DigitMultipleStep_example 
     Examples/Digit/DigitMultipleStep.cpp)
 
