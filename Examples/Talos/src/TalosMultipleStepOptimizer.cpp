@@ -1,20 +1,20 @@
-#include "DigitMultipleStepOptimizer.h"
+#include "TalosMultipleStepOptimizer.h"
 
 namespace RAPTOR {
-namespace Digit {
+namespace Talos {
 
 // // constructor
-// DigitMultipleStepOptimizer::DigitMultipleStepOptimizer()
+// TalosMultipleStepOptimizer::TalosMultipleStepOptimizer()
 // {
 // }
 
 
 // // destructor
-// DigitMultipleStepOptimizer::~DigitMultipleStepOptimizer()
+// TalosMultipleStepOptimizer::~TalosMultipleStepOptimizer()
 // {
 // }
 
-bool DigitMultipleStepOptimizer::set_parameters(
+bool TalosMultipleStepOptimizer::set_parameters(
     const int NSteps_input,
     const VecX& x0_input,
     const double T_input,
@@ -34,14 +34,11 @@ bool DigitMultipleStepOptimizer::set_parameters(
     
     stepOptVec_.reserve(NSteps_input);
     for (int i = 0; i < NSteps_input; i++) {
-        stepOptVec_.push_back(new DigitSingleStepOptimizer());
+        stepOptVec_.push_back(new TalosSingleStepOptimizer());
 
         char stanceLeg = (i % 2 == 0) ? 
             'L' : 
             'R';
-        Transform stance_foot_T_des = (i % 2 == 0) ? 
-            Transform(3, -M_PI / 2) : 
-            Transform(3, M_PI / 2);
 
         stepOptVec_[i]->set_parameters(x0_input,
                                        T_input,
@@ -51,9 +48,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                        model_input, 
                                        jtype_input,
                                        gps_input[i],
-                                       stanceLeg,
-                                       stance_foot_T_des,
-                                       false);
+                                       stanceLeg);
     }
 
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
@@ -61,7 +56,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
     periodConsVec_.reserve(NSteps_input);
     for (int i = 0; i < NSteps_input - 1; i++) {
         periodConsVec_.push_back(
-            std::make_shared<DigitMultipleStepPeriodicityConstraints>(
+            std::make_shared<TalosMultipleStepPeriodicityConstraints>(
                 stepOptVec_[i]->trajPtr_,
                 stepOptVec_[i + 1]->trajPtr_,
                 stepOptVec_[i]->dcidPtr_,
@@ -75,7 +70,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
 // [TNLP_set_parameters]
 
 // [TNLP_get_nlp_info]
-bool DigitMultipleStepOptimizer::get_nlp_info(
+bool TalosMultipleStepOptimizer::get_nlp_info(
    Index&          n,
    Index&          m,
    Index&          nnz_jac_g,
@@ -129,7 +124,7 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
 
 // [TNLP_get_bounds_info]
 // returns the variable bounds
-bool DigitMultipleStepOptimizer::get_bounds_info(
+bool TalosMultipleStepOptimizer::get_bounds_info(
     Index   n,
     Number* x_l,
     Number* x_u,
@@ -175,7 +170,7 @@ bool DigitMultipleStepOptimizer::get_bounds_info(
 
 // [TNLP_eval_f]
 // returns the value of the objective function
-bool DigitMultipleStepOptimizer::eval_f(
+bool TalosMultipleStepOptimizer::eval_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -206,7 +201,7 @@ bool DigitMultipleStepOptimizer::eval_f(
 
 // [TNLP_eval_grad_f]
 // return the gradient of the objective function grad_{x} f(x)
-bool DigitMultipleStepOptimizer::eval_grad_f(
+bool TalosMultipleStepOptimizer::eval_grad_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -231,7 +226,7 @@ bool DigitMultipleStepOptimizer::eval_grad_f(
 
 // [TNLP_eval_g]
 // return the value of the constraints: g(x)
-bool DigitMultipleStepOptimizer::eval_g(
+bool TalosMultipleStepOptimizer::eval_g(
     Index         n,
     const Number* x,
     bool          new_x,
@@ -311,7 +306,7 @@ bool DigitMultipleStepOptimizer::eval_g(
 
 // [TNLP_eval_jac_g]
 // return the structure or values of the Jacobian
-bool DigitMultipleStepOptimizer::eval_jac_g(
+bool TalosMultipleStepOptimizer::eval_jac_g(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -419,7 +414,7 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
 // [TNLP_eval_jac_g]
 
 // [TNLP_summarize_constraints]
-void DigitMultipleStepOptimizer::summarize_constraints(
+void TalosMultipleStepOptimizer::summarize_constraints(
     Index                      m,
     const Number*              g,
     const bool                 verbose
@@ -483,5 +478,5 @@ void DigitMultipleStepOptimizer::summarize_constraints(
 }
 // [TNLP_summarize_constraints]
 
-}; // namespace Digit
+}; // namespace Talos
 }; // namespace RAPTOR

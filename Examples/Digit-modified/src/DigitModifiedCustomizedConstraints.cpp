@@ -15,12 +15,7 @@ DigitModifiedCustomizedConstraints::DigitModifiedCustomizedConstraints(const Mod
     modelPtr_ = std::make_unique<Model>(model_input);
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
 
-    if (modelPtr_->existJointName("right_toe_roll")) {
-        swingfoot_id = modelPtr_->getJointId("right_toe_roll");
-    }
-    else {
-        throw std::runtime_error("Can not find joint: right_toe_roll");
-    }
+    swingfoot_id = modelPtr_->getJointId("right_toe_roll");
 
     // This is right foot end transform
     // This only applies when stance foot is left foot!!!

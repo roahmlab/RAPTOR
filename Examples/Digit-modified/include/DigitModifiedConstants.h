@@ -1,3 +1,5 @@
+#pragma once
+
 namespace RAPTOR {
 namespace DigitModified {
 
