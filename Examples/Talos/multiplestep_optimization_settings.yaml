@@ -50,7 +50,7 @@ max_wall_time: 100.0
 max_iter: 100
 
   # scale the objective function
-obj_scaling_factor: 1e-1
+obj_scaling_factor: 1e-2
 
   # print level
 print_level: 5 # 0: no output, 5: detailed output that is usually enough for tuning parameters

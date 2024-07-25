@@ -1,4 +1,4 @@
-#include "TalosMultipleStepOptimizer.h"
+#include "TalosSingleStepOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -37,61 +37,63 @@ int main(int argc, char* argv[]) {
     model.damping.setZero();
     model.friction.setZero();
 
+    // the robot start from this initial condition:
+    Eigen::VectorXd q0(NUM_INDEPENDENT_JOINTS);
+    q0 << 0, 0, -0.411354,  0.859395, -0.448041, -0.001708,
+          0, 0, -0.411354,  0.859395, -0.448041, -0.001708;
+    Eigen::VectorXd q_d0(NUM_INDEPENDENT_JOINTS);
+    q_d0.setZero();
+
     // load settings
     YAML::Node config;
 
     const double T = 0.4;
-    int NSteps = 2;
     TimeDiscretization time_discretization = Uniform;
     int N = 14;
     int degree = 5;
     
-    std::vector<GaitParameters> gps(NSteps);
+    GaitParameters gp;
 
     try {
-        config = YAML::LoadFile("../Examples/Talos/multiplestep_optimization_settings.yaml");
+        config = YAML::LoadFile("../Examples/Talos/singlestep_optimization_settings.yaml");
 
-        NSteps = config["NSteps"].as<int>();
         N = config["N"].as<int>();
         degree = config["degree"].as<int>();
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-        auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<double>>();
-        auto swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<std::vector<double>>();
-        auto swingfoot_end_x_des = config["swingfoot_end_x_des"].as<std::vector<double>>();
-
-        if (swingfoot_midstep_z_des.size() != NSteps || 
-            swingfoot_begin_x_des.size() != NSteps || 
-            swingfoot_end_x_des.size() != NSteps) {
-            throw std::runtime_error("Error parsing YAML file: Incorrect number of gait parameters!");
-        }
-
-        gps.resize(NSteps);
-        for (int i = 0; i < NSteps; i++) {
-            gps[i].swingfoot_midstep_z_des = swingfoot_midstep_z_des[i];
-            gps[i].swingfoot_begin_x_des = swingfoot_begin_x_des[i];
-            gps[i].swingfoot_end_x_des = swingfoot_end_x_des[i];
-        }
+        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
+        gp.swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<double>();
+        gp.swingfoot_end_x_des = config["swingfoot_end_x_des"].as<double>();
     } 
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
-        throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos-multiple-step.txt");
-
-    SmartPtr<TalosMultipleStepOptimizer> mynlp = new TalosMultipleStepOptimizer();
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos.txt");
+    if (argc > 1) {
+        char* end = nullptr;
+        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    }
+    else {
+        std::srand(std::time(nullptr));
+    }
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    
+    SmartPtr<TalosSingleStepOptimizer> mynlp = new TalosSingleStepOptimizer();
     try {
-	    mynlp->set_parameters(NSteps,
-                              z,
+	    mynlp->set_parameters(z,
                               T,
                               N,
                               time_discretization,
                               degree,
                               model,
                               jtype,
-                              gps);
+                              gp,
+                              'L',
+                              Transform(),
+                              q0,
+                              q_d0);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
@@ -134,9 +136,9 @@ int main(int argc, char* argv[]) {
             app->Options()->SetStringValue("derivative_test", "first-order");
         }
         app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
-        // app->Options()->SetIntegerValue("derivative_test_first_index", 1000);
-        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-        app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
+        // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+        app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
     }
 
     // Initialize the IpoptApplication and process the options
@@ -154,7 +156,7 @@ int main(int argc, char* argv[]) {
 
         auto end = std::chrono::high_resolution_clock::now();
         double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
-        
+
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
@@ -162,51 +164,86 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
+    // Evaluate the solution on a finer time discretization
+    try {
+        SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
+        testnlp->set_parameters(z,
+                                T,
+                                N,
+                                time_discretization,
+                                degree,
+                                model,
+                                jtype,
+                                gp,
+                                'L',
+                                Transform(),
+                                q0,
+                                q_d0);
+        Index n, m, nnz_jac_g, nnz_h_lag;
+        TNLP::IndexStyleEnum index_style;
+        testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+        Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
+        Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
+        for (int i = 0; i < testnlp->numVars; i++) {
+            ztry[i] = mynlp->solution[i];
+        }
+        testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
+        testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+        testnlp->summarize_constraints(testnlp->numCons, g, true);
+        std::cout << "Constraint violation on finer discretization: " << testnlp->final_constr_violation << std::endl;
+    }
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
+    }
+
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution(filepath + "solution-talos-multiple-step.txt");
+        // std::ofstream solution(filepath + 
+        //                        "robustness_test_solution_" + 
+        //                        std::to_string(degree) + 
+        //                        ".txt");
+        std::ofstream solution(filepath + "solution-talos-forward.txt");
+
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
         }
         solution.close();
 
-        for (int p = 0; p < NSteps; p++) {
-            std::ofstream trajectory(filepath + "trajectory-talos-multiple-step-" + std::to_string(p) + ".txt");
-            trajectory << std::setprecision(20);
-            const auto& cidPtr_ = mynlp->stepOptVec_[p]->cidPtr_;
-            for (int i = 0; i < NUM_JOINTS; i++) {
-                for (int j = 0; j < cidPtr_->N; j++) {
-                    trajectory << cidPtr_->q(j)(i) << ' ';
-                }
-                trajectory << std::endl;
+        std::ofstream trajectory(filepath + "trajectory-talos.txt");
+        trajectory << std::setprecision(20);
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
             }
-            for (int i = 0; i < NUM_JOINTS; i++) {
-                for (int j = 0; j < cidPtr_->N; j++) {
-                    trajectory << cidPtr_->v(j)(i) << ' ';
-                }
-                trajectory << std::endl;
-            }
-            for (int i = 0; i < NUM_JOINTS; i++) {
-                for (int j = 0; j < cidPtr_->N; j++) {
-                    trajectory << cidPtr_->a(j)(i) << ' ';
-                }
-                trajectory << std::endl;
-            }
-            for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-                for (int j = 0; j < cidPtr_->N; j++) {
-                    trajectory << cidPtr_->tau(j)(i) << ' ';
-                }
-                trajectory << std::endl;
-            }
-            for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-                for (int j = 0; j < cidPtr_->N; j++) {
-                    trajectory << cidPtr_->lambda(j)(i) << ' ';
-                }
-                trajectory << std::endl;
-            }
-            trajectory.close();
+            trajectory << std::endl;
         }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        trajectory.close();
     }
 
     return 0;

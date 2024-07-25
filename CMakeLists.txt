@@ -263,9 +263,8 @@ target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Talos_example 
-    Examples/Talos/TalosSingleStep.cpp)
-    # Examples/Talos/TalosSingleStepSpeedTest.cpp)
-    # Examples/Talos/TalosSingleStepRobustnessTest.cpp)
+    # Examples/Talos/TalosSingleStep.cpp)
+    Examples/Talos/TalosSingleStepFixedPosition.cpp)
 
 target_include_directories(Talos_example PUBLIC
     Examples/Talos/include

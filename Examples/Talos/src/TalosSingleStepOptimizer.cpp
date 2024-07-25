@@ -24,17 +24,30 @@ bool TalosSingleStepOptimizer::set_parameters(
     const Eigen::VectorXi& jtype_input,
     const GaitParameters& gp_input,
     const char stanceLeg,
-    const Transform stance_foot_T_des
+    const Transform stance_foot_T_des,
+    const VecX q0_input,
+    const VecX q_d0_input
  ) 
 {
     enable_hessian = false;
     x0 = x0_input;
 
-    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
-                                              N_input, 
-                                              NUM_INDEPENDENT_JOINTS, 
-                                              time_discretization_input, 
-                                              degree_input);                                   
+    bcPtr_ = std::make_shared<BezierCurves>(T_input, 
+                                            N_input, 
+                                            NUM_INDEPENDENT_JOINTS, 
+                                            time_discretization_input, 
+                                            degree_input);     
+
+    if (q0_input.size() == NUM_INDEPENDENT_JOINTS) {
+        bcPtr_->constrainInitialPosition(q0_input);
+    }
+    if (q_d0_input.size() == NUM_INDEPENDENT_JOINTS) {
+        bcPtr_->constrainInitialVelocity(q_d0_input);
+    }
+
+    // convert to base class
+    trajPtr_ = bcPtr_;
+
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
     
@@ -65,12 +78,12 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));        
     constraintsNameVec_.push_back("torque limits");
 
-    // Joint limits
-    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-                                                                          cidPtr_->dcPtr_, 
-                                                                          JOINT_LIMITS_LOWER_VEC, 
-                                                                          JOINT_LIMITS_UPPER_VEC));      
-    constraintsNameVec_.push_back("joint limits");                                                                                                                           
+    // // Joint limits
+    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+    //                                                                       cidPtr_->dcPtr_, 
+    //                                                                       JOINT_LIMITS_LOWER_VEC, 
+    //                                                                       JOINT_LIMITS_UPPER_VEC));      
+    // constraintsNameVec_.push_back("joint limits");                                                                                                                           
 
     // Surface contact constraints
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);

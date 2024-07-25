@@ -41,13 +41,15 @@ public:
     ~Trajectories() = default;
 
     // class methods:
-    virtual void compute(const VecX& z, 
-                         bool compute_derivatives = true,
-                         bool compute_hessian = false);
+    void initialize_memory();
 
     bool is_computed(const VecX& z, 
                      bool compute_derivatives,
                      bool compute_hessian);
+
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
 
     // these methods are defined in TrajectoryGroup
     virtual void add_trajectory(const std::string& name,    

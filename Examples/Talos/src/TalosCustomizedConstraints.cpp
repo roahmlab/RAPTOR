@@ -15,8 +15,14 @@ TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
     modelPtr_ = std::make_unique<Model>(model_input);
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
 
-    leftfoot_endT.p << 0, 0, -0.107;
-    rightfoot_endT.p << 0, 0, -0.107;
+    // leftfoot_endT.p << 0, 0, -0.107;
+    // rightfoot_endT.p << 0, 0, -0.107;
+
+    // for single step fixed initial condition
+    // the initial condition has been fixed but the swing foot is slightly off the ground
+    // we take this into consideration so that the optimization does not stuck on this constraint forever
+    leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
 
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
@@ -114,17 +120,6 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     g8 = Utils::wrapToPi(q.row(4)); // torso pitch
     g9 = Utils::wrapToPi(q.row(5)); // torso yaw
 
-    // std::cout << g1.transpose() << std::endl;
-    // std::cout << g2.transpose() << std::endl;
-    // std::cout << g3.transpose() << std::endl;
-    // std::cout << g4.transpose() << std::endl;
-    // std::cout << g5.transpose() << std::endl;
-    // std::cout << g6.transpose() << std::endl;
-    // std::cout << g7.transpose() << std::endl;
-    // std::cout << g8.transpose() << std::endl;
-    // std::cout << g9.transpose() << std::endl;
-    // std::cout << std::endl;
-
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
 
     if (compute_derivatives) {
@@ -196,6 +191,85 @@ void TalosCustomizedConstraints::compute_bounds() {
 
     g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb;
     g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub;
+}
+
+void TalosCustomizedConstraints::print_violation_info() {
+    // (1) swingfoot height always larger than 0
+    //               height equal to 0 at the beginning and at the end
+    //               height higher than the desired value in the middle
+    for (int i = 0; i < trajPtr_->N; i++) {
+        if (g1(i) <= g1_lb(i) - 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+                      << i 
+                      << " is below lower limit: " 
+                      << g1(i) 
+                      << " < " 
+                      << g1_lb(i) 
+                      << std::endl;
+        }
+        if (g1(i) >= g1_ub(i) + 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+                      << i 
+                      << " is above upper limit: " 
+                      << g1(i) 
+                      << " > " 
+                      << g1_ub(i) 
+                      << std::endl;
+        }
+    }
+
+    // (2) swingfoot always flat and points forward
+    for (int i = 0; i < trajPtr_->N; i++) {
+        if (abs(g2(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot roll at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g2(i) 
+                      << std::endl;
+        }
+        if (abs(g3(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot pitch at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g3(i) 
+                      << std::endl;
+        }
+        if (abs(g4(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot yaw at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g4(i) 
+                      << std::endl;
+        }
+    }
+
+    // (3) swingfoot xy equal to desired value at the beginning and at the end
+    if (g5(0) <= g5_lb(0) - 1e-4 ||
+        g5(0) >= g5_ub(0) + 1e-4) {
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at beginning is not equal to desired value:" 
+                  << g5(0) 
+                  << std::endl;
+    }
+    if (g5(1) <= g5_lb(1) - 1e-4 ||
+        g5(1) >= g5_ub(1) + 1e-4) {
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot y at beginning is not equal to desired value:" 
+                  << g5(1) 
+                  << std::endl;
+    }
+    if (g5(2) <= g5_lb(2) - 1e-4 ||
+        g5(2) >= g5_ub(2) + 1e-4) {
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at end is not equal to desired value:" 
+                  << g5(2) 
+                  << std::endl;
+    }
+    if (g5(3) <= g5_lb(3) - 1e-4 ||
+        g5(3) >= g5_ub(3) + 1e-4) {
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot y at end is not equal to desired value:" 
+                  << g5(3) 
+                  << std::endl;
+    }
+
+    // (4) torso height always larger than 0.9 meter
 }
 
 }; // namespace Talos
