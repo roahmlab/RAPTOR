@@ -178,7 +178,7 @@ public:
     Transform stance_foot_T_des;
 
         // closed loop related transforms
-        // you can find all of these numbers in digit-v3.xml
+        // you can find all these numbers in digit-v3.xml
     const Transform left_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
     const Transform left_toeA_anchor_endT = Transform(Vec3(0.0179, -0.009551, -0.054164));
 
