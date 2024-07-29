@@ -13,12 +13,15 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
 
     actual_model_nq = model.nq - 1;
 
-    model.gravity.linear()(2) = -9.81;
+    model.gravity.linear()(2) = GRAVITY;
 
     // manually define the joint axis of rotation
     // 1 for Rx, 2 for Ry, 3 for Rz
     // 4 for Px, 5 for Py, 6 for Pz
     // not sure how to extract this from a pinocchio model so define outside here.
+    if (model.nq != 8) {
+        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
+    }
     jtype.resize(model.nq);
     jtype << 3, 3, 3, 3, 3, 3, 3, 
              3;
