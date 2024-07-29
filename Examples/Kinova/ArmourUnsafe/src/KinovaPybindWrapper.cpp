@@ -10,12 +10,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename) {
 
     // Define robot model
     pinocchio::urdf::buildModel(urdf_filename, model);
-
-    // the number of joints in the model is currently hardcoded
-    if (model.nq != 7) {
-        throw std::invalid_argument("Model must have 7 joints");
-    }
-
+    
     model.gravity.linear()(2) = GRAVITY;
 
     // manually define the joint axis of rotation

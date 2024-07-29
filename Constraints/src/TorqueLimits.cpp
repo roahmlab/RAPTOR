@@ -13,7 +13,7 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
     
     initialize_memory(trajPtr_->N * trajPtr_->Nact, 
                       trajPtr_->varLength,
-                      false);
+                      true);
 }
 
 void TorqueLimits::compute(const VecX& z, 
@@ -25,17 +25,19 @@ void TorqueLimits::compute(const VecX& z,
 
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
-    if (compute_hessian) {
-        throw std::invalid_argument("TorqueLimits: Hessian not implemented yet");
-    }
-
     idPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = idPtr_->tau(i);
+        g.segment(i * trajPtr_->Nact, trajPtr_->Nact) = idPtr_->tau(i);
 
         if (compute_derivatives) {
-            pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = idPtr_->ptau_pz(i);
+            pg_pz.middleRows(i * trajPtr_->Nact, trajPtr_->Nact) = idPtr_->ptau_pz(i);
+
+            if (compute_hessian) {
+                for (int j = 0; j < trajPtr_->Nact; j++) {
+                    pg_pz_pz(i * trajPtr_->Nact + j) = idPtr_->ptau_pz_pz(j, i);
+                }
+            }
         }
     }
 }
