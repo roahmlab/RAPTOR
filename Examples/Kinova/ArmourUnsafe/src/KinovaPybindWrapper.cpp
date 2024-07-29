@@ -32,36 +32,21 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename) {
     torque_limits_buffer = VecX::Zero(model.nv);
 }
 
-void KinovaPybindWrapper::set_obstacles(const int num_obstacles_inp,
-                                        const py::array_t<double> obstacles_inp) {
-    num_obstacles = num_obstacles_inp;      
-
-    if (num_obstacles < 0) {
-        throw std::invalid_argument("Number of obstacles must be non-negative");
-    }                                
-
-    py::buffer_info obstacles_buf = obstacles_inp.request();
-
-    if (obstacles_buf.size != num_obstacles * (3 + 3 + 3)) {
-        throw std::invalid_argument("Number of obstacles does not match the input array size");
+void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
+    if (obstacles_inp.shape(1) != 9) {
+        throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
 
-    const double* obstacles_ptr = (const double*)obstacles_buf.ptr;
+    num_obstacles = obstacles_inp.shape(0);
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
     boxSize.resize(num_obstacles);
 
     for (int i = 0; i < num_obstacles; i++) {
-        boxCenters[i] << obstacles_ptr[i * 9 + 0],
-                         obstacles_ptr[i * 9 + 1],
-                         obstacles_ptr[i * 9 + 2];
-        boxOrientation[i] << obstacles_ptr[i * 9 + 3],
-                             obstacles_ptr[i * 9 + 4],
-                             obstacles_ptr[i * 9 + 5];
-        boxSize[i] << obstacles_ptr[i * 9 + 6],
-                      obstacles_ptr[i * 9 + 7],
-                      obstacles_ptr[i * 9 + 8];
+        boxCenters[i] << obstacles_inp(i, 0), obstacles_inp(i, 1), obstacles_inp(i, 2);
+        boxOrientation[i] << obstacles_inp(i, 3), obstacles_inp(i, 4), obstacles_inp(i, 5);
+        boxSize[i] << obstacles_inp(i, 6), obstacles_inp(i, 7), obstacles_inp(i, 8);
     }
 
     set_obstacles_check = true;
@@ -92,82 +77,54 @@ void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
     set_ipopt_parameters_check = true;
 }
 
-void KinovaPybindWrapper::set_trajectory_parameters(const py::array_t<double> q0_inp,
-                                                    const py::array_t<double> qd0_inp,
-                                                    const py::array_t<double> qdd0_inp,
+void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                    const nb_1d_double qd0_inp,
+                                                    const nb_1d_double qdd0_inp,
                                                     const double duration_inp) {
-    py::buffer_info q0_buf = q0_inp.request();
-    py::buffer_info qd0_buf = qd0_inp.request();
-    py::buffer_info qdd0_buf = qdd0_inp.request();
+    if (q0_inp.shape(0) != model.nv || 
+        qd0_inp.shape(0) != model.nv || 
+        qdd0_inp.shape(0) != model.nv) {
+        throw std::invalid_argument("q0, qd0, qdd0 must be of size model.nv");
+    }
 
     T = duration_inp;
-
-    if (q0_buf.size != model.nv) {
-        throw std::invalid_argument("q0 must be of size model.nv");
-    }
-
-    if (qd0_buf.size != model.nv) {
-        throw std::invalid_argument("qd0 must be of size model.nv");
-    }
-    
-    if (qdd0_buf.size != model.nv) {
-        throw std::invalid_argument("qdd0 must be of size model.nv");
-    }
 
     if (T <= 0.0) {
         throw std::invalid_argument("Duration must be positive");
     }
 
-    const double *q0_ptr = (const double*)q0_buf.ptr;
-    const double *qd0_ptr = (const double*)qd0_buf.ptr;
-    const double *qdd0_ptr = (const double*)qdd0_buf.ptr;
-    
     atp.q0.resize(model.nv);
     atp.q_d0.resize(model.nv);
     atp.q_dd0.resize(model.nv);
 
     for (int i = 0; i < model.nv; i++) {
-        atp.q0(i) = q0_ptr[i];
-        atp.q_d0(i) = qd0_ptr[i];
-        atp.q_dd0(i) = qdd0_ptr[i];
+        atp.q0(i) = q0_inp(i);
+        atp.q_d0(i) = qd0_inp(i);
+        atp.q_dd0(i) = qdd0_inp(i);
     }     
 
     set_trajectory_parameters_check = true;                             
 }
 
-void KinovaPybindWrapper::set_buffer(const py::array_t<double> joint_limits_buffer_inp,
-                                     const py::array_t<double> velocity_limits_buffer_inp,
-                                     const py::array_t<double> torque_limits_buffer_inp) {
-    py::buffer_info joint_limits_buffer_buf = joint_limits_buffer_inp.request();
-    py::buffer_info velocity_limits_buffer_buf = velocity_limits_buffer_inp.request();
-    py::buffer_info torque_limits_buffer_buf = torque_limits_buffer_inp.request();
-
-    if (joint_limits_buffer_buf.size != model.nv) {
-        throw std::invalid_argument("joint_limits_buffer must be of size model.nv");
+void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
+                                     const nb_1d_double velocity_limits_buffer_inp,
+                                     const nb_1d_double torque_limits_buffer_inp) {
+    if (joint_limits_buffer_inp.shape(0) != model.nv || 
+        velocity_limits_buffer_inp.shape(0) != model.nv || 
+        torque_limits_buffer_inp.shape(0) != model.nv) {
+        throw std::invalid_argument("joint_limits_buffer, velocity_limits_buffer, torque_limits_buffer must be of size model.nv");
     }
-
-    if (velocity_limits_buffer_buf.size != model.nv) {
-        throw std::invalid_argument("velocity_limits_buffer must be of size model.nv");
-    }
-
-    if (torque_limits_buffer_buf.size != model.nv) {
-        throw std::invalid_argument("torque_limits_buffer must be of size model.nv");
-    }
-
-    const double* joint_limits_buffer_ptr = (const double*)joint_limits_buffer_buf.ptr;
-    const double* velocity_limits_buffer_ptr = (const double*)velocity_limits_buffer_buf.ptr;
-    const double* torque_limits_buffer_ptr = (const double*)torque_limits_buffer_buf.ptr;
 
     for (int i = 0; i < model.nv; i++) {
-        joint_limits_buffer(i) = joint_limits_buffer_ptr[i];
-        velocity_limits_buffer(i) = velocity_limits_buffer_ptr[i];
-        torque_limits_buffer(i) = torque_limits_buffer_ptr[i];
+        joint_limits_buffer(i) = joint_limits_buffer_inp(i);
+        velocity_limits_buffer(i) = velocity_limits_buffer_inp(i);
+        torque_limits_buffer(i) = torque_limits_buffer_inp(i);
     }                               
 
     set_buffer_check = true;                                                    
 }
 
-void KinovaPybindWrapper::set_target(const py::array_t<double> q_des_inp,
+void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
                                      const double tplan_inp) {
     tplan = tplan_inp;
 
@@ -175,23 +132,20 @@ void KinovaPybindWrapper::set_target(const py::array_t<double> q_des_inp,
         throw std::invalid_argument("tplan must be greater than 0.0 or smaller than duration");
     }
 
-    py::buffer_info q_des_buf = q_des_inp.request();
-
-    if (q_des_buf.size != model.nv) {
+    if (q_des_inp.shape(0) != model.nv) {
         throw std::invalid_argument("q_des must be of size model.nv");
     }
 
-    const double *q_des_ptr = (const double*)q_des_buf.ptr;
-
     for (int i = 0; i < model.nv; i++) {
-        qdes(i) = q_des_ptr[i];
+        qdes(i) = q_des_inp(i);
     }
+
     tplan_n = int(tplan / T * N);
 
     set_target_check = true;
 }
 
-py::tuple KinovaPybindWrapper::optimize() {
+nb::tuple KinovaPybindWrapper::optimize() {
     if (!set_obstacles_check || 
         !set_ipopt_parameters_check || 
         !set_trajectory_parameters_check || 
@@ -254,8 +208,12 @@ py::tuple KinovaPybindWrapper::optimize() {
     set_trajectory_parameters_check = false;
     set_target_check = false;
 
-    py::array_t<double> result(model.nv, mynlp->solution.data());
-    return py::make_tuple(result, mynlp->ifFeasible);
+    const size_t shape_ptr[] = {model.nv};
+    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
+                                                       1,
+                                                       shape_ptr,
+                                                       nb::handle());
+    return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
 }; // namespace Kinova

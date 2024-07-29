@@ -13,7 +13,7 @@ int main() {
     omp_set_num_threads(num_threads);
     
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);

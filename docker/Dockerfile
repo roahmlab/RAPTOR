@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
 
     # install python packages
 RUN pip install --upgrade pip && \
-    pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2
+    pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind
 
     # Install pinochio dependencies
 RUN --mount=type=cache,target=/var/cache/apt \
