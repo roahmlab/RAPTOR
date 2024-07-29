@@ -30,8 +30,15 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd; 
 
-    /** Default constructor */
-    Optimizer() = default;
+    /** Default constructor with setting openmp threads */
+    Optimizer() {
+        // macro NUM_THREADS should be define in cmake
+        #ifdef NUM_THREADS
+            omp_set_num_threads(NUM_THREADS);
+        #else
+            throw std::runtime_error("macro NUM_THREADS is not defined!");
+        #endif
+    };
 
     /** Default destructor */
     virtual ~Optimizer() = default;

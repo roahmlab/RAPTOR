@@ -17,6 +17,21 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Number of threads that openmp will use
+if(DEFINED NUM_THREADS)
+  add_definitions(-DNUM_THREADS=${NUM_THREADS})
+  message(STATUS "Number of threads used in openmp: ${NUM_THREADS}")
+else()
+    # Get the maximum number of threads using nproc
+    execute_process(
+        COMMAND nproc
+        OUTPUT_VARIABLE MAX_THREADS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    add_definitions(-DNUM_THREADS=${MAX_THREADS})
+    message(STATUS "Maximize number of threads used in openmp: ${MAX_THREADS}")
+endif()
+
 # Find Python binding library
 find_package(Python 3.10
   REQUIRED COMPONENTS Interpreter Development.Module

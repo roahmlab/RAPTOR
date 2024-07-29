@@ -5,10 +5,6 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
     // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
     

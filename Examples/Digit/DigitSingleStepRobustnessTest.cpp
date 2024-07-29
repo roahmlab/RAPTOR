@@ -17,10 +17,6 @@ const std::string mu_strategy_str[] = {"adaptive", "monotone"};
 const std::string linear_solver_str[] = {"ma27", "ma57", "ma86"};
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     // define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     

@@ -13,10 +13,6 @@ using namespace Ipopt;
 const std::string filepath = "../Examples/Talos/data/";
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     // define robot model
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
     
