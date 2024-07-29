@@ -14,11 +14,17 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -fopenmp")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Find Python library
-add_subdirectory(extern/pybind)
+# Find Python binding library
+find_package(Python 3.10
+  REQUIRED COMPONENTS Interpreter Development.Module
+  OPTIONAL_COMPONENTS Development.SABIModule)
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
+find_package(nanobind CONFIG REQUIRED)
 
 # Find Boost library
 find_package(Boost REQUIRED COMPONENTS 
@@ -469,15 +475,16 @@ target_link_libraries(KinovaSysId_example PUBLIC
 target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-pybind11_add_module(oracle_pybind SHARED
+nanobind_add_module(oracle_nanobind 
+    NB_SHARED LTO
     Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp
     Examples/Kinova/ArmourUnsafe/src/KinovaPybindWrapper.cpp)
 
-target_include_directories(oracle_pybind PUBLIC
+target_include_directories(oracle_nanobind PUBLIC
     Examples/Kinova
     Examples/Kinova/ArmourUnsafe/include)
 
-target_link_libraries(oracle_pybind PUBLIC
+target_link_libraries(oracle_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -489,20 +496,20 @@ target_link_libraries(oracle_pybind PUBLIC
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 
-target_compile_options(oracle_pybind PUBLIC
+nanobind_compile_options(oracle_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
 
-set_property(TARGET oracle_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET oracle_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-pybind11_add_module(oracle_waitr_pybind SHARED
+nanobind_add_module(oracle_waitr_nanobind SHARED
     Examples/Kinova/WaitrUnsafe/KinovaWaitrPybind.cpp
     Examples/Kinova/WaitrUnsafe/src/KinovaWaitrPybindWrapper.cpp)
 
-target_include_directories(oracle_waitr_pybind PUBLIC
+target_include_directories(oracle_waitr_nanobind PUBLIC
     Examples/Kinova
     Examples/Kinova/WaitrUnsafe/include)
 
-target_link_libraries(oracle_waitr_pybind PUBLIC
+target_link_libraries(oracle_waitr_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -514,10 +521,10 @@ target_link_libraries(oracle_waitr_pybind PUBLIC
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 
-target_compile_options(oracle_waitr_pybind PUBLIC
+    nanobind_compile_options(oracle_waitr_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
 
-set_property(TARGET oracle_waitr_pybind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET oracle_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 ## Test scripts
 add_executable(ForwardKinematics_test 

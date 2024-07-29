@@ -178,7 +178,7 @@ public:
 
 int main() {
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);

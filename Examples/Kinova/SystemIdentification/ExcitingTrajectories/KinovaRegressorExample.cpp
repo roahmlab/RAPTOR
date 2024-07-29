@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
     
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
