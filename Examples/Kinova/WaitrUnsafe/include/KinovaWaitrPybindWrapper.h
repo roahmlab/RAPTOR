@@ -1,8 +1,9 @@
 #ifndef KINOVA_WAITR_PYBIND_WRAPPER_H
 #define KINOVA_WAITR_PYBIND_WRAPPER_H
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/string.h>
 
 #include "KinovaWaitrOptimizer.h"
 
@@ -12,7 +13,7 @@
 namespace RAPTOR {
 namespace Kinova {
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 class KinovaWaitrPybindWrapper {
 public:
@@ -20,6 +21,9 @@ public:
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     KinovaWaitrPybindWrapper() = default;
@@ -30,8 +34,7 @@ public:
     ~KinovaWaitrPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const int num_obstacles_inp,
-                       const py::array_t<double> obstacles_inp);
+    void set_obstacles(const nb_2d_double obstacles_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double obj_scaling_factor,
@@ -41,19 +44,19 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const py::array_t<double> q0_inp,
-                                   const py::array_t<double> qd0_inp,
-                                   const py::array_t<double> qdd0_inp,
+    void set_trajectory_parameters(const nb_1d_double q0_inp,
+                                   const nb_1d_double qd0_inp,
+                                   const nb_1d_double qdd0_inp,
                                    const double duration_inp);
 
-    void set_buffer(const py::array_t<double> joint_limits_buffer_inp,
-                    const py::array_t<double> velocity_limits_buffer_inp,
-                    const py::array_t<double> torque_limits_buffer_inp);
+    void set_buffer(const nb_1d_double joint_limits_buffer_inp,
+                    const nb_1d_double velocity_limits_buffer_inp,
+                    const nb_1d_double torque_limits_buffer_inp);
 
-    void set_target(const py::array_t<double> q_des_inp,
+    void set_target(const nb_1d_double q_des_inp,
                     const double tplan_inp);
 
-    py::tuple optimize();
+    nb::tuple optimize();
 
     // Class members
     // robot model

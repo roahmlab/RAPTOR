@@ -15,5 +15,7 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, 
 
 constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m
 
+constexpr double GRAVITY = -9.81; // m/s^2
+
 }; // namespace Kinova
 }; // namespace RAPTOR

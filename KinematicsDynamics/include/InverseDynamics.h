@@ -12,6 +12,7 @@
 #include "pinocchio/algorithm/kinematics-derivatives.hpp"
 #include "pinocchio/algorithm/rnea.hpp"
 #include "pinocchio/algorithm/rnea-derivatives.hpp"
+#include "pinocchio/algorithm/rnea-second-order-derivatives.hpp"
 #include "pinocchio/algorithm/crba.hpp"
 
 #include "Trajectories.h"
@@ -30,6 +31,7 @@ public:
     using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+    using Ten3 = pinocchio::Data::Tensor3x;
 
     // Constructor
     InverseDynamics() = default;
@@ -45,6 +47,10 @@ public:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false);
+
+    MatX chipFromTensor3x(const Ten3& tensor3x, 
+                          const Eigen::Index offset, 
+                          const Eigen::Index dim);
 
         // determine if the constraints are computed before and save the current decision variable
     bool is_computed(const VecX& z, 
@@ -68,11 +74,15 @@ public:
     MatX prnea_pv;
     MatX prnea_pa;
 
-        // compute results are stored here
-    Eigen::Array<VecX, 1, Eigen::Dynamic> tau;
+    Ten3 ptau2_pq;
+    Ten3 ptau2_pv;
+    Ten3 ptau2_pqpv;
+    Ten3 ptau2_papq;
 
         // compute results are stored here
+    Eigen::Array<VecX, 1, Eigen::Dynamic> tau;
     Eigen::Array<MatX, 1, Eigen::Dynamic> ptau_pz;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> ptau_pz_pz;
 };
 
 }; // namespace RAPTOR

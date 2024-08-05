@@ -1,18 +1,17 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <nanobind/nanobind.h>
 
 #include "KinovaPybindWrapper.h"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 using namespace RAPTOR;
 using namespace Kinova;
 
-PYBIND11_MODULE(oracle_pybind, m) {
-    m.doc() = "pybind11 oracle_pybind plugin";
+NB_MODULE(oracle_nanobind, m) {
+    m.doc() = "nanobind oracle_nanobind plugin";
 
-    py::class_<KinovaPybindWrapper>(m, "KinovaPybindWrapper")
-        .def(py::init<const std::string>())
+    nb::class_<KinovaPybindWrapper>(m, "KinovaPybindWrapper")
+        .def(nb::init<const std::string>())
         .def("set_obstacles", &KinovaPybindWrapper::set_obstacles)
         .def("set_ipopt_parameters", &KinovaPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &KinovaPybindWrapper::set_trajectory_parameters)

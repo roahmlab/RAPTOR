@@ -5,20 +5,16 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
     // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
     
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/ArmourUnsafe/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    model.gravity.linear()(2) = -9.81;
+    model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
     // model.damping.setZero();
     // model.rotorInertia.setZero();
@@ -27,6 +23,9 @@ int main(int argc, char* argv[]) {
     // 1 for Rx, 2 for Ry, 3 for Rz
     // 4 for Px, 5 for Py, 6 for Pz
     // not sure how to extract this from a pinocchio model so define outside here.
+    if (model.nq != 7) {
+        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
+    }
     Eigen::VectorXi jtype(model.nq);
     jtype << 3, 3, 3, 3, 3, 3, 3;
 

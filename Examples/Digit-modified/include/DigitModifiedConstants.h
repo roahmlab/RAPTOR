@@ -96,5 +96,8 @@ constexpr double GAMMA = 0.7;
 constexpr double FOOT_WIDTH = 0.04; // (m)
 constexpr double FOOT_LENGTH = 0.1175; // (m)
 
+// pulled out from digit-v3.xml
+constexpr double GRAVITY = -9.806; // m/s^2
+
 }; // namespace DigitModified
 }; // namespace RAPTOR

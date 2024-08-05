@@ -10,19 +10,15 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main() {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-    
     // Define robot model
-    const std::string urdf_filename = "../Examples/Kinova/WaitrUnsafe/kinova_grasp.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     const int actual_model_nq = model.nq - 1;
 
-    model.gravity.linear()(2) = -9.81;
+    model.gravity.linear()(2) = GRAVITY;
     model.rotorInertia.setZero();
     model.damping.setZero();
     model.friction.setZero();
@@ -31,6 +27,9 @@ int main() {
     // 1 for Rx, 2 for Ry, 3 for Rz
     // 4 for Px, 5 for Py, 6 for Pz
     // not sure how to extract this from a pinocchio model so define outside here.
+    if (model.nq != 8) {
+        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
+    }
     Eigen::VectorXi jtype(model.nq);
     jtype << 3, 3, 3, 3, 3, 3, 3, 
              0; // the last joint is a fixed joint

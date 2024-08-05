@@ -5,10 +5,6 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main () {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     // Define Data
     Eigen::MatrixXd temp;
     temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/SinExperiment_1703028519/feedback_pos.csv");

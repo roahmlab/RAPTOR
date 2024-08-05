@@ -18,22 +18,21 @@ const TimeDiscretization time_discret[] = {Uniform, Chebyshev};
 const std::string time_discretization_str[] = {"Uniform", "Chebyshev"};
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     // define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    model.gravity.linear()(2) = -9.806;
+    model.gravity.linear()(2) = GRAVITY;
 
     // manually define the joint axis of rotation
     // 1 for Rx, 2 for Ry, 3 for Rz
     // 4 for Px, 5 for Py, 6 for Pz
     // not sure how to extract this from a pinocchio model so define outside here.
+    if (model.nq != 36) {
+        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
+    }
     Eigen::VectorXi jtype(model.nq);
     jtype << 4, 5, 6, 1, 2, 3, 
              3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
