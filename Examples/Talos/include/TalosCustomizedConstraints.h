@@ -47,6 +47,9 @@ public:
         // compute constraints lower bounds and upper bounds
     void compute_bounds() final override;
 
+        // print violation information
+    void print_violation_info() final override;
+
     // class variables:
     GaitParameters gp;
 

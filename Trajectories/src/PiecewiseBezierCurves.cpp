@@ -46,33 +46,7 @@ PiecewiseBezierCurves::PiecewiseBezierCurves(double T_input,
 
     coefficients.resize(6, Nact);
 
-    q.resize(1, N);
-    q_d.resize(1, N);
-    q_dd.resize(1, N);
-
-    pq_pz.resize(1, N);
-    pq_d_pz.resize(1, N);
-    pq_dd_pz.resize(1, N);
-
-    pq_pz_pz.resize(Nact, N);
-    pq_d_pz_pz.resize(Nact, N);
-    pq_dd_pz_pz.resize(Nact, N);
-
-    for (int i = 0; i < N; i++) {
-        q(i) = VecX::Zero(Nact);
-        q_d(i) = VecX::Zero(Nact);
-        q_dd(i) = VecX::Zero(Nact);
-
-        pq_pz(i) = MatX::Zero(Nact, varLength);
-        pq_d_pz(i) = MatX::Zero(Nact, varLength);
-        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
-
-        for (int j = 0; j < Nact; j++) {
-            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-        }
-    }
+    initialize_memory();
 }
 
 void PiecewiseBezierCurves::compute(const VecX& z, 

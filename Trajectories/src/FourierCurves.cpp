@@ -42,17 +42,7 @@ FourierCurves::FourierCurves(const VecX& tspan_input,
     }
 
     // varLength is changed so we have to reallocate the memory
-    for (int i = 0; i < N; i++) {
-        pq_pz(i) = MatX::Zero(Nact, varLength);
-        pq_d_pz(i) = MatX::Zero(Nact, varLength);
-        pq_dd_pz(i) = MatX::Zero(Nact, varLength);
-
-        for (int j = 0; j < Nact; j++) {
-            pq_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-            pq_d_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-            pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
-        }
-    }
+    initialize_memory();
 }
 
 FourierCurves::FourierCurves(double T_input, 

@@ -63,6 +63,12 @@ Trajectories::Trajectories(const int varLength_input,
         tspan(N - 1) = T;
     }
     
+    initialize_memory();
+
+    current_z.resize(1);
+}
+
+void Trajectories::initialize_memory() {
     q.resize(1, N);
     q_d.resize(1, N);
     q_dd.resize(1, N);
@@ -90,8 +96,6 @@ Trajectories::Trajectories(const int varLength_input,
             pq_dd_pz_pz(j, i) = MatX::Zero(varLength, varLength);
         }
     }
-
-    current_z.resize(1);
 }
 
 bool Trajectories::is_computed(const VecX& z, 

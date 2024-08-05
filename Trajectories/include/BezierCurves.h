@@ -22,6 +22,10 @@ public:
                  TimeDiscretization time_discretization, 
                  int degree_input);
 
+    void constrainInitialPosition(const VecX& q0_input);
+
+    void constrainInitialVelocity(const VecX& q_d0_input);
+
     virtual void compute(const VecX& z, 
                          bool compute_derivatives = true,
                          bool compute_hessian = false);
@@ -33,6 +37,16 @@ public:
     VecX ddB;
 
     VecX Bionomials;
+
+    VecX q0;
+    VecX q_d0;
+    VecX q_dd0;
+    VecX qT;
+
+    bool constrain_initial_position = false;
+    bool constrain_initial_velocity = false;
+    bool constrain_initial_acceleration = false;
+    bool constrain_end_position = false;
 };
 
 }; // namespace RAPTOR

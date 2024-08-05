@@ -36,6 +36,39 @@ BezierCurves::BezierCurves(double T_input,
     }
 }
 
+void BezierCurves::constrainInitialPosition(const VecX& q0_input) {
+    if (q0_input.size() != Nact) {
+        std::cerr << "function input: q0_input.size() = " << q0_input.size() << std::endl;
+        std::cerr << "desired: Nact = " << Nact << std::endl;
+        throw std::invalid_argument("BezierCurves: initial position vector has wrong size");
+    }
+
+    q0 = q0_input;
+    constrain_initial_position = true;
+
+    varLength -= Nact;
+    initialize_memory();
+}
+
+void BezierCurves::constrainInitialVelocity(const VecX& q_d0_input) {
+    if (!constrain_initial_position) {
+        throw std::invalid_argument("BezierCurves: initial position must be constrained first");
+    }
+
+    if (q_d0_input.size() != Nact) {
+        std::cerr << "function input: q_d0_input.size() = " << q_d0_input.size() << std::endl;
+        std::cerr << "desired: Nact = " << Nact << std::endl;
+        throw std::invalid_argument("BezierCurves: initial velocity vector has wrong size");
+    }
+
+    q_d0 = q_d0_input;
+    constrain_initial_velocity = true;
+
+    varLength -= Nact;
+    initialize_memory();
+
+}
+
 void BezierCurves::compute(const VecX& z, 
                            bool compute_derivatives,
                            bool compute_hessian) {
@@ -47,8 +80,25 @@ void BezierCurves::compute(const VecX& z,
 
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
-    // MatX coefficients = z.head((degree + 1) * Nact).reshaped(degree + 1, Nact);
-    MatX coefficients = Utils::reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
+    MatX coefficients = MatX::Zero(degree + 1, Nact);
+    
+    if (constrain_initial_position) {
+        if (constrain_initial_velocity) {
+            coefficients.topRows(1) = q0.transpose();
+            coefficients.middleRows(1, 1) = q_d0.transpose();
+            coefficients.bottomRows(degree - 1) = Utils::reshape(z.head((degree - 1) * Nact), 
+                                                                 degree - 1, Nact);
+        }
+        else {
+            coefficients.topRows(1) = q0.transpose();
+            coefficients.bottomRows(degree) = Utils::reshape(z.head(degree * Nact), 
+                                                             degree, Nact);
+        }
+    }
+    else {
+        coefficients = Utils::reshape(z.head((degree + 1) * Nact), 
+                                      degree + 1, Nact);
+    }
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x) / T;
@@ -96,19 +146,38 @@ void BezierCurves::compute(const VecX& z,
         q_dd(x) = coefficients.transpose() * ddB;
 
         if (compute_derivatives) {
-            for (int i = 0; i < Nact; i++) {
-                pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = B.transpose();
-                pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dB.transpose();
-                pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddB.transpose();
+            if (constrain_initial_position) {
+                if (constrain_initial_velocity) {
+                    for (int i = 0; i < Nact; i++) {
+                        pq_pz(x).block(i, i * (degree - 1), 1, degree - 1)    = B.tail(degree - 1).transpose();
+                        pq_d_pz(x).block(i, i * (degree - 1), 1, degree - 1)  = dB.tail(degree - 1).transpose();
+                        pq_dd_pz(x).block(i, i * (degree - 1), 1, degree - 1) = ddB.tail(degree - 1).transpose();
+                    }
+                }
+                else {
+                    for (int i = 0; i < Nact; i++) {
+                        pq_pz(x).block(i, i * degree, 1, degree)    = B.tail(degree).transpose();
+                        pq_d_pz(x).block(i, i * degree, 1, degree)  = dB.tail(degree).transpose();
+                        pq_dd_pz(x).block(i, i * degree, 1, degree) = ddB.tail(degree).transpose();
+                    }
+                }
+            }
+            else {
+                for (int i = 0; i < Nact; i++) {
+                    pq_pz(x).block(i, i * (degree + 1), 1, degree + 1)    = B.transpose();
+                    pq_d_pz(x).block(i, i * (degree + 1), 1, degree + 1)  = dB.transpose();
+                    pq_dd_pz(x).block(i, i * (degree + 1), 1, degree + 1) = ddB.transpose();
+                }
             }
         }
 
         if (compute_hessian) {
-            for (int i = 0; i < Nact; i++) {
-                pq_pz_pz(i, x).setZero(); 
-                pq_d_pz_pz(i, x).setZero(); 
-                pq_dd_pz_pz(i, x).setZero(); 
-            }
+            // this has been done in the constructor
+            // for (int i = 0; i < Nact; i++) {
+            //     pq_pz_pz(i, x).setZero(); 
+            //     pq_d_pz_pz(i, x).setZero(); 
+            //     pq_dd_pz_pz(i, x).setZero(); 
+            // }
         }
     }
 }
