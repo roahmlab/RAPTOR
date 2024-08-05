@@ -77,4 +77,33 @@ void ConstrainedJointLimits::compute_bounds() {
     }
 }
 
+void ConstrainedJointLimits::print_violation_info() {
+    for (int i = 0; i < trajPtr_->N; i++) {
+        for (int j = 0; j < NB; j++) {
+            if (g(i * NB + j) <= lowerLimits(j)) {
+                std::cout << "        ConstrainedJointLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i
+                          << " is below lower limit: "
+                          << g(i * NB + j) 
+                          << " < " 
+                          << lowerLimits(j) 
+                          << std::endl;
+            } 
+            else if (g(i * NB + j) >= upperLimits(j)) {
+                std::cout << "        ConstrainedJointLimits.cpp: Joint " 
+                          << j 
+                          << " at time instance " 
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * NB + j) 
+                          << " > " 
+                          << upperLimits(j) 
+                          << std::endl;
+            }
+        }
+    }
+}
+
 }; // namespace RAPTOR

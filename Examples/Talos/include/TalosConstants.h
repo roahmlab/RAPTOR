@@ -21,8 +21,8 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -2.095,          // leg_left_3_joint
     0,               // leg_left_4_joint
     -1.309,          // leg_left_5_joint
-    -0.5236,         // leg_left_6_joint   
-    -1.57079632679   // leg_right_1_joint
+    -0.5236,         // leg_left_6_joint
+    -1.57079632679,  // leg_right_1_joint
     -0.5236,         // leg_right_2_joint
     -2.095,          // leg_right_3_joint 
     0,               // leg_right_4_joint   

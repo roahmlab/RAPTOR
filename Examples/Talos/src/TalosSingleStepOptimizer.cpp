@@ -60,30 +60,29 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                  stance_foot_T_des);                                                          
     cidPtr_ = dcidPtr_; // convert to base class
 
-    // convert joint limits from degree to radian
-    VecX JOINT_LIMITS_LOWER_VEC = 
-        Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS);
-    VecX JOINT_LIMITS_UPPER_VEC =
-        Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS);
-
+    // Torque limits
     VecX TORQUE_LIMITS_LOWER_VEC = 
         Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);          
     VecX TORQUE_LIMITS_UPPER_VEC =
         Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);                                                                                                            
 
-    // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));        
     constraintsNameVec_.push_back("torque limits");
 
-    // // Joint limits
-    // constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
-    //                                                                       cidPtr_->dcPtr_, 
-    //                                                                       JOINT_LIMITS_LOWER_VEC, 
-    //                                                                       JOINT_LIMITS_UPPER_VEC));      
-    // constraintsNameVec_.push_back("joint limits");                                                                                                                           
+    // Joint limits
+    VecX JOINT_LIMITS_LOWER_VEC = 
+        Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS);
+    VecX JOINT_LIMITS_UPPER_VEC =
+        Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS);
+    
+    constraintsPtrVec_.push_back(std::make_unique<ConstrainedJointLimits>(trajPtr_, 
+                                                                          cidPtr_->dcPtr_, 
+                                                                          JOINT_LIMITS_LOWER_VEC, 
+                                                                          JOINT_LIMITS_UPPER_VEC));      
+    constraintsNameVec_.push_back("joint limits");                                                                                                                           
 
     // Surface contact constraints
     const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);

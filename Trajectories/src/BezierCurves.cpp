@@ -66,7 +66,6 @@ void BezierCurves::constrainInitialVelocity(const VecX& q_d0_input) {
 
     varLength -= Nact;
     initialize_memory();
-
 }
 
 void BezierCurves::compute(const VecX& z, 

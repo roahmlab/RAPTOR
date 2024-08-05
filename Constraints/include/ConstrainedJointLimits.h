@@ -32,6 +32,9 @@ public:
         // compute constraints lower bounds and upper bounds
     virtual void compute_bounds() override;
 
+        // print violation info
+    virtual void print_violation_info() override;
+
     // class variables:
     int NB = 0;
     std::shared_ptr<DynamicsConstraints> dcPtr_;
