@@ -42,7 +42,9 @@ public:
         const Eigen::VectorXi& jtype_input,
         const GaitParameters& gp_input,
         const char stanceLeg = 'L', // stance foot is left foot by default
-        const Transform stance_foot_T_des = Transform()
+        const Transform stance_foot_T_des = Transform(),
+        const VecX q0_input = VecX(0),  // optional initial position
+        const VecX q_d0_input = VecX(0) // optional initial velocity
     );
 
     /**@name Overloaded from TNLP */
@@ -91,6 +93,7 @@ public:
        const TalosSingleStepOptimizer&
     );
 
+    std::shared_ptr<BezierCurves> bcPtr_;
     std::shared_ptr<Trajectories> trajPtr_; 
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
