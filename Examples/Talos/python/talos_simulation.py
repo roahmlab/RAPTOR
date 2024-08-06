@@ -117,11 +117,12 @@ if __name__ == "__main__":
         constraint_datas.append(cm.createData())
         
     # forward simulation settings
-    dt_sim = 1e-3
+    dt_sim = 5e-4
     T_ss = 0.8
         
     # load results from RAPTOR
-    trajectories = np.loadtxt('../data/solution-talos-forward.txt')
+    step_length = 0.8
+    trajectories = np.loadtxt('../data/solution-talos-forward-' + str(step_length) + '.txt')
 
     ts_raptor = np.linspace(0, T_ss, len(trajectories))
     xs_raptor = np.zeros((len(ts_raptor), nq + nv)) 
@@ -152,7 +153,7 @@ if __name__ == "__main__":
     
     ts_sim = np.arange(0, T_ss, dt_sim)
     
-    Kp = np.diag(80.0 * np.ones(nu))
+    Kp = np.diag(60.0 * np.ones(nu))
     # Kd = np.diag(0.05 * np.sqrt(60.0) * np.ones(nv))
     Kd = np.diag(5.0 * np.ones(nu))
     
@@ -164,11 +165,12 @@ if __name__ == "__main__":
     
     np.savetxt('../data/trajectory-talos-simulation.txt', pos_sim.T)
     
-    scipy.io.savemat('../data/talos-simulation.mat', {'ts_sim': ts_sim, 
-                                                      'pos_sim': pos_sim, 
-                                                      'vel_sim': vel_sim, 
-                                                      'us_sim': us_sim, 
-                                                      'e_sim': e_sim, 
-                                                      'edot_sim': edot_sim})
+    scipy.io.savemat('../data/talos-simulation-' + str(step_length) + '.mat', 
+                     {'ts_sim': ts_sim, 
+                      'pos_sim': pos_sim, 
+                      'vel_sim': vel_sim, 
+                      'us_sim': us_sim, 
+                      'e_sim': e_sim, 
+                      'edot_sim': edot_sim})
     
     

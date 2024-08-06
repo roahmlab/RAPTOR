@@ -71,14 +71,15 @@ int main(int argc, char* argv[]) {
     }
     
     // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos.txt");
-    if (argc > 1) {
-        char* end = nullptr;
-        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-    }
-    else {
-        std::srand(std::time(nullptr));
-    }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    Eigen::VectorXd z = Eigen::VectorXd::Zero((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    // }
+    // else {
+    //     std::srand(std::time(nullptr));
+    // }
+    // Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     
     SmartPtr<TalosSingleStepOptimizer> mynlp = new TalosSingleStepOptimizer();
     try {
@@ -201,7 +202,7 @@ int main(int argc, char* argv[]) {
     if (mynlp->solution.size() == mynlp->numVars) {
         // Evaluate the solution on a finer time discretization
         try {
-            const double dt_sim = 1e-3;
+            const double dt_sim = 5e-4;
             const int N_simulate = T / dt_sim;
 
             SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
@@ -229,7 +230,9 @@ int main(int argc, char* argv[]) {
             testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
             testnlp->summarize_constraints(testnlp->numCons, g, false);
 
-            std::ofstream solution(filepath + "solution-talos-forward.txt");
+            char numBuffer[10];
+            sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
+            std::ofstream solution(filepath + "solution-talos-forward-" + numBuffer + ".txt");
             for (int j = 0; j < N_simulate; j++) {
                 for (int i = 0; i < NUM_JOINTS; i++) {
                     solution << testnlp->cidPtr_->q(j)(i) << ' ';
@@ -255,39 +258,39 @@ int main(int argc, char* argv[]) {
         // }
         // solution.close();
 
-        std::ofstream trajectory(filepath + "trajectory-talos.txt");
-        trajectory << std::setprecision(20);
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-            for (int j = 0; j < N; j++) {
-                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-            }
-            trajectory << std::endl;
-        }
-        trajectory.close();
+        // std::ofstream trajectory(filepath + "trajectory-talos.txt");
+        // trajectory << std::setprecision(20);
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // trajectory.close();
     }
 
     return 0;
