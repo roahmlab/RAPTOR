@@ -618,7 +618,7 @@ void Optimizer::summarize_constraints(
                           << "], value: "   << g[max_constr_violation_id2] << std::endl;
             }
 
-            constraintsPtrVec_[c]->print_violation_info();
+            if (verbose) constraintsPtrVec_[c]->print_violation_info();
                     
             ifFeasible = false;
         }
