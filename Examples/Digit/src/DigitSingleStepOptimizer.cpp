@@ -25,16 +25,29 @@ bool DigitSingleStepOptimizer::set_parameters(
     const GaitParameters& gp_input,
     const char stanceLeg,
     const Transform& stance_foot_T_des,
-    bool periodic
+    bool periodic,
+    const VecX q0_input,
+    const VecX q_d0_input
  ) 
 {
     x0 = x0_input;
                                           
-    trajPtr_ = std::make_shared<BezierCurves>(T_input, 
-                                              N_input, 
-                                              NUM_INDEPENDENT_JOINTS, 
-                                              time_discretization_input, 
-                                              degree_input);       
+    bcPtr_ = std::make_shared<BezierCurves>(T_input, 
+                                            N_input, 
+                                            NUM_INDEPENDENT_JOINTS, 
+                                            time_discretization_input, 
+                                            degree_input);     
+
+    if (q0_input.size() == NUM_INDEPENDENT_JOINTS) {
+        bcPtr_->constrainInitialPosition(q0_input);
+    }
+    if (q_d0_input.size() == NUM_INDEPENDENT_JOINTS) {
+        bcPtr_->constrainInitialVelocity(q_d0_input);
+    }
+
+    // convert to base class
+    trajPtr_ = bcPtr_;
+
     // add v_reset and lambda_reset to the end of the decision variables                                         
     trajPtr_->varLength += NUM_JOINTS + NUM_DEPENDENT_JOINTS;
 
