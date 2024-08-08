@@ -92,7 +92,7 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
 
 // pulled out from digit-v3.xml
 constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
-    -126.682,   // left-hip-roll
+    -113.000,   // left-hip-roll
     -79.1765,   // left-hip-yaw
     -216.928,   // left-hip-pitch
     -231.317,   // left-knee
@@ -108,7 +108,7 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
 
 // pulled out from digit-v3.xml
 constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
-    126.682,   // left-hip-roll
+    113.000,   // left-hip-roll
     79.1765,   // left-hip-yaw
     216.928,   // left-hip-pitch
     231.317,   // left-knee
