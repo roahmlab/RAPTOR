@@ -47,6 +47,9 @@ public:
         // compute constraints lower bounds and upper bounds
     virtual void compute_bounds() override;
 
+        // print violation info
+    virtual void print_violation_info() override;
+
     // class variables:
     GaitParameters gp;
 
@@ -77,6 +80,17 @@ public:
 
         // forward kinematics derivatives
     std::vector<Transform> dTdq;
+
+        // constraints
+    VecX g1, g1_lb, g1_ub;
+    VecX g2, g2_lb, g2_ub;
+    VecX g3, g3_lb, g3_ub;
+    VecX g4, g4_lb, g4_ub;
+    VecX g5, g5_lb, g5_ub;
+    VecX g6, g6_lb, g6_ub;
+    VecX g7, g7_lb, g7_ub;
+    VecX g8, g8_lb, g8_ub;
+    VecX g9, g9_lb, g9_ub;
 };
 
 } // namespace Digit

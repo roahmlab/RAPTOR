@@ -90,27 +90,27 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    VecX g1 = swingfoot_xyzrpy.row(2);
+    g1 = swingfoot_xyzrpy.row(2);
 
     // (2) swingfoot always flat and points forward
-    VecX g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
-    VecX g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
-    VecX g4 = (ddcPtr_->stanceLeg == 'L') ? 
+    g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
+    g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
+    g4 = (ddcPtr_->stanceLeg == 'L') ? 
         Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2) :
         Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() - M_PI / 2); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value 
     //     at the beginning and at the end of each walking step
-    VecX g5(4);
+    g5 = VecX::Zero(4);
     g5 << swingfoot_xyzrpy.topLeftCorner(2, 1), swingfoot_xyzrpy.topRightCorner(2, 1);
 
     // (4) torso height always larger than 1 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    VecX g6 = q.row(2); // torso height
-    VecX g7 = Utils::wrapToPi(q.row(3)); // torso roll
-    VecX g8 = Utils::wrapToPi(q.row(4)); // torso pitch
-    VecX g9 = (ddcPtr_->stanceLeg == 'L') ?
+    g6 = q.row(2); // torso height
+    g7 = Utils::wrapToPi(q.row(3)); // torso roll
+    g8 = Utils::wrapToPi(q.row(4)); // torso pitch
+    g9 = (ddcPtr_->stanceLeg == 'L') ?
         Utils::wrapToPi(q.row(5).array() + M_PI / 2) :
         Utils::wrapToPi(q.row(5).array() - M_PI / 2); // torso yaw
 
@@ -153,40 +153,127 @@ void DigitCustomizedConstraints::compute_bounds() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    VecX g1_lb = VecX::Zero(trajPtr_->N);
-    VecX g1_ub = VecX::Constant(trajPtr_->N, 1e19);
+    g1_lb = VecX::Zero(trajPtr_->N);
+    g1_ub = VecX::Constant(trajPtr_->N, 1e19);
     g1_lb(trajPtr_->N / 2) = gp.swingfoot_midstep_z_des;
     g1_ub(0) = 0;
     g1_ub(trajPtr_->N - 1) = 0;
 
     // (2) swingfoot always flat and points forward
-    VecX g2_lb = VecX::Zero(trajPtr_->N);
-    VecX g2_ub = VecX::Zero(trajPtr_->N);
-    VecX g3_lb = VecX::Zero(trajPtr_->N);
-    VecX g3_ub = VecX::Zero(trajPtr_->N);
-    VecX g4_lb = VecX::Zero(trajPtr_->N);
-    VecX g4_ub = VecX::Zero(trajPtr_->N);
+    g2_lb = VecX::Zero(trajPtr_->N);
+    g2_ub = VecX::Zero(trajPtr_->N);
+    g3_lb = VecX::Zero(trajPtr_->N);
+    g3_ub = VecX::Zero(trajPtr_->N);
+    g4_lb = VecX::Zero(trajPtr_->N);
+    g4_ub = VecX::Zero(trajPtr_->N);
 
     // (3) swingfoot xy equal to desired value at the beginning and at the end
-    VecX g5_lb(4);
-    VecX g5_ub(4);
+    g5_lb = VecX::Zero(4);
+    g5_ub = VecX::Zero(4);
     g5_lb << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
     g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
 
     // (4) torso height always larger than 1 meter
     //     roll and pitch always close to 0
     //     yaw always close to 0 when walking forward
-    VecX g6_lb = VecX::Constant(trajPtr_->N, 1);
-    VecX g6_ub = VecX::Constant(trajPtr_->N, 1e19);
-    VecX g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
-    VecX g8_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g8_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
-    VecX g9_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    VecX g9_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g6_lb = VecX::Constant(trajPtr_->N, 1);
+    g6_ub = VecX::Constant(trajPtr_->N, 1e19);
+    g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g8_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g8_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g9_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g9_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
 
     g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb;
     g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub;
+}
+
+void DigitCustomizedConstraints::print_violation_info() {
+    // (1) swingfoot height always larger than 0
+    //               height equal to 0 at the beginning and at the end
+    //               height higher than the desired value in the middle
+    for (int i = 0; i < trajPtr_->N; i++) {
+        if (g1(i) <= g1_lb(i) - 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+                      << i 
+                      << " is below lower limit: " 
+                      << g1(i) 
+                      << " < " 
+                      << g1_lb(i) 
+                      << std::endl;
+        }
+        if (g1(i) >= g1_ub(i) + 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+                      << i 
+                      << " is above upper limit: " 
+                      << g1(i) 
+                      << " > " 
+                      << g1_ub(i) 
+                      << std::endl;
+        }
+    }
+
+    // (2) swingfoot always flat and points forward
+    for (int i = 0; i < trajPtr_->N; i++) {
+        if (abs(g2(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot roll at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g2(i) 
+                      << std::endl;
+        }
+        if (abs(g3(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot pitch at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g3(i) 
+                      << std::endl;
+        }
+        if (abs(g4(i)) >= 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: swing foot yaw at time instance " 
+                      << i 
+                      << " is not close to 0: " 
+                      << g4(i) 
+                      << std::endl;
+        }
+    }
+
+    // (4) torso height always larger than 1 meter
+    //     roll and pitch always close to 0
+    //     yaw always close to 0 when walking forward
+    for (int i = 0; i < trajPtr_->N; i++) {
+        if (g6(i) <= g6_lb(i) - 1e-4) {
+            std::cout << "        TalosCustomizedConstraints.cpp: torso height at time instance " 
+                      << i 
+                      << " is below lower limit: " 
+                      << g6(i) 
+                      << " < " 
+                      << g6_lb(i) 
+                      << std::endl;
+        }
+        if (abs(g7(i)) >= gp.eps_torso_angle) {
+            std::cout << "        TalosCustomizedConstraints.cpp: torso roll at time instance " 
+                      << i 
+                      << " is too large: " 
+                      << g7(i) 
+                      << std::endl;
+        }
+        if (abs(g8(i)) >= gp.eps_torso_angle) {
+            std::cout << "        TalosCustomizedConstraints.cpp: torso pitch at time instance " 
+                      << i 
+                      << " is too large: " 
+                      << g8(i) 
+                      << std::endl;
+        }
+        if (abs(g9(i)) >= gp.eps_torso_angle) {
+            std::cout << "        TalosCustomizedConstraints.cpp: torso yaw at time instance " 
+                      << i 
+                      << " is too large: " 
+                      << g9(i) 
+                      << std::endl;
+        }
+    }
 }
 
 }; // namespace Digit

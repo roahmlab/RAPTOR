@@ -44,7 +44,9 @@ public:
         const GaitParameters& gp_input,
         const char stanceLeg = 'L', // stance foot is left foot by default
         const Transform& stance_foot_T_des = Transform(3, -M_PI / 2),
-        bool periodic = true
+        bool periodic = true,
+        const VecX q0_input = VecX(0),  // optional initial position
+        const VecX q_d0_input = VecX(0) // optional initial velocity
     );
 
     /**@name Overloaded from TNLP */
@@ -93,6 +95,7 @@ public:
        const DigitSingleStepOptimizer&
     );
 
+    std::shared_ptr<BezierCurves> bcPtr_;
     std::shared_ptr<Trajectories> trajPtr_; 
 
     std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
