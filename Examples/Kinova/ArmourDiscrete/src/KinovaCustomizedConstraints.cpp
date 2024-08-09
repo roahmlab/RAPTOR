@@ -16,13 +16,40 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
                                                                      boxOrientation_input,
                                                                      boxSize_input);
 
+    // initialize sphere info
+    num_spheres = NUM_SPHERES;
+    sphere_joint_id.resize(NUM_SPHERES);
+    sphere_offset_axis.resize(NUM_SPHERES);
+    sphere_offset.resize(NUM_SPHERES);
+    sphere_radius.resize(NUM_SPHERES);
+    for (int i = 0; i < NUM_SPHERES; i++) {
+        sphere_joint_id[i] = SPHERE_JOINT_ID[i];
+        sphere_offset_axis[i] = SPHERE_OFFSET_AXIS[i];
+        sphere_offset[i] = SPHERE_OFFSET[i];
+        sphere_radius[i] = SPHERE_RADIUS[i];
+    }
+
     // m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
 
     collisionAvoidancePtr_->onlyComputeDerivativesForMinimumDistance = true;
-    m = trajPtr_->N * NUM_SPHERES;
+    m = trajPtr_->N * num_spheres;
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);
 
+    initialize_memory(m, trajPtr_->varLength);
+}
+
+void KinovaCustomizedConstraints::add_collision_sphere(int joint_id,
+                                                       int offset_axis,
+                                                       double offset,
+                                                       double radius) {
+    num_spheres++;
+    sphere_joint_id.push_back(joint_id);
+    sphere_offset_axis.push_back(offset_axis);
+    sphere_offset.push_back(offset);
+    sphere_radius.push_back(radius);
+
+    m = trajPtr_->N * num_spheres;
     initialize_memory(m, trajPtr_->varLength);
 }
 
@@ -46,7 +73,7 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
         const MatX& pq_pz = trajPtr_->pq_pz(i);
         const Eigen::Array<MatX, Eigen::Dynamic, 1>& pq_pz_pz = trajPtr_->pq_pz_pz.col(i); 
 
-        for (int j = 0; j < NUM_SPHERES; j++) {
+        for (int j = 0; j < num_spheres; j++) {
             // define the transform matrix of the sphere center with respect to the joint
             endT = Transform(sphere_offset_axis[j], sphere_offset[j]);
 
@@ -94,15 +121,15 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
             }
             
             const auto& minIndex = collisionAvoidancePtr_->minimumDistanceIndex;
-            g(i * NUM_SPHERES + j) = collisionAvoidancePtr_->minimumDistance - sphere_radius[j];
+            g(i * num_spheres + j) = collisionAvoidancePtr_->minimumDistance - sphere_radius[j];
 
             if (compute_derivatives) {
-                pg_pz.row(i * NUM_SPHERES + j) = 
+                pg_pz.row(i * num_spheres + j) = 
                     collisionAvoidancePtr_->pdistances_pz.row(minIndex);
             }
 
             if (compute_hessian) {
-                pg_pz_pz(i * NUM_SPHERES + j) = 
+                pg_pz_pz(i * num_spheres + j) = 
                     collisionAvoidancePtr_->pdistances_pz_pz(minIndex);
             }
         }
@@ -117,8 +144,8 @@ void KinovaCustomizedConstraints::compute_bounds() {
 
 void KinovaCustomizedConstraints::print_violation_info() {
     for (int i = 0; i < trajPtr_->N; i++) {
-        for (int j = 0; j < NUM_SPHERES; j++) {
-            if (g(i * NUM_SPHERES + j) <= 0) {
+        for (int j = 0; j < num_spheres; j++) {
+            if (g(i * num_spheres + j) <= 0) {
                 std::cout << "        KinovaCustomizedConstraints.cpp: Sphere " << j 
                           << " corresponding to link " << sphere_joint_id[j]
                           << " at time instance " << i 

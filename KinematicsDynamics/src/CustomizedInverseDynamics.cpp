@@ -123,8 +123,8 @@ void CustomizedInverseDynamics::compute(const VecX& z,
         tau(i) = VecX::Zero(trajPtr_->Nact);
 
         if (compute_derivatives) {
-            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, z.size());
-            plambda_pz(i) = MatX::Zero(6, z.size());
+            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, trajPtr_->varLength);
+            plambda_pz(i) = MatX::Zero(6, trajPtr_->varLength);
         }
 
         // below is the original Roy Featherstone's inverse dynamics algorithm
@@ -213,7 +213,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
                 if (compute_derivatives) {
                     // compute pv_pz
-                    pv_pz(j) = MatX::Zero(6, z.size());
+                    pv_pz(j) = MatX::Zero(6, trajPtr_->varLength);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
@@ -224,7 +224,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                     }
 
                     // compute pa_pz
-                    pa_pz(j) = MatX::Zero(6, z.size());
+                    pa_pz(j) = MatX::Zero(6, trajPtr_->varLength);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {

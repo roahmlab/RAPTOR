@@ -582,6 +582,19 @@ target_link_libraries(KinematicsConstraints_test PUBLIC
 target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(CustomizedInverseDynamics_test 
+    Tests/KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
+
+target_link_libraries(CustomizedInverseDynamics_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(CustomizedInverseDynamics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 ## Install
 install(TARGETS 
     trajlib
