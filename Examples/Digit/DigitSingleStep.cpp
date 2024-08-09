@@ -20,18 +20,6 @@ int main(int argc, char* argv[]) {
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = GRAVITY;
-
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    if (model.nq != 36) {
-        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
-    }
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 4, 5, 6, 1, 2, 3, 
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
     
     // ignore friction for now
     model.friction.setZero();
@@ -78,15 +66,15 @@ int main(int argc, char* argv[]) {
 
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
-    // if (argc > 1) {
-    //     char* end = nullptr;
-    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-    // }
-    // else {
-    //     std::srand(std::time(nullptr));
-    // }
-    // Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
+    if (argc > 1) {
+        char* end = nullptr;
+        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    }
+    else {
+        std::srand(std::time(nullptr));
+    }
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
@@ -96,7 +84,6 @@ int main(int argc, char* argv[]) {
                               time_discretization,
                               degree,
                               model,
-                              jtype,
                               gp);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
@@ -180,7 +167,6 @@ int main(int argc, char* argv[]) {
         //                             TimeDiscretization::Uniform,
         //                             degree,
         //                             model,
-        //                             jtype,
         //                             gp,
         //                             'L',
         //                             Transform(3, -M_PI / 2),

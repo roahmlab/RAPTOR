@@ -18,7 +18,7 @@ public:
 	ForwardKinematicsSolver() = default;
 
 	ForwardKinematicsSolver(const Model* model_input,
-							const Eigen::VectorXi& jtype_input);
+							Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
 	~ForwardKinematicsSolver() = default;

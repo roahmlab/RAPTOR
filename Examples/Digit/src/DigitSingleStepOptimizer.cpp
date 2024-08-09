@@ -21,7 +21,6 @@ bool DigitSingleStepOptimizer::set_parameters(
     const TimeDiscretization time_discretization_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const GaitParameters& gp_input,
     const char stanceLeg,
     const Transform& stance_foot_T_des,
@@ -54,7 +53,6 @@ bool DigitSingleStepOptimizer::set_parameters(
     dcidPtr_ = std::make_shared<DigitConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
                                                                  NUM_DEPENDENT_JOINTS, 
-                                                                 jtype_input, 
                                                                  stanceLeg, 
                                                                  stance_foot_T_des);                                                          
     cidPtr_ = dcidPtr_; // convert to base class
@@ -94,7 +92,6 @@ bool DigitSingleStepOptimizer::set_parameters(
 
     // kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<DigitCustomizedConstraints>(model_input, 
-                                                                              jtype_input, 
                                                                               trajPtr_, 
                                                                               dcidPtr_->ddcPtr_,
                                                                               gp_input));    

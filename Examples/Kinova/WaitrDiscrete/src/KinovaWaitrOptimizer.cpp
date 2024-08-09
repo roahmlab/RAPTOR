@@ -1,28 +1,28 @@
-#include "KinovaOptimizer.h"
+#include "KinovaWaitrOptimizer.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
-// KinovaOptimizer::KinovaOptimizer()
+// KinovaWaitrOptimizer::KinovaWaitrOptimizer()
 // {
 // }
 
 
 // // destructor
-// KinovaOptimizer::~KinovaOptimizer()
+// KinovaWaitrOptimizer::~KinovaWaitrOptimizer()
 // {
 // }
 
 // [TNLP_set_parameters]
-bool KinovaOptimizer::set_parameters(
+bool KinovaWaitrOptimizer::set_parameters(
     const VecX& x0_input,
     const double T_input,
     const int N_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const ArmourTrajectoryParameters& atp_input,
+    const contactSurfaceParams& csp_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
     const std::vector<Vec3>& boxSize_input,
@@ -33,19 +33,24 @@ bool KinovaOptimizer::set_parameters(
     const VecX& torque_limits_buffer_input
  ) 
 {
-    enable_hessian = true;
+    enable_hessian = false;
+
     x0 = x0_input;
     qdes = qdes_input;
     tplan_n = tplan_n_input;
 
     trajPtr_ = std::make_shared<ArmourBezierCurves>(T_input, 
                                                     N_input, 
-                                                    model_input.nq, 
+                                                    model_input.nq - 1, 
                                                     Chebyshev, 
                                                     atp_input);
 
-    idPtr_ = std::make_shared<InverseDynamics>(model_input,
-                                               trajPtr_);
+    Eigen::VectorXi jtype = convertPinocchioJointType(model_input);    
+    jtype(jtype.size() - 1) = 0; // The last joint, which connects the tray and the object, should be a fixed joint                                 
+
+    idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
+                                                         trajPtr_,
+                                                         jtype);
     
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
@@ -85,15 +90,24 @@ bool KinovaOptimizer::set_parameters(
                                                                 idPtr_,
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("torque limits");                                                            
+    constraintsNameVec_.push_back("torque limits");   
+
+    // Contact constraints with the object
+    constraintsPtrVec_.push_back(std::make_unique<WaitrContactConstraints>(idPtr_, 
+                                                                           csp_input));                                                         
+    constraintsNameVec_.push_back("contact constraints");
 
     // Customized constraints (collision avoidance with obstacles)
+    Model model_reduced;
+    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model_input.nv};
+    pinocchio::buildReducedModel(model_input, list_of_joints_to_lock_by_id, VecX::Zero(model_input.nv), model_reduced);
+    Eigen::VectorXi jtype_reduced = jtype.head(model_reduced.nv);
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
-                                                                               model_input,
-                                                                               jtype_input,
+                                                                               model_reduced,
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
-                                                                               boxSize_input));   
+                                                                               boxSize_input,
+                                                                               jtype_reduced));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
@@ -106,7 +120,7 @@ bool KinovaOptimizer::set_parameters(
 
 // [TNLP_get_nlp_info]
 // returns some info about the nlp
-bool KinovaOptimizer::get_nlp_info(
+bool KinovaWaitrOptimizer::get_nlp_info(
    Index&          n,
    Index&          m,
    Index&          nnz_jac_g,
@@ -137,7 +151,7 @@ bool KinovaOptimizer::get_nlp_info(
 
 // [TNLP_eval_f]
 // returns the value of the objective function
-bool KinovaOptimizer::eval_f(
+bool KinovaWaitrOptimizer::eval_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -158,11 +172,9 @@ bool KinovaOptimizer::eval_f(
                 pow(Utils::wrapToPi(qplan[2] - qdes[2]), 2) + 
                 pow(Utils::wrapToPi(qplan[4] - qdes[4]), 2) + 
                 pow(Utils::wrapToPi(qplan[6] - qdes[6]), 2) + 
-                pow(qplan[1] - qdes[1], 2) +                  // These are not continuous joints
+                pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
                 pow(qplan[3] - qdes[3], 2) + 
                 pow(qplan[5] - qdes[5], 2);
-
-    obj_value = 0.5 * obj_value;
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -172,7 +184,7 @@ bool KinovaOptimizer::eval_f(
 
 // [TNLP_eval_grad_f]
 // return the gradient of the objective function grad_{x} f(x)
-bool KinovaOptimizer::eval_grad_f(
+bool KinovaWaitrOptimizer::eval_grad_f(
    Index         n,
    const Number* x,
    bool          new_x,
@@ -180,7 +192,7 @@ bool KinovaOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -190,53 +202,18 @@ bool KinovaOptimizer::eval_grad_f(
     const VecX& qplan = trajPtr_->q(tplan_n);
     const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);
 
-    Number qdiff = 0;
     for(Index i = 0; i < n; i++){
         if (i % 2 == 0) {
-            qdiff = Utils::wrapToPi(qplan[i] - qdes[i]);
+            grad_f[i] = (2 * Utils::wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
         }
         else {
-            qdiff = qplan[i] - qdes[i];
+            grad_f[i] = (2 * (qplan[i] - qdes[i]) * pqplan_pz(i, i));
         }
-        
-        grad_f[i] = qdiff * pqplan_pz(i, i);
     }
 
     return true;
 }
 // [TNLP_eval_grad_f]
-
-// [TNLP_eval_hess_f]
-// return the hessian of the objective function hess_{x} f(x) as a dense matrix
-bool KinovaOptimizer::eval_hess_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   MatX&         hess_f
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    trajPtr_->compute(z, true, true);
-
-    const VecX& qplan = trajPtr_->q(tplan_n);
-    const MatX& pqplan_pz = trajPtr_->pq_pz(tplan_n);
-    // we know the following is just 0
-    // const Eigen::Array<MatX, Eigen::Dynamic, 1>& pqplan_pz_pz = trajPtr_->pq_pz_pz.col(tplan_n);
-
-    hess_f = MatX::Zero(n, n);
-
-    for(Index i = 0; i < n; i++){
-        hess_f(i, i) = pqplan_pz(i, i) * pqplan_pz(i, i);
-    }
-
-    return true;
-}
-// [TNLP_eval_hess_f]
 
 }; // namespace Kinova
 }; // namespace RAPTOR

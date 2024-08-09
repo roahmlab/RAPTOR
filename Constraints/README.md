@@ -42,5 +42,3 @@ The contact wrench contains 6 elements (`fx`, `fy`, `fz`, `mx`, `my`, `mz`).
 `fx`, `fy`, `fz` represents the translational contact force in the local frame.
 `mx`, `my`, `mz` represents the rotational contact moment in the local frame.
 There are several conditions for the object to stay on the end effector:
-
-1. adsads

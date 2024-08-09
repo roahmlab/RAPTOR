@@ -4,14 +4,12 @@ namespace RAPTOR {
 namespace Talos {
 
 TalosDynamicsConstraints::TalosDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
-                                                   const Eigen::VectorXi& jtype_input,
                                                    char stanceLeg_input, 
                                                    const Transform& stance_foot_T_des_input) :
     modelPtr_(modelPtr_input),
-    jtype(jtype_input),
     stanceLeg(stanceLeg_input),
     DynamicsConstraints(modelPtr_input->nv, NUM_DEPENDENT_JOINTS) {
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
         if (modelPtr_->existJointName(dependentJointNames[i])) {

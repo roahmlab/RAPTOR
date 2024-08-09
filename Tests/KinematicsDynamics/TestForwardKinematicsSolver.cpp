@@ -11,16 +11,7 @@ int main() {
     pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::Data data(model);
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 4, 5, 6, 1, 2, 3, 
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
-
-    ForwardKinematicsSolver fkSolver(&model, jtype);
+    ForwardKinematicsSolver fkSolver(&model);
 
     // set joint angles
     std::srand(std::time(nullptr));

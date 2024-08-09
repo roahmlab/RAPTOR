@@ -29,9 +29,9 @@ public:
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
-        const Transform& desiredTransform_input
+        const Model& model_input,
+        const Transform& desiredTransform_input,
+        Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
     /**@name Overloaded from TNLP */

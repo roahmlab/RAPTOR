@@ -30,7 +30,6 @@ public:
 
     // Constructor
     DigitCustomizedConstraints(const Model& model_input,
-                               const Eigen::VectorXi& jtype_input,
                                std::shared_ptr<Trajectories>& trajPtr_input,
                                std::shared_ptr<DigitDynamicsConstraints>& dcPtr_input,
                                const GaitParameters& gp_input);
@@ -59,9 +58,6 @@ public:
     std::unique_ptr<Model> modelPtr_;
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
-
-        // jtype copy
-    Eigen::VectorXi jtype;
 
         // swing foot information
     Model::JointIndex swingfoot_id = 0;

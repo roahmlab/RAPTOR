@@ -1,11 +1,11 @@
-#ifndef KINOVA_PYBIND_WRAPPER_H
-#define KINOVA_PYBIND_WRAPPER_H
+#ifndef KINOVA_WAITR_PYBIND_WRAPPER_H
+#define KINOVA_WAITR_PYBIND_WRAPPER_H
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 
-#include "KinovaOptimizer.h"
+#include "KinovaWaitrOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -15,7 +15,7 @@ namespace Kinova {
 
 namespace nb = nanobind;
 
-class KinovaPybindWrapper {
+class KinovaWaitrPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
@@ -26,15 +26,19 @@ public:
     using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
-    KinovaPybindWrapper() = default;
+    KinovaWaitrPybindWrapper() = default;
 
-    KinovaPybindWrapper(const std::string urdf_filename);
+    KinovaWaitrPybindWrapper(const std::string urdf_filename);
 
     // Destructor
-    ~KinovaPybindWrapper() = default;
+    ~KinovaWaitrPybindWrapper() = default;
 
     // Class methods
     void set_obstacles(const nb_2d_double obstacles_inp);
+
+    void set_contact_surface_parameters(const double mu_inp,
+                                        const double Lx_inp,
+                                        const double Ly_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double obj_scaling_factor,
@@ -61,7 +65,8 @@ public:
     // Class members
     // robot model
     Model model;
-    Eigen::VectorXi jtype;
+
+    int actual_model_nq = 0;
 
     // obstacle information
     int num_obstacles = 0;
@@ -73,17 +78,20 @@ public:
     ArmourTrajectoryParameters atp;
     double T = 1;
     int N = 16;
-    int degree = 5;
+    int degree = ARMOUR_BEZIER_CURVE_DEGREE;
     VecX qdes;
     double tplan = 0;
     int tplan_n = 0;
+
+    // contact surface parameters
+    contactSurfaceParams csp;
 
     // buffer information
     VecX joint_limits_buffer;
     VecX velocity_limits_buffer;
     VecX torque_limits_buffer;
     
-    SmartPtr<KinovaOptimizer> mynlp;
+    SmartPtr<KinovaWaitrOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
     // Flags to check if the parameters are set
@@ -97,4 +105,4 @@ public:
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // KINOVA_PYBIND_WRAPPER_H
+#endif // KINOVA_WAITR_PYBIND_WRAPPER_H

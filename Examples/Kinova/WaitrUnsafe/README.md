@@ -1,1 +1,0 @@
-This folder contains an implementation of an unsafe version of [WAITR](https://roahmlab.github.io/waitr-dev/).

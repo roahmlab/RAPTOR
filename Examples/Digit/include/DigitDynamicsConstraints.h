@@ -70,7 +70,6 @@ public:
 
     // Constructor
     DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
-                             const Eigen::VectorXi& jtype_input, 
                              char stanceLeg, 
                              const Transform& stance_foot_T_des_input);
 
@@ -155,9 +154,6 @@ public:
         // dep/indep joint indeces
     int dependentJointIds[NUM_DEPENDENT_JOINTS] = {0};
     int independentJointIds[NUM_INDEPENDENT_JOINTS] = {0};
-
-        // jtype copy
-    Eigen::VectorXi jtype;
 
         // for contact constraints (forward kinematics mainly)
     Model::JointIndex contact_joint_id = 0;

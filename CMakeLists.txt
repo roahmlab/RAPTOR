@@ -103,7 +103,6 @@ add_library(trajlib SHARED
     Trajectories/src/FixedFrequencyFourierCurves.cpp
     Trajectories/src/BezierCurves.cpp 
     Trajectories/src/ArmourBezierCurves.cpp
-    Trajectories/src/WaitrBezierCurves.cpp
     Trajectories/src/Polynomials.cpp 
     Trajectories/src/Plain.cpp
     Trajectories/src/TrajectoryGroup.cpp)
@@ -204,33 +203,33 @@ target_link_libraries(Taloslib PUBLIC
 target_include_directories(Taloslib PUBLIC
     Examples/Talos/include)
 
-## Digit-modified library
-add_library(DigitModifiedlib SHARED
-    Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
-    Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
-    Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
-    Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
-    Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
+# ## Digit-modified library
+# add_library(DigitModifiedlib SHARED
+#     Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
+#     Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
+#     Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
+#     Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
+#     Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
 
-target_link_libraries(DigitModifiedlib PUBLIC
-    trajlib
-    IDlib
-    Conslib
-    Optlib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
+# target_link_libraries(DigitModifiedlib PUBLIC
+#     trajlib
+#     IDlib
+#     Conslib
+#     Optlib
+#     ipopt
+#     coinhsl
+#     ${BOOST_LIBRARIES} 
+#     pinocchio::pinocchio)
 
-target_include_directories(DigitModifiedlib PUBLIC
-    Examples/Digit-modified/include)
+# target_include_directories(DigitModifiedlib PUBLIC
+#     Examples/Digit-modified/include)
 
 # Kinova libraries
 add_library(Kinovalib SHARED
     Examples/Kinova/InverseKinematics/KinovaIKSolver.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
-    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaOptimizer.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
+    Examples/Kinova/WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     Examples/Kinova/SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
@@ -247,18 +246,18 @@ target_link_libraries(Kinovalib PUBLIC
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova
     Examples/Kinova/InverseKinematics
-    Examples/Kinova/ArmourUnsafe/include
-    Examples/Kinova/WaitrUnsafe/include
+    Examples/Kinova/ArmourDiscrete/include
+    Examples/Kinova/WaitrDiscrete/include
     Examples/Kinova/SystemIdentification/DataFilter/include
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
 
 ## Example scripts
 add_executable(Digit_example 
-    # Examples/Digit/DigitSingleStep.cpp)
+    Examples/Digit/DigitSingleStep.cpp)
     # Examples/Digit/DigitSingleStepSpeedTest.cpp)
     # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
-    Examples/Digit/DigitSingleStepFixedPosition.cpp)
+    # Examples/Digit/DigitSingleStepFixedPosition.cpp)
 
 target_include_directories(Digit_example PUBLIC
     Examples/Digit/include
@@ -364,28 +363,28 @@ target_link_libraries(TalosMultipleStep_example PRIVATE
 target_compile_options(TalosMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-add_executable(DigitModified_example 
-    Examples/Digit-modified/DigitModifiedSingleStep.cpp)
-    # Examples/Digit-modified/DigitModifiedSingleStepSpeedTest.cpp)
-    # Examples/Digit-modified/DigitModifiedSingleStepRobustnessTest.cpp)
+# add_executable(DigitModified_example 
+#     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
+#     # Examples/Digit-modified/DigitModifiedSingleStepSpeedTest.cpp)
+#     # Examples/Digit-modified/DigitModifiedSingleStepRobustnessTest.cpp)
 
-target_include_directories(DigitModified_example PUBLIC
-    Examples/Digit-modified/include)
+# target_include_directories(DigitModified_example PUBLIC
+#     Examples/Digit-modified/include)
 
-target_link_libraries(DigitModified_example PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    DigitModifiedlib
-    ipopt
-    coinhsl
-    yaml-cpp
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
+# target_link_libraries(DigitModified_example PUBLIC
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     DigitModifiedlib
+#     ipopt
+#     coinhsl
+#     yaml-cpp
+#     ${BOOST_LIBRARIES} 
+#     pinocchio::pinocchio)
 
-target_compile_options(DigitModified_example PUBLIC
-    ${PINOCCHIO_FLAGS})
+# target_compile_options(DigitModified_example PUBLIC
+#     ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaIK_example 
     Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)
@@ -409,11 +408,11 @@ target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Kinova_example 
-    Examples/Kinova/ArmourUnsafe/KinovaExample.cpp)
+    Examples/Kinova/ArmourDiscrete/KinovaExample.cpp)
 
 target_include_directories(Kinova_example PUBLIC
     Examples/Kinova
-    Examples/Kinova/ArmourUnsafe/include)
+    Examples/Kinova/ArmourDiscrete/include)
 
 target_link_libraries(Kinova_example PUBLIC
     trajlib 
@@ -430,11 +429,11 @@ target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaWaitr_example 
-    Examples/Kinova/WaitrUnsafe/KinovaWaitrExample.cpp)
+    Examples/Kinova/WaitrDiscrete/KinovaWaitrExample.cpp)
 
 target_include_directories(KinovaWaitr_example PUBLIC
     Examples/Kinova
-    Examples/Kinova/WaitrUnsafe/include)
+    Examples/Kinova/WaitrDiscrete/include)
 
 target_link_libraries(KinovaWaitr_example PUBLIC
     trajlib 
@@ -494,12 +493,12 @@ target_compile_options(KinovaSysId_example PUBLIC
 
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO
-    Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaPybindWrapper.cpp)
+    Examples/Kinova/ArmourDiscrete/KinovaPybind.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaPybindWrapper.cpp)
 
 target_include_directories(oracle_nanobind PUBLIC
     Examples/Kinova
-    Examples/Kinova/ArmourUnsafe/include)
+    Examples/Kinova/ArmourDiscrete/include)
 
 target_link_libraries(oracle_nanobind PUBLIC
     trajlib 
@@ -519,12 +518,12 @@ nanobind_compile_options(oracle_nanobind PUBLIC
 set_property(TARGET oracle_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 nanobind_add_module(oracle_waitr_nanobind SHARED
-    Examples/Kinova/WaitrUnsafe/KinovaWaitrPybind.cpp
-    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrPybindWrapper.cpp)
+    Examples/Kinova/WaitrDiscrete/KinovaWaitrPybind.cpp
+    Examples/Kinova/WaitrDiscrete/src/KinovaWaitrPybindWrapper.cpp)
 
 target_include_directories(oracle_waitr_nanobind PUBLIC
     Examples/Kinova
-    Examples/Kinova/WaitrUnsafe/include)
+    Examples/Kinova/WaitrDiscrete/include)
 
 target_link_libraries(oracle_waitr_nanobind PUBLIC
     trajlib 
@@ -583,6 +582,19 @@ target_link_libraries(KinematicsConstraints_test PUBLIC
 target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(CustomizedInverseDynamics_test 
+    Tests/KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
+
+target_link_libraries(CustomizedInverseDynamics_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(CustomizedInverseDynamics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 ## Install
 install(TARGETS 
     trajlib
@@ -592,6 +604,6 @@ install(TARGETS
     Kinovalib
     Digitlib
     Taloslib
-    DigitModifiedlib
+    # DigitModifiedlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

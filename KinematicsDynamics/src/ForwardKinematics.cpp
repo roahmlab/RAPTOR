@@ -2,18 +2,19 @@
 
 namespace RAPTOR {
 
-// ForwardKinematicsSolver::ForwardKinematicsSolver() {
-//     q_copy = VecX::Zero(0);
-// }
-
 ForwardKinematicsSolver::ForwardKinematicsSolver(const Model* model_input,
-										         const Eigen::VectorXi& jtype_input) : 
+										         Eigen::VectorXi jtype_input) : 
     modelPtr_(model_input),
     jtype(jtype_input) {
-    if (modelPtr_->nv != jtype.size()) {
-        std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
-        std::cerr << "jtype.size() = " << jtype.size() << std::endl;
-        throw std::invalid_argument("modelPtr_->nv != jtype.size()");
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size() = " << jtype.size() << std::endl;
+            throw std::invalid_argument("modelPtr_->nv != jtype.size()");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
     }
 }
 

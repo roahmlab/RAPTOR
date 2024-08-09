@@ -3,15 +3,40 @@
 namespace RAPTOR {
 
 CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input, 
-                                                     const Eigen::VectorXi& jtype_input,
-                                                     const std::shared_ptr<Trajectories>& trajPtr_input) {   
-    jtype = jtype_input;
+                                                     const std::shared_ptr<Trajectories>& trajPtr_input,
+                                                     Eigen::VectorXi jtype_input) : 
+    jtype(jtype_input) {
     trajPtr_ = trajPtr_input;
     N = trajPtr_->N;
 
     modelPtr_ = std::make_shared<Model>(model_input);
     dataPtr_ = std::make_shared<Data>(model_input);
 
+    // sanity check on consistency on jtype
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "model.nv: " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size(): " << jtype.size() << std::endl;
+            throw std::invalid_argument("CustomizedInverseDynamics: total number of joints in jtype not consistent with model!");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
+    }
+
+    active_joints.clear();
+    for (int i = 0; i < jtype.size(); i++) {
+        if (jtype(i) != 0) {
+            active_joints.push_back(i);
+        }
+    }
+    if (active_joints.size() != trajPtr_->Nact) {
+        std::cerr << "active_joints: " << active_joints.size() << std::endl;
+        std::cerr << "trajPtr_->Nact: " << trajPtr_->Nact << std::endl;
+        throw std::invalid_argument("CustomizedInverseDynamics: actuated joints in jtype not consistent with trajectory pointer!");
+    }
+
+    // initialize the arrays for kinematics and dynamics
     Xtree.resize(1, modelPtr_->nv);
     I.resize(1, modelPtr_->nv);
 
@@ -33,6 +58,7 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
     a_grav << modelPtr_->gravity.angular(),
               modelPtr_->gravity.linear();
 
+    // allocate memory for the arrays
     Xup.resize(1, modelPtr_->nv);
     dXupdq.resize(1, modelPtr_->nv);
     S.resize(1, modelPtr_->nv);
@@ -48,6 +74,24 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
     
     lambda.resize(1, N);  
     plambda_pz.resize(1, N);
+}
+
+Eigen::VectorXd CustomizedInverseDynamics::get_full_joints(const VecX& q) const {
+    Eigen::VectorXd q_full(modelPtr_->nq);
+    q_full.setZero();
+    for (int i = 0; i < active_joints.size(); i++) {
+        q_full(active_joints[i]) = q(i);
+    }
+    return q_full;
+}
+
+Eigen::MatrixXd CustomizedInverseDynamics::get_full_joints_derivative(const MatX& q) const {
+    Eigen::MatrixXd q_full_derivative(modelPtr_->nq, q.cols());
+    q_full_derivative.setZero();
+    for (int i = 0; i < active_joints.size(); i++) {
+        q_full_derivative.row(active_joints[i]) = q.row(i);
+    }
+    return q_full_derivative;
 }
 
 void CustomizedInverseDynamics::compute(const VecX& z,
@@ -68,19 +112,19 @@ void CustomizedInverseDynamics::compute(const VecX& z,
     }
 
     for (int i = 0; i < N; i++) {
-        const VecX& q = trajPtr_->q(i);
-        const VecX& q_d = trajPtr_->q_d(i);
-        const VecX& q_dd = trajPtr_->q_dd(i);
+        const VecX q = get_full_joints(trajPtr_->q(i));
+        const VecX q_d = get_full_joints(trajPtr_->q_d(i));
+        const VecX q_dd = get_full_joints(trajPtr_->q_dd(i));
 
-        const MatX& pq_pz = trajPtr_->pq_pz(i);
-        const MatX& pq_d_pz = trajPtr_->pq_d_pz(i);
-        const MatX& pq_dd_pz = trajPtr_->pq_dd_pz(i);
+        const MatX pq_pz = get_full_joints_derivative(trajPtr_->pq_pz(i));
+        const MatX pq_d_pz = get_full_joints_derivative(trajPtr_->pq_d_pz(i));
+        const MatX pq_dd_pz = get_full_joints_derivative(trajPtr_->pq_dd_pz(i));
 
         tau(i) = VecX::Zero(trajPtr_->Nact);
 
         if (compute_derivatives) {
-            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, z.size());
-            plambda_pz(i) = MatX::Zero(6, z.size());
+            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, trajPtr_->varLength);
+            plambda_pz(i) = MatX::Zero(6, trajPtr_->varLength);
         }
 
         // below is the original Roy Featherstone's inverse dynamics algorithm
@@ -169,7 +213,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
                 if (compute_derivatives) {
                     // compute pv_pz
-                    pv_pz(j) = MatX::Zero(6, z.size());
+                    pv_pz(j) = MatX::Zero(6, trajPtr_->varLength);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
@@ -180,7 +224,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                     }
 
                     // compute pa_pz
-                    pa_pz(j) = MatX::Zero(6, z.size());
+                    pa_pz(j) = MatX::Zero(6, trajPtr_->varLength);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {

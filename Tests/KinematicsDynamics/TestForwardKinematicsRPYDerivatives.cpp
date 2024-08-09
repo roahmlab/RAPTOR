@@ -20,15 +20,13 @@ public:
 
     bool set_parameters(
         const VecX& x0_input,
-        const Model& model_input, 
-        const Eigen::VectorXi& jtype_input
+        const Model& model_input
     ) {
         enable_hessian = true;
         x0 = x0_input;
         model = model_input;
-        jtype = jtype_input;
 
-        fkPtr_ = std::make_unique<ForwardKinematicsSolver>(&model, jtype);
+        fkPtr_ = std::make_unique<ForwardKinematicsSolver>(&model);
 
         return true;
     }
@@ -167,7 +165,6 @@ public:
     );
 
     Model model;
-    Eigen::VectorXi jtype;
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
@@ -183,21 +180,13 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3;
-
     Eigen::VectorXd z0 = Eigen::VectorXd::Random(model.nq);
 
     // Initialize gradient checker
     SmartPtr<FKGradientChecker> mynlp = new FKGradientChecker();
     try {
 	    mynlp->set_parameters(z0,
-                              model,
-                              jtype);
+                              model);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

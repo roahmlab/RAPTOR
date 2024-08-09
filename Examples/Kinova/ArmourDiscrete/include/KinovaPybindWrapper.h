@@ -1,11 +1,11 @@
-#ifndef KINOVA_WAITR_PYBIND_WRAPPER_H
-#define KINOVA_WAITR_PYBIND_WRAPPER_H
+#ifndef KINOVA_PYBIND_WRAPPER_H
+#define KINOVA_PYBIND_WRAPPER_H
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 
-#include "KinovaWaitrOptimizer.h"
+#include "KinovaOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -15,7 +15,7 @@ namespace Kinova {
 
 namespace nb = nanobind;
 
-class KinovaWaitrPybindWrapper {
+class KinovaPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
@@ -26,12 +26,12 @@ public:
     using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
-    KinovaWaitrPybindWrapper() = default;
+    KinovaPybindWrapper() = default;
 
-    KinovaWaitrPybindWrapper(const std::string urdf_filename);
+    KinovaPybindWrapper(const std::string urdf_filename);
 
     // Destructor
-    ~KinovaWaitrPybindWrapper() = default;
+    ~KinovaPybindWrapper() = default;
 
     // Class methods
     void set_obstacles(const nb_2d_double obstacles_inp);
@@ -61,9 +61,6 @@ public:
     // Class members
     // robot model
     Model model;
-    Eigen::VectorXi jtype;
-
-    int actual_model_nq = 0;
 
     // obstacle information
     int num_obstacles = 0;
@@ -72,23 +69,20 @@ public:
     std::vector<Vec3> boxSize;
 
     // trajectory information
-    WaitrTrajectoryParameters atp;
+    ArmourTrajectoryParameters atp;
     double T = 1;
     int N = 16;
-    int degree = WAITR_BEZIER_CURVE_DEGREE;
+    int degree = 5;
     VecX qdes;
     double tplan = 0;
     int tplan_n = 0;
-
-    // contact surface parameters
-    contactSurfaceParams csp;
 
     // buffer information
     VecX joint_limits_buffer;
     VecX velocity_limits_buffer;
     VecX torque_limits_buffer;
     
-    SmartPtr<KinovaWaitrOptimizer> mynlp;
+    SmartPtr<KinovaOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
     // Flags to check if the parameters are set
@@ -102,4 +96,4 @@ public:
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // KINOVA_WAITR_PYBIND_WRAPPER_H
+#endif // KINOVA_PYBIND_WRAPPER_H

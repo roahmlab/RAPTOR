@@ -23,17 +23,6 @@ int main() {
     model.damping.setZero();
     model.friction.setZero();
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    if (model.nq != 8) {
-        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
-    }
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3, 
-             0; // the last joint is a fixed joint
-
     // Define obstacles
     const int num_obstacles = 2;
     std::vector<Eigen::Vector3d> boxCenters;
@@ -51,14 +40,15 @@ int main() {
     }
 
     // Define trajectories
-    WaitrTrajectoryParameters atp;
+    ArmourTrajectoryParameters atp;
     atp.q0 = Eigen::VectorXd::Zero(actual_model_nq);
+    atp.q0(1) = -M_PI / 2;
     atp.q_d0 = Eigen::VectorXd::Zero(actual_model_nq);
     atp.q_dd0 = Eigen::VectorXd::Zero(actual_model_nq);
 
     const double T = 1;
     const int N = 16;
-    const int degree = WAITR_BEZIER_CURVE_DEGREE;
+    const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define contact surface parameters
     contactSurfaceParams csp;
@@ -125,7 +115,6 @@ int main() {
                               N,
                               degree,
                               model,
-                              jtype,
                               atp,
                               csp,
                               boxCenters,

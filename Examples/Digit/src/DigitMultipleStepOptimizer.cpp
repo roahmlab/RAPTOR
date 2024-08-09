@@ -22,7 +22,6 @@ bool DigitMultipleStepOptimizer::set_parameters(
     const TimeDiscretization time_discretization_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const std::vector<GaitParameters>& gps_input
 ) 
 {
@@ -49,7 +48,6 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                        time_discretization_input,
                                        degree_input,
                                        model_input, 
-                                       jtype_input,
                                        gps_input[i],
                                        stanceLeg,
                                        stance_foot_T_des,

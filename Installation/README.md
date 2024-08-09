@@ -1,13 +1,13 @@
 # Installation of required packages
 
-First clone the repository with its submodules (pybind11)
+First clone the repository
 ```
-git clone --recurse-submodules https://github.com/roahmlab/RAPTOR.git
+git clone https://github.com/roahmlab/RAPTOR.git
 ```
 
 ## Install Through Docker (Recommended)
 We strongly suggest you use docker.
-We have provided a docker file.
+We have provided a docker file at `docker/Dockerfile`.
 
 We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
@@ -21,7 +21,7 @@ You need to do this BEFORE you build the docker image.
 Finally, in Visual Studio Code, simply click "ctrl+shift+P" and search "Dev Containers: Rebuild Container",
 it will build the environment automatically for you from [docker/Dockerfile](../docker/Dockerfile) so that you don't need to follow the steps below.
 
-## Install Independently
+## Install Required Packages Independently
 All of the following instructions are assuming that the packages are installed to root directories,
 like /usr/local or /usr.
 You might need to edit your ~/.basrc so that the environment variable PATH includes /usr/local/bin and
@@ -56,18 +56,11 @@ sudo apt install libeigen3-dev
 In Ubuntu 20.04, you need to go to the official [website](https://eigen.tuxfamily.org/index.php?title=3.4) and manually install it.
 
 ### pinocchio
-Please refer to this [link](https://stack-of-tasks.github.io/pinocchio/download.html).
-Go to "Build from source" page. 
-Follow the instructions there.
-Note that if you encounter any problem regarding python binding (like, eigenpy), go to the CMakeLists.txt in the main folder, change flag BUILD_PYTHON_INTERFACE to OFF, and redo all the procedures.
-Specifically, run the following command
-```
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_PYTHON_INTERFACE=OFF
-```
+Please refer to the offical website [link](https://stack-of-tasks.github.io/pinocchio/download.html).
 
-### Qhull (Not used for now)
+<!-- ### Qhull (Not used for now)
 Please refer to this [link](http://www.qhull.org/download/)
-Build from source in the downloaded folder so that the libraries are installed in /usr/local/
+Build from source in the downloaded folder so that the libraries are installed in /usr/local/ -->
 
 ### Ipopt
 Please refer to this [link](https://coin-or.github.io/Ipopt/INSTALL.html).

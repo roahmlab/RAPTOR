@@ -22,27 +22,27 @@ public:
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                           const Model* model_input,
-                          const Eigen::VectorXi& jtype_input,
                           const size_t joint_id_input,
                           const size_t time_id_input,
                           const Transform& desiredTransform_input,
-                          const Transform endT_input = Transform());
+                          const Transform endT_input = Transform(),
+                          Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                           const Model* model_input,
-                          const Eigen::VectorXi& jtype_input,
                           const size_t joint_id_input,
                           const size_t time_id_input,
                           const Vec3& desiredPosition_input,
-                          const Transform endT_input = Transform());
+                          const Transform endT_input = Transform(),
+                          Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                           const Model* model_input,
-                          const Eigen::VectorXi& jtype_input,
                           const size_t joint_id_input,
                           const size_t time_id_input,
                           const Mat3& desiredRotation_input,
-                          const Transform endT_input = Transform());
+                          const Transform endT_input = Transform(),
+                          Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
     ~KinematicsConstraints() = default;
@@ -62,7 +62,6 @@ public:
     std::shared_ptr<Trajectories>& trajPtr_;
 
     const Model* modelPtr_ = nullptr;
-    Eigen::VectorXi jtype;
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 

@@ -22,7 +22,6 @@ bool TalosMultipleStepOptimizer::set_parameters(
     const TimeDiscretization time_discretization_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const std::vector<GaitParameters>& gps_input
 ) 
 {
@@ -45,8 +44,7 @@ bool TalosMultipleStepOptimizer::set_parameters(
                                        N_input,
                                        time_discretization_input,
                                        degree_input,
-                                       model_input, 
-                                       jtype_input,
+                                       model_input,
                                        gps_input[i],
                                        stanceLeg);
     }

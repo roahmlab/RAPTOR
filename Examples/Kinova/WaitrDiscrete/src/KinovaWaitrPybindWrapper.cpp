@@ -11,30 +11,15 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
 
     model.gravity.linear()(2) = GRAVITY;
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    if (model.nq != 8) {
-        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
-    }
-    jtype.resize(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3, 
-             3;
-
-    qdes.resize(actual_model_nq);
+    qdes = VecX::Zero(actual_model_nq);
+    joint_limits_buffer = VecX::Zero(actual_model_nq);
+    velocity_limits_buffer = VecX::Zero(actual_model_nq);
+    torque_limits_buffer = VecX::Zero(actual_model_nq);
 
     mynlp = new KinovaWaitrOptimizer();
     app = IpoptApplicationFactory();
 
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-
-    joint_limits_buffer = VecX::Zero(actual_model_nq);
-    velocity_limits_buffer = VecX::Zero(actual_model_nq);
-    torque_limits_buffer = VecX::Zero(actual_model_nq);
-
-    // TODO: define contact surface parameters
-    // csp.mu = 0.5;
 }
 
 void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
@@ -57,13 +42,21 @@ void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     set_obstacles_check = true;
 }
 
+void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const double mu_inp,
+                                                              const double Lx_inp,
+                                                              const double Ly_inp) {
+    csp.mu = mu_inp;
+    csp.Lx = Lx_inp;
+    csp.Ly = Ly_inp;
+}
+
 void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
-                                               const double obj_scaling_factor,
-                                               const double max_wall_time, 
-                                               const int print_level,
-                                               const std::string mu_strategy,
-                                               const std::string linear_solver,
-                                               const bool gradient_check) {
+                                                    const double obj_scaling_factor,
+                                                    const double max_wall_time, 
+                                                    const int print_level,
+                                                    const std::string mu_strategy,
+                                                    const std::string linear_solver,
+                                                    const bool gradient_check) {
     app->Options()->SetNumericValue("tol", tol);
     app->Options()->SetNumericValue("obj_scaling_factor", obj_scaling_factor);
     app->Options()->SetNumericValue("max_wall_time", max_wall_time);
@@ -75,21 +68,21 @@ void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
     if (gradient_check) {
         app->Options()->SetStringValue("output_file", "ipopt.out");
         app->Options()->SetStringValue("derivative_test", "first-order");
-        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-        app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
+        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+        app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
     }
 
     set_ipopt_parameters_check = true;
 }
 
 void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
-                                                    const nb_1d_double qd0_inp,
-                                                    const nb_1d_double qdd0_inp,
-                                                    const double duration_inp) {
-    if (q0_inp.shape(0) != model.nv || 
-        qd0_inp.shape(0) != model.nv || 
-        qdd0_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("q0, qd0, qdd0 must be of size model.nv");
+                                                         const nb_1d_double qd0_inp,
+                                                         const nb_1d_double qdd0_inp,
+                                                         const double duration_inp) {
+    if (q0_inp.shape(0) != actual_model_nq || 
+        qd0_inp.shape(0) != actual_model_nq || 
+        qdd0_inp.shape(0) != actual_model_nq) {
+        throw std::invalid_argument("q0, qd0, qdd0 must be of size actual_model_nq");
     }
 
     T = duration_inp;
@@ -98,11 +91,11 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
         throw std::invalid_argument("Duration must be positive");
     }
 
-    atp.q0.resize(model.nv);
-    atp.q_d0.resize(model.nv);
-    atp.q_dd0.resize(model.nv);
+    atp.q0.resize(actual_model_nq);
+    atp.q_d0.resize(actual_model_nq);
+    atp.q_dd0.resize(actual_model_nq);
 
-    for (int i = 0; i < model.nv; i++) {
+    for (int i = 0; i < actual_model_nq; i++) {
         atp.q0(i) = q0_inp(i);
         atp.q_d0(i) = qd0_inp(i);
         atp.q_dd0(i) = qdd0_inp(i);
@@ -112,15 +105,15 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
 }
 
 void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                                     const nb_1d_double velocity_limits_buffer_inp,
-                                     const nb_1d_double torque_limits_buffer_inp) {
-    if (joint_limits_buffer_inp.shape(0) != model.nv || 
-        velocity_limits_buffer_inp.shape(0) != model.nv || 
-        torque_limits_buffer_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("joint_limits_buffer, velocity_limits_buffer, torque_limits_buffer must be of size model.nv");
+                                          const nb_1d_double velocity_limits_buffer_inp,
+                                          const nb_1d_double torque_limits_buffer_inp) {
+    if (joint_limits_buffer_inp.shape(0) != actual_model_nq || 
+        velocity_limits_buffer_inp.shape(0) != actual_model_nq || 
+        torque_limits_buffer_inp.shape(0) != actual_model_nq) {
+        throw std::invalid_argument("joint_limits_buffer, velocity_limits_buffer, torque_limits_buffer must be of size actual_model_nq");
     }
 
-    for (int i = 0; i < model.nv; i++) {
+    for (int i = 0; i < actual_model_nq; i++) {
         joint_limits_buffer(i) = joint_limits_buffer_inp(i);
         velocity_limits_buffer(i) = velocity_limits_buffer_inp(i);
         torque_limits_buffer(i) = torque_limits_buffer_inp(i);
@@ -130,18 +123,18 @@ void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer
 }
 
 void KinovaWaitrPybindWrapper::set_target(const nb_1d_double q_des_inp,
-                                     const double tplan_inp) {
+                                          const double tplan_inp) {
     tplan = tplan_inp;
 
     if (tplan <= 0.0 || tplan > T) {
         throw std::invalid_argument("tplan must be greater than 0.0 or smaller than duration");
     }
 
-    if (q_des_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("q_des must be of size model.nv");
+    if (q_des_inp.shape(0) != actual_model_nq) {
+        throw std::invalid_argument("q_des must be of size actual_model_nq");
     }
 
-    for (int i = 0; i < model.nv; i++) {
+    for (int i = 0; i < actual_model_nq; i++) {
         qdes(i) = q_des_inp(i);
     }
 
@@ -170,7 +163,6 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
                               N,
                               degree,
                               model,
-                              jtype,
                               atp,
                               csp,
                               boxCenters,
@@ -214,7 +206,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     set_trajectory_parameters_check = false;
     set_target_check = false;
 
-    const size_t shape_ptr[] = {model.nv};
+    const size_t shape_ptr[] = {actual_model_nq};
     auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
                                                        1,
                                                        shape_ptr,
