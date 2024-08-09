@@ -43,12 +43,18 @@ public:
     ~CustomizedInverseDynamics() = default;
 
     // class methods:
+    VecX get_full_joints(const VecX& q) const;
+
+    MatX get_full_joints_derivative(const MatX& q) const;
+
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false) override; 
 
     // class members:
     Eigen::VectorXi jtype;
+    std::vector<int> active_joints;
+
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
     Vec6 a_grav;

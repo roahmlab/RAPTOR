@@ -14,7 +14,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\base_link.STL"/>
+        <mesh filename="meshes/base_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -23,7 +23,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\base_link.STL"/>
+        <mesh filename="meshes/base_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -37,7 +37,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\shoulder_link.STL"/>
+        <mesh filename="meshes/shoulder_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -46,7 +46,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\shoulder_link.STL"/>
+        <mesh filename="meshes/shoulder_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -68,7 +68,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\half_arm_1_link.STL"/>
+        <mesh filename="meshes/half_arm_1_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -77,7 +77,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\half_arm_1_link.STL"/>
+        <mesh filename="meshes/half_arm_1_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -99,7 +99,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\half_arm_2_link.STL"/>
+        <mesh filename="meshes/half_arm_2_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -108,7 +108,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\half_arm_2_link.STL"/>
+        <mesh filename="meshes/half_arm_2_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -130,7 +130,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\forearm_link.STL"/>
+        <mesh filename="meshes/forearm_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -139,7 +139,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\forearm_link.STL"/>
+        <mesh filename="meshes/forearm_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -161,7 +161,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\spherical_wrist_1_link.STL"/>
+        <mesh filename="meshes/spherical_wrist_1_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -170,7 +170,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\spherical_wrist_1_link.STL"/>
+        <mesh filename="meshes/spherical_wrist_1_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -192,7 +192,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\spherical_wrist_2_link.STL"/>
+        <mesh filename="meshes/spherical_wrist_2_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -201,7 +201,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\spherical_wrist_2_link.STL"/>
+        <mesh filename="meshes/spherical_wrist_2_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -224,7 +224,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\bracelet_with_vision_link.STL"/>
+        <mesh filename="meshes/bracelet_with_vision_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -233,7 +233,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\bracelet_with_vision_link.STL"/>
+        <mesh filename="meshes/bracelet_with_vision_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -281,7 +281,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\base_of_gripper.STL"/>
+        <mesh filename="meshes/base_of_gripper.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.89804 0.91765 0.92941 0.25"/>
@@ -290,7 +290,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\base_of_gripper.STL"/>
+        <mesh filename="meshes/base_of_gripper.STL"/>
       </geometry>
     </collision>
   </link>
@@ -306,7 +306,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_spring_link.STL"/>
+        <mesh filename="meshes/right_spring_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.89804 0.91765 0.92941 1"/>
@@ -315,7 +315,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_spring_link.STL"/>
+        <mesh filename="meshes/right_spring_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -337,7 +337,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_spring_link.STL"/>
+        <mesh filename="meshes/left_spring_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -346,7 +346,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_spring_link.STL"/>
+        <mesh filename="meshes/left_spring_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -368,7 +368,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_driver.STL"/>
+        <mesh filename="meshes/right_driver.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -377,7 +377,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_driver.STL"/>
+        <mesh filename="meshes/right_driver.STL"/>
       </geometry>
     </collision>
   </link>
@@ -399,7 +399,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_coupler.STL"/>
+        <mesh filename="meshes/right_coupler.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -408,7 +408,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_coupler.STL"/>
+        <mesh filename="meshes/right_coupler.STL"/>
       </geometry>
     </collision>
   </link>
@@ -430,7 +430,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_follower.STL"/>
+        <mesh filename="meshes/right_follower.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -439,7 +439,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_follower.STL"/>
+        <mesh filename="meshes/right_follower.STL"/>
       </geometry>
     </collision>
   </link>
@@ -461,7 +461,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_pad.STL"/>
+        <mesh filename="meshes/right_pad.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.529411764705882 0.549019607843137 0.549019607843137 1"/>
@@ -470,7 +470,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\right_pad.STL"/>
+        <mesh filename="meshes/right_pad.STL"/>
       </geometry>
     </collision>
   </link>
@@ -491,7 +491,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_driver.STL"/>
+        <mesh filename="meshes/left_driver.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -500,7 +500,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_driver.STL"/>
+        <mesh filename="meshes/left_driver.STL"/>
       </geometry>
     </collision>
   </link>
@@ -522,7 +522,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_coupler.STL"/>
+        <mesh filename="meshes/left_coupler.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -531,7 +531,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_coupler.STL"/>
+        <mesh filename="meshes/left_coupler.STL"/>
       </geometry>
     </collision>
   </link>
@@ -553,7 +553,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_follower.STL"/>
+        <mesh filename="meshes/left_follower.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1"/>
@@ -562,7 +562,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_follower.STL"/>
+        <mesh filename="meshes/left_follower.STL"/>
       </geometry>
     </collision>
   </link>
@@ -584,7 +584,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_pad.STL"/>
+        <mesh filename="meshes/left_pad.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.529411764705882 0.549019607843137 0.549019607843137 1"/>
@@ -593,7 +593,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\left_pad.STL"/>
+        <mesh filename="meshes/left_pad.STL"/>
       </geometry>
     </collision>
   </link>
@@ -629,7 +629,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\plate_shifted_scaled_origin_v3.STL" />
+        <mesh filename="meshes/plate_shifted_scaled_origin_v3.STL" />
           <!-- scale="0.001 0.001 0.001" -->
       </geometry>
       <material name="">
@@ -639,7 +639,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\plate_shifted_scaled_origin_v3.STL" />
+        <mesh filename="meshes/plate_shifted_scaled_origin_v3.STL" />
           <!-- scale="0.001 0.001 0.001" -->
       </geometry>
     </collision>
@@ -647,7 +647,7 @@
 
 <!-- Need to add the cup here -->
 
-  <!-- Joint 10 -->
+  <!-- Joint 10 (just a placeholder so that pinocchio urdf parse does not ignore this) -->
   <joint name="contact_joint" type="revolute">
      <origin rpy="0 0 0" xyz="0 -0.075 0.00127" />
      <!-- the joint is rotated by pi/2 about the x-axis of the preceding joint
@@ -667,8 +667,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\cube_all_corners_shifted_scaled_origin_v2.STL" />
-          <!-- scale="0.001 0.001 0.001" -->
+        <mesh filename="meshes/cube_all_corners_shifted_scaled_origin_v2.STL" />
       </geometry>
       <material name="">
         <color rgba="1 1 1 1" />
@@ -677,8 +676,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh filename="urdfs\kinova\meshes\cube_all_corners_shifted_scaled_origin_v2.STL" />
-          <!-- scale="0.001 0.001 0.001" -->
+        <mesh filename="meshes/cube_all_corners_shifted_scaled_origin_v2.STL" />
       </geometry>
     </collision>
   </link>

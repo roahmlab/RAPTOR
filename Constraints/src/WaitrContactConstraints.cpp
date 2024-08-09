@@ -39,7 +39,7 @@ void WaitrContactConstraints::compute(const VecX& z,
         const Vec3& rotation_torque = lambda.head(3);
         const Vec3& translation_force = lambda.tail(3);
 
-        double contact_force      = translation_force(2) + csp.maxSuctionForce;
+        double contact_force      = translation_force(2);
         double friction_force     = sqrt(pow(translation_force(0), 2) + pow(translation_force(1), 2));
         double max_friction_force = csp.mu * contact_force;
         double mx_lower_limit     = -csp.Lx * contact_force;

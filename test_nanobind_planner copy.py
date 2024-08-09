@@ -1,9 +1,12 @@
 import numpy as np
-import build.oracle_nanobind as oracle
+# import build.oracle_nanobind as oracle
+import build.oracle_waitr_nanobind as oracle
 
-urdf_filename = "Robots/kinova-gen3/kinova.urdf"
+# urdf_filename = "Robots/kinova-gen3/kinova.urdf"
+urdf_filename = "Robots/kinova-gen3/kinova_grasp.urdf"
 
-planner = oracle.KinovaPybindWrapper(urdf_filename)
+# planner = oracle.KinovaPybindWrapper(urdf_filename)
+planner = oracle.KinovaWaitrPybindWrapper(urdf_filename)
 
 # obstacle information (xyz, rpy, size)
 obstacles = np.array([[0, 0, 2, 0, 0, 0, 0.1, 0.1, 0.1],
@@ -11,9 +14,9 @@ obstacles = np.array([[0, 0, 2, 0, 0, 0, 0.1, 0.1, 0.1],
                       [0, 2, 0, 0, 0, 0, 0.1, 0.1, 0.1]])
 
 # trajectory information
-q0 = np.array([0, 0.5, 0, -0.7, 0.5, 0, 0.5])
-qd0 = np.array([0, -1, 0, 0, 0, -1, 0])
-qdd0 = np.array([1, 0, 0, 1, 0, 0, 0])
+q0 = np.array([0, -np.pi/2, 0, 0, 0, 0, 0])
+qd0 = np.array([0, 0, 0, 0, 0, 0, 0])
+qdd0 = np.array([0, 0, 0, 0, 0, 0, 0])
 
 duration = 2.0
 

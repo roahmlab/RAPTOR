@@ -1,14 +1,19 @@
 #ifndef KINOVA_WAITR_OPTIMIZER_H
 #define KINOVA_WAITR_OPTIMIZER_H
 
-#include "KinovaCustomizedConstraints.h"
+#include "pinocchio/algorithm/model.hpp"
+
 #include "KinovaConstants.h"
-#include "CustomizedInverseDynamics.h"
+
+#include "ArmourBezierCurves.h"
+
 #include "Optimizer.h"
-#include "WaitrBezierCurves.h"
+
 #include "JointLimits.h"
 #include "VelocityLimits.h"
 #include "TorqueLimits.h"
+#include "CustomizedInverseDynamics.h"
+#include "KinovaCustomizedConstraints.h"
 #include "WaitrContactConstraints.h"
 
 namespace RAPTOR {
@@ -35,7 +40,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const Eigen::VectorXi& jtype_input,
-        const WaitrTrajectoryParameters& atp_input,
+        const ArmourTrajectoryParameters& atp_input,
         const contactSurfaceParams& csp_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,

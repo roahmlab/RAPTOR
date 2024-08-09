@@ -36,6 +36,10 @@ public:
     // Class methods
     void set_obstacles(const nb_2d_double obstacles_inp);
 
+    void set_contact_surface_parameters(const double mu_inp,
+                                        const double Lx_inp,
+                                        const double Ly_inp);
+
     void set_ipopt_parameters(const double tol,
                               const double obj_scaling_factor,
                               const double max_wall_time, 
@@ -72,10 +76,10 @@ public:
     std::vector<Vec3> boxSize;
 
     // trajectory information
-    WaitrTrajectoryParameters atp;
+    ArmourTrajectoryParameters atp;
     double T = 1;
     int N = 16;
-    int degree = WAITR_BEZIER_CURVE_DEGREE;
+    int degree = ARMOUR_BEZIER_CURVE_DEGREE;
     VecX qdes;
     double tplan = 0;
     int tplan_n = 0;

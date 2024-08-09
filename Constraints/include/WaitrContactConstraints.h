@@ -12,18 +12,15 @@ typedef struct contactSurfaceParams_  {
     double mu = 0.7;
     double Lx = 0.1;
     double Ly = 0.1;
-    double maxSuctionForce = 100;
 
     contactSurfaceParams_() = default;
 
     contactSurfaceParams_(double mu_input, 
                           double Lx_input, 
-                          double Ly_input,
-                          double maxSuctionForce_input) :
+                          double Ly_input) :
         mu(mu_input), 
         Lx(Lx_input), 
-        Ly(Ly_input),
-        maxSuctionForce(maxSuctionForce_input) {}
+        Ly(Ly_input) {}
 } contactSurfaceParams;
 
 class WaitrContactConstraints : public Constraints {

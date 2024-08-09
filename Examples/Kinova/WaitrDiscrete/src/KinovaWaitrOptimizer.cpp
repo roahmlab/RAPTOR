@@ -22,7 +22,7 @@ bool KinovaWaitrOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const Eigen::VectorXi& jtype_input,
-    const WaitrTrajectoryParameters& atp_input,
+    const ArmourTrajectoryParameters& atp_input,
     const contactSurfaceParams& csp_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
@@ -34,15 +34,17 @@ bool KinovaWaitrOptimizer::set_parameters(
     const VecX& torque_limits_buffer_input
  ) 
 {
+    enable_hessian = false;
+
     x0 = x0_input;
     qdes = qdes_input;
     tplan_n = tplan_n_input;
 
-    trajPtr_ = std::make_shared<WaitrBezierCurves>(T_input, 
-                                                   N_input, 
-                                                   model_input.nq - 1, 
-                                                   Chebyshev, 
-                                                   atp_input);
+    trajPtr_ = std::make_shared<ArmourBezierCurves>(T_input, 
+                                                    N_input, 
+                                                    model_input.nq - 1, 
+                                                    Chebyshev, 
+                                                    atp_input);
                                                    
     idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
                                                          jtype_input,
@@ -94,9 +96,13 @@ bool KinovaWaitrOptimizer::set_parameters(
     constraintsNameVec_.push_back("contact constraints");
 
     // Customized constraints (collision avoidance with obstacles)
+    Model model_reduced;
+    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model_input.nv};
+    pinocchio::buildReducedModel(model_input, list_of_joints_to_lock_by_id, VecX::Zero(model_input.nv), model_reduced);
+    Eigen::VectorXi jtype_reduced = jtype_input.head(model_reduced.nv);
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
-                                                                               model_input,
-                                                                               jtype_input,
+                                                                               model_reduced,
+                                                                               jtype_reduced,
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
                                                                                boxSize_input));   

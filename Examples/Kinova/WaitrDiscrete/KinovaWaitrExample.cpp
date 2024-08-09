@@ -51,14 +51,14 @@ int main() {
     }
 
     // Define trajectories
-    WaitrTrajectoryParameters atp;
+    ArmourTrajectoryParameters atp;
     atp.q0 = Eigen::VectorXd::Zero(actual_model_nq);
     atp.q_d0 = Eigen::VectorXd::Zero(actual_model_nq);
     atp.q_dd0 = Eigen::VectorXd::Zero(actual_model_nq);
 
     const double T = 1;
     const int N = 16;
-    const int degree = WAITR_BEZIER_CURVE_DEGREE;
+    const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define contact surface parameters
     contactSurfaceParams csp;

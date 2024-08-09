@@ -103,7 +103,6 @@ add_library(trajlib SHARED
     Trajectories/src/FixedFrequencyFourierCurves.cpp
     Trajectories/src/BezierCurves.cpp 
     Trajectories/src/ArmourBezierCurves.cpp
-    Trajectories/src/WaitrBezierCurves.cpp
     Trajectories/src/Polynomials.cpp 
     Trajectories/src/Plain.cpp
     Trajectories/src/TrajectoryGroup.cpp)
