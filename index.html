@@ -1,0 +1,408 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>RAPTOR: RAPid and Robust Trajectory Optimization for Robots</title>
+		<meta charset="utf-8" />
+		 <meta name="viewport" content="width=1000">
+		<link rel="stylesheet" href="assets/css/main.css" />
+
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-LS6L6LB7RX"></script>
+		<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-LS6L6LB7RX');
+		</script>
+
+		<meta property="og:url"           content="https://roahmlab.github.io/RAPTOR/" />
+	    <meta property="og:type"          content="website" />
+	    <meta property="og:title"         content="RAPTOR: RAPid and Robust Trajectory Optimization for Robots" />
+	    <meta property="og:description"   content="Dynamic locomotion for humanoid robots presents significant analytical and computational challenges due to the extensive number of linkages and degrees of freedom. This complexity results in a vast search space for feasible gaits which translates into a time-consuming process when optimizing over trajectories. In addition, the process often involves numerous hyperparameters and requires a good initial guess or a warm-start strategy, further complicating the development process. Existing methods struggle to integrate the latest hardware designs, such as actuated ankles with closed-loop mechanisms, which offer increased stability, but introduce additional constraints into the dynamics that can be challenging to represent in a computationally tractable fashion. This work introduces a generalized gait optimization framework that directly generates smooth and physically feasible trajectories. The proposed method demonstrates faster and more robust convergence than existing techniques and explicitly incorporates closed-loop constraints. The method is implemented as an open-source C++ codebase that significantly reduces computation times, facilitating dynamic locomotion for full-size humanoids." />
+	    
+
+	</head>
+	<body id="top">
+
+
+		<!-- Main -->
+			<div id="main" style="padding-bottom:1em; padding-top: 5em; width: 60em; max-width: 70em; margin-left: auto; margin-right: auto;">
+					<section id="four">
+						<div class="box alt" style="margin-bottom: 1em;">
+							<div class="row 0% uniform" style="width: 100%; display: flex; justify-content: space-between;">
+								<!-- UM Robotics Logo -->
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 20%">
+									<span class="image fit" style="margin-bottom: 0.5em; margin-top: 0.3em">
+										<img src="images/MRoboticsicon.svg" alt="">
+									</span>
+								</div>
+								<!-- RoahmLab Logo -->
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 22%">
+									<span class="image fit" style="margin-bottom: 0.5em; margin-top: 0.3em">
+										<img src="images/ROAHMLABicon.png" alt="">
+									</span>
+								</div>
+							</div>
+						</div>
+
+						<h1 style="text-align: center; margin-bottom: 0; color: #8C1515; font-size: 300%">RAPTOR</h1>
+						<h2 style="text-align: center; white-space: nowrap; font-size: 200%">RAPid and Robust Trajectory Optimization for Robots</h2>
+
+						<!-- TODO: fill in demos -->
+						<!-- <div class="box alt" style="margin-bottom: 1em;">
+							<div class="row 50% uniform" style="width: 100%; color: black;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									Human Demonstration with UMI
+								</div>
+								
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 66.67%">
+									Fully Autonomous Policy Rollout
+								</div>
+							</div>
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/teaser_data_collection_dish.mp4" type="video/mp4">	
+										</video>
+									</span>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/task_dish_washing_1x_compressed.mp4" type="video/mp4">	
+										</video>
+										<div style="position: absolute; top: 2%; right: 1%">
+											<p style="color: white; text-align: center; font-size: 2em">1x</p>
+										</div>
+									</span>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/task_cloth_folding_1x_compressed.mp4" type="video/mp4">
+										</video>
+										<div style="position: absolute; top: 2%; right: 1%">
+											<p style="color: white; text-align: center; font-size: 2em">1x</p>
+										</div>
+									</span>
+								</div>
+							</div>
+							<div class="row 50% uniform" style="width: 100%">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/teaser_data_collection_cup.mp4" type="video/mp4">	
+										</video>
+									</span>
+								</div>
+								
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/task_cup_arrangement_1x_compressed.mp4" type="video/mp4">
+										</video>
+										<div style="position: absolute; top: 2%; right: 1%">
+											<p style="color: white; text-align: center; font-size: 2em">1x</p>
+										</div>
+									</span>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.33%">
+									<span class="image fit">
+										<video autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/task_dynamic_tossing_1x_compressed.mp4" type="video/mp4">
+										</video>
+										<div style="position: absolute; top: 2%; right: 1%">
+											<p style="color: white; text-align: center; font-size: 2em">1x</p>
+										</div>
+									</span>
+								</div>
+							</div>
+						</div> -->
+								
+
+						<p style="color: black;">We present "RAPid and robust Trajectory Optimization toolbox for Robots" (RAPTOR) -- Dynamic locomotion for humanoid robots presents significant analytical and computational challenges due to the extensive number of linkages and degrees of freedom. This complexity results in a vast search space for feasible gaits which translates into a time-consuming process when optimizing over trajectories. In addition, the process often involves numerous hyperparameters and requires a good initial guess or a warm-start strategy, further complicating the development process. Existing methods struggle to integrate the latest hardware designs, such as actuated ankles with closed-loop mechanisms, which offer increased stability, but introduce additional constraints into the dynamics that can be challenging to represent in a computationally tractable fashion. This work introduces a generalized gait optimization framework that directly generates smooth and physically feasible trajectories. The proposed method demonstrates faster and more robust convergence than existing techniques and explicitly incorporates closed-loop constraints. The method is implemented as an open-source C++ codebase that significantly reduces computation times, facilitating dynamic locomotion for full-size humanoids.
+						</p>
+		
+						<hr>
+						<h3>Paper</h3>
+						<!-- TODO: fill in paper link -->
+						<!-- <p style="margin-bottom: 0em;">
+							Latest version: <a href="https://arxiv.org/abs/2402.10329">arXiv</a> or <a href="umi.pdf">here</a>.
+							<br>Robotics: Science and Systems (RSS) 2024<br>
+						</p> -->
+						<!-- <p style="margin-bottom: 1em; color: #4e79a7">★ Best Systems Paper Award Finalist, RSS ★</p>
+						<div class="12u$"><a href="umi.pdf"><span class="image fit" style="border: 1px solid; border-color: #888888;"><img src="images/umi_thumbnail.png" alt="" /></span></a></div> -->
+
+						
+						<h3>Code and Tutorial</h3>
+						<!-- TODO: fill in links to tutorials -->
+
+						<!-- <div class="box alt" style="margin-bottom: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 10%">
+									<a href="https://github.com/real-stanford/universal_manipulation_interface">
+										<span class="image fit" style="margin-bottom: 0.5em;">
+											<img src="images/github_logo.svg" alt=""/>
+										</span>
+										Codebase
+									</a>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 10%">
+									<a href="https://docs.google.com/document/d/1TPYwV9sNVPAi0ZlAupDMkXZ4CA1hsZx7YDMSmcEy6EU/edit?usp=sharing">
+										<span class="image fit" style="margin-bottom: 0.5em;">
+											<img src="images/build.svg" alt=""/>
+										</span>
+										Hardware Guide
+									</a>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 10%">
+									<a href="https://swanky-sphere-ad1.notion.site/UMI-Data-Collection-Tutorial-4db1a1f0f2aa4a2e84d9742720428b4c?pvs=4">
+										<span class="image fit" style="margin-bottom: 0.5em;">
+											<img src="images/documentation.svg" alt=""/>
+										</span>
+										Data Collection Instruction
+									</a>
+								</div>
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 30%;">
+									<span style="margin-bottom: 0.5em;">
+										<iframe height=20% src="https://www.youtube.com/embed/EJmAg1Bnp-k?si=c5q8eiYyuAao3opy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+									</span>
+									<br>
+									<a href="https://youtu.be/EJmAg1Bnp-k?si=24dVkyAtTY2MHnLp">3D Printing Tutorial</a>
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 7%">
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 30%">
+									<span style="margin-bottom: 0.5em;">
+										<iframe src="https://www.youtube.com/embed/x3ko0v_xwpg?si=0cXzjI4zI8P9UDxd" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+									</span>
+									<br>
+									<a href="https://youtu.be/x3ko0v_xwpg?si=cQnTKZEktMx3oPpf">Assembly Tutorial</a>
+								</div>
+							</div>
+						</div> -->
+						
+						<hr>
+						<h3>Authors</h3>
+						<section>
+							<div class="box alt" style="margin-bottom: 1em;">
+								<div class="row 50% uniform" style="width: 100%">
+									<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 12.5%">
+										<a href="https://cfather.github.io/jimzhang.github.io/"><span class="image fit" style="margin-bottom: 0.5em;">
+											<img src="images/bohao.jpg" alt="" style="border-radius: 50%;" /></span>Bohao Zhang<sup>1</sup></a></div>
+
+										<a href="https://www.roahmlab.com/ram-personal"><span class="image fit" style="margin-bottom: 0.5em;">
+											<img src="images/ramv.jpg" alt="" style="border-radius: 50%;" /></span>Ram Vasudevan<sup>2</sup></a></div>
+									
+								</div>
+							</div>
+						</section>
+						<p>
+							<sup>1</sup> Robotics Institute, University of Michigan, Ann Arbor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							<sup>2</sup> Mechanical Engineering, University of Michigan, Ann Arbor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						</p>
+				
+						<!-- TODO: fill in bibtex -->
+						<!-- <h3>BibTeX</h3>
+						<pre><code>@inproceedings{chi2024universal,
+							title={Universal Manipulation Interface: In-The-Wild Robot Teaching Without In-The-Wild Robots},
+							author={Chi, Cheng and Xu, Zhenjia and Pan, Chuer and Cousineau, Eric and Burchfiel, Benjamin and Feng, Siyuan and Tedrake, Russ and Song, Shuran},
+							booktitle={Proceedings of Robotics: Science and Systems (RSS)},
+							year={2024}
+						}</code></pre> -->
+					
+						<!-- <hr>
+						<h3>Hardware Design</h3>
+						<b>How can we capture sufficient information for a wide variety of tasks with just a wrist-mounted camera?</b>
+						<br>
+						UMI’s data collection hardware takes the form of a hand-held parallel jaw gripper, mounted with a GoPro camera ①.
+						<br>
+						To gather policy-deployable observations, UMI needs to capture sufficient visual context to infer action ② and critical information like depth ③.
+						<br>
+						To obtain action data leading to deployable policies, UMI needs to capture precise robot action under fast human motion ④, 
+						fine adjustments on griping width ⑤, and automatically check whether each demonstration is valid under the specific robot kinematic constraints ⑥.
+						<div class="row 50% uniform" style="width: 100%; margin-top: 0.5em;">
+							<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 100%">
+								<span class="image fit">
+									<img src="images/UMI_hardware.jpg" alt="">
+								</span>
+							</div>
+						</div> -->
+·
+						<!-- <hr>
+						<h3>Policy Robustness</h4>
+						Enabled by our unique wrist-only camera setup and camera-centric action representations, UMI is 100% calibration-free (functioning even with base movement) and robust against distractors and drastic lighting changes.
+						<div class="box alt" style="margin-bottom: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.3%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/robustness_move_base.mp4" type="video/mp4"> </video>
+									</span>
+									Robot Base Movements
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.3%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/robustness_light_with_gopro.mp4" type="video/mp4"> </video>
+									</span>
+									Different Lighting Conditions
+								</div>
+								
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 33.3%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/robustness_sauce.mp4" type="video/mp4"> </video>
+									</span>
+									Perturbations with Other Sauce
+								</div>
+							</div>
+						</div> -->
+
+						<!-- <hr>
+						<h3>Capability Experiments</h3>
+						
+						<h4>(1) Dynamic Tossing &#129342; </h4>
+						<u><b>Task</b></u> The robot is tasked to sort 6 objects by tossing them to the corresponding bin. The 3 spherical objects (baseball &#9918;, orange &#127818;, apple &#127822;) should be tossed into the round bin, while the 3 Lego Duplo pieces go into the rectangular bin.
+						<br>
+						<u><b>Ablation</b></u> Without inference-time observation and action latency matching, the policy exhibits significantly more jittery movements, due to the misalignment between observations and action executions.
+						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;">
+											<source src="videos/task_dynamic_tossing.mp4" type="video/mp4">
+										</video>
+									</span>
+									Ours
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_tossing_no_latency_matching.mp4" type="video/mp4"> </video>
+									</span>
+									No Latency Matching
+								</div>
+							</div>
+						</div> -->
+
+						<!-- <h4>(2) Cup Arrangement &#9749; </h4>
+						<u><b>Task</b></u> Pick up and place an espresso cup on the saucer with its handle facing to the left of the robot.
+						<br>
+						<u><b>Ablation</b></u> Data collected by UMI is robot agnostic. Here we can deploy the same policy on both UR5e and Franka robots. In fact, you can deploy it on any robot equipped with a parallel jaw stroke > 85mm.
+						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cup_ur5.mp4" type="video/mp4"> </video>
+									</span>
+									Ours (UR5)
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cup_franka.mp4" type="video/mp4"> </video>
+									</span>
+									Ours (Franka)
+								</div>
+							</div>
+						</div> -->
+						
+						<!-- <h4>(3) Bimanual Cloth Folding &#128090; </h4>
+						<u><b>Task</b></u> Two robot arms need to coordinate and fold the sweater’s sleeves inward, then fold up the bottom hem, rotate 90 degrees, and finally fold the sweater in half again.
+						<br>
+						<u><b>Ablation</b></u> Without inter-gripper proprioception (relative pose between the two grippers), the coordination between the two arms is significantly worse.
+						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/task_cloth_folding.mp4" type="video/mp4"> </video>
+									</span>
+									Ours
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cloth_no_rel.mp4" type="video/mp4"> </video>
+									</span>
+									No Inter-gripper Proprioception
+								</div>
+							</div>
+						</div> -->
+
+
+						<!-- <h4>(4) Dish Washing &#127869; </h4>
+						<u><b>Task</b></u> For successful dish washing, the robots need to sequentially execute 7 dependent actions: turn on faucet, grasp plate, pick up sponge, wash and wipe plate until ketchups are removed, place plate, place the sponge and turn off faucet.
+						<br>
+						<u><b>Ablation</b></u> The baseline policy trained with ResNet-34 as vision encoder, yielded non-reactive behaviors towards variations in plate or sponge position.
+						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/task_dish_washing.mp4" type="video/mp4"> </video>
+									</span>
+									Ours (CLIP-pretrained ViT as Vision Encoder)
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_dish_resnet.mp4" type="video/mp4"> </video>
+									</span>
+									ResNet as Vision Encoder
+								</div>
+							</div>
+						</div> -->
+
+						<!-- <hr>
+						<h3>In-the-wild Generalization Experiments</h3>
+						With UMI, you can go to any home, any restaurant and start data collection within 2 minutes.
+						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
+							<div class="row 50% uniform" style="width: 100%;">
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/in_the_wild_cup_data_collection.mp4" type="video/mp4"> </video>
+									</span>
+									Human Data Collection
+								</div>
+
+								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
+									<span class="image fit" style="margin-bottom: 0.5em;">
+										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/in_the_wild_cup_data_overview.mp4" type="video/mp4"> </video>
+									</span>
+									Data Overview
+								</div>
+							</div>
+						</div> -->
+
+						<hr>
+				        <h3>Acknowledgements</h3>
+						<!-- TODO: fill in acknowledgements -->
+				        <!-- <p>This work was supported </p> -->
+						
+						<h3>Contact</h3>
+				        <p>We are actively developing the codebase and appreciate any feedback! <br>
+						   If you have any questions about the paper, please feel free to contact <a href="https://cfather.github.io/jimzhang.github.io/">Bohao Zhang</a>. <br>
+						   If you have any questions about the code and would like to report any bugs or problems, please raise a new issue in the <a href="https://github.com/roahmlab/RAPTOR/issues">Issues page</a> in the RAPTOR repo. We will try to respond to it as soon as possible. <br>
+						   If you would like to request any related new features and have suggestions on how to improve the performance of RAPTOR, please raise a new discussion in the <a href="https://github.com/roahmlab/RAPTOR/discussions">Discussions page</a> in the RAPTOR repo.
+						</p>
+						
+					</section>
+
+					
+			</div>
+
+			<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.poptrox.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+	</body>
+</html>
