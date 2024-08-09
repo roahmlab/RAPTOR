@@ -2,13 +2,13 @@
 
 We aim to solve a trajectory optimization problem formulated as below
 
-![ProblemFormulation](Assets/pic-ProblemFormulation.svg)
+![ProblemFormulation](assets/pic-ProblemFormulation.svg)
 
 where we assume that the trajectories are already parameterized and only treat the trajectory parameters as the decision variables.
 
 For example, you can define your trajectory to be a polynomial (on a fixed interval [0,T]):
 
-![TrajectoryFormulation](Assets/pic-TrajectoryFormulation.svg)
+![TrajectoryFormulation](assets/pic-TrajectoryFormulation.svg)
 
 And based on that, you can add joint limit constraints, torque limit constraints, end effector constraints, or any other customized constraints to your optimization problem.
 
