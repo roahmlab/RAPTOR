@@ -3,14 +3,24 @@
 namespace RAPTOR {
 
 RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input, 
-                                                   const Eigen::VectorXi& jtype_input,
-                                                   const std::shared_ptr<Trajectories>& trajPtr_input) {
-    jtype = jtype_input;
+                                                   const std::shared_ptr<Trajectories>& trajPtr_input,
+                                                   Eigen::VectorXi jtype_input) :
+    jtype(jtype_input) {
     trajPtr_ = trajPtr_input;
     N = trajPtr_->N;
-
     modelPtr_ = std::make_shared<Model>(model_input);
     dataPtr_ = std::make_shared<Data>(model_input);
+
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size() = " << jtype.size() << std::endl;
+            throw std::invalid_argument("modelPtr_->nv != jtype.size()");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
+    }
 
     Xtree.resize(1, modelPtr_->nv);
     I.resize(1, modelPtr_->nv);

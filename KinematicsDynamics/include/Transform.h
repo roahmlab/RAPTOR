@@ -16,6 +16,8 @@
 
 namespace RAPTOR {
 
+Eigen::VectorXi convertPinocchioJointType(const pinocchio::Model& model);
+
 // 6x6 spatial transform matrix
 class Transform {
 public:

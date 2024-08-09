@@ -17,11 +17,10 @@ public:
 
     // Constructor
     TalosConstrainedInverseDynamics(const Model& model_input, 
-                                            std::shared_ptr<Trajectories>& trajPtr_input,
-                                            int numDependentJoints_input,
-                                            const Eigen::VectorXi& jtype_input, 
-                                            char stanceLeg, 
-                                            const Transform& stance_foot_T_des_input);
+                                    std::shared_ptr<Trajectories>& trajPtr_input,
+                                    int numDependentJoints_input,
+                                    char stanceLeg, 
+                                    const Transform& stance_foot_T_des_input);
 
     // Destructor
     ~TalosConstrainedInverseDynamics() = default;

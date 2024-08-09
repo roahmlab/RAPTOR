@@ -4,18 +4,17 @@ namespace RAPTOR {
 
 KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                              const Model* model_input,
-                                             const Eigen::VectorXi& jtype_input,
                                              const size_t joint_id_input,
                                              const size_t time_id_input,
                                              const Transform& desiredTransform_input,
-                                             const Transform endT_input) :
+                                             const Transform endT_input,
+                                             Eigen::VectorXi jtype_input) :
     trajPtr_(trajPtr_input),
     modelPtr_(model_input),
-    jtype(jtype_input),
     joint_id(joint_id_input),
     time_id(time_id_input),
     endT(endT_input) {
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype_input);
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -40,18 +39,17 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
 
 KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                              const Model* model_input,
-                                             const Eigen::VectorXi& jtype_input,
                                              const size_t joint_id_input,
                                              const size_t time_id_input,
                                              const Vec3& desiredPosition_input,
-                                             const Transform endT_input) :
+                                             const Transform endT_input,
+                                             Eigen::VectorXi jtype_input) :
     trajPtr_(trajPtr_input),
     modelPtr_(model_input),
-    jtype(jtype_input),
     joint_id(joint_id_input),
     time_id(time_id_input),
     endT(endT_input) {
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype_input);
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");
@@ -71,18 +69,17 @@ KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& traj
 
 KinematicsConstraints::KinematicsConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                              const Model* model_input,
-                                             const Eigen::VectorXi& jtype_input,
                                              const size_t joint_id_input,
                                              const size_t time_id_input,
                                              const Mat3& desiredRotation_input,
-                                             const Transform endT_input) :
+                                             const Transform endT_input,
+                                             Eigen::VectorXi jtype_input) :
     trajPtr_(trajPtr_input),
     modelPtr_(model_input),
-    jtype(jtype_input),
     joint_id(joint_id_input),
     time_id(time_id_input),
     endT(endT_input) {
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_, jtype_input);
 
     if (joint_id > modelPtr_->nq) {
         throw std::invalid_argument("joint_id should not be larger than model.nq");

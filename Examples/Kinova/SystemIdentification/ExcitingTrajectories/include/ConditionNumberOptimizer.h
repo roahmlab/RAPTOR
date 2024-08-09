@@ -37,11 +37,11 @@ public:
         const int degree_input,
         const double base_frequency_input,
         const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
         const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
-        const VecX& torque_limits_buffer_input
+        const VecX& torque_limits_buffer_input,
+        Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
     /**@name Overloaded from TNLP */

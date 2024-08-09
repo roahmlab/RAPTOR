@@ -21,7 +21,6 @@ bool KinovaOptimizer::set_parameters(
     const int N_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const ArmourTrajectoryParameters& atp_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
@@ -90,7 +89,6 @@ bool KinovaOptimizer::set_parameters(
     // Customized constraints (collision avoidance with obstacles)
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               jtype_input,
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
                                                                                boxSize_input));   

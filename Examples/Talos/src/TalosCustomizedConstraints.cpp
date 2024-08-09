@@ -4,16 +4,14 @@ namespace RAPTOR {
 namespace Talos {
 
 TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
-                                                       const Eigen::VectorXi& jtype_input,
                                                        std::shared_ptr<Trajectories>& trajPtr_input,
                                                        std::shared_ptr<TalosDynamicsConstraints>& ddcPtr_input,
                                                        const GaitParameters& gp_input) : 
-    jtype(jtype_input),
     trajPtr_(trajPtr_input),
     ddcPtr_(ddcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     // leftfoot_endT.p << 0, 0, -0.107;
     // rightfoot_endT.p << 0, 0, -0.107;

@@ -21,11 +21,11 @@ bool ConditionNumberOptimizer::set_parameters(
         const int degree_input,
         const double base_frequency_input,
         const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
         const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
-        const VecX& torque_limits_buffer_input
+        const VecX& torque_limits_buffer_input,
+        Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
     x0 = x0_input;
@@ -40,8 +40,8 @@ bool ConditionNumberOptimizer::set_parameters(
                                                              base_frequency_input);
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
-                                                         jtype_input, 
-                                                         trajPtr_);
+                                                         trajPtr_,
+                                                         jtype_input);
 
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
@@ -89,10 +89,10 @@ bool ConditionNumberOptimizer::set_parameters(
     std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               jtype_input,
                                                                                groundCenter,
                                                                                groundOrientation,
-                                                                               groundSize));   
+                                                                               groundSize,
+                                                                               jtype_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 
     // check dimensions of regroupMatrix

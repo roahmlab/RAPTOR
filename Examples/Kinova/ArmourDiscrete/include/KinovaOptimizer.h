@@ -36,7 +36,6 @@ public:
         const int N_input,
         const int degree_input,
         const Model& model_input, 
-        const Eigen::VectorXi& jtype_input,
         const ArmourTrajectoryParameters& atp_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,

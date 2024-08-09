@@ -13,19 +13,9 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    Eigen::VectorXi jtype(model.nq);
-    // jtype << 4, 5, 6, 1, 2, 3, 
-    //          3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
-    //          3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
-    jtype << 3, 3, 3, 3, 3, 3, 3;
-
     // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Plain>(model.nv);
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
-    ForwardKinematicsSolver fkSolver(&model, jtype);
+    ForwardKinematicsSolver fkSolver(&model);
 
     // compute a valid transform using forward kinematics
     std::srand(std::time(nullptr));
@@ -34,7 +24,7 @@ int main() {
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);
 
-    KinematicsConstraints kc(trajPtr_, &model, jtype, end, 6, fkSolver.getTransform());
+    KinematicsConstraints kc(trajPtr_, &model, end, 6, fkSolver.getTransform());
 
     // simple test when difference is small
     Eigen::VectorXd z_test = z.array() + 1e-6;

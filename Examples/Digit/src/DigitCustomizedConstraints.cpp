@@ -4,16 +4,14 @@ namespace RAPTOR {
 namespace Digit {
 
 DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
-                                                       const Eigen::VectorXi& jtype_input,
                                                        std::shared_ptr<Trajectories>& trajPtr_input,
                                                        std::shared_ptr<DigitDynamicsConstraints>& ddcPtr_input,
                                                        const GaitParameters& gp_input) : 
-    jtype(jtype_input),
     trajPtr_(trajPtr_input),
     ddcPtr_(ddcPtr_input),
     gp(gp_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     leftfoot_endT.R << 0,             1, 0,
                        -0.5,          0, sin(M_PI / 3),
@@ -195,7 +193,7 @@ void DigitCustomizedConstraints::print_violation_info() {
     //               height higher than the desired value in the middle
     for (int i = 0; i < trajPtr_->N; i++) {
         if (g1(i) <= g1_lb(i) - 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: swing foot height at time instance " 
                       << i 
                       << " is below lower limit: " 
                       << g1(i) 
@@ -204,7 +202,7 @@ void DigitCustomizedConstraints::print_violation_info() {
                       << std::endl;
         }
         if (g1(i) >= g1_ub(i) + 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: swing foot height at time instance " 
                       << i 
                       << " is above upper limit: " 
                       << g1(i) 
@@ -217,21 +215,21 @@ void DigitCustomizedConstraints::print_violation_info() {
     // (2) swingfoot always flat and points forward
     for (int i = 0; i < trajPtr_->N; i++) {
         if (abs(g2(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot roll at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: swing foot roll at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g2(i) 
                       << std::endl;
         }
         if (abs(g3(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot pitch at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: swing foot pitch at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g3(i) 
                       << std::endl;
         }
         if (abs(g4(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot yaw at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: swing foot yaw at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g4(i) 
@@ -244,7 +242,7 @@ void DigitCustomizedConstraints::print_violation_info() {
     //     yaw always close to 0 when walking forward
     for (int i = 0; i < trajPtr_->N; i++) {
         if (g6(i) <= g6_lb(i) - 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: torso height at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: torso height at time instance " 
                       << i 
                       << " is below lower limit: " 
                       << g6(i) 
@@ -253,21 +251,21 @@ void DigitCustomizedConstraints::print_violation_info() {
                       << std::endl;
         }
         if (abs(g7(i)) >= gp.eps_torso_angle) {
-            std::cout << "        TalosCustomizedConstraints.cpp: torso roll at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: torso roll at time instance " 
                       << i 
                       << " is too large: " 
                       << g7(i) 
                       << std::endl;
         }
         if (abs(g8(i)) >= gp.eps_torso_angle) {
-            std::cout << "        TalosCustomizedConstraints.cpp: torso pitch at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: torso pitch at time instance " 
                       << i 
                       << " is too large: " 
                       << g8(i) 
                       << std::endl;
         }
         if (abs(g9(i)) >= gp.eps_torso_angle) {
-            std::cout << "        TalosCustomizedConstraints.cpp: torso yaw at time instance " 
+            std::cout << "        DigitCustomizedConstraints.cpp: torso yaw at time instance " 
                       << i 
                       << " is too large: " 
                       << g9(i) 

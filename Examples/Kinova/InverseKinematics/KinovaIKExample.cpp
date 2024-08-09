@@ -13,19 +13,9 @@ int main() {
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    if (model.nq != 7) {
-        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
-    }
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3;
     
     // Compute forward kinematics at a random configuration first
-    ForwardKinematicsSolver fkSolver(&model, jtype);
+    ForwardKinematicsSolver fkSolver(&model);
 
     std::srand(std::time(nullptr));
     Eigen::VectorXd q = Eigen::VectorXd::Random(model.nq);
@@ -40,7 +30,6 @@ int main() {
     try {
 	    mynlp->set_parameters(z,
                               model,
-                              jtype,
                               desiredTransform);
         mynlp->constr_viol_tol = 1e-8;
     }

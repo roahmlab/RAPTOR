@@ -5,14 +5,13 @@ namespace Kinova {
 
 KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                                          const Model& model_input,
-                                                         const Eigen::VectorXi& jtype_input,
                                                          const std::vector<Vec3>& boxCenters_input,
                                                          const std::vector<Vec3>& boxOrientation_input,
-                                                         const std::vector<Vec3>& boxSize_input) :
-    trajPtr_(trajPtr_input),
-    jtype(jtype_input) {
+                                                         const std::vector<Vec3>& boxSize_input,
+                                                         Eigen::VectorXi jtype_input) :
+    trajPtr_(trajPtr_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
-    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype);
+    fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype_input);
     collisionAvoidancePtr_ = std::make_shared<BoxCollisionAvoidance>(boxCenters_input, 
                                                                      boxOrientation_input,
                                                                      boxSize_input);

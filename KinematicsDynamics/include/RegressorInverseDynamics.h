@@ -40,8 +40,8 @@ public:
 
     // Constructor
     RegressorInverseDynamics(const Model& model_input, 
-                             const Eigen::VectorXi& jtype_input,
-                             const std::shared_ptr<Trajectories>& trajPtr_input);
+                             const std::shared_ptr<Trajectories>& trajPtr_input,
+                             Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
     ~RegressorInverseDynamics() = default;

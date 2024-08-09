@@ -21,7 +21,6 @@ bool KinovaWaitrOptimizer::set_parameters(
     const int N_input,
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const ArmourTrajectoryParameters& atp_input,
     const contactSurfaceParams& csp_input,
     const std::vector<Vec3>& boxCenters_input,
@@ -45,10 +44,13 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                     model_input.nq - 1, 
                                                     Chebyshev, 
                                                     atp_input);
-                                                   
+
+    Eigen::VectorXi jtype = convertPinocchioJointType(model_input);    
+    jtype(jtype.size() - 1) = 0; // The last joint, which connects the tray and the object, should be a fixed joint                                 
+
     idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
-                                                         jtype_input,
-                                                         trajPtr_);
+                                                         trajPtr_,
+                                                         jtype);
     
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
@@ -99,13 +101,13 @@ bool KinovaWaitrOptimizer::set_parameters(
     Model model_reduced;
     std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model_input.nv};
     pinocchio::buildReducedModel(model_input, list_of_joints_to_lock_by_id, VecX::Zero(model_input.nv), model_reduced);
-    Eigen::VectorXi jtype_reduced = jtype_input.head(model_reduced.nv);
+    Eigen::VectorXi jtype_reduced = jtype.head(model_reduced.nv);
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_reduced,
-                                                                               jtype_reduced,
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
-                                                                               boxSize_input));   
+                                                                               boxSize_input,
+                                                                               jtype_reduced));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);

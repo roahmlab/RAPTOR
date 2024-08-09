@@ -21,7 +21,6 @@ bool TalosSingleStepOptimizer::set_parameters(
     const TimeDiscretization time_discretization_input,         
     const int degree_input,
     const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
     const GaitParameters& gp_input,
     const char stanceLeg,
     const Transform stance_foot_T_des,
@@ -54,8 +53,7 @@ bool TalosSingleStepOptimizer::set_parameters(
     // stance foot is left foot by default
     dcidPtr_ = std::make_shared<TalosConstrainedInverseDynamics>(model_input, 
                                                                  trajPtr_,
-                                                                 NUM_DEPENDENT_JOINTS, 
-                                                                 jtype_input, 
+                                                                 NUM_DEPENDENT_JOINTS,
                                                                  stanceLeg, 
                                                                  stance_foot_T_des);                                                          
     cidPtr_ = dcidPtr_; // convert to base class
@@ -92,7 +90,6 @@ bool TalosSingleStepOptimizer::set_parameters(
 
     // kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<TalosCustomizedConstraints>(model_input, 
-                                                                              jtype_input, 
                                                                               trajPtr_, 
                                                                               dcidPtr_->ddcPtr_,
                                                                               gp_input));    

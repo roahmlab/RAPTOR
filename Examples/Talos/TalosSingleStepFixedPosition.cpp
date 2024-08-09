@@ -13,24 +13,11 @@ using namespace Ipopt;
 const std::string filepath = "../Examples/Talos/data/";
 
 int main(int argc, char* argv[]) {
-    // set openmp number of threads
-    int num_threads = 32; // this number is currently hardcoded
-    omp_set_num_threads(num_threads);
-
     // define robot model
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 4, 5, 6, 1, 2, 3, 
-             3, 1, 2, 2, 2, 1,
-             3, 1, 2, 2, 2, 1;
     
     // ignore all motor dynamics
     model.rotorInertia.setZero();
@@ -89,7 +76,6 @@ int main(int argc, char* argv[]) {
                               time_discretization,
                               degree,
                               model,
-                              jtype,
                               gp,
                               'L',
                               Transform(),
@@ -109,9 +95,9 @@ int main(int argc, char* argv[]) {
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
         app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
 
-        // app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
-        char* end = nullptr;
-        app->Options()->SetIntegerValue("max_iter", (unsigned int)std::strtoul(argv[1], &end, 10));
+        app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+        // char* end = nullptr;
+        // app->Options()->SetIntegerValue("max_iter", (unsigned int)std::strtoul(argv[1], &end, 10));
 
         app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
         app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
@@ -153,9 +139,9 @@ int main(int argc, char* argv[]) {
 		throw std::runtime_error("Error during initialization of optimization!");
     }
 
-    char numBuffer[10];
-    sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
-    std::ofstream experiment_output(filepath + "speed_output_" + numBuffer + ".txt", std::ofstream::out | std::ofstream::app);
+    // char numBuffer[10];
+    // sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
+    // std::ofstream experiment_output(filepath + "speed_output_" + numBuffer + ".txt", std::ofstream::out | std::ofstream::app);
 
     try {
         auto start = std::chrono::high_resolution_clock::now();
@@ -166,8 +152,8 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         double solve_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
 
-        // std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
-        experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
+        // experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -188,7 +174,6 @@ int main(int argc, char* argv[]) {
         //                             TimeDiscretization::Uniform,
         //                             degree,
         //                             model,
-        //                             jtype,
         //                             gp,
         //                             'L',
         //                             Transform(),

@@ -65,7 +65,6 @@ public:
     // Class members
     // robot model
     Model model;
-    Eigen::VectorXi jtype;
 
     int actual_model_nq = 0;
 

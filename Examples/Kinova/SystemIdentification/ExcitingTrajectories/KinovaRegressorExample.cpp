@@ -19,16 +19,6 @@ int main(int argc, char* argv[]) {
     // model.damping.setZero();
     // model.rotorInertia.setZero();
 
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    if (model.nq != 7) {
-        throw std::invalid_argument("Error: Incorrect number of joints in the robot model!");
-    }
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 3, 3, 3, 3, 3, 3, 3;
-
     // Define trajectory parameters
     const double T = 10.0;
     const int N = 50;
@@ -60,7 +50,6 @@ int main(int argc, char* argv[]) {
                               degree,
                               base_frequency,
                               model,
-                              jtype,
                               regroupMatrixFileName,
                               joint_limits_buffer,
                               velocity_limits_buffer,

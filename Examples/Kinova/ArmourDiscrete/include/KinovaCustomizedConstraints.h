@@ -52,10 +52,10 @@ public:
     // Constructor
     KinovaCustomizedConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                 const Model& model_input,
-                                const Eigen::VectorXi& jtype_input,
                                 const std::vector<Vec3>& boxCenters_input,
                                 const std::vector<Vec3>& boxOrientation_input,
-                                const std::vector<Vec3>& boxSize_input);
+                                const std::vector<Vec3>& boxSize_input,
+                                Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
     ~KinovaCustomizedConstraints() = default;
@@ -80,9 +80,6 @@ public:
     std::unique_ptr<Model> modelPtr_;
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
-
-        // jtype copy
-    Eigen::VectorXi jtype;
 
         // the transform matrix at the beginning and at the end
     Transform startT;

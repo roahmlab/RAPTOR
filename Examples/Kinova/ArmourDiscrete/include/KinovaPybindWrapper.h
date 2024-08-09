@@ -61,7 +61,6 @@ public:
     // Class members
     // robot model
     Model model;
-    Eigen::VectorXi jtype;
 
     // obstacle information
     int num_obstacles = 0;

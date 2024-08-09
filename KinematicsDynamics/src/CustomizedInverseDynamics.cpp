@@ -3,9 +3,9 @@
 namespace RAPTOR {
 
 CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input, 
-                                                     const Eigen::VectorXi& jtype_input,
-                                                     const std::shared_ptr<Trajectories>& trajPtr_input) {   
-    jtype = jtype_input;
+                                                     const std::shared_ptr<Trajectories>& trajPtr_input,
+                                                     Eigen::VectorXi jtype_input) : 
+    jtype(jtype_input) {
     trajPtr_ = trajPtr_input;
     N = trajPtr_->N;
 
@@ -13,10 +13,15 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
     dataPtr_ = std::make_shared<Data>(model_input);
 
     // sanity check on consistency on jtype
-    if (modelPtr_->nv != jtype.size()) {
-        std::cerr << "model.nv: " << modelPtr_->nv << std::endl;
-        std::cerr << "jtype.size(): " << jtype.size() << std::endl;
-        throw std::invalid_argument("CustomizedInverseDynamics: total number of joints in jtype not consistent with model!");
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "model.nv: " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size(): " << jtype.size() << std::endl;
+            throw std::invalid_argument("CustomizedInverseDynamics: total number of joints in jtype not consistent with model!");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
     }
 
     active_joints.clear();

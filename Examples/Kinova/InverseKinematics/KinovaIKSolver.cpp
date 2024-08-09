@@ -17,9 +17,9 @@ namespace Kinova {
 // [TNLP_set_parameters]
 bool KinovaIKSolver::set_parameters(
     const VecX& x0_input,
-    const Model& model_input, 
-    const Eigen::VectorXi& jtype_input,
-    const Transform& desiredTransform_input
+    const Model& model_input,
+    const Transform& desiredTransform_input,
+    Eigen::VectorXi jtype_input
 )
 {
     enable_hessian = true;
@@ -40,10 +40,11 @@ bool KinovaIKSolver::set_parameters(
     // End effector kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<KinematicsConstraints>(trajPtr_,
                                                                          &model_input,
-                                                                         jtype_input,
                                                                          model_input.nq, // the last joint
                                                                          0,
-                                                                         desiredTransform_input));   
+                                                                         desiredTransform_input,
+                                                                         Transform(),
+                                                                         jtype_input));   
     constraintsNameVec_.push_back("kinematics constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);

@@ -2,6 +2,57 @@
 
 namespace RAPTOR {
 
+Eigen::VectorXi convertPinocchioJointType(const pinocchio::Model& model) {
+    Eigen::VectorXi jtype(model.nq);
+
+    for (int i = 0; i < model.nq; i++) {
+        const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
+        const std::string shortname = model.joints[pinocchio_joint_id].shortname();
+
+        if (shortname.find('R') != std::string::npos) {
+            if (shortname.find('X') != std::string::npos) {
+                jtype(i) = 1;
+            }
+            else if (shortname.find('Y') != std::string::npos) {
+                jtype(i) = 2;
+            }
+            else if (shortname.find('Z') != std::string::npos) {
+                jtype(i) = 3;
+            }
+            else if (shortname.find('U') != std::string::npos) {
+                // This is specific to the digit robot
+                // There are 4 joints that have "<axis xyz="0 0 -1"/>"
+                // But they can not be identified by urdf parser so we manually set them to be of type -3
+                std::cerr << "Warning: joint " << i << " is set to be of type -3!" << std::endl;
+                std::cerr << "         We assume that this would only happen for Digit-v3, but not other robots!" << std::endl;
+                jtype(i) = -3;
+            }
+            else {
+                throw std::invalid_argument("convertPinocchioJointType: invalid joint type!");
+            }
+        }
+        else if (shortname.find('P') != std::string::npos) {
+            if (shortname.find('X') != std::string::npos) {
+                jtype(i) = 4;
+            }
+            else if (shortname.find('Y') != std::string::npos) {
+                jtype(i) = 5;
+            }
+            else if (shortname.find('Z') != std::string::npos) {
+                jtype(i) = 6;
+            }
+            else {
+                throw std::invalid_argument("convertPinocchioJointType: invalid joint type!");
+            }
+        }
+        else {
+            throw std::invalid_argument("convertPinocchioJointType: invalid joint type!");
+        }
+    }
+
+    return jtype;
+}
+
 Transform::Transform() {
     R.setIdentity();
     p.setZero();
