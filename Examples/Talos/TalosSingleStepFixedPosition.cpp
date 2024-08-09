@@ -108,7 +108,11 @@ int main(int argc, char* argv[]) {
         app->Options()->SetNumericValue("tol", config["tol"].as<double>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
         app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
-        app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+
+        // app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+        char* end = nullptr;
+        app->Options()->SetIntegerValue("max_iter", (unsigned int)std::strtoul(argv[1], &end, 10));
+
         app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
         app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
@@ -149,6 +153,10 @@ int main(int argc, char* argv[]) {
 		throw std::runtime_error("Error during initialization of optimization!");
     }
 
+    char numBuffer[10];
+    sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
+    std::ofstream experiment_output(filepath + "speed_output_" + numBuffer + ".txt", std::ofstream::out | std::ofstream::app);
+
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -156,100 +164,68 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        double solve_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
 
-        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
+        // std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
+        experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    // Evaluate the solution on a finer time discretization
-    try {
-        SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
-        testnlp->set_parameters(z,
-                                T,
-                                N,
-                                time_discretization,
-                                degree,
-                                model,
-                                jtype,
-                                gp,
-                                'L',
-                                Transform(),
-                                q0,
-                                q_d0);
-        Index n, m, nnz_jac_g, nnz_h_lag;
-        TNLP::IndexStyleEnum index_style;
-        testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-        Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
-        Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
-        for (int i = 0; i < testnlp->numVars; i++) {
-            ztry[i] = mynlp->solution[i];
-        }
-        testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
-        testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-        testnlp->summarize_constraints(testnlp->numCons, g, true);
-        std::cout << "Constraint violation on finer discretization: " << testnlp->final_constr_violation << std::endl;
-    }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
-    }
-
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        // Evaluate the solution on a finer time discretization
-        try {
-            const double dt_sim = 5e-4;
-            const int N_simulate = T / dt_sim;
+        // // Evaluate the solution on a finer time discretization
+        // try {
+        //     const double dt_sim = 5e-4;
+        //     const int N_simulate = T / dt_sim;
 
-            SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
-            testnlp->set_parameters(z,
-                                    T,
-                                    N_simulate,
-                                    TimeDiscretization::Uniform,
-                                    degree,
-                                    model,
-                                    jtype,
-                                    gp,
-                                    'L',
-                                    Transform(),
-                                    q0,
-                                    q_d0);
-            Index n, m, nnz_jac_g, nnz_h_lag;
-            TNLP::IndexStyleEnum index_style;
-            testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-            Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
-            Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
-            for (int i = 0; i < testnlp->numVars; i++) {
-                ztry[i] = mynlp->solution[i];
-            }
-            testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
-            testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-            testnlp->summarize_constraints(testnlp->numCons, g, false);
+        //     SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
+        //     testnlp->set_parameters(z,
+        //                             T,
+        //                             N_simulate,
+        //                             TimeDiscretization::Uniform,
+        //                             degree,
+        //                             model,
+        //                             jtype,
+        //                             gp,
+        //                             'L',
+        //                             Transform(),
+        //                             q0,
+        //                             q_d0);
+        //     Index n, m, nnz_jac_g, nnz_h_lag;
+        //     TNLP::IndexStyleEnum index_style;
+        //     testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+        //     Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
+        //     Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
+        //     for (int i = 0; i < testnlp->numVars; i++) {
+        //         ztry[i] = mynlp->solution[i];
+        //     }
+        //     testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
+        //     testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+        //     testnlp->summarize_constraints(testnlp->numCons, g, false);
 
-            char numBuffer[10];
-            sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
-            std::ofstream solution(filepath + "solution-talos-forward-" + numBuffer + ".txt");
-            for (int j = 0; j < N_simulate; j++) {
-                for (int i = 0; i < NUM_JOINTS; i++) {
-                    solution << testnlp->cidPtr_->q(j)(i) << ' ';
-                }
-                for (int i = 0; i < NUM_JOINTS; i++) {
-                    solution << testnlp->cidPtr_->v(j)(i) << ' ';
-                }
-                for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-                    solution << testnlp->cidPtr_->tau(j)(i) << ' ';
-                }
-                solution << std::endl;
-            }
-        }
-        catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
-        }
+        //     char numBuffer[10];
+        //     sprintf(numBuffer, "%.1f", gp.swingfoot_end_x_des);
+        //     std::ofstream solution(filepath + "solution-talos-forward-" + numBuffer + ".txt");
+        //     for (int j = 0; j < N_simulate; j++) {
+        //         for (int i = 0; i < NUM_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->q(j)(i) << ' ';
+        //         }
+        //         for (int i = 0; i < NUM_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->v(j)(i) << ' ';
+        //         }
+        //         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->tau(j)(i) << ' ';
+        //         }
+        //         solution << std::endl;
+        //     }
+        // }
+        // catch (std::exception& e) {
+        //     std::cerr << e.what() << std::endl;
+        //     throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
+        // }
 
         // std::ofstream solution(filepath + "solution-talos-forward.txt");
         // solution << std::setprecision(20);

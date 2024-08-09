@@ -169,7 +169,7 @@ bool DigitSingleStepOptimizer::eval_f(
 
     // minimize initial velocity
     const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    obj_value += 40 * sqrt(initial_velocity.dot(initial_velocity));
+    obj_value += 100 * sqrt(initial_velocity.dot(initial_velocity));
 
     // minimize initial acceleration
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);

@@ -163,6 +163,17 @@ if __name__ == "__main__":
         ts_raptor, xs_raptor, us_raptor, act_matrix,
         Kp, Kd)
     
+    RF_id = model.getFrameId("right_sole_link")
+    pin.forwardKinematics(model, data, xs_raptor[-1][:nq])
+    pin.updateFramePlacements(model, data)
+    RF_placement = data.oMf[RF_id]
+    step_length_opt = RF_placement.translation[0]
+    pin.forwardKinematics(model, data, pos_sim[-1])
+    pin.updateFramePlacements(model, data)
+    RF_placement = data.oMf[RF_id]
+    step_length_sim = RF_placement.translation[0]
+    print(step_length_opt, step_length_sim)
+    
     np.savetxt('../data/trajectory-talos-simulation.txt', pos_sim.T)
     
     scipy.io.savemat('../data/talos-simulation-' + str(step_length) + '.mat', 
@@ -171,6 +182,8 @@ if __name__ == "__main__":
                       'vel_sim': vel_sim, 
                       'us_sim': us_sim, 
                       'e_sim': e_sim, 
-                      'edot_sim': edot_sim})
+                      'edot_sim': edot_sim,
+                      'step_length_opt': step_length_opt,
+                      'step_length_sim': step_length_sim})
     
     

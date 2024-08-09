@@ -121,7 +121,11 @@ int main(int argc, char* argv[]) {
         app->Options()->SetNumericValue("tol", config["tol"].as<double>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
         app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+
         app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+        // char* end = nullptr;
+        // app->Options()->SetIntegerValue("max_iter", (unsigned int)std::strtoul(argv[1], &end, 10));
+
         app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
         app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
@@ -162,6 +166,10 @@ int main(int argc, char* argv[]) {
 		throw std::runtime_error("Error during initialization of optimization!");
     }
 
+    // char numBuffer[10];
+    // sprintf(numBuffer, "%.1f", abs(gp.swingfoot_end_y_des));
+    // std::ofstream experiment_output(filepath + "speed_output_" + numBuffer + ".txt", std::ofstream::out | std::ofstream::app);
+
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -169,9 +177,10 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        double solve_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
 
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
+        // experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -183,7 +192,7 @@ int main(int argc, char* argv[]) {
         // Evaluate the solution on a finer time discretization
         try {
             const double dt_sim = 5e-4;
-            const int N_simulate = T / dt_sim;
+            const int N_simulate = T / dt_sim + 1;
 
             SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
             testnlp->set_parameters(z,
