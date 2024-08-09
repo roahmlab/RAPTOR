@@ -228,9 +228,9 @@ target_include_directories(DigitModifiedlib PUBLIC
 # Kinova libraries
 add_library(Kinovalib SHARED
     Examples/Kinova/InverseKinematics/KinovaIKSolver.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaOptimizer.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaCustomizedConstraints.cpp
-    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrOptimizer.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaOptimizer.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
+    Examples/Kinova/WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     Examples/Kinova/SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp)
 
@@ -247,8 +247,8 @@ target_link_libraries(Kinovalib PUBLIC
 target_include_directories(Kinovalib PUBLIC
     Examples/Kinova
     Examples/Kinova/InverseKinematics
-    Examples/Kinova/ArmourUnsafe/include
-    Examples/Kinova/WaitrUnsafe/include
+    Examples/Kinova/ArmourDiscrete/include
+    Examples/Kinova/WaitrDiscrete/include
     Examples/Kinova/SystemIdentification/DataFilter/include
     Examples/Kinova/SystemIdentification/ExcitingTrajectories/include
     Examples/Kinova/SystemIdentification/IterativeSystemIdentification/include)
@@ -409,11 +409,11 @@ target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Kinova_example 
-    Examples/Kinova/ArmourUnsafe/KinovaExample.cpp)
+    Examples/Kinova/ArmourDiscrete/KinovaExample.cpp)
 
 target_include_directories(Kinova_example PUBLIC
     Examples/Kinova
-    Examples/Kinova/ArmourUnsafe/include)
+    Examples/Kinova/ArmourDiscrete/include)
 
 target_link_libraries(Kinova_example PUBLIC
     trajlib 
@@ -430,11 +430,11 @@ target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaWaitr_example 
-    Examples/Kinova/WaitrUnsafe/KinovaWaitrExample.cpp)
+    Examples/Kinova/WaitrDiscrete/KinovaWaitrExample.cpp)
 
 target_include_directories(KinovaWaitr_example PUBLIC
     Examples/Kinova
-    Examples/Kinova/WaitrUnsafe/include)
+    Examples/Kinova/WaitrDiscrete/include)
 
 target_link_libraries(KinovaWaitr_example PUBLIC
     trajlib 
@@ -494,12 +494,12 @@ target_compile_options(KinovaSysId_example PUBLIC
 
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO
-    Examples/Kinova/ArmourUnsafe/KinovaPybind.cpp
-    Examples/Kinova/ArmourUnsafe/src/KinovaPybindWrapper.cpp)
+    Examples/Kinova/ArmourDiscrete/KinovaPybind.cpp
+    Examples/Kinova/ArmourDiscrete/src/KinovaPybindWrapper.cpp)
 
 target_include_directories(oracle_nanobind PUBLIC
     Examples/Kinova
-    Examples/Kinova/ArmourUnsafe/include)
+    Examples/Kinova/ArmourDiscrete/include)
 
 target_link_libraries(oracle_nanobind PUBLIC
     trajlib 
@@ -519,12 +519,12 @@ nanobind_compile_options(oracle_nanobind PUBLIC
 set_property(TARGET oracle_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 nanobind_add_module(oracle_waitr_nanobind SHARED
-    Examples/Kinova/WaitrUnsafe/KinovaWaitrPybind.cpp
-    Examples/Kinova/WaitrUnsafe/src/KinovaWaitrPybindWrapper.cpp)
+    Examples/Kinova/WaitrDiscrete/KinovaWaitrPybind.cpp
+    Examples/Kinova/WaitrDiscrete/src/KinovaWaitrPybindWrapper.cpp)
 
 target_include_directories(oracle_waitr_nanobind PUBLIC
     Examples/Kinova
-    Examples/Kinova/WaitrUnsafe/include)
+    Examples/Kinova/WaitrDiscrete/include)
 
 target_link_libraries(oracle_waitr_nanobind PUBLIC
     trajlib 

@@ -1,0 +1,3 @@
+This folder contains an implementation of an discrete version of [ARMOUR](https://roahmlab.github.io/armour/).
+Instead of guaranteeing safety on continuous time intervals, we only validate constraints on discrete time nodes.
+This could be used to provide good initial guesses for [ARMOUR](https://roahmlab.github.io/armour/) because this runs much faster than [ARMOUR](https://roahmlab.github.io/armour/).

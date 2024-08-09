@@ -1,0 +1,3 @@
+This folder contains an implementation of an discrete version of [WAITR](https://roahmlab.github.io/waitr-dev/).
+Instead of guaranteeing safety on continuous time intervals, we only validate constraints on discrete time nodes.
+This could be used to provide good initial guesses for [WAITR](https://roahmlab.github.io/waitr-dev/) because this runs much faster than [WAITR](https://roahmlab.github.io/waitr-dev/).
