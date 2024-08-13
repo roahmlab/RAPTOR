@@ -258,6 +258,7 @@ add_executable(Digit_example
     # Examples/Digit/DigitSingleStepSpeedTest.cpp)
     # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
     # Examples/Digit/DigitSingleStepFixedPosition.cpp)
+    # Examples/Digit/VisualizationHelper.cpp)
 
 target_include_directories(Digit_example PUBLIC
     Examples/Digit/include

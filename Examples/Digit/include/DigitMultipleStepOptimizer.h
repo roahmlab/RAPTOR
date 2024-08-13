@@ -9,6 +9,14 @@ namespace Digit {
 
 using namespace Ipopt;
 
+// switch the solution from left stance to right stance
+// to be more specific, we have to perform the following changes:
+// 1. swap the left leg joints and right leg joints
+// 2. negate all joints
+// since Digit joint directions are mirrored between left leg and right leg
+Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
+                                              const int degree);
+
 class DigitMultipleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;

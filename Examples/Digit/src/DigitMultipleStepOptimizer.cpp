@@ -3,6 +3,28 @@
 namespace RAPTOR {
 namespace Digit {
 
+Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
+                                              const int degree) {
+    if (z.size() != (degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS) {
+        throw std::invalid_argument("z has wrong size in switchSolutionFromLeftToRight! A single step solution is required.");
+    }
+    
+    Eigen::VectorXd z_switched = z;
+
+    // swap left leg and right leg
+    z_switched.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+    z_switched.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+
+    // negate all joints
+    for (int i = 0; i < z_switched.size(); i++) {
+        z_switched(i) = -z_switched(i);
+    }
+
+    return z_switched;
+}
+
 // // constructor
 // DigitMultipleStepOptimizer::DigitMultipleStepOptimizer()
 // {
@@ -31,7 +53,9 @@ bool DigitMultipleStepOptimizer::set_parameters(
 
     x0 = x0_input;
     
+    stepOptVec_.clear();
     stepOptVec_.reserve(NSteps_input);
+    
     for (int i = 0; i < NSteps_input; i++) {
         stepOptVec_.push_back(new DigitSingleStepOptimizer());
 

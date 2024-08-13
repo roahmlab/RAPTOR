@@ -31,7 +31,9 @@ bool TalosMultipleStepOptimizer::set_parameters(
 
     x0 = x0_input;
     
+    stepOptVec_.clear();
     stepOptVec_.reserve(NSteps_input);
+    
     for (int i = 0; i < NSteps_input; i++) {
         stepOptVec_.push_back(new TalosSingleStepOptimizer());
 

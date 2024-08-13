@@ -8,7 +8,10 @@ import numpy as np
 timeStep = 0.1
 
 ### read data
-data = np.loadtxt("../data/trajectory-digit-simulation.txt")
+# data = np.loadtxt("../data/trajectory-digit-simulation.txt")
+
+data = np.loadtxt("../data/full-trajectories.txt")
+data = data.T
 
 ### connect to simulator
 p.connect(p.GUI)
