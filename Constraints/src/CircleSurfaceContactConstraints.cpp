@@ -98,5 +98,27 @@ void CircleSurfaceContactConstraints::compute_bounds() {
     }
 }
 
+void CircleSurfaceContactConstraints::print_violation_info() {
+    for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
+        // (1) positive contact force
+        if (g(i * 3 + 0) <= 0) {
+            std::cout << "CircleSurfaceContactConstraints: positive contact force violation " 
+                      << "at time step " << i << ": " << g(i * 3 + 0) << std::endl;
+        }
+
+        // (2) translation friction cone
+        if (g(i * 3 + 1) >= 0) {
+            std::cout << "CircleSurfaceContactConstraints: translation friction cone violation "
+                      << "at time step " << i << ": " << g(i * 3 + 1) << std::endl;
+        }
+
+        // (3) ZMP (object not flipping over)
+        if (g(i * 3 + 2) >= 0) {
+            std::cout << "CircleSurfaceContactConstraints: ZMP (object not flipping over) violation "
+                      << "at time step " << i << ": " << g(i * 3 + 2) << std::endl;
+        }
+    }
+}
+
 }; // namespace RAPTOR
 

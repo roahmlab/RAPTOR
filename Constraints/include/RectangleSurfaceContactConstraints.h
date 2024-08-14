@@ -41,10 +41,10 @@ public:
         // compute constraints
     void compute(const VecX& z, 
                  bool compute_derivatives = true,
-                 bool compute_hessian = false) override;
+                 bool compute_hessian = false) final override;
 
         // compute constraints lower bounds and upper bounds
-    void compute_bounds() override;
+    void compute_bounds() final override;
 
     // class variables:
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;

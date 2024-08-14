@@ -46,10 +46,13 @@ public:
         // compute constraints
     virtual void compute(const VecX& z, 
                          bool compute_derivatives = true,
-                         bool compute_hessian = false) override;
+                         bool compute_hessian = false) final override;
 
         // compute constraints lower bounds and upper bounds
-    void compute_bounds() override;
+    void compute_bounds() final override;
+
+        // print violation info
+    void print_violation_info() final override;
 
     // class members:
     std::shared_ptr<CustomizedInverseDynamics> idPtr_;

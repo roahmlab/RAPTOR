@@ -57,7 +57,7 @@ Trajectories::Trajectories(const int varLength_input,
     else if (time_discretization == Chebyshev) {
         tspan = VecX::Zero(N);
         for (int i = 1; i < N - 1; i++) {
-            tspan(i) = 0.5 * T * (1 - cos(M_PI * (2 * i - 1) / (2 * (N - 2))));
+            tspan(i) = 0.5 * T * (1 + cos(M_PI * (2 * (N - i) - 3) / (2 * (N - 2))));
         }
         tspan(0) = 0;
         tspan(N - 1) = T;

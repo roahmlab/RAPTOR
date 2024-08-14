@@ -47,7 +47,7 @@ int main() {
     atp.q_dd0 = Eigen::VectorXd::Zero(actual_model_nq);
 
     const double T = 1;
-    const int N = 16;
+    const int N = 32;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define contact surface parameters

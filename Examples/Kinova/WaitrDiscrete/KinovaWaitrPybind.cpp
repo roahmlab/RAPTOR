@@ -18,5 +18,6 @@ NB_MODULE(oracle_waitr_nanobind, m) {
         .def("set_trajectory_parameters", &KinovaWaitrPybindWrapper::set_trajectory_parameters)
         .def("set_buffer", &KinovaWaitrPybindWrapper::set_buffer)
         .def("set_target", &KinovaWaitrPybindWrapper::set_target)
-        .def("optimize", &KinovaWaitrPybindWrapper::optimize);
+        .def("optimize", &KinovaWaitrPybindWrapper::optimize)
+        .def("analyze_solution", &KinovaWaitrPybindWrapper::analyze_solution);
 }
