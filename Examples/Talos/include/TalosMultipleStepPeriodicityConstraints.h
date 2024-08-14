@@ -22,7 +22,7 @@ public:
                                             std::shared_ptr<Trajectories>& nextTrajPtr_input,
                                             std::shared_ptr<TalosConstrainedInverseDynamics> currDcidPtr_input,
                                             std::shared_ptr<TalosConstrainedInverseDynamics> nextDcidPtr_input,
-                                            const frictionParams& fp_input);
+                                            const rectangleContactSurfaceParams& fp_input);
 
     // Destructor
     ~TalosMultipleStepPeriodicityConstraints() = default;
@@ -42,7 +42,7 @@ public:
     std::shared_ptr<TalosConstrainedInverseDynamics> currDcidPtr_;
     std::shared_ptr<TalosConstrainedInverseDynamics> nextDcidPtr_;
 
-    frictionParams fp;
+    rectangleContactSurfaceParams fp;
 
         // intermediate variables updated in compute()
     MatX prnea_pq;

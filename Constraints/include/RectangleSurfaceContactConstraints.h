@@ -8,33 +8,34 @@
 
 namespace RAPTOR {
 
-typedef struct frictionParams_  {
+typedef struct rectangleContactSurfaceParams_  {
     double mu = 0.7;
     double gamma = 0.7;
-    double Lx = 0;
-    double Ly = 0;
+    double Lx = 0.1;
+    double Ly = 0.1;
 
-    frictionParams_(double mu_input, 
-                    double gamma_input, 
-                    double Lx_input, 
-                    double Ly_input) :
+    rectangleContactSurfaceParams_(
+        double mu_input, 
+        double gamma_input, 
+        double Lx_input, 
+        double Ly_input) :
         mu(mu_input), 
         gamma(gamma_input), 
         Lx(Lx_input), 
         Ly(Ly_input) {}
-} frictionParams;
+} rectangleContactSurfaceParams;
 
-class SurfaceContactConstraints : public Constraints {
+class RectangleSurfaceContactConstraints : public Constraints {
 public:
     // Constructor
-    SurfaceContactConstraints() = default;
+    RectangleSurfaceContactConstraints() = default;
 
     // Constructor
-    SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
-                              const frictionParams& fp_input);
+    RectangleSurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
+                                       const rectangleContactSurfaceParams& fp_input);
 
     // Destructor
-    ~SurfaceContactConstraints() = default;
+    ~RectangleSurfaceContactConstraints() = default;
 
     // class methods:
         // compute constraints
@@ -48,7 +49,7 @@ public:
     // class variables:
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
 
-    frictionParams fp;
+    rectangleContactSurfaceParams fp;
 };
 
 }; // namespace RAPTOR

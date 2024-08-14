@@ -11,7 +11,7 @@
 
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
-#include "SurfaceContactConstraints.h"
+#include "RectangleSurfaceContactConstraints.h"
 #include "DigitModifiedCustomizedConstraints.h"
 #include "DigitModifiedSingleStepPeriodicityConstraints.h"
 

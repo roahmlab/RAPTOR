@@ -22,7 +22,7 @@ bool KinovaWaitrOptimizer::set_parameters(
     const int degree_input,
     const Model& model_input, 
     const ArmourTrajectoryParameters& atp_input,
-    const contactSurfaceParams& csp_input,
+    const circleContactSurfaceParams& csp_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
     const std::vector<Vec3>& boxSize_input,
@@ -93,8 +93,8 @@ bool KinovaWaitrOptimizer::set_parameters(
     constraintsNameVec_.push_back("torque limits");   
 
     // Contact constraints with the object
-    constraintsPtrVec_.push_back(std::make_unique<WaitrContactConstraints>(idPtr_, 
-                                                                           csp_input));                                                         
+    constraintsPtrVec_.push_back(std::make_unique<CircleSurfaceContactConstraints>(idPtr_, 
+                                                                                   csp_input));                                                         
     constraintsNameVec_.push_back("contact constraints");
 
     // Customized constraints (collision avoidance with obstacles)

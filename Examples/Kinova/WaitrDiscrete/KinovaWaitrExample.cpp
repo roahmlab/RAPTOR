@@ -51,7 +51,7 @@ int main() {
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define contact surface parameters
-    contactSurfaceParams csp;
+    circleContactSurfaceParams csp;
     // TODO: define contact surface parameters
 
     // Define target

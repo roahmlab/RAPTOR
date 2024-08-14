@@ -135,8 +135,8 @@ add_library(Conslib SHARED
     Constraints/src/VelocityLimits.cpp
     Constraints/src/ConstrainedJointLimits.cpp
     Constraints/src/TorqueLimits.cpp
-    Constraints/src/SurfaceContactConstraints.cpp
-    Constraints/src/WaitrContactConstraints.cpp
+    Constraints/src/RectangleSurfaceContactConstraints.cpp
+    Constraints/src/CircleSurfaceContactConstraints.cpp
     Constraints/src/LieSpaceResidual.cpp
     Constraints/src/KinematicsConstraints.cpp
     Constraints/src/BoxCollisionAvoidance.cpp)
@@ -538,7 +538,7 @@ target_link_libraries(oracle_waitr_nanobind PUBLIC
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 
-    nanobind_compile_options(oracle_waitr_nanobind PUBLIC
+nanobind_compile_options(oracle_waitr_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
 
 set_property(TARGET oracle_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)

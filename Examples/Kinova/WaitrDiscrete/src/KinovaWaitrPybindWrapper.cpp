@@ -43,11 +43,11 @@ void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
 }
 
 void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const double mu_inp,
-                                                              const double Lx_inp,
-                                                              const double Ly_inp) {
+                                                              const double R_inp,
+                                                              const double maxSuctionForce_inp) {
     csp.mu = mu_inp;
-    csp.Lx = Lx_inp;
-    csp.Ly = Ly_inp;
+    csp.R = R_inp;
+    csp.maxSuctionForce = maxSuctionForce_inp;
 }
 
 void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,

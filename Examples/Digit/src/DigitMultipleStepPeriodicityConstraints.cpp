@@ -7,7 +7,7 @@ DigitMultipleStepPeriodicityConstraints::DigitMultipleStepPeriodicityConstraints
                                                                                  std::shared_ptr<Trajectories>& nextTrajPtr_input,
                                                                                  std::shared_ptr<DigitConstrainedInverseDynamics> currDcidPtr_input,
                                                                                  std::shared_ptr<DigitConstrainedInverseDynamics> nextDcidPtr_input,
-                                                                                 const frictionParams& fp_input) : 
+                                                                                 const rectangleContactSurfaceParams& fp_input) : 
     currTrajPtr_(currTrajPtr_input),
     nextTrajPtr_(nextTrajPtr_input),
     currDcidPtr_(currDcidPtr_input),

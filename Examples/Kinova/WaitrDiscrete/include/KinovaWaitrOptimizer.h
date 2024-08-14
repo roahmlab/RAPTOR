@@ -14,7 +14,7 @@
 #include "TorqueLimits.h"
 #include "CustomizedInverseDynamics.h"
 #include "KinovaCustomizedConstraints.h"
-#include "WaitrContactConstraints.h"
+#include "CircleSurfaceContactConstraints.h"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -40,7 +40,7 @@ public:
         const int degree_input,
         const Model& model_input, 
         const ArmourTrajectoryParameters& atp_input,
-        const contactSurfaceParams& csp_input,
+        const circleContactSurfaceParams& csp_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input,
