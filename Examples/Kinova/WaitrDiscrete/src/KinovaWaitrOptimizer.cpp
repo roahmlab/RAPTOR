@@ -41,11 +41,12 @@ bool KinovaWaitrOptimizer::set_parameters(
 
     trajPtr_ = std::make_shared<ArmourBezierCurves>(T_input, 
                                                     N_input, 
-                                                    model_input.nq - 1, 
+                                                    NUM_JOINTS, 
                                                     Chebyshev, 
                                                     atp_input);
 
     Eigen::VectorXi jtype = convertPinocchioJointType(model_input);    
+    jtype(jtype.size() - 2) = 0; // The last joint, which connects the gripper and the tray, should be a fixed joint
     jtype(jtype.size() - 1) = 0; // The last joint, which connects the tray and the object, should be a fixed joint                                 
 
     idPtr_ = std::make_shared<CustomizedInverseDynamics>(model_input,
@@ -99,7 +100,7 @@ bool KinovaWaitrOptimizer::set_parameters(
 
     // Customized constraints (collision avoidance with obstacles)
     Model model_reduced;
-    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model_input.nv};
+    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)(model_input.nv - 1), (pinocchio::JointIndex)model_input.nv};
     pinocchio::buildReducedModel(model_input, list_of_joints_to_lock_by_id, VecX::Zero(model_input.nv), model_reduced);
     Eigen::VectorXi jtype_reduced = jtype.head(model_reduced.nv);
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,

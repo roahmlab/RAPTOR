@@ -13,15 +13,9 @@ typedef struct circleContactSurfaceParams_  {
     double R = 0.1; // radius of the contact surface (assumed to be circle)
     double maxSuctionForce = 0; // maximum suction force of the suction cup
 
-    circleContactSurfaceParams_() = default;
-
-    circleContactSurfaceParams_(
-        double mu_input, 
-        double R_input,
-        double maxSuctionForce_input) :
-        mu(mu_input), 
-        R(R_input), 
-        maxSuctionForce(maxSuctionForce_input) {}
+    double contactForceBuffer = 0; // buffer for positive contact force constraint
+    double frictionForceBuffer = 0; // buffer for translation friction cone constraint
+    double ZMPBuffer = 0; // buffer for ZMP constraint
 } circleContactSurfaceParams;
 
 class CircleSurfaceContactConstraints : public Constraints {

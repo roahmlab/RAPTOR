@@ -38,7 +38,15 @@ public:
 
     void set_contact_surface_parameters(const double mu_inp,
                                         const double R_inp,
-                                        const double maxSuctionForce_inp = 0.0);
+                                        const double maxSuctionForce_inp = 0.0,
+                                        const double contactForceBuffer_inp = 0.0,
+                                        const double frictionForceBuffer_inp = 0.0,
+                                        const double ZMPBuffer_inp = 0.0);
+
+    void set_end_effector(const nb_1d_double contact_position,
+                          const double object_mass,
+                          const nb_1d_double object_com,
+                          const nb_2d_double object_inertia);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -99,6 +107,8 @@ public:
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;
+    bool set_contact_surface_parameters_check = false;
+    bool set_end_effector_check = false;
     bool set_ipopt_parameters_check = false;
     bool set_trajectory_parameters_check = false;
     bool set_buffer_check = false;

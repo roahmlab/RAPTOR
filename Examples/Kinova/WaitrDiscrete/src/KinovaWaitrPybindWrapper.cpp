@@ -7,14 +7,12 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
     // Define robot model
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    actual_model_nq = model.nq - 1;
-
     model.gravity.linear()(2) = GRAVITY;
 
-    qdes = VecX::Zero(actual_model_nq);
-    joint_limits_buffer = VecX::Zero(actual_model_nq);
-    velocity_limits_buffer = VecX::Zero(actual_model_nq);
-    torque_limits_buffer = VecX::Zero(actual_model_nq);
+    qdes = VecX::Zero(NUM_JOINTS);
+    joint_limits_buffer = VecX::Zero(NUM_JOINTS);
+    velocity_limits_buffer = VecX::Zero(NUM_JOINTS);
+    torque_limits_buffer = VecX::Zero(NUM_JOINTS);
 
     mynlp = new KinovaWaitrOptimizer();
     app = IpoptApplicationFactory();
@@ -45,10 +43,56 @@ void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
 
 void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const double mu_inp,
                                                               const double R_inp,
-                                                              const double maxSuctionForce_inp) {
+                                                              const double maxSuctionForce_inp,
+                                                              const double contactForceBuffer_inp,
+                                                              const double frictionForceBuffer_inp,
+                                                              const double ZMPBuffer_inp) {
     csp.mu = mu_inp;
     csp.R = R_inp;
     csp.maxSuctionForce = maxSuctionForce_inp;
+    csp.contactForceBuffer = contactForceBuffer_inp;
+    csp.frictionForceBuffer = frictionForceBuffer_inp;
+    csp.ZMPBuffer = ZMPBuffer_inp;
+    
+    set_contact_surface_parameters_check = true;
+    has_optimized = false;
+}
+
+void KinovaWaitrPybindWrapper::set_end_effector(const nb_1d_double contact_position,
+                                                const double object_mass,
+                                                const nb_1d_double object_com,
+                                                const nb_2d_double object_inertia) {
+    if (contact_position.shape(0) != 3) {
+        throw std::invalid_argument("contact_position must have 3 elements");
+    }
+
+    if (object_mass < 0) {
+        throw std::invalid_argument("object_mass must be non-negative");
+    }
+
+    if (object_com.shape(0) != 3) {
+        throw std::invalid_argument("object_com must have 3 elements");
+    }
+
+    if (object_inertia.shape(0) != 3 || object_inertia.shape(1) != 3) {
+        throw std::invalid_argument("object_inertia must be a 3x3 matrix");
+    }
+
+    const auto contact_id = model.getJointId("contact_joint");
+
+    model.jointPlacements[contact_id].translation() << contact_position(0),
+                                                       contact_position(1),
+                                                       contact_position(2);
+    model.inertias[contact_id].mass() = object_mass;
+    model.inertias[contact_id].lever() << object_com(0),
+                                          object_com(1),
+                                          object_com(2);
+    model.inertias[contact_id].inertia().matrix() 
+        << object_inertia(0, 0), object_inertia(0, 1), object_inertia(0, 2),
+           object_inertia(1, 0), object_inertia(1, 1), object_inertia(1, 2),
+           object_inertia(2, 0), object_inertia(2, 1), object_inertia(2, 2);
+    
+    set_end_effector_check = true;
     has_optimized = false;
 }
 
@@ -79,16 +123,17 @@ void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
     mynlp->constr_viol_tol = constr_viol_tol;
 
     set_ipopt_parameters_check = true;
+    has_optimized = false;
 }
 
 void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
                                                          const nb_1d_double qd0_inp,
                                                          const nb_1d_double qdd0_inp,
                                                          const double duration_inp) {
-    if (q0_inp.shape(0) != actual_model_nq || 
-        qd0_inp.shape(0) != actual_model_nq || 
-        qdd0_inp.shape(0) != actual_model_nq) {
-        throw std::invalid_argument("q0, qd0, qdd0 must be of size actual_model_nq");
+    if (q0_inp.shape(0) != NUM_JOINTS || 
+        qd0_inp.shape(0) != NUM_JOINTS || 
+        qdd0_inp.shape(0) != NUM_JOINTS) {
+        throw std::invalid_argument("q0, qd0, qdd0 must be of size NUM_JOINTS");
     }
 
     T = duration_inp;
@@ -97,11 +142,11 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
         throw std::invalid_argument("Duration must be positive");
     }
 
-    atp.q0.resize(actual_model_nq);
-    atp.q_d0.resize(actual_model_nq);
-    atp.q_dd0.resize(actual_model_nq);
+    atp.q0.resize(NUM_JOINTS);
+    atp.q_d0.resize(NUM_JOINTS);
+    atp.q_dd0.resize(NUM_JOINTS);
 
-    for (int i = 0; i < actual_model_nq; i++) {
+    for (int i = 0; i < NUM_JOINTS; i++) {
         atp.q0(i) = q0_inp(i);
         atp.q_d0(i) = qd0_inp(i);
         atp.q_dd0(i) = qdd0_inp(i);
@@ -114,13 +159,13 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
 void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
                                           const nb_1d_double velocity_limits_buffer_inp,
                                           const nb_1d_double torque_limits_buffer_inp) {
-    if (joint_limits_buffer_inp.shape(0) != actual_model_nq || 
-        velocity_limits_buffer_inp.shape(0) != actual_model_nq || 
-        torque_limits_buffer_inp.shape(0) != actual_model_nq) {
-        throw std::invalid_argument("joint_limits_buffer, velocity_limits_buffer, torque_limits_buffer must be of size actual_model_nq");
+    if (joint_limits_buffer_inp.shape(0) != NUM_JOINTS || 
+        velocity_limits_buffer_inp.shape(0) != NUM_JOINTS || 
+        torque_limits_buffer_inp.shape(0) != NUM_JOINTS) {
+        throw std::invalid_argument("joint_limits_buffer, velocity_limits_buffer, torque_limits_buffer must be of size NUM_JOINTS");
     }
 
-    for (int i = 0; i < actual_model_nq; i++) {
+    for (int i = 0; i < NUM_JOINTS; i++) {
         joint_limits_buffer(i) = joint_limits_buffer_inp(i);
         velocity_limits_buffer(i) = velocity_limits_buffer_inp(i);
         torque_limits_buffer(i) = torque_limits_buffer_inp(i);
@@ -138,11 +183,11 @@ void KinovaWaitrPybindWrapper::set_target(const nb_1d_double q_des_inp,
         throw std::invalid_argument("tplan must be greater than 0.0 or smaller than duration");
     }
 
-    if (q_des_inp.shape(0) != actual_model_nq) {
-        throw std::invalid_argument("q_des must be of size actual_model_nq");
+    if (q_des_inp.shape(0) != NUM_JOINTS) {
+        throw std::invalid_argument("q_des must be of size NUM_JOINTS");
     }
 
-    for (int i = 0; i < actual_model_nq; i++) {
+    for (int i = 0; i < NUM_JOINTS; i++) {
         qdes(i) = q_des_inp(i);
     }
 
@@ -154,6 +199,8 @@ void KinovaWaitrPybindWrapper::set_target(const nb_1d_double q_des_inp,
 
 nb::tuple KinovaWaitrPybindWrapper::optimize() {
     if (!set_obstacles_check || 
+        !set_contact_surface_parameters_check ||
+        !set_end_effector_check ||
         !set_ipopt_parameters_check || 
         !set_trajectory_parameters_check || 
         !set_buffer_check ||
@@ -162,7 +209,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    Eigen::VectorXd z(actual_model_nq);
+    Eigen::VectorXd z(NUM_JOINTS);
     z.setZero();
 
     // Initialize Kinova optimizer
@@ -216,7 +263,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     set_target_check = false;
     has_optimized = true;
 
-    const size_t shape_ptr[] = {actual_model_nq};
+    const size_t shape_ptr[] = {NUM_JOINTS};
     auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
                                                        1,
                                                        shape_ptr,
@@ -265,16 +312,16 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * actual_model_nq + 1);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
-        for (int j = 0; j < actual_model_nq; j++) {
+        for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
-            trajInfo(i, j + actual_model_nq) = testnlp->trajPtr_->q_d(i)(j);
-            trajInfo(i, j + actual_model_nq*2) = testnlp->trajPtr_->q_dd(i)(j);
-            trajInfo(i, j + actual_model_nq*3) = testnlp->idPtr_->tau(i)(j);
+            trajInfo(i, j + NUM_JOINTS) = testnlp->trajPtr_->q_d(i)(j);
+            trajInfo(i, j + NUM_JOINTS*2) = testnlp->trajPtr_->q_dd(i)(j);
+            trajInfo(i, j + NUM_JOINTS*3) = testnlp->idPtr_->tau(i)(j);
         }
 
-        trajInfo(i, 4 * actual_model_nq) = testnlp->trajPtr_->tspan(i);
+        trajInfo(i, 4 * NUM_JOINTS) = testnlp->trajPtr_->tspan(i);
     }
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> contactInfo(N_simulate, 3);
@@ -286,7 +333,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         contactInfo(i, 2) = sqrt(pow(rotation_torque(0), 2) + pow(rotation_torque(1), 2));
     }
 
-    const size_t shape_ptr1[] = {N_simulate, 4 * actual_model_nq + 1};
+    const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
     auto traj = nb::ndarray<nb::numpy, const double>(trajInfo.data(),
                                                      2,
                                                      shape_ptr1,

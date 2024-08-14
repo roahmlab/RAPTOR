@@ -85,16 +85,16 @@ void CircleSurfaceContactConstraints::compute(const VecX& z,
 void CircleSurfaceContactConstraints::compute_bounds() {
     for (int i = 0; i < idPtr_->trajPtr_->N; i++) {
         // (1) positive contact force
-        g_lb(i * 3 + 0) = 0;
+        g_lb(i * 3 + 0) = csp.contactForceBuffer;
         g_ub(i * 3 + 0) = 1e19;
 
         // (2) translation friction cone
         g_lb(i * 3 + 1) = -1e19;
-        g_ub(i * 3 + 1) = 0;
+        g_ub(i * 3 + 1) = -csp.frictionForceBuffer;
 
         // (3) ZMP (object not flipping over)
         g_lb(i * 3 + 2) = -1e19; 
-        g_ub(i * 3 + 2) = 0;
+        g_ub(i * 3 + 2) = -csp.ZMPBuffer;
     }
 }
 
