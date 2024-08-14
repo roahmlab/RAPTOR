@@ -166,11 +166,11 @@ bool DigitSingleStepOptimizer::eval_f(
 
     // minimize initial velocity
     const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    obj_value += 100 * sqrt(initial_velocity.dot(initial_velocity));
+    obj_value += MINIMIZE_INITIAL_VEL_WEIGHT * sqrt(initial_velocity.dot(initial_velocity));
 
     // minimize initial acceleration
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
+    obj_value += MINIMIZE_INITIAL_ACC_WEIGHT * sqrt(initial_acceleration.dot(initial_acceleration));
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -215,14 +215,14 @@ bool DigitSingleStepOptimizer::eval_grad_f(
     const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
     const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
     for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 40 * initial_velocity_pz(i) / initial_velocity_norm;
+        grad_f[i] += MINIMIZE_INITIAL_VEL_WEIGHT * initial_velocity_pz(i) / initial_velocity_norm;
     }
 
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
     const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
     for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
+        grad_f[i] += MINIMIZE_INITIAL_ACC_WEIGHT * initial_acceleration_pz(i) / initial_acceleration_norm;
     }
 
     return true;

@@ -151,11 +151,11 @@ void DigitCustomizedConstraints::compute_bounds() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
-    g1_lb = VecX::Zero(trajPtr_->N);
+    g1_lb = VecX::Constant(trajPtr_->N, std::min(gp.swingfoot_begin_des[2], gp.swingfoot_end_des[2]));
     g1_ub = VecX::Constant(trajPtr_->N, 1e19);
     g1_lb(trajPtr_->N / 2) = gp.swingfoot_midstep_z_des;
-    g1_ub(0) = 0;
-    g1_ub(trajPtr_->N - 1) = 0;
+    g1_ub(0) = gp.swingfoot_begin_des[2];
+    g1_ub(trajPtr_->N - 1) = gp.swingfoot_end_des[2];
 
     // (2) swingfoot always flat and points forward
     g2_lb = VecX::Zero(trajPtr_->N);
@@ -168,8 +168,9 @@ void DigitCustomizedConstraints::compute_bounds() {
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     g5_lb = VecX::Zero(4);
     g5_ub = VecX::Zero(4);
-    g5_lb << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
-    g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
+    g5_lb << gp.swingfoot_begin_des[0], gp.swingfoot_begin_des[1], 
+             gp.swingfoot_end_des[0], gp.swingfoot_end_des[1];
+    g5_ub = g5_lb;
 
     // (4) torso height always larger than 1 meter
     //     roll and pitch always close to 0

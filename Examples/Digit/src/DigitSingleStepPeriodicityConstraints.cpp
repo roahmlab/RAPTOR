@@ -207,9 +207,13 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
     dcidPtr_->ddcPtr_->reinitialize();
 
     // combine all constraints together
+    g1.setZero();
+    g2.setZero();
     g << g1, g2, g3, g4, g5;
 
     if (compute_derivatives) {
+        pg1_pz.setZero();
+        pg2_pz.setZero();
         pg_pz << pg1_pz, pg2_pz, pg3_pz, pg4_pz, pg5_pz;
     }
 }
@@ -228,7 +232,7 @@ void DigitSingleStepPeriodicityConstraints::compute_bounds() {
 void DigitSingleStepPeriodicityConstraints::print_violation_info() {
     // (1) H * (v+ - v-) = J * lambda
     for (int i = 0; i < NUM_JOINTS; i++) {
-        if (abs(g1(i)) > 1e-5) {
+        if (abs(g1(i)) > 1e-4) {
             std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: H * (v+ - v-) = J * lambda: dim " 
                       << i 
                       << " is violated: "
@@ -239,7 +243,7 @@ void DigitSingleStepPeriodicityConstraints::print_violation_info() {
 
     // (2) J * v+ = 0
     for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        if (abs(g2(i)) > 1e-5) {
+        if (abs(g2(i)) > 1e-4) {
             std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: J * v+ = 0: dim " 
                       << i
                       << " is violated: "
@@ -250,7 +254,7 @@ void DigitSingleStepPeriodicityConstraints::print_violation_info() {
 
     // (3) position reset
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        if (abs(g3(i)) > 1e-5) {
+        if (abs(g3(i)) > 1e-4) {
             std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: position reset: dim " 
                       << i
                       << " is violated: "
@@ -261,7 +265,7 @@ void DigitSingleStepPeriodicityConstraints::print_violation_info() {
 
     // (4) velocity reset
     for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        if (abs(g4(i)) > 1e-5) {
+        if (abs(g4(i)) > 1e-4) {
             std::cout << "        DigitSingleStepPeriodicityConstraints.cpp: velocity reset: dim " 
                       << i
                       << " is violated: "

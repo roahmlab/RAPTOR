@@ -13,10 +13,8 @@ namespace Digit {
 typedef struct GaitParameters_ {
     double eps_torso_angle = Utils::deg2rad(3); // 3 degrees
     double swingfoot_midstep_z_des = 0.15; // meters
-    double swingfoot_begin_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_begin_y_des = 0.00; // meters
-    double swingfoot_end_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_end_y_des = 0.00; // meters
+    double swingfoot_begin_des[3] = {-0.22, 0, 0}; // meters
+    double swingfoot_end_des[3] = {-0.22, 0, 0}; // meters
 } GaitParameters;
 
 class DigitCustomizedConstraints : public Constraints {

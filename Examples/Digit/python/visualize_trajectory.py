@@ -10,7 +10,7 @@ timeStep = 0.1
 ### read data
 # data = np.loadtxt("../data/trajectory-digit-simulation.txt")
 
-data = np.loadtxt("../data/full-trajectories.txt")
+data = np.loadtxt("../data/full-trajectories-upstairs.txt")
 data = data.T
 
 ### connect to simulator
@@ -49,7 +49,7 @@ for tid in range(0, data.shape[1]):
             id += 1
     
     p.stepSimulation()
-    time.sleep(1e-2)
+    time.sleep(5e-1)
     
 input("Press Enter to continue...")
 

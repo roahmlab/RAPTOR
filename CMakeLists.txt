@@ -254,11 +254,11 @@ target_include_directories(Kinovalib PUBLIC
 
 ## Example scripts
 add_executable(Digit_example 
-    Examples/Digit/DigitSingleStep.cpp)
+    # Examples/Digit/DigitSingleStep.cpp)
     # Examples/Digit/DigitSingleStepSpeedTest.cpp)
     # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
     # Examples/Digit/DigitSingleStepFixedPosition.cpp)
-    # Examples/Digit/VisualizationHelper.cpp)
+    Examples/Digit/VisualizationHelper.cpp)
 
 target_include_directories(Digit_example PUBLIC
     Examples/Digit/include
@@ -311,32 +311,32 @@ target_link_libraries(Talos_example PUBLIC
 target_compile_options(Talos_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-add_executable(DigitMultipleStep_example 
-    Examples/Digit/DigitMultipleStep.cpp)
+# add_executable(DigitMultipleStep_example 
+#     Examples/Digit/DigitMultipleStep.cpp)
 
-target_include_directories(DigitMultipleStep_example PRIVATE
-    Examples/Digit/include
-    KinematicsDynamics/include
-    Trajectories/include
-    Constraints/include
-    Optimization/include
-    Utils/include)
+# target_include_directories(DigitMultipleStep_example PRIVATE
+#     Examples/Digit/include
+#     KinematicsDynamics/include
+#     Trajectories/include
+#     Constraints/include
+#     Optimization/include
+#     Utils/include)
 
-target_link_libraries(DigitMultipleStep_example PRIVATE
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Digitlib
-    ipopt
-    coinhsl
-    yaml-cpp
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES}
-    pinocchio::pinocchio)
+# target_link_libraries(DigitMultipleStep_example PRIVATE
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     Digitlib
+#     ipopt
+#     coinhsl
+#     yaml-cpp
+#     ${GSL_LIBRARIES}
+#     ${BOOST_LIBRARIES}
+#     pinocchio::pinocchio)
 
-target_compile_options(DigitMultipleStep_example PUBLIC
-    ${PINOCCHIO_FLAGS})
+# target_compile_options(DigitMultipleStep_example PUBLIC
+#     ${PINOCCHIO_FLAGS})
 
 add_executable(TalosMultipleStep_example 
     Examples/Talos/TalosMultipleStep.cpp)

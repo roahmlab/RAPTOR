@@ -20,6 +20,9 @@ namespace Digit {
 
 using namespace Ipopt;
 
+constexpr double MINIMIZE_INITIAL_VEL_WEIGHT = 100.0;
+constexpr double MINIMIZE_INITIAL_ACC_WEIGHT = 20.0;
+
 class DigitSingleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;

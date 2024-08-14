@@ -26,9 +26,10 @@ int main() {
     const int N = T * FPS;
     GaitParameters gp;
     
-    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution_upstairs.txt");
 
-    std::ofstream trajectories(filepath + "full-trajectories.txt");
+    std::ofstream trajectories(filepath + "full-trajectories-upstairs.txt");
+    trajectories << std::setprecision(20);
 
     // setup optimizers
     std::vector<SmartPtr<DigitSingleStepOptimizer>> testnlps;

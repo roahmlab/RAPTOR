@@ -57,8 +57,16 @@ int main(int argc, char* argv[]) {
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
         gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
-        gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<double>();
-        gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<double>();
+
+        const auto swingfoot_begin_des = config["swingfoot_begin_des"].as<std::vector<double>>();
+        gp.swingfoot_begin_des[0] = swingfoot_begin_des[0];
+        gp.swingfoot_begin_des[1] = swingfoot_begin_des[1];
+        gp.swingfoot_begin_des[2] = swingfoot_begin_des[2];
+
+        const auto swingfoot_end_des = config["swingfoot_end_des"].as<std::vector<double>>();
+        gp.swingfoot_end_des[0] = swingfoot_end_des[0];
+        gp.swingfoot_end_des[1] = swingfoot_end_des[1];
+        gp.swingfoot_end_des[2] = swingfoot_end_des[2];
     } 
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
@@ -66,15 +74,15 @@ int main(int argc, char* argv[]) {
 
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
-    if (argc > 1) {
-        char* end = nullptr;
-        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-    }
-    else {
-        std::srand(std::time(nullptr));
-    }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    // }
+    // else {
+    //     std::srand(std::time(nullptr));
+    // }
+    // Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
@@ -84,7 +92,10 @@ int main(int argc, char* argv[]) {
                               time_discretization,
                               degree,
                               model,
-                              gp);
+                              gp,
+                              'L',
+                              Transform(3, -M_PI / 2),
+                              true);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
@@ -157,61 +168,57 @@ int main(int argc, char* argv[]) {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        // try {
-        //     const int N_simulate = 200;
+        try {
+            const int N_simulate = 200;
 
-        //     SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
-        //     testnlp->set_parameters(z,
-        //                             T,
-        //                             N_simulate,
-        //                             TimeDiscretization::Uniform,
-        //                             degree,
-        //                             model,
-        //                             gp,
-        //                             'L',
-        //                             Transform(3, -M_PI / 2),
-        //                             false);
-        //     Index n, m, nnz_jac_g, nnz_h_lag;
-        //     TNLP::IndexStyleEnum index_style;
-        //     testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-        //     Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
-        //     Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
-        //     for (int i = 0; i < testnlp->numVars; i++) {
-        //         ztry[i] = mynlp->solution[i];
-        //     }
-        //     testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
-        //     testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-        //     testnlp->summarize_constraints(testnlp->numCons, g, false);
+            SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
+            testnlp->set_parameters(z,
+                                    T,
+                                    N_simulate,
+                                    TimeDiscretization::Uniform,
+                                    degree,
+                                    model,
+                                    gp,
+                                    'L',
+                                    Transform(3, -M_PI / 2));
+            Index n, m, nnz_jac_g, nnz_h_lag;
+            TNLP::IndexStyleEnum index_style;
+            testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+            Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
+            Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
+            for (int i = 0; i < testnlp->numVars; i++) {
+                ztry[i] = mynlp->solution[i];
+            }
+            testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
+            testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+            testnlp->summarize_constraints(testnlp->numCons, g, false);
 
-        //     std::ofstream solution(filepath + "trajectory-digit-forwardalot.txt");
-        //     for (int j = 0; j < N_simulate; j++) {
-        //         for (int i = 0; i < NUM_JOINTS; i++) {
-        //             solution << testnlp->cidPtr_->q(j)(i) << ' ';
-        //         }
-        //         for (int i = 0; i < NUM_JOINTS; i++) {
-        //             solution << testnlp->cidPtr_->v(j)(i) << ' ';
-        //         }
-        //         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        //             solution << testnlp->cidPtr_->tau(j)(i) << ' ';
-        //         }
-        //         solution << std::endl;
-        //     }
-        // }
-        // catch (std::exception& e) {
-        //     std::cerr << e.what() << std::endl;
-        //     throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
-        // }
+            std::ofstream solution(filepath + "trajectory-digit-upstairs.txt");
+            for (int j = 0; j < N_simulate; j++) {
+                for (int i = 0; i < NUM_JOINTS; i++) {
+                    solution << testnlp->cidPtr_->q(j)(i) << ' ';
+                }
+                for (int i = 0; i < NUM_JOINTS; i++) {
+                    solution << testnlp->cidPtr_->v(j)(i) << ' ';
+                }
+                for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+                    solution << testnlp->cidPtr_->tau(j)(i) << ' ';
+                }
+                solution << std::endl;
+            }
+        }
+        catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
+        }
 
-        // std::ofstream solution(filepath + 
-        //                        "robustness_test_solution_" + 
-        //                        std::to_string(degree) + 
-        //                        ".txt");
+        std::ofstream solution(filepath + "solution_upstairs.txt");
 
-        // solution << std::setprecision(20);
-        // for (int i = 0; i < mynlp->numVars; i++) {
-        //     solution << mynlp->solution[i] << std::endl;
-        // }
-        // solution.close();
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
 
         // std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
         // trajectory << std::setprecision(20);
