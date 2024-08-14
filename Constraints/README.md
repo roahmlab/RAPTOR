@@ -34,9 +34,11 @@ We have not implemented the axis-angle representation yet.
 Instead, we constrain all 9 elements of the rotation matrix.
 For axis-angle representation (SE(3)) of the constraints and the jacobian, please refer to this [paper](https://arxiv.org/abs/1606.05285).
 
-### ContactConstraints
+### RectangleSurfaceContactConstraints
 
-Assuming that an object is attached on the end effector of the robot, we need to satisfy certain constraints so that the object keeps a rigid contact with the robot.
+Assuming that an object is attached on the end effector of the robot.
+The contact surface is flat and rectangle.
+We need to satisfy certain constraints so that the object keeps a rigid contact with the robot.
 We first need to access the contact wrench between the object and the robot.
 The contact wrench contains 6 elements (`fx`, `fy`, `fz`, `mx`, `my`, `mz`).
 `fx`, `fy`, `fz` represents the translational contact force in the local frame.

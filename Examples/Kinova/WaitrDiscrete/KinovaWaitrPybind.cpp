@@ -14,9 +14,11 @@ NB_MODULE(oracle_waitr_nanobind, m) {
         .def(nb::init<const std::string>())
         .def("set_obstacles", &KinovaWaitrPybindWrapper::set_obstacles)
         .def("set_contact_surface_parameters", &KinovaWaitrPybindWrapper::set_contact_surface_parameters)
+        .def("set_end_effector", &KinovaWaitrPybindWrapper::set_end_effector)
         .def("set_ipopt_parameters", &KinovaWaitrPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &KinovaWaitrPybindWrapper::set_trajectory_parameters)
         .def("set_buffer", &KinovaWaitrPybindWrapper::set_buffer)
         .def("set_target", &KinovaWaitrPybindWrapper::set_target)
-        .def("optimize", &KinovaWaitrPybindWrapper::optimize);
+        .def("optimize", &KinovaWaitrPybindWrapper::optimize)
+        .def("analyze_solution", &KinovaWaitrPybindWrapper::analyze_solution);
 }

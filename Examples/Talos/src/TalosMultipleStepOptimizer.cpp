@@ -51,7 +51,7 @@ bool TalosMultipleStepOptimizer::set_parameters(
                                        stanceLeg);
     }
 
-    const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
+    const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
 
     periodConsVec_.reserve(NSteps_input);
     for (int i = 0; i < NSteps_input - 1; i++) {

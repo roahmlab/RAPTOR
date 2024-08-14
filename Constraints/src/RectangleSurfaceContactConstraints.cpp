@@ -1,9 +1,9 @@
-#include "SurfaceContactConstraints.h"
+#include "RectangleSurfaceContactConstraints.h"
 
 namespace RAPTOR {
 
-SurfaceContactConstraints::SurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
-                                                     const frictionParams& fp_input) : 
+RectangleSurfaceContactConstraints::RectangleSurfaceContactConstraints(std::shared_ptr<ConstrainedInverseDynamics>& cidPtr_input,
+                                                                       const rectangleContactSurfaceParams& fp_input) : 
     cidPtr_(cidPtr_input), 
     fp(fp_input) {
     // (1)    positive contact force
@@ -19,15 +19,15 @@ SurfaceContactConstraints::SurfaceContactConstraints(std::shared_ptr<Constrained
     pg_pz.resize(m, cidPtr_->trajPtr_->varLength);
 }
 
-void SurfaceContactConstraints::compute(const VecX& z, 
-                                        bool compute_derivatives,
-                                        bool compute_hessian) {
+void RectangleSurfaceContactConstraints::compute(const VecX& z, 
+                                                 bool compute_derivatives,
+                                                 bool compute_hessian) {
     if (is_computed(z, compute_derivatives, compute_hessian)) {
         return;
     }
 
     if (compute_hessian) {
-        throw std::invalid_argument("SurfaceContactConstraints does not support hessian computation");
+        throw std::invalid_argument("RectangleSurfaceContactConstraints does not support hessian computation");
     }
     
     cidPtr_->compute(z, compute_derivatives);
@@ -70,8 +70,8 @@ void SurfaceContactConstraints::compute(const VecX& z,
             pg_pz.row(i * 7 + 0) = plambda_pz.row(2);
 
             // (2) translation friction cone
-            if (friction_force <= 1e-8) {
-                pg_pz.row(i * 7 + 1) = fp.mu * plambda_pz.row(2);
+            if (friction_force <= 1e-8) { // avoid singularity when friction_force is close to 0
+                pg_pz.row(i * 7 + 1) = -fp.mu * plambda_pz.row(2);
             }
             else {
                 pg_pz.row(i * 7 + 1) = (lambda(0) * plambda_pz.row(0) + 
@@ -94,7 +94,7 @@ void SurfaceContactConstraints::compute(const VecX& z,
     }
 }
 
-void SurfaceContactConstraints::compute_bounds() {
+void RectangleSurfaceContactConstraints::compute_bounds() {
     for (int i = 0; i < cidPtr_->trajPtr_->N; i++) {
         // (1) positive contact force
         g_lb(i * 7 + 0) = 0;

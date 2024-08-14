@@ -56,8 +56,8 @@ bool DigitModifiedSingleStepOptimizer::set_parameters(
             Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));                                                                                                                           
 
     // Surface contact constraints
-    const frictionParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
-    constraintsPtrVec_.push_back(std::make_unique<SurfaceContactConstraints>(cidPtr_, 
+    const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
+    constraintsPtrVec_.push_back(std::make_unique<RectangleSurfaceContactConstraints>(cidPtr_, 
                                                                              FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 

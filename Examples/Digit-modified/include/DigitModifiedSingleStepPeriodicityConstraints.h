@@ -7,7 +7,7 @@
 
 #include "Constraints.h"
 #include "DigitModifiedConstrainedInverseDynamics.h"
-#include "SurfaceContactConstraints.h"
+#include "RectangleSurfaceContactConstraints.h"
 
 #include <memory>
 #include <string>
@@ -46,7 +46,7 @@ public:
     // Constructor
     DigitModifiedSingleStepPeriodicityConstraints(std::shared_ptr<Trajectories>& trajPtr_input,
                                                   std::shared_ptr<DigitModifiedConstrainedInverseDynamics> dcidPtr_input,
-                                                  const frictionParams& fp_input);
+                                                  const rectangleContactSurfaceParams& fp_input);
 
     // Destructor
     ~DigitModifiedSingleStepPeriodicityConstraints() = default;
@@ -62,7 +62,7 @@ public:
     std::shared_ptr<Trajectories>& trajPtr_;
     std::shared_ptr<DigitModifiedConstrainedInverseDynamics> dcidPtr_;
 
-    frictionParams fp;
+    rectangleContactSurfaceParams fp;
 
         // intermediate variables updated in compute()
     int joint_id1[NUM_INDEPENDENT_JOINTS];

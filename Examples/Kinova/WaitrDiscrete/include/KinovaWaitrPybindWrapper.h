@@ -37,10 +37,19 @@ public:
     void set_obstacles(const nb_2d_double obstacles_inp);
 
     void set_contact_surface_parameters(const double mu_inp,
-                                        const double Lx_inp,
-                                        const double Ly_inp);
+                                        const double R_inp,
+                                        const double maxSuctionForce_inp = 0.0,
+                                        const double contactForceBuffer_inp = 0.0,
+                                        const double frictionForceBuffer_inp = 0.0,
+                                        const double ZMPBuffer_inp = 0.0);
+
+    void set_end_effector(const nb_1d_double contact_position,
+                          const double object_mass,
+                          const nb_1d_double object_com,
+                          const nb_2d_double object_inertia);
 
     void set_ipopt_parameters(const double tol,
+                              const double constr_viol_tol,
                               const double obj_scaling_factor,
                               const double max_wall_time, 
                               const int print_level,
@@ -62,6 +71,8 @@ public:
 
     nb::tuple optimize();
 
+    nb::tuple analyze_solution();
+
     // Class members
     // robot model
     Model model;
@@ -77,14 +88,14 @@ public:
     // trajectory information
     ArmourTrajectoryParameters atp;
     double T = 1;
-    int N = 16;
+    int N = 32;
     int degree = ARMOUR_BEZIER_CURVE_DEGREE;
     VecX qdes;
     double tplan = 0;
     int tplan_n = 0;
 
     // contact surface parameters
-    contactSurfaceParams csp;
+    circleContactSurfaceParams csp;
 
     // buffer information
     VecX joint_limits_buffer;
@@ -96,10 +107,13 @@ public:
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;
+    bool set_contact_surface_parameters_check = false;
+    bool set_end_effector_check = false;
     bool set_ipopt_parameters_check = false;
     bool set_trajectory_parameters_check = false;
     bool set_buffer_check = false;
     bool set_target_check = false;
+    bool has_optimized = false;
 };
 
 }; // namespace Kinova
