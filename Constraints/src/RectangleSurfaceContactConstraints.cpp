@@ -124,4 +124,48 @@ void RectangleSurfaceContactConstraints::compute_bounds() {
     }
 }
 
+void RectangleSurfaceContactConstraints::print_violation_info() {
+    for (int i = 0; i < cidPtr_->trajPtr_->N; i++) {
+        // (1) positive contact force
+        if (g(i * 7 + 0) <= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: positive contact force violation " 
+                      << "at time step " << i << ": " << g(i * 7 + 0) << std::endl;
+        }
+
+        // (2) translation friction cone
+        if (g(i * 7 + 1) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: translation friction cone violation "
+                      << "at time step " << i << ": " << g(i * 7 + 1) << std::endl;
+        }
+
+        // (3) rotation friction cone
+        if (g(i * 7 + 2) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: rotation friction cone violation "
+                      << "at time step " << i << ": " << g(i * 7 + 2) << std::endl;
+        }
+
+        // (4, 5) ZMP on one axis
+        if (g(i * 7 + 3) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: ZMP on x axis violation "
+                      << "at time step " << i << ": " << g(i * 7 + 3) << std::endl;
+        }
+
+        if (g(i * 7 + 4) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: ZMP on x axis violation "
+                      << "at time step " << i << ": " << g(i * 7 + 4) << std::endl;
+        }
+
+        // (6, 7) ZMP on the other axis
+        if (g(i * 7 + 5) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: ZMP on y axis violation "
+                      << "at time step " << i << ": " << g(i * 7 + 5) << std::endl;
+        }
+
+        if (g(i * 7 + 6) >= 0) {
+            std::cout << "RectangleSurfaceContactConstraints: ZMP on y axis violation "
+                      << "at time step " << i << ": " << g(i * 7 + 6) << std::endl;
+        }
+    }
+}
+
 }; // namespace RAPTOR

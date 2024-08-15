@@ -26,7 +26,7 @@ int main() {
     const int N = T * FPS;
     GaitParameters gp;
     
-    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "visualize_solution.txt");
 
     std::ofstream trajectories(filepath + "full-trajectories.txt");
 

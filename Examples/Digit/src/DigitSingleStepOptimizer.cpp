@@ -87,7 +87,7 @@ bool DigitSingleStepOptimizer::set_parameters(
     // Surface contact constraints
     const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<RectangleSurfaceContactConstraints>(cidPtr_, 
-                                                                             FRICTION_PARAMS));
+                                                                                      FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
     // kinematics constraints
@@ -201,10 +201,12 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
         VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
-        double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
+        const double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
 
-        for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j) / norm;
+        if (norm >= 1e-10) {
+            for ( Index j = 0; j < n; j++ ) {
+                grad_f[j] += v(j) / norm;
+            }
         }
     }
     for ( Index i = 0; i < n; i++ ) {
@@ -214,15 +216,19 @@ bool DigitSingleStepOptimizer::eval_grad_f(
     const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
     const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
     const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 40 * initial_velocity_pz(i) / initial_velocity_norm;
+    if (initial_velocity_norm > 1e-10) { // avoid singularity when initial_velocity_norm is close to 0
+        for ( Index i = 0; i < n; i++ ) {
+            grad_f[i] += 100 * initial_velocity_pz(i) / initial_velocity_norm;
+        }
     }
 
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
     const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
+    if (initial_acceleration_norm > 1e-10) { // avoid singularity when initial_acceleration_norm is close to 0
+        for ( Index i = 0; i < n; i++ ) {
+            grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
+        }
     }
 
     return true;

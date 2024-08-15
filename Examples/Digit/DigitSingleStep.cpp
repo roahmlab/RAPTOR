@@ -74,8 +74,9 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
-    
+    Eigen::VectorXd z = 0.1 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.05;
+    // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
 	    mynlp->set_parameters(z,
@@ -202,16 +203,14 @@ int main(int argc, char* argv[]) {
         //     throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
         // }
 
-        // std::ofstream solution(filepath + 
-        //                        "robustness_test_solution_" + 
-        //                        std::to_string(degree) + 
-        //                        ".txt");
+        std::ofstream solution(filepath + 
+                               "visualize_solution.txt");
 
-        // solution << std::setprecision(20);
-        // for (int i = 0; i < mynlp->numVars; i++) {
-        //     solution << mynlp->solution[i] << std::endl;
-        // }
-        // solution.close();
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
 
         // std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
         // trajectory << std::setprecision(20);
