@@ -11,7 +11,10 @@ time_discretization: Chebyshev # Chebyshev, Uniform
 degree: 5
 
 ### Gait behavior settings
-  # step height (in the middle of the gait)
+  # torso rotation angle toelration (rad)
+eps_torso_angle: 0.02
+
+  # step height (m) (in the middle of the gait)
 swingfoot_midstep_z_des: 0.10
 
   # position with respect to the forward direction of the robot at the beginning
@@ -41,7 +44,7 @@ tol: 1e-5
 constr_viol_tol: 1e-4
 
   # terminal condition 3: maximum wall time
-max_wall_time: 1000.0
+max_wall_time: 100.0
 
   # terminal condition 4: maximum number of iterations
 max_iter: 200

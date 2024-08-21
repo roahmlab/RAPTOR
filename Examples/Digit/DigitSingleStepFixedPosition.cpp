@@ -72,13 +72,13 @@ int main(int argc, char* argv[]) {
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     
     // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
-    if (argc > 1) {
-        char* end = nullptr;
-        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
-    }
-    else {
-        std::srand(std::time(nullptr));
-    }
+    // if (argc > 1) {
+    //     char* end = nullptr;
+    //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    // }
+    // else {
+    //     std::srand(std::time(nullptr));
+    // }
     // Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     Eigen::VectorXd z = Eigen::VectorXd::Zero((degree) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
     

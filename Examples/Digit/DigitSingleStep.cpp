@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
+        gp.eps_torso_angle = config["eps_torso_angle"].as<double>();
         gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
         gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<double>();
         gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<double>();
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]) {
 
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.1 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.05;
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();

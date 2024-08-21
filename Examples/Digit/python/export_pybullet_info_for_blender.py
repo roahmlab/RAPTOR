@@ -52,7 +52,8 @@ meshes = [
 ]
 
 # Import robot urdf
-p.connect(p.GUI)
+# p.connect(p.GUI)
+p.connect(p.DIRECT)
 urdf_filename = filepath + "digit-v3-armfixedspecific-floatingbase-springfixed.urdf"
 robot = p.loadURDF(urdf_filename, useFixedBase=True, basePosition=[0,0,0], baseOrientation=[0,0,0,1])
 num_joints = p.getNumJoints(robot)
@@ -78,10 +79,13 @@ for mesh in meshes:
         
         
 # Read trajectories info
-traj_filename = '../data/full-trajectories.txt'
+# traj_filename = '../data/full-trajectories_forward_1.0.txt'
+# traj_filename = '../data/8_pi_turning.txt'
+traj_filename = '../data/full-trajectories_upstairs.txt'
 data = np.loadtxt(traj_filename)
 data = data.T
 
+print(data.shape)
 
 # Update joint angles in pybullet and get mesh tranformations
 keyframes_obj_name_to_transform = []
@@ -98,7 +102,7 @@ for tid in range(0, data.shape[1]):
             p.resetJointState(robot, i, targetValue=pos[id])
             id += 1
     p.stepSimulation()
-    time.sleep(5e-2)
+    # time.sleep(5e-2)
             
     # Setup mesh configurations
     obj_name_to_transform = {}
@@ -131,10 +135,18 @@ for tid in range(0, data.shape[1]):
             
         obj_name_to_transform[obj_name] = (obj_location, obj_rotation_quaternion)
         
+    obj_name_to_transform['Camera'] = ([pos[0] - 2.2, pos[1] - 2.2, 1.6], [np.pi * 0.40, 0, -np.pi*0.25])
+    obj_name_to_transform['Area_Light_Up'] = ([pos[0], pos[1], 3], [0, 0, 0])
+    obj_name_to_transform['Area_Light_Forward'] = ([pos[0], pos[1] - 3, 1], [np.pi/2, 0, 0])
+    
+    # obj_name_to_transform['Camera'] = ([-2.2, -2.2, 1.6], [np.pi * 0.42, 0, -np.pi*0.25])
+    # obj_name_to_transform['Area_Light_Up'] = ([0, 0, 3], [0, 0, 0])
+    # obj_name_to_transform['Area_Light_Forward'] = ([0, -3, 1], [np.pi/2, 0, 0])
+        
     keyframes_obj_name_to_transform.append(obj_name_to_transform)
     
 # Save the results to a file
-with open('keyframes_obj_name_to_transform.pkl', 'wb') as file:
+with open('../data/keyframes_obj_name_to_transform_upstairs.pkl', 'wb') as file:
     pickle.dump(keyframes_obj_name_to_transform, file)
     
 
