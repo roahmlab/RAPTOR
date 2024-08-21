@@ -1,18 +1,16 @@
-#include "DigitMultipleStepOptimizer.h"
+#include "TalosMultipleStepOptimizer.h"
 
 using namespace RAPTOR;
-using namespace Digit;
+using namespace Talos;
 using namespace Ipopt;
 
-const std::string filepath = "../Examples/Digit/data/";
+const std::string filepath = "../Examples/Talos/data/";
 
 int main() {
-    const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
 
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-
-    model.gravity.linear()(2) = GRAVITY;
     
     // ignore friction for now
     model.friction.setZero();
@@ -26,19 +24,19 @@ int main() {
     const int N = T * FPS;
     GaitParameters gp;
     
-    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution_upstairs.txt");
+    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution-talos-forward.txt");
 
-    std::ofstream trajectories(filepath + "full-trajectories_upstairs.txt");
+    std::ofstream trajectories(filepath + "full-trajectories_forward_0.0.txt");
 
     // setup optimizers
-    std::vector<SmartPtr<DigitSingleStepOptimizer>> testnlps;
+    std::vector<SmartPtr<TalosSingleStepOptimizer>> testnlps;
     testnlps.reserve(numSteps);
 
     int offset = 0;
     Transform previousStandingFootTransform;
     
     for (int step = 0; step < numSteps; step++) {
-        testnlps.push_back(new DigitSingleStepOptimizer());
+        testnlps.push_back(new TalosSingleStepOptimizer());
 
         // Eigen::VectorXd z((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
         // for (int i = 0; i < z.size(); i++) {
@@ -95,7 +93,7 @@ int main() {
         for (size_t j = 0; j < testnlp->constraintsNameVec_.size(); j++) {
             if (testnlp->constraintsNameVec_[j] == "customized constraints") {
                 const auto& constraintsPtr_ = testnlp->constraintsPtrVec_[j];
-                const auto& customizedConstraintsPtr = dynamic_cast<DigitCustomizedConstraints*>(constraintsPtr_.get());
+                const auto& customizedConstraintsPtr = dynamic_cast<TalosCustomizedConstraints*>(constraintsPtr_.get());
 
                 swingfoot_xyzrpy = 
                     customizedConstraintsPtr->swingfoot_xyzrpy.col(customizedConstraintsPtr->swingfoot_xyzrpy.cols() - 1);

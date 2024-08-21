@@ -13,14 +13,14 @@ TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
     modelPtr_ = std::make_unique<Model>(model_input);
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
-    // leftfoot_endT.p << 0, 0, -0.107;
-    // rightfoot_endT.p << 0, 0, -0.107;
+    leftfoot_endT.p << 0, 0, -0.107;
+    rightfoot_endT.p << 0, 0, -0.107;
 
-    // for single step fixed initial condition
-    // the initial condition has been fixed but the swing foot is slightly off the ground
-    // we take this into consideration so that the optimization does not stuck on this constraint forever
-    leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
-    rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // // for single step fixed initial condition
+    // // the initial condition has been fixed but the swing foot is slightly off the ground
+    // // we take this into consideration so that the optimization does not stuck on this constraint forever
+    // leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
 
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
@@ -108,7 +108,7 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     }
     g5.tail(trajPtr_->N) = swingfoot_xyzrpy.row(1).array() - gp.swingfoot_begin_y_des;
 
-    // (4) torso height always larger than 1 meter
+    // (4) torso height always larger than 0.95 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
     //           stays between left foot and right foot
@@ -185,10 +185,10 @@ void TalosCustomizedConstraints::compute_bounds() {
     g5_lb = VecX::Zero(2 + trajPtr_->N);
     g5_ub = VecX::Zero(2 + trajPtr_->N);
 
-    // (4) torso height always larger than 0.9 meter
+    // (4) torso height always larger than 0.95 meter
     //     roll and pitch always close to 0
     //     yaw always close to 0 when walking forward
-    g6_lb = VecX::Constant(trajPtr_->N, 0.9);
+    g6_lb = VecX::Constant(trajPtr_->N, 0.95);
     g6_ub = VecX::Constant(trajPtr_->N, 1e19);
     g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
     g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
@@ -258,18 +258,18 @@ void TalosCustomizedConstraints::print_violation_info() {
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     if (g5(0) <= g5_lb(0) - 1e-4 ||
         g5(0) >= g5_ub(0) + 1e-4) {
-        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at beginning is not equal to desired value:" 
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at beginning is not equal to desired value: " 
                   << g5(0) 
                   << std::endl;
     }
     if (g5(1) <= g5_lb(1) - 1e-4 ||
         g5(1) >= g5_ub(1) + 1e-4) {
-        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at end is not equal to desired value:" 
+        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at end is not equal to desired value: " 
                   << g5(1) 
                   << std::endl;
     }
 
-    // (4) torso height always larger than 0.9 meter
+    // (4) torso height always larger than 0.95 meter
 }
 
 }; // namespace Talos

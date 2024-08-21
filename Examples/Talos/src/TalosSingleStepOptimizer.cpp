@@ -24,6 +24,7 @@ bool TalosSingleStepOptimizer::set_parameters(
     const GaitParameters& gp_input,
     const char stanceLeg,
     const Transform stance_foot_T_des,
+    const bool periodic,
     const VecX q0_input,
     const VecX q_d0_input
  ) 
@@ -60,9 +61,9 @@ bool TalosSingleStepOptimizer::set_parameters(
 
     // Torque limits
     VecX TORQUE_LIMITS_LOWER_VEC = 
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);          
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS) * 1e6;          
     VecX TORQUE_LIMITS_UPPER_VEC =
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);                                                                                                            
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS) * 1e6;                                                                                                            
 
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
@@ -94,6 +95,14 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                               dcidPtr_->ddcPtr_,
                                                                               gp_input));    
     constraintsNameVec_.push_back("customized constraints");
+
+    // periodic reset map constraints
+    if (periodic) {
+        constraintsPtrVec_.push_back(std::make_unique<TalosSingleStepPeriodicityConstraints>(trajPtr_, 
+                                                                                             dcidPtr_,
+                                                                                             FRICTION_PARAMS));    
+        constraintsNameVec_.push_back("reset map constraints");     
+    }
 
     return true;
 }
@@ -147,11 +156,24 @@ bool TalosSingleStepOptimizer::eval_f(
     cidPtr_->compute(z, false);
 
     obj_value = 0;
+    
+    // minimize control torque
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
         obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
     }
-
     obj_value /= cidPtr_->N;
+
+    // minimize initial velocity
+    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
+    obj_value += 100 * sqrt(initial_velocity.dot(initial_velocity));
+
+    // minimize initial acceleration
+    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
+    obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
+
+    // // minimize reset velocity
+    // const VecX& reset_velocity = z.segment(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
+    // obj_value += 200 * sqrt(reset_velocity.dot(reset_velocity));
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -182,16 +204,43 @@ bool TalosSingleStepOptimizer::eval_grad_f(
 
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
         VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
-        double norm_tau = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
+        const double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
 
-        for ( Index j = 0; j < n; j++ ) {
-            grad_f[j] += v(j) / norm_tau;
+        if (norm >= 1e-10) {
+            for ( Index j = 0; j < n; j++ ) {
+                grad_f[j] += v(j) / norm;
+            }
         }
     }
-
     for ( Index i = 0; i < n; i++ ) {
         grad_f[i] /= cidPtr_->N;
     }
+
+    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
+    const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
+    const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
+    if (initial_velocity_norm > 1e-10) { // avoid singularity when initial_velocity_norm is close to 0
+        for ( Index i = 0; i < n; i++ ) {
+            grad_f[i] += 100 * initial_velocity_pz(i) / initial_velocity_norm;
+        }
+    }
+
+    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
+    const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
+    const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
+    if (initial_acceleration_norm > 1e-10) { // avoid singularity when initial_acceleration_norm is close to 0
+        for ( Index i = 0; i < n; i++ ) {
+            grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
+        }
+    }
+
+    // const VecX& reset_velocity = z.segment(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
+    // const double reset_velocity_norm = sqrt(reset_velocity.dot(reset_velocity));
+    // if (reset_velocity_norm > 1e-10) { // avoid singularity when reset_velocity_norm is close to 0
+    //     for ( Index i = trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS; i < NUM_JOINTS; i++ ) {
+    //         grad_f[i] += 200 * z(i) / reset_velocity_norm;
+    //     }
+    // }
 
     return true;
 }

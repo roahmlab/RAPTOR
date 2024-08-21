@@ -11,7 +11,7 @@ namespace RAPTOR {
 namespace Talos {
 
 typedef struct GaitParameters_ {
-    double eps_torso_angle = Utils::deg2rad(3); // 3 degrees
+    double eps_torso_angle = Utils::deg2rad(1.5); // 3 degrees
     double swingfoot_midstep_z_des = 0.10; // meters
     double swingfoot_begin_x_des = 0.00; // meters 
     double swingfoot_begin_y_des = -0.17; // meters

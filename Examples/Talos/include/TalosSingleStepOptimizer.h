@@ -7,6 +7,7 @@
 
 #include "TalosConstrainedInverseDynamics.h"
 #include "TalosDynamicsConstraints.h"
+#include "TalosSingleStepPeriodicityConstraints.h"
 #include "Utils.h"
 
 #include "ConstrainedJointLimits.h"
@@ -42,6 +43,7 @@ public:
         const GaitParameters& gp_input,
         const char stanceLeg = 'L', // stance foot is left foot by default
         const Transform stance_foot_T_des = Transform(),
+        const bool periodic = true,
         const VecX q0_input = VecX(0),  // optional initial position
         const VecX q_d0_input = VecX(0) // optional initial velocity
     );

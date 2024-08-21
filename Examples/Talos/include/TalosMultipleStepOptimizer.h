@@ -9,6 +9,23 @@ namespace Talos {
 
 using namespace Ipopt;
 
+Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
+                                              const int degree) {
+    if (z.size() != (degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS) {
+        throw std::invalid_argument("z has wrong size in switchSolutionFromLeftToRight! A single step solution is required.");
+    }
+    
+    Eigen::VectorXd z_switched = z;
+
+    // swap left leg and right leg
+    z_switched.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+    z_switched.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+
+    return z_switched;
+}
+
 class TalosMultipleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;

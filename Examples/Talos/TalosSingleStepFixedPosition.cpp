@@ -79,6 +79,7 @@ int main(int argc, char* argv[]) {
                               gp,
                               'L',
                               Transform(),
+                              false,
                               q0,
                               q_d0);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
@@ -177,6 +178,7 @@ int main(int argc, char* argv[]) {
         //                             gp,
         //                             'L',
         //                             Transform(),
+        //                             false,
         //                             q0,
         //                             q_d0);
         //     Index n, m, nnz_jac_g, nnz_h_lag;

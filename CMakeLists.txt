@@ -187,6 +187,7 @@ add_library(Taloslib SHARED
     Examples/Talos/src/TalosConstrainedInverseDynamics.cpp
     Examples/Talos/src/TalosCustomizedConstraints.cpp
     Examples/Talos/src/TalosSingleStepOptimizer.cpp
+    Examples/Talos/src/TalosSingleStepPeriodicityConstraints.cpp
     Examples/Talos/src/TalosMultipleStepOptimizer.cpp
     Examples/Talos/src/TalosMultipleStepPeriodicityConstraints)
 
@@ -285,8 +286,9 @@ target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(Talos_example 
-    # Examples/Talos/TalosSingleStep.cpp)
-    Examples/Talos/TalosSingleStepFixedPosition.cpp)
+    Examples/Talos/TalosSingleStep.cpp)
+    # Examples/Talos/TalosSingleStepFixedPosition.cpp)
+    # Examples/Talos/VisualizationHelper.cpp)
 
 target_include_directories(Talos_example PUBLIC
     Examples/Talos/include

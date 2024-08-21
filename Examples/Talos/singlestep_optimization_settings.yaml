@@ -15,7 +15,7 @@ degree: 5
 swingfoot_midstep_z_des: 0.1
 
   # position with respect to the forward direction of the robot at the beginning
-swingfoot_begin_x_des: 0.0
+swingfoot_begin_x_des: -0.0
 
   # position with respect to the forward direction of the robot at the end
 swingfoot_end_x_des: 0.0
