@@ -164,7 +164,9 @@ Note that the number of actuated joints involved in closed-loop chains is not la
 As a result, we can sample a bunch of points within the actuated joint limits and solve the problem offline first.
 We then collect the data and interpolate them using trigonometric polynomials.
 To be more specific, the interpolation looks like
-$$sin(q_u) = \sum_{1 \leq i \leq j \leq n} \sin(i q_a) \cos(j q_a)$$
+```math
+sin(q_u) = \sum_{1 \leq i \leq j \leq n} \sin(i q_a) \cos(j q_a)
+```
 inspired by the trigonometric nature of the forward kinematics (of the robot with only revolute joints).
 $q_u$ can then be computed by $\arcsin$.
 And as a result, if interpolation values are larger than 1 or smaller than -1, the problem is (very likely) infeasible.
