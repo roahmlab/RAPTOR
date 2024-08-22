@@ -157,17 +157,10 @@
 		
 						<hr>
 						<h3>Paper</h3>
-						<!-- TODO: fill in paper link -->
-						<!-- <p style="margin-bottom: 0em;">
-							Latest version: <a href="https://arxiv.org/abs/2402.10329">arXiv</a> or <a href="umi.pdf">here</a>.
-							<br>Robotics: Science and Systems (RSS) 2024<br>
-						</p> -->
-						<!-- <p style="margin-bottom: 1em; color: #4e79a7">★ Best Systems Paper Award Finalist, RSS ★</p>
-						<div class="12u$"><a href="umi.pdf"><span class="image fit" style="border: 1px solid; border-color: #888888;"><img src="images/umi_thumbnail.png" alt="" /></span></a></div> -->
-
+						coming soon!
 						
 						<h3>Code and Tutorial</h3>
-						<!-- TODO: fill in links to tutorials -->
+						coming soon!
 
 						<!-- <div class="box alt" style="margin-bottom: 1em;">
 							<div class="row 50% uniform" style="width: 100%;">
@@ -240,13 +233,7 @@
 						</p>
 				
 						<h3>BibTeX</h3>
-						<!-- TODO: fill in bibtex -->
-						<!-- <pre><code>@inproceedings{chi2024universal,
-							title={Universal Manipulation Interface: In-The-Wild Robot Teaching Without In-The-Wild Robots},
-							author={Chi, Cheng and Xu, Zhenjia and Pan, Chuer and Cousineau, Eric and Burchfiel, Benjamin and Feng, Siyuan and Tedrake, Russ and Song, Shuran},
-							booktitle={Proceedings of Robotics: Science and Systems (RSS)},
-							year={2024}
-						}</code></pre> -->
+						coming soon!
 
 						<!-- <hr>
 						<h3>Capability Experiments</h3>
@@ -274,95 +261,7 @@
 								</div>
 							</div>
 						</div> -->
-
-						<!-- <h4>(2) Cup Arrangement &#9749; </h4>
-						<u><b>Task</b></u> Pick up and place an espresso cup on the saucer with its handle facing to the left of the robot.
-						<br>
-						<u><b>Ablation</b></u> Data collected by UMI is robot agnostic. Here we can deploy the same policy on both UR5e and Franka robots. In fact, you can deploy it on any robot equipped with a parallel jaw stroke > 85mm.
-						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
-							<div class="row 50% uniform" style="width: 100%;">
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cup_ur5.mp4" type="video/mp4"> </video>
-									</span>
-									Ours (UR5)
-								</div>
-
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cup_franka.mp4" type="video/mp4"> </video>
-									</span>
-									Ours (Franka)
-								</div>
-							</div>
-						</div> -->
 						
-						<!-- <h4>(3) Bimanual Cloth Folding &#128090; </h4>
-						<u><b>Task</b></u> Two robot arms need to coordinate and fold the sweater’s sleeves inward, then fold up the bottom hem, rotate 90 degrees, and finally fold the sweater in half again.
-						<br>
-						<u><b>Ablation</b></u> Without inter-gripper proprioception (relative pose between the two grippers), the coordination between the two arms is significantly worse.
-						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
-							<div class="row 50% uniform" style="width: 100%;">
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/task_cloth_folding.mp4" type="video/mp4"> </video>
-									</span>
-									Ours
-								</div>
-
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_cloth_no_rel.mp4" type="video/mp4"> </video>
-									</span>
-									No Inter-gripper Proprioception
-								</div>
-							</div>
-						</div> -->
-
-
-						<!-- <h4>(4) Dish Washing &#127869; </h4>
-						<u><b>Task</b></u> For successful dish washing, the robots need to sequentially execute 7 dependent actions: turn on faucet, grasp plate, pick up sponge, wash and wipe plate until ketchups are removed, place plate, place the sponge and turn off faucet.
-						<br>
-						<u><b>Ablation</b></u> The baseline policy trained with ResNet-34 as vision encoder, yielded non-reactive behaviors towards variations in plate or sponge position.
-						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
-							<div class="row 50% uniform" style="width: 100%;">
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/task_dish_washing.mp4" type="video/mp4"> </video>
-									</span>
-									Ours (CLIP-pretrained ViT as Vision Encoder)
-								</div>
-
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/comparison_dish_resnet.mp4" type="video/mp4"> </video>
-									</span>
-									ResNet as Vision Encoder
-								</div>
-							</div>
-						</div> -->
-
-						<!-- <hr>
-						<h3>In-the-wild Generalization Experiments</h3>
-						With UMI, you can go to any home, any restaurant and start data collection within 2 minutes.
-						<div class="box alt" style="margin-bottom: 1em; margin-top: 1em;">
-							<div class="row 50% uniform" style="width: 100%;">
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/in_the_wild_cup_data_collection.mp4" type="video/mp4"> </video>
-									</span>
-									Human Data Collection
-								</div>
-
-								<div class="2u" style="font-size: 1em; line-height: 1.5em; text-align: center; width: 50%">
-									<span class="image fit" style="margin-bottom: 0.5em;">
-										<video controls autoplay loop muted playsinline style="width: 100%; margin-right: 5%;"><source src="videos/in_the_wild_cup_data_overview.mp4" type="video/mp4"> </video>
-									</span>
-									Data Overview
-								</div>
-							</div>
-						</div> -->
-
 						<hr>
 				        <h3>Acknowledgements</h3>
 						<!-- TODO: fill in acknowledgements -->
