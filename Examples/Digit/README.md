@@ -5,7 +5,7 @@ This folder contains the gait optimization implementation for Digit.
 ## Getting Started
 The executable is compiled as `Digit_example` in the `build/` folder.
 Make sure you run it in `build/` otherwise there will be path error.
-```
+```bash
 cd RAPTOR/build
 ./Digit_example
 ```
@@ -41,7 +41,7 @@ This paragraph serves as supplementary materials to our paper.
 Digit-v3 contains multiple closed-loop kinematics chains.
 They are defined in the MuJoCo XML format, coming together with Digit-v3's official description file, which can be found in `Robots/digit-v3/digit-v3.xml`.
 To be more specific, there are six equality constraints in Digit dynamics:
-```
+```html
 <equality>
     <connect name='left-leg/achilles-rod' body1='left-leg/heel-spring' body2='left-leg/achilles-rod' anchor='0.113789 -0.011056 0' />
     <connect name='left-leg/toe-a-rod' body1='left-leg/toe-roll' body2='left-leg/toe-a-rod' anchor='0.0179 -0.009551 -0.054164' />
@@ -101,12 +101,12 @@ However, if we fix `heel_spring` in the urdf, the urdf parser in pinocchio will 
 As a result, we manually perform the forward kinematics by merging the transformation matrix of `heel_spring` into the original `anchor (offset)`.
 To be more specific, the new anchor definition can be found in line 185-187 and line 196-198 in `include/DigitDynamicsConstraints.h`.
 For example, 
-```
+```C++
 Transform(Utils::deg2rad(Vec3(4.47, 0.32, 155.8)), 
           Vec3(-0.01766, -0.029456, 0.00104))
 ```
 is the transformation matrix for left_heel_spring and
-```
+```C++
 Transform(Vec3(0.113789, -0.011056, 0))
 ```
 is the original anchor.
@@ -182,7 +182,7 @@ This region is decided by the previous point, by overapproximating based on the 
 #### Lesson 4: Initial guess
 Finally, the initial guess of the optimization needs to be chosen carefully so that all joint angles on the initial trajectory stays inside the feasible region.
 As you can see in `DigitSingleStep.cpp`:
-```
+```C++
 Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
 ```
 Randomly sampling from $[-0.1, 0.1]$ for all decision variables (in other words, Bezier coefficients) would be enough.

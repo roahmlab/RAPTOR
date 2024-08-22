@@ -1,23 +1,25 @@
 # RAPTOR: RAPid and Robust Trajectory Optimization for Robots
 
-We aim to solve a trajectory optimization problem formulated as below
+Dynamic locomotion for humanoid robots presents significant analytical and computational challenges due to the extensive number of linkages and degrees of freedom. 
+This complexity results in a vast search space for feasible gaits which translates into a time-consuming process when optimizing over trajectories. 
+In addition, the process often involves numerous hyperparameters and requires a good initial guess or a warm-start strategy, further complicating the development process. 
+Existing methods struggle to integrate the latest hardware designs, such as actuated ankles with closed-loop mechanisms, which offer increased stability, but introduce additional constraints into the dynamics that can be challenging to represent in a computationally tractable fashion. 
+This work introduces a generalized gait optimization framework that directly generates smooth and physically feasible trajectories. 
+The proposed method demonstrates faster and more robust convergence than existing techniques and explicitly incorporates closed-loop constraints. 
+The method is implemented as an open-source C++ codebase that significantly reduces computation times, facilitating dynamic locomotion for full-size humanoids.
+Note that RAPTOR also works for other fully actuated systems such as robotic manipulators.
 
-![ProblemFormulation](Assets/pic-ProblemFormulation.svg)
+To be more specific, we parameterize the trajectories for the robot states as, for example, polynomials.
+The decision variable of the optimization is then the coefficients of the polynomial.
+We sample a certain number of discrete points on the trajectory and evaluate the constraints, such as joints limits, torque limits, or collision avoidance.
+We use Ipopt as our optimization solver.
+For some of the constraints, we implement the analytical hessian so that Ipopt can converge faster.
 
-where we assume that the trajectories are already parameterized and only treat the trajectory parameters as the decision variables.
+![Digit walking forward](https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6)
 
-For example, you can define your trajectory to be a polynomial (on a fixed interval [0,T]):
+![Digit stepping stones](https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9)
 
-![TrajectoryFormulation](Assets/pic-TrajectoryFormulation.svg)
-
-And based on that, you can add joint limit constraints, torque limit constraints, end effector constraints, or any other customized constraints to your optimization problem.
-
-These constraints will then be evaluated on a sequence of discrete time instances t_i over [0,T], so that the trajectory respects all of the constraints over all time.
-
-Compared with the direct collocation method or the single/multiple shooting method, this method guarantees a **smooth** trajectory instead of a discrete representation.
-And this method could usually run faster since less decision variables are involved.
-
-Note that this formulation only works for fully-actuated systems.
+![Talos walking forward](https://github.com/user-attachments/assets/94ffb2db-00c6-4336-a805-ab4d0647932b)
 
 ## Requirements
 - Ubuntu >= 20.04
@@ -25,10 +27,9 @@ Note that this formulation only works for fully-actuated systems.
 - [GSL](https://www.gnu.org/software/gsl/): solve close-loop kinematics
 - [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html): compute inverse dynamics and its gradient
 - [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html): for nonlinear optimization
-- PkgConfig (`pkg-config`)
-- `urdfdom` (`liburdfdom-dev`)
 
 A more detailed instruction is provided [here](Installation/README.md).
+We recommend users to install the requirements through docker.
 
 ## Overview
  - Trajectories/ : This folder contains implementation of multiple primitives of smooth trajectories.
@@ -41,19 +42,28 @@ A more detailed instruction is provided [here](Installation/README.md).
 A more detailed instruction on how to code your own optimization problem is provided [here](Coding/README.md).  
             
 ## Getting Started
-Run the following commands for a Digit-v3 example:
+Run the following command to compile all the code.
 ```bash
 mkdir build
 cd build
 cmake ..
 make -j
-./Digit_example
 ```
 
-More settings are included in [Examples/Digit/singlestep_optimization_settings.yaml](Examples/Digit/singlestep_optimization_settings.yaml).
-You can change gait behavior or Ipopt settings there.
+You will be able to find README in each of the examples presented in `Example/` folder.
+We provide the following examples
+ - Kinova-gen3
+    - `ArmourDiscrete/`: The robot arm has nothing on its end effector. Reaching a target configuration while avoiding obstacles and satisfying torque limits.
+    - `WaitrDiscrete/`: The robot arm is holding a tray with an object on it. Reaching a target configuratio while avoiding obstacles, satisfying torque limits, and making sure the object not fall off from the tray.
+    - `SystemIdentification/`: **(Future work)** Multiple examples related to system identification of a robotic arm. 
+ - Digit
+    - Single step periodic gait optimization
+    - Multiple step gait optimization
+ - Talos
+    - Single step gait optimization while starting from a fixed initial configuration
+    - Multiple step gait optimization
 
 ## Credits
 Bohao Zhang (jimzhang@umich.edu)
 
-[RoahmLab](http://www.roahmlab.com/), University of Michigan, Ann Arbor
+This work is developed in [RoahmLab](http://www.roahmlab.com/), University of Michigan, Ann Arbor

@@ -43,11 +43,6 @@ sudo apt-get install libboost-all-dev
 sudo apt-get install liburdfdom-dev
 ```
 
-### PkgConfig
-```
-sudo apt-get install -y pkg-config
-```
-
 ### Eigen 3.4
 In Ubuntu 22.04, the Eigen library version is 3.4.0 by default. Simply do
 ```
