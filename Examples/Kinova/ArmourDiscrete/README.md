@@ -8,6 +8,7 @@ The following constraints are activated:
 - Velocity limits
 - Torque limits
 - Obstacle avoidance, where robot are represented as collection of spheres and the environment are represented as collection of boxes
+
 Analytical hessian of all constraints are provided.
 
 The obstacles are defined in `KinovaExample.cpp`.

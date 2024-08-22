@@ -52,7 +52,7 @@ The contact wrench contains 6 elements (`fx`, `fy`, `fz`, `mx`, `my`, `mz`).
 `fx`, `fy`, `fz` represents the translational contact force in the local frame.
 `mx`, `my`, `mz` represents the rotational contact moment in the local frame.
 There are several conditions for the object to stay on the end effector:
-$$
+```math
 \begin{align}
     0 &\leq \lambda_{st}^{fz}(t) \\
     \sqrt{(\lambda_{st}^{fx}(t))^2 + (\lambda_{st}^{fy}(t))^2} &\leq \mu \lambda_{st}^{fz}(t) \\
@@ -60,7 +60,7 @@ $$
     -\frac{1}{2}l_a\lambda_{st}^{fz}(t) \leq \lambda_{st}^{mx}(t) &\leq \frac{1}{2}l_a\lambda_{st}^{fz}(t) \\
     -\frac{1}{2}l_b\lambda_{st}^{fz}(t) \leq \lambda_{st}^{my}(t) &\leq \frac{1}{2}l_b\lambda_{st}^{fz}(t)
 \end{align}
-$$
+```
 
 - (1) states that the contact force should always be non-negative.
 - (2) states that the translational friction force should stay inside the friction cone.

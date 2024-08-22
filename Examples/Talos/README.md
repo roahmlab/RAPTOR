@@ -15,9 +15,7 @@ Check line 196-210 in `TalosSingleStepFixedPosition.cpp`.
 
 In `Examples/Talos/python/talos_simulation.py`, you will be able to find how we simulate the Talos using `scipy.solve_ivp` as the integrator and pinocchio to evaluate the contact dynamics.
 Here we apply a tracking controller in the simulation:
-$$
-u(t) = u_{openloop}(t) + K_Pe(t) + K_D\dot{e}(t)
-$$
+$$u(t) = u_{openloop}(t) + K_Pe(t) + K_D\dot{e}(t)$$
 Here, $u_{openloop}(t)$ represents the open loop control input recovered from the control input sequence saved in `data/solution-talos-forward-[step length].txt` using zero-order hold ([ZOH](https://en.wikipedia.org/wiki/Zero-order_hold)).
 We also added a simple PD control here where the desired trajectories are also recovered from `data/solution-talos-forward-[step length].txt` using ZOH.
 
