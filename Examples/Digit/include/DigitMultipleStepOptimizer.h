@@ -38,7 +38,8 @@ public:
         const TimeDiscretization time_discretization_input,
         const int degree_input,
         const Model& model_input, 
-        const std::vector<GaitParameters>& gps_input
+        const std::vector<GaitParameters>& gps_input,
+        const bool periodic = false
     );
 
     /**@name Overloaded from TNLP */

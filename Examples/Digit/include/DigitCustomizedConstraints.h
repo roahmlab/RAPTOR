@@ -11,7 +11,7 @@ namespace RAPTOR {
 namespace Digit {
 
 typedef struct GaitParameters_ {
-    double eps_torso_angle = Utils::deg2rad(3); // 3 degrees
+    double eps_torso_angle = Utils::deg2rad(1.5); // 3 degrees
     double swingfoot_midstep_z_des = 0.15; // meters
     double swingfoot_begin_x_des = -0.22; // meters (negative if left stance, positive if right stance)
     double swingfoot_begin_y_des = 0.00; // meters
@@ -87,6 +87,7 @@ public:
     VecX g7, g7_lb, g7_ub;
     VecX g8, g8_lb, g8_ub;
     VecX g9, g9_lb, g9_ub;
+    VecX g10, g10_lb, g10_ub;
 };
 
 } // namespace Digit

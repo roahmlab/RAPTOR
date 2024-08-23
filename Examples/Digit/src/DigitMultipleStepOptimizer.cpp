@@ -44,7 +44,8 @@ bool DigitMultipleStepOptimizer::set_parameters(
     const TimeDiscretization time_discretization_input,
     const int degree_input,
     const Model& model_input, 
-    const std::vector<GaitParameters>& gps_input
+    const std::vector<GaitParameters>& gps_input,
+    const bool periodic
 ) 
 {
     if (gps_input.size() != NSteps_input) {
@@ -76,6 +77,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
                                        stanceLeg,
                                        stance_foot_T_des,
                                        false);
+        stepOptVec_[i]->constr_viol_tol = constr_viol_tol;
     }
 
     const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
@@ -88,6 +90,17 @@ bool DigitMultipleStepOptimizer::set_parameters(
                 stepOptVec_[i + 1]->trajPtr_,
                 stepOptVec_[i]->dcidPtr_,
                 stepOptVec_[i + 1]->dcidPtr_,
+                FRICTION_PARAMS
+            ));
+    }
+
+    if (periodic) {
+        periodConsVec_.push_back(
+            std::make_shared<DigitMultipleStepPeriodicityConstraints>(
+                stepOptVec_[NSteps_input - 1]->trajPtr_,
+                stepOptVec_[0]->trajPtr_,
+                stepOptVec_[NSteps_input - 1]->dcidPtr_,
+                stepOptVec_[0]->dcidPtr_,
                 FRICTION_PARAMS
             ));
     }
@@ -111,8 +124,8 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
 
     n_local.resize(stepOptVec_.size());
     n_position.resize(stepOptVec_.size() + 1);
-    m_local.resize(2 * stepOptVec_.size() - 1);
-    m_position.resize(2 * stepOptVec_.size());
+    m_local.resize(stepOptVec_.size() + periodConsVec_.size());
+    m_position.resize(stepOptVec_.size() + periodConsVec_.size());
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
         Index nnz_jac_g_local;
@@ -126,7 +139,7 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
         nnz_jac_g += nnz_jac_g_local;
     }
 
-    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+    for ( Index i = 0; i < periodConsVec_.size(); i++ ) {
         m_position[stepOptVec_.size() + i] = numCons;
 
         m_local[stepOptVec_.size() + i] = periodConsVec_[i]->m;
@@ -135,7 +148,7 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
                      NUM_INDEPENDENT_JOINTS * n_local[i] +
                      NUM_INDEPENDENT_JOINTS * n_local[i + 1];
     }
-    m_position[2 * stepOptVec_.size() - 1] = numCons;
+    m_position[stepOptVec_.size() + periodConsVec_.size()] = numCons;
 
     n = numVars;
     m = numCons;
@@ -175,13 +188,20 @@ bool DigitMultipleStepOptimizer::get_bounds_info(
                                         m_local[i], g_l + m_position[i], g_u + m_position[i]);
     }
 
-    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+    for ( Index i = 0; i < periodConsVec_.size(); i++ ) {
         const Index start_pos = m_position[stepOptVec_.size() + i];
         const Index end_pos = m_position[stepOptVec_.size() + i + 1];
 
-        std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: "
-                  << periodConsVec_[i]->m 
-                  << " [" << start_pos << " " << end_pos << "]" << std::endl;
+        if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+            std::cout << "gait " << i << " - " << 0 << " continuous constraint: "
+                      << periodConsVec_[i]->m 
+                      << " [" << start_pos << " " << end_pos << "]" << std::endl;
+        }
+        else {
+            std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: "
+                      << periodConsVec_[i]->m 
+                      << " [" << start_pos << " " << end_pos << "]" << std::endl;
+        }
 
         periodConsVec_[i]->compute_bounds();
 
@@ -274,7 +294,7 @@ bool DigitMultipleStepOptimizer::eval_g(
         ifFeasibleCurrIter = ifFeasibleCurrIter & stepOptVec_[i]->ifFeasibleCurrIter;
     }
 
-    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+    for ( Index i = 0; i < periodConsVec_.size(); i++ ) {
         VecX z_curr = Utils::initializeEigenVectorFromArray(x + n_position[i], n_local[i]);
         periodConsVec_[i]->compute(z_curr, false);
 
@@ -365,7 +385,7 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
             }
         }
 
-        for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) { 
+        for ( Index i = 0; i < periodConsVec_.size(); i++ ) { 
             const Index start_pos = m_position[stepOptVec_.size() + i];
             const Index end_pos = m_position[stepOptVec_.size() + i + 1];
 
@@ -409,7 +429,7 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
             idx += n_local[i] * m_local[i];
         }
 
-        for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) { 
+        for ( Index i = 0; i < periodConsVec_.size(); i++ ) { 
             VecX z_curr = Utils::initializeEigenVectorFromArray(x + n_position[i], n_local[i]);
             periodConsVec_[i]->compute(z_curr, true);
 
@@ -464,7 +484,7 @@ void DigitMultipleStepOptimizer::summarize_constraints(
         final_constr_violation = std::max(final_constr_violation, stepOptVec_[i]->final_constr_violation);
     }
 
-    for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
+    for ( Index i = 0; i < periodConsVec_.size(); i++ ) {
         VecX z_curr = solution.segment(n_position[i], n_local[i]);
         periodConsVec_[i]->compute(z_curr, false);
 
@@ -487,8 +507,14 @@ void DigitMultipleStepOptimizer::summarize_constraints(
 
         if (max_constr_violation > constr_viol_tol) {
             if (verbose) {
-                std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: " 
-                          << max_constr_violation << std::endl;
+                if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+                    std::cout << "gait " << i << " - " << 0 << " continuous constraint: " 
+                              << max_constr_violation << std::endl;
+                }
+                else {
+                    std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: " 
+                              << max_constr_violation << std::endl;
+                }
                 std::cout << "    range: [" << periodConsVec_[i]->g_lb[max_constr_violation_id] 
                                             << ", " 
                                             << periodConsVec_[i]->g_ub[max_constr_violation_id] 

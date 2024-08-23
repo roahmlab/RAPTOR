@@ -37,7 +37,7 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -90,      // right-hip-pitch
     -180,     // right-achilles-rod
     -10,      // right-ach2
-    -58.4     // right-knee
+    -58.4,    // right-knee
     -71.6,    // right-tarsus
     -18.2531 - 15, // -44.9815, // right-toe-A
     -180,     // right-toe-A-rod
