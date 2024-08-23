@@ -204,27 +204,6 @@ target_link_libraries(Taloslib PUBLIC
 target_include_directories(Taloslib PUBLIC
     Examples/Talos/include)
 
-# ## Digit-modified library
-# add_library(DigitModifiedlib SHARED
-#     Examples/Digit-modified/src/DigitModifiedDynamicsConstraints.cpp
-#     Examples/Digit-modified/src/DigitModifiedConstrainedInverseDynamics.cpp
-#     Examples/Digit-modified/src/DigitModifiedSingleStepOptimizer.cpp
-#     Examples/Digit-modified/src/DigitModifiedCustomizedConstraints.cpp
-#     Examples/Digit-modified/src/DigitModifiedSingleStepPeriodicityConstraints.cpp)
-
-# target_link_libraries(DigitModifiedlib PUBLIC
-#     trajlib
-#     IDlib
-#     Conslib
-#     Optlib
-#     ipopt
-#     coinhsl
-#     ${BOOST_LIBRARIES} 
-#     pinocchio::pinocchio)
-
-# target_include_directories(DigitModifiedlib PUBLIC
-#     Examples/Digit-modified/include)
-
 # Kinova libraries
 add_library(Kinovalib SHARED
     Examples/Kinova/InverseKinematics/KinovaIKSolver.cpp
@@ -365,29 +344,6 @@ target_link_libraries(TalosMultipleStep_example PRIVATE
 
 target_compile_options(TalosMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
-
-# add_executable(DigitModified_example 
-#     Examples/Digit-modified/DigitModifiedSingleStep.cpp)
-#     # Examples/Digit-modified/DigitModifiedSingleStepSpeedTest.cpp)
-#     # Examples/Digit-modified/DigitModifiedSingleStepRobustnessTest.cpp)
-
-# target_include_directories(DigitModified_example PUBLIC
-#     Examples/Digit-modified/include)
-
-# target_link_libraries(DigitModified_example PUBLIC
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     DigitModifiedlib
-#     ipopt
-#     coinhsl
-#     yaml-cpp
-#     ${BOOST_LIBRARIES} 
-#     pinocchio::pinocchio)
-
-# target_compile_options(DigitModified_example PUBLIC
-#     ${PINOCCHIO_FLAGS})
 
 add_executable(KinovaIK_example 
     Examples/Kinova/InverseKinematics/KinovaIKExample.cpp)
