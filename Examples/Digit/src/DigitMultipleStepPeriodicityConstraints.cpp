@@ -196,7 +196,7 @@ void DigitMultipleStepPeriodicityConstraints::compute(const VecX& z,
 
         // (3) rotation friction cone
         pg5_pz.row(2) = 2 * contactLambda(5) * pcontactLambda_pz.row(5) - 
-                        2 * pow(fp.gamma, 2) * contact_force * pcontactLambda_pz.row(2);; 
+                        2 * pow(fp.gamma, 2) * contact_force * pcontactLambda_pz.row(2);
 
         // (4, 5) ZMP on one axis
         pg5_pz.row(3) = pcontactLambda_pz.row(3) - fp.Lx * pcontactLambda_pz.row(2);

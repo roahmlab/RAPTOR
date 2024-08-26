@@ -28,7 +28,7 @@ DigitCustomizedConstraints::DigitCustomizedConstraints(const Model& model_input,
     swingfoot_xyzrpy = MatX::Zero(6, trajPtr_->N);
     pswingfoot_xyzrpy_pz.resize(1, trajPtr_->N);
 
-    m = trajPtr_->N * 8 + 4;
+    m = trajPtr_->N * 10 + 4;
     initialize_memory(m, trajPtr_->varLength, false);
 }
 
@@ -103,16 +103,19 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     g5 << swingfoot_xyzrpy.topLeftCorner(2, 1), swingfoot_xyzrpy.topRightCorner(2, 1);
 
     // (4) torso height always larger than 1 meter
+    //           torso stays between the two feet
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
     g6 = q.row(2); // torso height
-    g7 = Utils::wrapToPi(q.row(3)); // torso roll
-    g8 = Utils::wrapToPi(q.row(4)); // torso pitch
-    g9 = (ddcPtr_->stanceLeg == 'L') ?
+    g7 = q.row(0) - 0.5 * swingfoot_xyzrpy.row(0); // torso stays between the two feet
+    g8 = q.row(1) - 0.5 * swingfoot_xyzrpy.row(1); // torso stays between the two feet
+    g9 = Utils::wrapToPi(q.row(3)); // torso roll
+    g10 = Utils::wrapToPi(q.row(4)); // torso pitch
+    g11 = (ddcPtr_->stanceLeg == 'L') ?
         Utils::wrapToPi(q.row(5).array() + M_PI / 2) :
         Utils::wrapToPi(q.row(5).array() - M_PI / 2); // torso yaw
 
-    g << g1, g2, g3, g4, g5, g6, g7, g8, g9;
+    g << g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11;
 
     if (compute_derivatives) {
         int iter = 0;
@@ -134,6 +137,12 @@ void DigitCustomizedConstraints::compute(const VecX& z,
         pg_pz.row(iter++) = pswingfoot_xyzrpy_pz(trajPtr_->N - 1).row(1);
         for (int i = 0; i < trajPtr_->N; i++) {
             pg_pz.row(iter++) = pq_pz(i).row(2);
+        }
+        for (int i = 0; i < trajPtr_->N; i++) {
+            pg_pz.row(iter++) = pq_pz(i).row(0) - 0.5 * pswingfoot_xyzrpy_pz(i).row(0);
+        }
+        for (int i = 0; i < trajPtr_->N; i++) {
+            pg_pz.row(iter++) = pq_pz(i).row(1) - 0.5 * pswingfoot_xyzrpy_pz(i).row(1);
         }
         for (int i = 0; i < trajPtr_->N; i++) {
             pg_pz.row(iter++) = pq_pz(i).row(3);
@@ -172,19 +181,24 @@ void DigitCustomizedConstraints::compute_bounds() {
     g5_ub << gp.swingfoot_begin_x_des, gp.swingfoot_begin_y_des, gp.swingfoot_end_x_des, gp.swingfoot_end_y_des;
 
     // (4) torso height always larger than 1 meter
+    //     torso stays between the two feet
     //     roll and pitch always close to 0
     //     yaw always close to 0 when walking forward
-    g6_lb = VecX::Constant(trajPtr_->N, 1);
+    g6_lb = VecX::Constant(trajPtr_->N, 1.05);
     g6_ub = VecX::Constant(trajPtr_->N, 1e19);
-    g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
-    g8_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
-    g8_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g7_lb = VecX::Constant(trajPtr_->N, -0.05);
+    g7_ub = VecX::Constant(trajPtr_->N, 0.05);
+    g8_lb = VecX::Constant(trajPtr_->N, -0.10);
+    g8_ub = VecX::Constant(trajPtr_->N, 0.10);
     g9_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
     g9_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g10_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g10_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
+    g11_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
+    g11_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
 
-    g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb;
-    g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub;
+    g_lb << g1_lb, g2_lb, g3_lb, g4_lb, g5_lb, g6_lb, g7_lb, g8_lb, g9_lb, g10_lb, g11_lb;
+    g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub, g10_ub, g11_ub;
 }
 
 void DigitCustomizedConstraints::print_violation_info() {
@@ -250,25 +264,25 @@ void DigitCustomizedConstraints::print_violation_info() {
                       << g6_lb(i) 
                       << std::endl;
         }
-        if (abs(g7(i)) >= gp.eps_torso_angle) {
+        if (abs(g9(i)) >= gp.eps_torso_angle) {
             std::cout << "        DigitCustomizedConstraints.cpp: torso roll at time instance " 
                       << i 
                       << " is too large: " 
-                      << g7(i) 
+                      << g9(i) 
                       << std::endl;
         }
-        if (abs(g8(i)) >= gp.eps_torso_angle) {
+        if (abs(g10(i)) >= gp.eps_torso_angle) {
             std::cout << "        DigitCustomizedConstraints.cpp: torso pitch at time instance " 
                       << i 
                       << " is too large: " 
-                      << g8(i) 
+                      << g10(i) 
                       << std::endl;
         }
-        if (abs(g9(i)) >= gp.eps_torso_angle) {
+        if (abs(g11(i)) >= gp.eps_torso_angle) {
             std::cout << "        DigitCustomizedConstraints.cpp: torso yaw at time instance " 
                       << i 
                       << " is too large: " 
-                      << g9(i) 
+                      << g11(i) 
                       << std::endl;
         }
     }

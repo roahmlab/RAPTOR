@@ -80,20 +80,26 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Six-5.txt");
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-Two-14-5-Uniform.txt");
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-Bezier-14-5-Uniform.txt");
+    Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    Eigen::VectorXd z0(z_onestep.size() * NSteps);
+    for (int i = 0; i < NSteps; i++) {
+        z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
+    }
+    // add noise to initial guess to explore the solution space
+    // std::srand(std::time(nullptr));
+    // z = z + 0.01 * Eigen::VectorXd::Random(z.size());
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
 	    mynlp->set_parameters(NSteps,
-                              z,
+                              z0,
                               T,
                               N,
                               time_discretization,
                               degree,
                               model,
-                              gps);
+                              gps,
+                              true);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
@@ -166,7 +172,7 @@ int main(int argc, char* argv[]) {
 
     // Print the solution
     if (mynlp->solution.size() == mynlp->numVars) {
-        std::ofstream solution(filepath + "solution-digit-Bezier-multiple-step.txt");
+        std::ofstream solution(filepath + "solution-digit-multiple-step.txt");
         solution << std::setprecision(20);
         for (int i = 0; i < mynlp->numVars; i++) {
             solution << mynlp->solution[i] << std::endl;
@@ -174,7 +180,7 @@ int main(int argc, char* argv[]) {
         solution.close();
 
         for (int p = 0; p < NSteps; p++) {
-            std::ofstream trajectory(filepath + "trajectory-digit-Bezier-multiple-step-" + std::to_string(p) + ".txt");
+            std::ofstream trajectory(filepath + "trajectory-digit-multiple-step-" + std::to_string(p) + ".txt");
             trajectory << std::setprecision(20);
             const auto& cidPtr_ = mynlp->stepOptVec_[p]->cidPtr_;
             for (int i = 0; i < NUM_JOINTS; i++) {
