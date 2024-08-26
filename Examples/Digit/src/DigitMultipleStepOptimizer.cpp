@@ -3,28 +3,6 @@
 namespace RAPTOR {
 namespace Digit {
 
-Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
-                                              const int degree) {
-    if (z.size() != (degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS) {
-        throw std::invalid_argument("z has wrong size in switchSolutionFromLeftToRight! A single step solution is required.");
-    }
-    
-    Eigen::VectorXd z_switched = z;
-
-    // swap left leg and right leg
-    z_switched.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
-        z.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
-    z_switched.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
-        z.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
-
-    // negate all joints
-    for (int i = 0; i < z_switched.size(); i++) {
-        z_switched(i) = -z_switched(i);
-    }
-
-    return z_switched;
-}
-
 // // constructor
 // DigitMultipleStepOptimizer::DigitMultipleStepOptimizer()
 // {
@@ -54,6 +32,7 @@ bool DigitMultipleStepOptimizer::set_parameters(
 
     x0 = x0_input;
     
+    // define constraints for multiple steps
     stepOptVec_.clear();
     stepOptVec_.reserve(NSteps_input);
     
@@ -80,8 +59,37 @@ bool DigitMultipleStepOptimizer::set_parameters(
         stepOptVec_[i]->constr_viol_tol = constr_viol_tol;
     }
 
-    const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
+    // refine the initial guess for right stance phase
+    int oneStepSize = x0.size() / NSteps_input;
+    for (int i = 0; i < NSteps_input; i++) {
+        if (i % 2 == 0) {
+            // assume the initial guess is correct for left stance phase
+            // do nothing here
+            // x0.segment(i * oneStepSize, oneStepSize) = z_onestep;
+        }
+        else {
+            const VecX z_onestep = x0.segment(i * oneStepSize, oneStepSize);
+            if (i < NSteps_input - 1) {
+                x0.segment(i * oneStepSize, oneStepSize) = 
+                    switchSolutionFromLeftToRight(
+                        stepOptVec_[i]->dcidPtr_,
+                        stepOptVec_[i + 1]->dcidPtr_,
+                        z_onestep, 
+                        degree_input);
+            }
+            else {
+                x0.segment(i * oneStepSize, oneStepSize) = 
+                    switchSolutionFromLeftToRight(
+                        stepOptVec_[i]->dcidPtr_,
+                        stepOptVec_[0]->dcidPtr_,
+                        z_onestep, 
+                        degree_input);
+            }
+        }
+    }
 
+    // define constraints for multiple steps continuity
+    const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     periodConsVec_.reserve(NSteps_input);
     for (int i = 0; i < NSteps_input - 1; i++) {
         periodConsVec_.push_back(
@@ -108,6 +116,62 @@ bool DigitMultipleStepOptimizer::set_parameters(
     return true;
 }
 // [TNLP_set_parameters]
+
+Eigen::VectorXd DigitMultipleStepOptimizer::switchSolutionFromLeftToRight(std::shared_ptr<DigitConstrainedInverseDynamics>& currDcidPtr_,
+                                                                          std::shared_ptr<DigitConstrainedInverseDynamics>& nextDcidPtr_,
+                                                                          const VecX& z, 
+                                                                          const int degree) {
+    if (z.size() != (degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS) {
+        throw std::invalid_argument("z has wrong size in switchSolutionFromLeftToRight! A single step solution is required.");
+    }
+    
+    Eigen::VectorXd z_switched = z;
+
+    // swap left leg and right leg
+    z_switched.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+    z_switched.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+
+    // negate all joints
+    for (int i = 0; i < z_switched.size(); i++) {
+        z_switched(i) = -z_switched(i);
+    }
+
+    // perform a reset map to initialize v_plus and lambda (at the end of z)
+    currDcidPtr_->compute(z_switched, false);
+
+    Model& model = *(currDcidPtr_->modelPtr_);
+    Data& data = *(currDcidPtr_->dataPtr_);
+    std::shared_ptr<DigitDynamicsConstraints> nextDdcPtr_ = nextDcidPtr_->ddcPtr_;
+
+    const VecX& q_minus = currDcidPtr_->q(currDcidPtr_->N - 1);
+    const VecX& v_minus = currDcidPtr_->v(currDcidPtr_->N - 1);
+    nextDdcPtr_->get_c(q_minus);
+    nextDdcPtr_->get_J(q_minus);
+
+    MatX LHS = MatX::Zero(model.nv + NUM_DEPENDENT_JOINTS, model.nv + NUM_DEPENDENT_JOINTS);
+
+    crba(model, data, q_minus);
+    LHS.topLeftCorner(model.nv, model.nv) = data.M;
+    for (size_t j = 0; j < model.nv; j++) {
+        for (size_t k = j + 1; k < model.nv; k++) {
+            LHS(k, j) = LHS(j, k);
+        }
+    }
+
+    LHS.topRightCorner(model.nv, NUM_DEPENDENT_JOINTS) = nextDdcPtr_->J.transpose();
+    LHS.bottomLeftCorner(NUM_DEPENDENT_JOINTS, model.nv) = nextDdcPtr_->J;
+
+    VecX RHS = VecX::Zero(model.nv + NUM_DEPENDENT_JOINTS);
+    RHS.head(model.nv) = LHS.topLeftCorner(model.nv, model.nv) * v_minus;
+
+    Eigen::ColPivHouseholderQR<MatX> dec(LHS);
+
+    z_switched.tail(NUM_JOINTS + NUM_DEPENDENT_JOINTS) = dec.solve(RHS);
+
+    return z_switched;
+}
 
 // [TNLP_get_nlp_info]
 bool DigitMultipleStepOptimizer::get_nlp_info(
@@ -144,9 +208,17 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
 
         m_local[stepOptVec_.size() + i] = periodConsVec_[i]->m;
         numCons += periodConsVec_[i]->m;
-        nnz_jac_g += periodConsVec_[i]->m * n_local[i] +
-                     NUM_INDEPENDENT_JOINTS * n_local[i] +
-                     NUM_INDEPENDENT_JOINTS * n_local[i + 1];
+
+        if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+            nnz_jac_g += periodConsVec_[i]->m * n_local[i] +
+                         NUM_INDEPENDENT_JOINTS * n_local[i] +
+                         NUM_INDEPENDENT_JOINTS * n_local[0];
+        }
+        else {
+            nnz_jac_g += periodConsVec_[i]->m * n_local[i] +
+                         NUM_INDEPENDENT_JOINTS * n_local[i] +
+                         NUM_INDEPENDENT_JOINTS * n_local[i + 1];
+        }
     }
     m_position[stepOptVec_.size() + periodConsVec_.size()] = numCons;
 
@@ -154,6 +226,8 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_h_lag = n * (n + 1) / 2;
+
+    std::cout << "nnz_jac_g: " << nnz_jac_g << std::endl;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -373,7 +447,6 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
         
     if( values == NULL ) {
         // return the structure of the Jacobian
-        // this particular Jacobian is dense in blocks
         Index idx = 0;
         for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
             for ( Index j = 0; j < m_local[i]; j++ ) {
@@ -397,19 +470,38 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
                 }
             }
 
-            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
-                    iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + j;
-                    jCol[idx] = n_position[i + 1] + k;
-                    idx++;
+            if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[0]; k++ ) {
+                        iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + j;
+                        jCol[idx] = n_position[0] + k;
+                        idx++;
+                    }
+                }
+
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[0]; k++ ) {
+                        iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + NUM_INDEPENDENT_JOINTS + j;
+                        jCol[idx] = n_position[0] + k;
+                        idx++;
+                    }
                 }
             }
+            else {
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                        iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + j;
+                        jCol[idx] = n_position[i + 1] + k;
+                        idx++;
+                    }
+                }
 
-            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
-                    iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + NUM_INDEPENDENT_JOINTS + j;
-                    jCol[idx] = n_position[i + 1] + k;
-                    idx++;
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                        iRow[idx] = start_pos + NUM_JOINTS + NUM_DEPENDENT_JOINTS + NUM_INDEPENDENT_JOINTS + j;
+                        jCol[idx] = n_position[i + 1] + k;
+                        idx++;
+                    }
                 }
             }
         }
@@ -440,17 +532,34 @@ bool DigitMultipleStepOptimizer::eval_jac_g(
                 }
             }
 
-            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
-                    values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
-                    idx++;
+            if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[0]; k++ ) {
+                        values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
+                        idx++;
+                    }
+                }
+
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[0]; k++ ) {
+                        values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
+                        idx++;
+                    }
                 }
             }
+            else {
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                        values[idx] = periodConsVec_[i]->pg3_pz2(j, k);
+                        idx++;
+                    }
+                }
 
-            for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
-                for ( Index k = 0; k < n_local[i + 1]; k++ ) {
-                    values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
-                    idx++;
+                for ( Index j = 0; j < NUM_INDEPENDENT_JOINTS; j++ ) {
+                    for ( Index k = 0; k < n_local[i + 1]; k++ ) {
+                        values[idx] = periodConsVec_[i]->pg4_pz2(j, k);
+                        idx++;
+                    }
                 }
             }
         }

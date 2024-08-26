@@ -81,24 +81,27 @@ int main(int argc, char* argv[]) {
     }
     
     Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
-    Eigen::VectorXd z(z_onestep.size() * NSteps);
+    Eigen::VectorXd z0(z_onestep.size() * NSteps);
     for (int i = 0; i < NSteps; i++) {
-        if (i % 2 == 0) {
-            z.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
-        }
-        else {
-            z.segment(i * z_onestep.size(), z_onestep.size()) = 
-                switchSolutionFromLeftToRight(z_onestep, degree);
-        }
+        // if (i % 2 == 0) {
+        //     z.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
+        //     // z.segment(i * z_onestep_left.size(), z_onestep_left.size()) = z_onestep_left;
+        // }
+        // else {
+        //     z.segment(i * z_onestep.size(), z_onestep.size()) = 
+        //         switchSolutionFromLeftToRight(z_onestep, degree);
+        //     // z.segment(i * z_onestep_left.size(), z_onestep_left.size()) = z_onestep_right;
+        // }
+        z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
     }
     // add noise to initial guess to explore the solution space
-    std::srand(std::time(nullptr));
-    z = z + 0.01 * Eigen::VectorXd::Random(z.size());
+    // std::srand(std::time(nullptr));
+    // z = z + 0.01 * Eigen::VectorXd::Random(z.size());
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
 	    mynlp->set_parameters(NSteps,
-                              z,
+                              z0,
                               T,
                               N,
                               time_discretization,

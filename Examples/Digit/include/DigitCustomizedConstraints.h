@@ -88,6 +88,7 @@ public:
     VecX g8, g8_lb, g8_ub;
     VecX g9, g9_lb, g9_ub;
     VecX g10, g10_lb, g10_ub;
+    VecX g11, g11_lb, g11_ub;
 };
 
 } // namespace Digit

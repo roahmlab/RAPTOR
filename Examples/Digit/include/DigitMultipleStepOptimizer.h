@@ -9,17 +9,10 @@ namespace Digit {
 
 using namespace Ipopt;
 
-// switch the solution from left stance to right stance
-// to be more specific, we have to perform the following changes:
-// 1. swap the left leg joints and right leg joints
-// 2. negate all joints
-// since Digit joint directions are mirrored between left leg and right leg
-Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
-                                              const int degree);
-
 class DigitMultipleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
+    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -128,6 +121,16 @@ public:
     DigitMultipleStepOptimizer& operator=(
        const DigitMultipleStepOptimizer&
     );
+
+    // switch the solution from left stance to right stance
+    // to be more specific, we have to perform the following changes:
+    // 1. swap the left leg joints and right leg joints
+    // 2. negate all joints
+    // since Digit joint directions are mirrored between left leg and right leg
+    VecX switchSolutionFromLeftToRight(std::shared_ptr<DigitConstrainedInverseDynamics>& currDcidPtr_,
+                                       std::shared_ptr<DigitConstrainedInverseDynamics>& nextDcidPtr_,
+                                       const VecX& z, 
+                                       const int degree);
 
     std::vector<SmartPtr<DigitSingleStepOptimizer>> stepOptVec_;
     std::vector<std::shared_ptr<DigitMultipleStepPeriodicityConstraints>> periodConsVec_;
