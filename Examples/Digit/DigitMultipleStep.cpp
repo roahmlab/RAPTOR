@@ -83,15 +83,6 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
     Eigen::VectorXd z0(z_onestep.size() * NSteps);
     for (int i = 0; i < NSteps; i++) {
-        // if (i % 2 == 0) {
-        //     z.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
-        //     // z.segment(i * z_onestep_left.size(), z_onestep_left.size()) = z_onestep_left;
-        // }
-        // else {
-        //     z.segment(i * z_onestep.size(), z_onestep.size()) = 
-        //         switchSolutionFromLeftToRight(z_onestep, degree);
-        //     // z.segment(i * z_onestep_left.size(), z_onestep_left.size()) = z_onestep_right;
-        // }
         z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
     }
     // add noise to initial guess to explore the solution space
