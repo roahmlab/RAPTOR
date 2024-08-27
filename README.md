@@ -19,7 +19,7 @@ For some of the constraints, we implement the analytical hessian so that Ipopt c
 
 ![Digit stepping stones](https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9)
 
-![Talos walking forward](https://github.com/user-attachments/assets/94ffb2db-00c6-4336-a805-ab4d0647932b)
+![Talos walking forward](https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025)
 
 ## Requirements
 - Ubuntu >= 20.04
