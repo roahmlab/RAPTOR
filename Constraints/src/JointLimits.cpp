@@ -31,8 +31,8 @@ void JointLimits::compute(const VecX& z,
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     for (int i = 0; i < trajPtr_->N; i++) {
-        // g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = Utils::wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact));
-        g.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = trajPtr_->q(i).head(trajPtr_->Nact);
+        // g.segment(i * trajPtr_->Nact, trajPtr_->Nact) = Utils::wrapToPi(trajPtr_->q(i).head(trajPtr_->Nact));
+        g.segment(i * trajPtr_->Nact, trajPtr_->Nact) = trajPtr_->q(i).head(trajPtr_->Nact);
 
         if (compute_derivatives) {
             pg_pz.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, trajPtr_->varLength) = trajPtr_->pq_pz(i);
@@ -48,8 +48,8 @@ void JointLimits::compute(const VecX& z,
 
 void JointLimits::compute_bounds() {
     for (int i = 0; i < trajPtr_->N; i++) {
-        g_lb.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = lowerLimits;
-        g_ub.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = upperLimits;
+        g_lb.segment(i * trajPtr_->Nact, trajPtr_->Nact) = lowerLimits;
+        g_ub.segment(i * trajPtr_->Nact, trajPtr_->Nact) = upperLimits;
     }
 }
 
