@@ -119,14 +119,14 @@ void FourierCurves::compute(const VecX& z,
     MatX coefficients = Utils::reshape(temp, 2 * degree + 2, Nact);
 
     if (optimize_initial_position) {
-        q0 = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
+        q0 = z.segment((2 * degree + 2) * Nact, Nact);
     }
     if (optimize_initial_velocity) {
         if (optimize_initial_position) {
-            q_d0 = z.block((2 * degree + 2) * Nact + Nact, 0, Nact, 1);
+            q_d0 = z.segment((2 * degree + 2) * Nact + Nact, Nact);
         }
         else {
-            q_d0 = z.block((2 * degree + 2) * Nact, 0, Nact, 1);
+            q_d0 = z.segment((2 * degree + 2) * Nact, Nact);
         }
     }
 

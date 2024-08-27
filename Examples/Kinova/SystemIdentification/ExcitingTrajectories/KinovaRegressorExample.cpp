@@ -28,9 +28,9 @@ int main(int argc, char* argv[]) {
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
     Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 0.1;
-    z.block((2 * degree + 1) * model.nv, 0, model.nv, 1) = 
+    z.segment((2 * degree + 1) * model.nv, model.nv) = 
         2 * 1.0 * Eigen::VectorXd::Random(model.nv).array() - 1.0;
-    z.block((2 * degree + 1) * model.nv + model.nv, 0, model.nv, 1) = 
+    z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
         2 * 0.5 * Eigen::VectorXd::Random(model.nv).array() - 0.5;
 
     // Define limits buffer

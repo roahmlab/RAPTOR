@@ -44,8 +44,8 @@ void TorqueLimits::compute(const VecX& z,
 
 void TorqueLimits::compute_bounds() {
     for (int i = 0; i < trajPtr_->N; i++) {
-        g_lb.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = lowerLimits;
-        g_ub.block(i * trajPtr_->Nact, 0, trajPtr_->Nact, 1) = upperLimits;
+        g_lb.segment(i * trajPtr_->Nact, trajPtr_->Nact) = lowerLimits;
+        g_ub.segment(i * trajPtr_->Nact, trajPtr_->Nact) = upperLimits;
     }
 }
 

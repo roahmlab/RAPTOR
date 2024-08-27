@@ -320,7 +320,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
                     &stance_foot_endT, 
                     0);
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
-    qcopy.block(0, 0, 6, 1) = torso_T.getXYZRPY();
+    qcopy.head(6) = torso_T.getXYZRPY();
 
     // gsl multidimensional root-finding
     const gsl_multiroot_fdfsolver_type *T;
@@ -602,8 +602,8 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     &stance_foot_endT, 
                     0);
 
-    c.block(18, 0, 3, 1) = fkPtr_->getTranslation() - stance_foot_T_des.p;
-    c.block(21, 0, 3, 1) = fkPtr_->getRPY() - stance_foot_T_des.getRPY();
+    c.segment(18, 3) = fkPtr_->getTranslation() - stance_foot_T_des.p;
+    c.segment(21, 3) = fkPtr_->getRPY() - stance_foot_T_des.getRPY();
 }
 
 void DigitDynamicsConstraints::get_J(const VecX& q) {

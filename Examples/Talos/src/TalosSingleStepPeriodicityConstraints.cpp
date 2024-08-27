@@ -221,8 +221,8 @@ void TalosSingleStepPeriodicityConstraints::compute_bounds() {
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;
 
-    g_lb.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setConstant(-1e19);
-    // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
+    g_lb.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setConstant(-1e19);
+    // g_ub.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setZero();
 }
 
 void TalosSingleStepPeriodicityConstraints::print_violation_info() {
