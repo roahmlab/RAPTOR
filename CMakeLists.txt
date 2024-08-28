@@ -479,6 +479,32 @@ target_link_libraries(KinovaSysId_example PUBLIC
 target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+
+nanobind_add_module(KinovaHLP_nanobind 
+    NB_SHARED LTO
+    Examples/Kinova/WaypointPlanning/WaypointPlanningPybind.cpp)
+
+target_include_directories(KinovaHLP_nanobind PUBLIC
+    Examples/Kinova
+    Examples/Kinova/ArmourDiscrete/include)
+
+target_link_libraries(KinovaHLP_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ompl
+    ${PYTHON_LIBRARIES})
+
+nanobind_compile_options(KinovaHLP_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+set_property(TARGET KinovaHLP_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO
     Examples/Kinova/ArmourDiscrete/KinovaPybind.cpp

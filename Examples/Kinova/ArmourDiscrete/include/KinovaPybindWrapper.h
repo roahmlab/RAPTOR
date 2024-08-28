@@ -28,7 +28,8 @@ public:
     // Constructor
     KinovaPybindWrapper() = default;
 
-    KinovaPybindWrapper(const std::string urdf_filename);
+    KinovaPybindWrapper(const std::string urdf_filename,
+                        const bool display_info);
 
     // Destructor
     ~KinovaPybindWrapper() = default;
@@ -37,6 +38,7 @@ public:
     void set_obstacles(const nb_2d_double obstacles_inp);
 
     void set_ipopt_parameters(const double tol,
+                              const double constr_viol_tol,
                               const double obj_scaling_factor,
                               const double max_wall_time, 
                               const int print_level,
@@ -57,6 +59,8 @@ public:
                     const double tplan_inp);
 
     nb::tuple optimize();
+
+    nb::ndarray<nb::numpy, const double> analyze_solution();
 
     // Class members
     // robot model
@@ -91,6 +95,7 @@ public:
     bool set_trajectory_parameters_check = false;
     bool set_buffer_check = false;
     bool set_target_check = false;
+    bool has_optimized = false;
 };
 
 }; // namespace Kinova

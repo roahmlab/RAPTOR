@@ -11,7 +11,7 @@ NB_MODULE(oracle_waitr_nanobind, m) {
     m.doc() = "nanobind oracle_waitr_nanobind plugin";
 
     nb::class_<KinovaWaitrPybindWrapper>(m, "KinovaWaitrPybindWrapper")
-        .def(nb::init<const std::string>())
+        .def(nb::init<const std::string, const bool>())
         .def("set_obstacles", &KinovaWaitrPybindWrapper::set_obstacles)
         .def("set_contact_surface_parameters", &KinovaWaitrPybindWrapper::set_contact_surface_parameters)
         .def("set_end_effector", &KinovaWaitrPybindWrapper::set_end_effector)

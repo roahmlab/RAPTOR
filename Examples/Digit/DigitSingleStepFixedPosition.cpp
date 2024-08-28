@@ -182,6 +182,7 @@ int main(int argc, char* argv[]) {
             const int N_simulate = T / dt_sim + 1;
 
             SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
+            testnlp->display_info = false;
             testnlp->set_parameters(z,
                                     T,
                                     N_simulate,
