@@ -573,6 +573,15 @@ void Optimizer::finalize_solution(
     }
 
     if(display_info) std::cout << "Objective value: " << obj_value_copy << std::endl;
+
+    // clear the previous information
+    ifFeasibleCurrIter = false;
+    currentIpoptSolution = VecX();
+    currentIpoptObjValue = std::numeric_limits<Number>::max();
+    ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+    optimalIpoptSolution = VecX();
+    optimalIpoptObjValue = std::numeric_limits<Number>::max();
+    ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
 }
 // [TNLP_finalize_solution]
 
