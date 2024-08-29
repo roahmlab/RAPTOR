@@ -23,12 +23,14 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     torque_limits_buffer = VecX::Zero(model.nv);
 }
 
-void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
+void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
+                                        const double collision_buffer_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
 
     num_obstacles = obstacles_inp.shape(0);
+    collision_buffer = collision_buffer_inp;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -154,7 +156,9 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    VecX z0 = 0.5 * (atp.q0 + qdes);
+    // VecX z0 = 0.5 * (atp.q0 + qdes);
+    // VecX z0 = atp.q0;
+    VecX z0 = qdes;
 
     // Initialize Kinova optimizer
     try {
@@ -171,7 +175,8 @@ nb::tuple KinovaPybindWrapper::optimize() {
                               tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,
-                              torque_limits_buffer);
+                              torque_limits_buffer,
+                              collision_buffer);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

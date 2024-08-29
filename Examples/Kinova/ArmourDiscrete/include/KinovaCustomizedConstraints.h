@@ -55,6 +55,7 @@ public:
                                 const std::vector<Vec3>& boxCenters_input,
                                 const std::vector<Vec3>& boxOrientation_input,
                                 const std::vector<Vec3>& boxSize_input,
+                                const double collision_buffer_input = 0,
                                 Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
@@ -86,6 +87,8 @@ public:
     std::unique_ptr<Model> modelPtr_;
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
+
+    double collision_buffer = 0;
 
         // sphere info
     int num_spheres = 0;

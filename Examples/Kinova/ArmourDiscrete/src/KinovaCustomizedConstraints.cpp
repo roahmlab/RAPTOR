@@ -8,8 +8,10 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
                                                          const std::vector<Vec3>& boxCenters_input,
                                                          const std::vector<Vec3>& boxOrientation_input,
                                                          const std::vector<Vec3>& boxSize_input,
+                                                         const double collision_buffer_input,
                                                          Eigen::VectorXi jtype_input) :
-    trajPtr_(trajPtr_input) {
+    trajPtr_(trajPtr_input),
+    collision_buffer(collision_buffer_input) {
     modelPtr_ = std::make_unique<Model>(model_input);
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get(), jtype_input);
     collisionAvoidancePtr_ = std::make_shared<BoxCollisionAvoidance>(boxCenters_input, 
@@ -137,8 +139,8 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
 }
 
 void KinovaCustomizedConstraints::compute_bounds() {
-    // distance with obstacles larger than 0
-    g_lb.setConstant(0);
+    // distance with obstacles larger than collision_buffer = 0
+    g_lb.setConstant(collision_buffer);
     g_ub.setConstant(1e19);
 }
 

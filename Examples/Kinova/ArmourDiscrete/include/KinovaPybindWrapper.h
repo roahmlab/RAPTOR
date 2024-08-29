@@ -35,7 +35,8 @@ public:
     ~KinovaPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_double obstacles_inp);
+    void set_obstacles(const nb_2d_double obstacles_inp,
+                       const double collision_buffer_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -71,11 +72,12 @@ public:
     std::vector<Vec3> boxCenters;
     std::vector<Vec3> boxOrientation;
     std::vector<Vec3> boxSize;
+    double collision_buffer = 0;
 
     // trajectory information
     ArmourTrajectoryParameters atp;
     double T = 1;
-    int N = 33;
+    int N = 17;
     int degree = 5;
     VecX qdes;
     double tplan = 0;
