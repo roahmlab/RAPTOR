@@ -44,7 +44,8 @@ public:
         const int tplan_n_input,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
-        const VecX& torque_limits_buffer_input
+        const VecX& torque_limits_buffer_input,
+        const double collision_buffer_input = 0
     );
 
     /**@name Overloaded from TNLP */

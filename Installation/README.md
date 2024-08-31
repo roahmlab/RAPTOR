@@ -11,12 +11,14 @@ We have provided a docker file at `docker/Dockerfile`.
 
 We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there.
-To be more specific, you need to get HSL library from its official [website](https://www.hsl.rl.ac.uk/), 
-and then put the HSL folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is a wrapper for easier compilation of HSL.
-Rename the HSL wrapper folder as "HSL" and compress it so that you get a "HSL.zip".
-Put the "HSL.zip" in `docker/` so that dockerfile can find it.
-This zip file will later be 'unzip'ed and built inside the docker container.
-You need to do this BEFORE you build the docker image.
+To be more specific, you need to 
+1. get HSL library from its official [website](https://licences.stfc.ac.uk/product/coin-hsl). The academic license is free but it could take 1 or 2 days to process the order.
+2. put the HSL source code as a folder called `HSL` inside [ThirdParty-HSL/](https://github.com/coin-or-tools/ThirdParty-HSL), which is a wrapper to compile HSL.
+3. Rename the HSL wrapper folder as `HSL` and compress it so that you get a `HSL.zip`.
+4. Put the "HSL.zip" in `docker/` so that dockerfile can find it.
+
+This zip file will later be 'unzip'ed and built inside the docker container after docker starts to build.
+You need to follow the steps above BEFORE you build the docker image otherwise you will have error.
 
 Finally, in Visual Studio Code, simply click "ctrl+shift+P" and search "Dev Containers: Rebuild Container",
 it will build the environment automatically for you from [docker/Dockerfile](../docker/Dockerfile) so that you don't need to follow the steps below.

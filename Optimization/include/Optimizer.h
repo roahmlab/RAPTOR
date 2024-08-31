@@ -237,6 +237,8 @@ public:
     // But right now it is hardcoded here
     // You have to manually change this from outside
     Number constr_viol_tol = 1e-4;
+
+    bool display_info = true;
 };
 
 }; // namespace RAPTOR
