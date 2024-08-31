@@ -141,6 +141,7 @@ void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
     }
 
     tplan_n = int(tplan / T * N);
+    tplan_n = std::min(std::max(0, tplan_n), N - 1);
 
     set_target_check = true;
     has_optimized = false;
@@ -156,9 +157,9 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    // VecX z0 = 0.5 * (atp.q0 + qdes);
+    VecX z0 = 0.5 * (atp.q0 + qdes);
     // VecX z0 = atp.q0;
-    VecX z0 = qdes;
+    // VecX z0 = qdes;
 
     // Initialize Kinova optimizer
     try {
@@ -218,49 +219,46 @@ nb::tuple KinovaPybindWrapper::optimize() {
     return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
-nb::ndarray<nb::numpy, const double> KinovaPybindWrapper::analyze_solution() {
+nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_solution() {
     if (!has_optimized) {
         throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
     }
 
-    // // re-evaluate the solution on a finer time discretization
-    // const int N_simulate = 33;
-    // SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
-    // try {
-    //     testnlp->display_info = false;
-    //     testnlp->set_parameters(mynlp->solution,
-    //                             T,
-    //                             N_simulate,
-    //                             degree,
-    //                             model,
-    //                             atp,
-    //                             boxCenters,
-    //                             boxOrientation,
-    //                             boxSize,
-    //                             qdes,
-    //                             tplan_n,
-    //                             joint_limits_buffer,
-    //                             velocity_limits_buffer,
-    //                             torque_limits_buffer);
-    //     Index n, m, nnz_jac_g, nnz_h_lag;
-    //     TNLP::IndexStyleEnum index_style;
-    //     testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
-    //     Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
-    //     Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
-    //     for (int i = 0; i < testnlp->numVars; i++) {
-    //         ztry[i] = mynlp->solution(i);
-    //     }
-    //     testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
-    //     testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
-    //     testnlp->summarize_constraints(testnlp->numCons, g, false);
-    // }
-    // catch (std::exception& e) {
-    //     std::cerr << e.what() << std::endl;
-    //     throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
-    // }
-
-    const auto& testnlp = mynlp;
-    const int N_simulate = N;
+    // re-evaluate the solution on a finer time discretization
+    const int N_simulate = 60;
+    SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
+    try {
+        testnlp->display_info = false;
+        testnlp->set_parameters(mynlp->solution,
+                                T,
+                                N_simulate,
+                                degree,
+                                model,
+                                atp,
+                                boxCenters,
+                                boxOrientation,
+                                boxSize,
+                                qdes,
+                                tplan_n,
+                                joint_limits_buffer,
+                                velocity_limits_buffer,
+                                torque_limits_buffer);
+        Index n, m, nnz_jac_g, nnz_h_lag;
+        TNLP::IndexStyleEnum index_style;
+        testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+        Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
+        Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
+        for (int i = 0; i < testnlp->numVars; i++) {
+            ztry[i] = mynlp->solution(i);
+        }
+        testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
+        testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+        testnlp->summarize_constraints(testnlp->numCons, g, false);
+    }
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
+    }
 
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
@@ -275,10 +273,12 @@ nb::ndarray<nb::numpy, const double> KinovaPybindWrapper::analyze_solution() {
     }
 
     const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
-    auto traj = nb::ndarray<nb::numpy, const double>(trajInfo.data(),
-                                                     2,
-                                                     shape_ptr1,
-                                                     nb::handle());
+    auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        trajInfo.data(),
+        2,
+        shape_ptr1,
+        nb::handle()
+    );
 
     return traj;
 }

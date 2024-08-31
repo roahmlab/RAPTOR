@@ -61,7 +61,7 @@ public:
 
     nb::tuple optimize();
 
-    nb::ndarray<nb::numpy, const double> analyze_solution();
+    nb::ndarray<nb::numpy, double, nb::shape<2, -1>> analyze_solution();
 
     // Class members
     // robot model

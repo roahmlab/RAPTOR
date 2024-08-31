@@ -19,16 +19,16 @@ int main() {
     model.damping.setZero();
     model.rotorInertia.setZero();
     
-    const int numSteps = 2;
+    const int numSteps = 6;
     const int degree = 5;
     const double T = 0.4;
     const double FPS = 30.0;
     const int N = T * FPS;
     GaitParameters gp;
     
-    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution_upstairs.txt");
+    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution-digit-multiple-step.txt");
 
-    std::ofstream trajectories(filepath + "full-trajectories_upstairs.txt");
+    std::ofstream trajectories(filepath + "full-trajectories_multiple-step-2.txt");
 
     // setup optimizers
     std::vector<SmartPtr<DigitSingleStepOptimizer>> testnlps;
@@ -40,21 +40,21 @@ int main() {
     for (int step = 0; step < numSteps; step++) {
         testnlps.push_back(new DigitSingleStepOptimizer());
 
-        // Eigen::VectorXd z((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
-        // for (int i = 0; i < z.size(); i++) {
-        //     z(i) = solution(offset + i);
-        // }
-        // offset += z.size();
+        Eigen::VectorXd z((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+        for (int i = 0; i < z.size(); i++) {
+            z(i) = solution(offset + i);
+        }
+        offset += z.size();
 
         char stanceLeg = (step % 2 == 0) ? 'L' : 'R';
 
-        Eigen::VectorXd z;
-        if (stanceLeg == 'R') {
-            z = switchSolutionFromLeftToRight(solution, degree);
-        }
-        else {
-            z = solution;
-        }
+        // Eigen::VectorXd z;
+        // if (stanceLeg == 'R') {
+        //     z = switchSolutionFromLeftToRight(solution, degree);
+        // }
+        // else {
+        //     z = solution;
+        // }
 
         Transform stanceFootTransform(3, -M_PI / 2);
         if (step > 0) {

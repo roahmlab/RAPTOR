@@ -71,8 +71,6 @@ set(OMPL_LIBRARY_DIRS /usr/local/share)
 include_directories(${OMPL_INCLUDE_DIRS})
 link_directories(${OMPL_LIBRARY_DIRS})
 
-message(STATUS "ompl include dirs: ${OMPL_INCLUDE_DIRS}")
-
 set(PINOCCHIO_FLAGS
   ${pinocchio_CFLAGS_OTHER}
   -Wno-ignored-attributes

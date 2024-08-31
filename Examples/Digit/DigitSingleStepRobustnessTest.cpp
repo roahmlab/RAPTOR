@@ -59,12 +59,16 @@ int main(int argc, char* argv[]) {
     app->Options()->SetIntegerValue("print_level", 0);
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    for (int degree_choice = 0; degree_choice < 4; degree_choice++) {
+    int degree_choice = std::stoi(argv[1]);
+    int mu_strategy_choice = std::stoi(argv[2]);
+    int linear_solver_choice = std::stoi(argv[3]);
+
+    // for (int degree_choice = 0; degree_choice < 4; degree_choice++) {
         degree = degree_range[degree_choice];
         N = N_range[degree_choice];
-        for (int mu_strategy_choice = 0; mu_strategy_choice < 2; mu_strategy_choice++) {
+        // for (int mu_strategy_choice = 0; mu_strategy_choice < 2; mu_strategy_choice++) {
             app->Options()->SetStringValue("mu_strategy", mu_strategy_str[mu_strategy_choice].c_str());
-            for (int linear_solver_choice = 0; linear_solver_choice < 2; linear_solver_choice++) {
+            // for (int linear_solver_choice = 0; linear_solver_choice < 3; linear_solver_choice++) {
                 app->Options()->SetStringValue("linear_solver", linear_solver_str[linear_solver_choice].c_str());
 
                 std::cerr << "EXPERIMENT: Degree: " << degree << ", mu_strategy: " << mu_strategy_str[mu_strategy_choice] << ", linear_solver: " << linear_solver_str[linear_solver_choice] << std::endl;
@@ -120,12 +124,14 @@ int main(int argc, char* argv[]) {
                         std::cerr << e.what() << std::endl;
                         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
                     }
+
+                    mynlp.~SmartPtr();
                 }
 
                 experiment_output.close();
-            }
-        }
-    }
+            // }
+        // }
+    // }
 
     return 0;
 }
