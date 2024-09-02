@@ -28,7 +28,8 @@ public:
     // Constructor
     KinovaWaitrPybindWrapper() = default;
 
-    KinovaWaitrPybindWrapper(const std::string urdf_filename);
+    KinovaWaitrPybindWrapper(const std::string urdf_filename,
+                             const bool display_info);
 
     // Destructor
     ~KinovaWaitrPybindWrapper() = default;

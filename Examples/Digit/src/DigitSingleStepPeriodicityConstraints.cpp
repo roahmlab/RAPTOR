@@ -71,7 +71,7 @@ void DigitSingleStepPeriodicityConstraints::compute(const VecX& z,
     const VecX& q_minus = dcidPtr_->q(lastIdx);
     const VecX& v_minus = dcidPtr_->v(lastIdx);
 
-    const VecX& v_plus = z.block(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, 0, NUM_JOINTS, 1);
+    const VecX& v_plus = z.segment(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
 
     const VecX& q_0 = dcidPtr_->q(0);
     const VecX& v_0 = dcidPtr_->v(0);
@@ -221,8 +221,8 @@ void DigitSingleStepPeriodicityConstraints::compute_bounds() {
     // g_lb(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 0;
     g_ub(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS) = 1e19;
 
-    g_lb.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setConstant(-1e19);
-    // g_ub.block(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 0, 6, 1).setZero();
+    g_lb.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setConstant(-1e19);
+    // g_ub.segment(NUM_JOINTS + NUM_DEPENDENT_JOINTS + 2 * NUM_INDEPENDENT_JOINTS + 1, 6).setZero();
 }
 
 void DigitSingleStepPeriodicityConstraints::print_violation_info() {

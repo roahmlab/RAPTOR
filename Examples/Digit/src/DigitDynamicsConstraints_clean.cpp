@@ -334,7 +334,7 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
                     &stance_foot_endT, 
                     0);
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
-    qcopy.block(0, 0, 6, 1) = torso_T.getXYZRPY();
+    qcopy.head(6) = torso_T.getXYZRPY();
 
     // gsl multidimensional root-finding
     const gsl_multiroot_fdfsolver_type *T;
@@ -469,7 +469,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &left_toeA_anchor_endT);
     const Vec3 left_anchorA = fkPtr_->getTranslation();
-    c.block(0, 0, 3, 1) = left_rodA - left_anchorA;
+    c.segment(0, 3) = left_rodA - left_anchorA;
 
     // left toe B closed loop
     fkPtr_->compute(modelPtr_->getJointId("left_tarsus"), 
@@ -482,7 +482,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &left_toeB_anchor_endT);
     const Vec3 left_anchorB = fkPtr_->getTranslation();
-    c.block(3, 0, 3, 1) = left_rodB - left_anchorB;
+    c.segment(3, 3) = left_rodB - left_anchorB;
 
     // left knee-tarsus closed loop
     fkPtr_->compute(modelPtr_->getJointId("left_hip_pitch"), 
@@ -495,7 +495,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &left_knee_anchor_endT);
     const Vec3 left_anchorKnee = fkPtr_->getTranslation();
-    c.block(6, 0, 3, 1) = left_rodKnee - left_anchorKnee;
+    c.segment(6, 3) = left_rodKnee - left_anchorKnee;
 
     // right toe A closed loop
     fkPtr_->compute(modelPtr_->getJointId("right_tarsus"), 
@@ -508,7 +508,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &right_toeA_anchor_endT);
     const Vec3 right_anchorA = fkPtr_->getTranslation();
-    c.block(9, 0, 3, 1) = right_rodA - right_anchorA;
+    c.segment(9, 3) = right_rodA - right_anchorA;
 
     // right toe B closed loop
     fkPtr_->compute(modelPtr_->getJointId("right_tarsus"), 
@@ -521,7 +521,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &right_toeB_anchor_endT);
     const Vec3 right_anchorB = fkPtr_->getTranslation();
-    c.block(12, 0, 3, 1) = right_rodB - right_anchorB;
+    c.segment(12, 3) = right_rodB - right_anchorB;
     
     // right knee-tarsus closed loop
     fkPtr_->compute(modelPtr_->getJointId("right_hip_pitch"), 
@@ -534,7 +534,7 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     q, nullptr,
                     &right_knee_anchor_endT);
     const Vec3 right_anchorKnee = fkPtr_->getTranslation();
-    c.block(15, 0, 3, 1) = right_rodKnee - right_anchorKnee;
+    c.segment(15, 3) = right_rodKnee - right_anchorKnee;
 
     // stance foot contact constraint
     fkPtr_->compute(0, 
@@ -544,8 +544,8 @@ void DigitDynamicsConstraints::get_c(const VecX& q) {
                     &stance_foot_endT, 
                     0);
 
-    c.block(18, 0, 3, 1) = fkPtr_->getTranslation() - stance_foot_T_des.p;
-    c.block(21, 0, 3, 1) = fkPtr_->getRPY() - stance_foot_T_des.getRPY();
+    c.segment(18, 3) = fkPtr_->getTranslation() - stance_foot_T_des.p;
+    c.segment(21, 3) = fkPtr_->getRPY() - stance_foot_T_des.getRPY();
 }
 
 void DigitDynamicsConstraints::get_J(const VecX& q) {

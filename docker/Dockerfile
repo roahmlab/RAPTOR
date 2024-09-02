@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
 
     # install python packages
 RUN pip install --upgrade pip && \
-    pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind
+    pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 
     # Install pinochio dependencies
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -63,11 +63,16 @@ RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=bind,source=docker/scripts/install-ipopt.sh,target=/tmp/install-ipopt.sh \
     bash /tmp/install-ipopt.sh
 
+# Install the ompl
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=bind,source=docker/scripts/install-ompl.sh,target=/tmp/install-ompl.sh \
+    bash /tmp/install-ompl.sh
+
 ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin
 ENV PKG_CONFIG_PATH /opt/openrobots/lib/pkgconfig
-ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib
+ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib:/usr/local/share
 ENV PYTHONPATH /opt/openrobots/lib/python3.10/site-packages
-ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local
+ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local:/usr/local/include/ompl-1.6
 
 # Set the entry point to VSCode's default command
 CMD ["/bin/bash"]

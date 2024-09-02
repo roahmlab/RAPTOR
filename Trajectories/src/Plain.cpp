@@ -83,7 +83,7 @@ void Plain::compute(const VecX& z,
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     for (int i = 0; i < N; i++) {
-        q(i) = z.block(i * Nact, 0, Nact, 1);
+        q(i) = z.segment(i * Nact, Nact);
         // q_d(i) = 0;
         // q_dd(i) = 0;
 

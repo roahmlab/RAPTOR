@@ -169,6 +169,7 @@ int main(int argc, char* argv[]) {
             const int N_simulate = T / dt_sim;
 
             SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();
+            testnlp->display_info = false;
             testnlp->set_parameters(z,
                                     T,
                                     N_simulate,

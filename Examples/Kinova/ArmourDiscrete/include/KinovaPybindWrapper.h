@@ -28,15 +28,18 @@ public:
     // Constructor
     KinovaPybindWrapper() = default;
 
-    KinovaPybindWrapper(const std::string urdf_filename);
+    KinovaPybindWrapper(const std::string urdf_filename,
+                        const bool display_info);
 
     // Destructor
     ~KinovaPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_double obstacles_inp);
+    void set_obstacles(const nb_2d_double obstacles_inp,
+                       const double collision_buffer_inp);
 
     void set_ipopt_parameters(const double tol,
+                              const double constr_viol_tol,
                               const double obj_scaling_factor,
                               const double max_wall_time, 
                               const int print_level,
@@ -58,6 +61,8 @@ public:
 
     nb::tuple optimize();
 
+    nb::ndarray<nb::numpy, double, nb::shape<2, -1>> analyze_solution();
+
     // Class members
     // robot model
     Model model;
@@ -67,11 +72,12 @@ public:
     std::vector<Vec3> boxCenters;
     std::vector<Vec3> boxOrientation;
     std::vector<Vec3> boxSize;
+    double collision_buffer = 0;
 
     // trajectory information
     ArmourTrajectoryParameters atp;
     double T = 1;
-    int N = 16;
+    int N = 17;
     int degree = 5;
     VecX qdes;
     double tplan = 0;
@@ -91,6 +97,7 @@ public:
     bool set_trajectory_parameters_check = false;
     bool set_buffer_check = false;
     bool set_target_check = false;
+    bool has_optimized = false;
 };
 
 }; // namespace Kinova

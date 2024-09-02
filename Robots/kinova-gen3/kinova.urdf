@@ -243,10 +243,10 @@
       <mass value="0"/>
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="-0.0" izz="0.0"/>
     </inertial>
-    <visual>
+    <!-- <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/end_effector_link.STL"/>
+        <mesh filename="meshes/end_effector_link.stl"/>
       </geometry>
       <material name="">
         <color rgba="0.75294 0.75294 0.75294 1"/>
@@ -255,9 +255,9 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/end_effector_link.STL"/>
+        <mesh filename="meshes/end_effector_link.stl"/>
       </geometry>
-    </collision>
+    </collision> -->
   </link>
   <joint name="end_effector" type="fixed">
     <origin rpy="3.1415926535897932384626433832795 0 0" xyz="0 0 -0.0615250000000001"/>

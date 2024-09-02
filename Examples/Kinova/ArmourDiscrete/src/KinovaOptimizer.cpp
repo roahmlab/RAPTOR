@@ -29,7 +29,8 @@ bool KinovaOptimizer::set_parameters(
     const int tplan_n_input,
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
-    const VecX& torque_limits_buffer_input
+    const VecX& torque_limits_buffer_input,
+    const double collision_buffer_input
  ) 
 {
     enable_hessian = true;
@@ -73,11 +74,11 @@ bool KinovaOptimizer::set_parameters(
                                                                JOINT_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("joint limits");
 
-    // Velocity limits
-    constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
-                                                                  VELOCITY_LIMITS_LOWER_VEC, 
-                                                                  VELOCITY_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("velocity limits");        
+    // // Velocity limits
+    // constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
+    //                                                               VELOCITY_LIMITS_LOWER_VEC, 
+    //                                                               VELOCITY_LIMITS_UPPER_VEC));
+    // constraintsNameVec_.push_back("velocity limits");        
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
@@ -91,7 +92,8 @@ bool KinovaOptimizer::set_parameters(
                                                                                model_input,
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
-                                                                               boxSize_input));   
+                                                                               boxSize_input,
+                                                                               collision_buffer_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);

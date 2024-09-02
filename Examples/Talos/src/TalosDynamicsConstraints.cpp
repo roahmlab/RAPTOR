@@ -219,7 +219,7 @@ void TalosDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
                     0);
 
     Transform torso_T = stance_foot_T_des * fkPtr_->getTransform().inverse();
-    q.block(0, 0, 6, 1) = torso_T.getXYZRPY();
+    q.head(6) = torso_T.getXYZRPY();
     
     if (compute_derivatives) {
         get_c(q);

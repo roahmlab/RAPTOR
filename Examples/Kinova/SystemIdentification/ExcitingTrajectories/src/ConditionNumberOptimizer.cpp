@@ -92,6 +92,7 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                                groundCenter,
                                                                                groundOrientation,
                                                                                groundSize,
+                                                                               0.0,
                                                                                jtype_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 

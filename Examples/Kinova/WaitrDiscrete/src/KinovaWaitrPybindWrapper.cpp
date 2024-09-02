@@ -3,7 +3,8 @@
 namespace RAPTOR {
 namespace Kinova {
 
-KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filename) {
+KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filename,
+                                                   const bool display_info) {
     // Define robot model
     pinocchio::urdf::buildModel(urdf_filename, model);
 
@@ -15,8 +16,9 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
     torque_limits_buffer = VecX::Zero(NUM_JOINTS);
 
     mynlp = new KinovaWaitrOptimizer();
-    app = IpoptApplicationFactory();
+    mynlp->display_info = display_info;
 
+    app = IpoptApplicationFactory();
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 }
 
@@ -261,7 +263,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     set_ipopt_parameters_check = false;
     set_trajectory_parameters_check = false;
     set_target_check = false;
-    has_optimized = true;
+    has_optimized = mynlp->ifFeasible;
 
     const size_t shape_ptr[] = {NUM_JOINTS};
     auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
@@ -273,13 +275,14 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
 
 nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
     if (!has_optimized) {
-        throw std::runtime_error("No optimization has been performed!");
+        throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
     }
 
     // re-evaluate the solution on a finer time discretization
     const int N_simulate = 256;
     SmartPtr<KinovaWaitrOptimizer> testnlp = new KinovaWaitrOptimizer();
     try {
+        testnlp->display_info = false;
         testnlp->set_parameters(mynlp->solution,
                                 T,
                                 N_simulate,

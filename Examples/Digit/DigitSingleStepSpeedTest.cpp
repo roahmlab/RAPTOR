@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) {
                 // Evaluate the solution on a finer time discretization
                 try {
                     SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
+                    testnlp->display_info = false;
                     testnlp->set_parameters(z,
                                             T,
                                             1000,

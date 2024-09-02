@@ -59,9 +59,17 @@ link_directories(${GSL_LIBRARY_DIRS})
 find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+# Find Pinocchio library
 find_package(pinocchio REQUIRED)
 include_directories(${PINOCCHIO_INCLUDE_DIRS})
 link_directories(${PINOCCHIO_LIBRARY_DIRS})
+
+# Find ompl library
+find_package(ompl REQUIRED)
+set(OMPL_INCLUDE_DIRS /usr/local/include/ompl-1.6)
+set(OMPL_LIBRARY_DIRS /usr/local/share)
+include_directories(${OMPL_INCLUDE_DIRS})
+link_directories(${OMPL_LIBRARY_DIRS})
 
 set(PINOCCHIO_FLAGS
   ${pinocchio_CFLAGS_OTHER}
@@ -366,6 +374,25 @@ target_link_libraries(KinovaIK_example PUBLIC
 target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(KinovaHLP_example 
+    Examples/Kinova/WaypointPlanning/WaypointPlanningExample.cpp)
+
+target_include_directories(KinovaHLP_example PUBLIC
+    Examples/Kinova
+    Examples/Kinova/ArmourDiscrete/include)
+
+target_link_libraries(KinovaHLP_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Kinovalib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ompl)
+
+target_compile_options(KinovaHLP_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(Kinova_example 
     Examples/Kinova/ArmourDiscrete/KinovaExample.cpp)
 
@@ -449,6 +476,32 @@ target_link_libraries(KinovaSysId_example PUBLIC
 
 target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
+
+
+nanobind_add_module(KinovaHLP_nanobind 
+    NB_SHARED LTO
+    Examples/Kinova/WaypointPlanning/WaypointPlanningPybind.cpp)
+
+target_include_directories(KinovaHLP_nanobind PUBLIC
+    Examples/Kinova
+    Examples/Kinova/ArmourDiscrete/include)
+
+target_link_libraries(KinovaHLP_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ompl
+    ${PYTHON_LIBRARIES})
+
+nanobind_compile_options(KinovaHLP_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+set_property(TARGET KinovaHLP_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO

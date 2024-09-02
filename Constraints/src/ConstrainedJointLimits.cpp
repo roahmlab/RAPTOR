@@ -51,7 +51,7 @@ void ConstrainedJointLimits::compute(const VecX& z,
         dcPtr_->fill_independent_vector(qfull, trajPtr_->q(i), true);
 
         dcPtr_->setupJointPosition(qfull, compute_derivatives);
-        g.block(i * NB, 0, NB, 1) = Utils::wrapToPi(qfull);
+        g.segment(i * NB, NB) = Utils::wrapToPi(qfull);
 
         if (compute_derivatives) {
             // fill in independent joints derivatives directly
@@ -72,8 +72,8 @@ void ConstrainedJointLimits::compute(const VecX& z,
 
 void ConstrainedJointLimits::compute_bounds() {
     for (int i = 0; i < trajPtr_->N; i++) {
-        g_lb.block(i * NB, 0, NB, 1) = lowerLimits;
-        g_ub.block(i * NB, 0, NB, 1) = upperLimits;
+        g_lb.segment(i * NB, NB) = lowerLimits;
+        g_ub.segment(i * NB, NB) = upperLimits;
     }
 }
 
