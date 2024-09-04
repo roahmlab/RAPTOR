@@ -6,26 +6,24 @@ git clone https://github.com/roahmlab/RAPTOR.git
 ```
 
 ## Install Through Docker (Recommended)
-We strongly suggest you use docker. You can find the installation instructions [here]:(https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-We have provided a docker file at `docker/Dockerfile`.
 
+You shouldcomplete HSL steps BEFORE you build the docker image otherwise you will have error.
 <!-- We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there. -->
 <!-- To be more specific, you need to  -->
 ### HSL
 We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem. Please follow the instructions below to complete the installation:
 1. Compared to the official HSL, we used [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is specifically tailored for COIN-OR projects, particularly Ipopt, offering easier integration and installation.
-```
-git clone https://github.com/coin-or-tools/ThirdParty-HSL.git. 
-```
+    ```
+    git clone https://github.com/coin-or-tools/ThirdParty-HSL.git. 
+    ```
 2. Download a tarball containing the Coin-HSL source code from the official [website](https://licences.stfc.ac.uk/product/coin-hsl). The academic license is free but it could take 1 or 2 days to process the order.
 3. Unpack the Coin-HSL source code and place the folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which serves as a wrapper to simplify the compilation and integration of HSL.
 4. Rename the ThirdParty-HSL as `HSL`,then compress it into a `HSL.zip` file. Note: This zip file will later be 'unziped' and built inside the docker container. <!-- Not sure we should keep one uncompressed copy at origin location -->
 
-You need to follow the steps above BEFORE you build the docker image otherwise you will have error.
 
 ### Docker
-We strongly recommend using Docker. We have provided a Dockerfile that will automatically install all the required packages. If you don't have Docker installed, you can find the installation instructions [here]:(https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+We strongly recommend using Docker. We have provided a Dockerfile that will automatically install all the required packages. If you don't have Docker installed, you can find the installation instructions [here](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
 
 1. The provided Dockerfile is at `docker/Dockerfile`. 
 2. Move the HSL.zip file in `docker/` so that dockerfile can find it.
