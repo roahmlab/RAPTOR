@@ -1,5 +1,7 @@
 # RAPTOR: RAPid and Robust Trajectory Optimization for Robots
 
+## Introduction
+
 Dynamic locomotion for humanoid robots presents significant analytical and computational challenges due to the extensive number of linkages and degrees of freedom. 
 This complexity results in a vast search space for feasible gaits which translates into a time-consuming process when optimizing over trajectories. 
 In addition, the process often involves numerous hyperparameters and requires a good initial guess or a warm-start strategy, further complicating the development process. 
@@ -7,7 +9,7 @@ Existing methods struggle to integrate the latest hardware designs, such as actu
 This work introduces a generalized gait optimization framework that directly generates smooth and physically feasible trajectories. 
 The proposed method demonstrates faster and more robust convergence than existing techniques and explicitly incorporates closed-loop constraints. 
 The method is implemented as an open-source C++ codebase that significantly reduces computation times, facilitating dynamic locomotion for full-size humanoids.
-Note that RAPTOR also works for other fully actuated systems such as robotic manipulators.
+Note that **RAPTOR** also works for other fully actuated systems such as robotic manipulators.
 
 To be more specific, we parameterize the trajectories for the robot states as, for example, polynomials.
 The decision variable of the optimization is then the coefficients of the polynomial.
@@ -15,11 +17,12 @@ We sample a certain number of discrete points on the trajectory and evaluate the
 We use Ipopt as our optimization solver.
 For some of the constraints, we implement the analytical hessian so that Ipopt can converge faster.
 
-![Digit walking forward](https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6)
+## Demos
+<img src="https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6" alt="Digit walking forward" width="400" height="400">
 
-![Digit stepping stones](https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9)
+<img src="https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9" alt="Digit stepping stones" width="400" height="400">
 
-![Talos walking forward](https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025)
+<img src="https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025" alt="Talos walking forward" width="400" height="400">
 
 ## Requirements
 - Ubuntu >= 20.04
@@ -63,6 +66,19 @@ We provide the following examples
  - Talos
     - Single step gait optimization while starting from a fixed initial configuration
     - Multiple step gait optimization
+
+## Bibtex
+To cite **RAPTOR** in your academic research, please use the following bibtex entry:
+```
+@misc{zhang2024rapidrobusttrajectoryoptimization,
+	  title={Rapid and Robust Trajectory Optimization for Humanoids}, 
+	  author={Bohao Zhang and Ram Vasudevan},
+	  year={2024},
+	  eprint={2409.00303},
+	  archivePrefix={arXiv},
+	  primaryClass={cs.RO},
+	  url={https://arxiv.org/abs/2409.00303}}
+```
 
 ## Credits
 Bohao Zhang (jimzhang@umich.edu)
