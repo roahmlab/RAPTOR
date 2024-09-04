@@ -7,7 +7,7 @@ git clone https://github.com/roahmlab/RAPTOR.git
 
 ## Install Through Docker (Recommended)
 
-You shouldc omplete HSL steps BEFORE you build the docker image otherwise you will have error.
+You should complete HSL steps BEFORE you build the docker image otherwise you will have error.
 <!-- We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there. -->
 <!-- To be more specific, you need to  -->
