@@ -7,7 +7,7 @@ git clone https://github.com/roahmlab/RAPTOR.git
 
 ## Install Through Docker (Recommended)
 
-You shouldcomplete HSL steps BEFORE you build the docker image otherwise you will have error.
+You shouldc omplete HSL steps BEFORE you build the docker image otherwise you will have error.
 <!-- We choose [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem.
 Check this [github repository](https://github.com/coin-or-tools/ThirdParty-HSL) out and follow the instructions there. -->
 <!-- To be more specific, you need to  -->
@@ -17,7 +17,7 @@ We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems 
     ```
     git clone https://github.com/coin-or-tools/ThirdParty-HSL.git. 
     ```
-2. Download a tarball containing the Coin-HSL source code from the official [website](https://licences.stfc.ac.uk/product/coin-hsl). The academic license is free but it could take 1 or 2 days to process the order.
+2. Download a tarball containing the Coin-HSL source code from its official [website](https://licences.stfc.ac.uk/product/coin-hsl). The academic license is free but it could take 1 or 2 days to process the order.
 3. Unpack the Coin-HSL source code and place the folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which serves as a wrapper to simplify the compilation and integration of HSL.
 4. Rename the ThirdParty-HSL as `HSL`,then compress it into a `HSL.zip` file. Note: This zip file will later be 'unziped' and built inside the docker container. <!-- Not sure we should keep one uncompressed copy at origin location -->
 
