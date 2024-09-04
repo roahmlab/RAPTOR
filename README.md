@@ -18,11 +18,11 @@ We use Ipopt as our optimization solver.
 For some of the constraints, we implement the analytical hessian so that Ipopt can converge faster.
 
 ## Demos
-<img src="https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6" alt="Digit walking forward" width="400" height="400">
+<img src="https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6" alt="Digit walking forward" width="300" height="300">
 
-<img src="https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9" alt="Digit stepping stones" width="400" height="400">
+<img src="https://github.com/user-attachments/assets/7c715902-3192-43ca-83a2-33239c758bf9" alt="Digit stepping stones" width="300" height="300">
 
-<img src="https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025" alt="Talos walking forward" width="400" height="400">
+<img src="https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025" alt="Talos walking forward" width="300" height="300">
 
 ## Requirements
 - Ubuntu >= 20.04
@@ -71,13 +71,13 @@ We provide the following examples
 To cite **RAPTOR** in your academic research, please use the following bibtex entry:
 ```
 @misc{zhang2024rapidrobusttrajectoryoptimization,
-	  title={Rapid and Robust Trajectory Optimization for Humanoids}, 
-	  author={Bohao Zhang and Ram Vasudevan},
-	  year={2024},
-	  eprint={2409.00303},
-	  archivePrefix={arXiv},
-	  primaryClass={cs.RO},
-	  url={https://arxiv.org/abs/2409.00303}}
+title={Rapid and Robust Trajectory Optimization for Humanoids}, 
+author={Bohao Zhang and Ram Vasudevan},
+year={2024},
+eprint={2409.00303},
+archivePrefix={arXiv},
+primaryClass={cs.RO},
+url={https://arxiv.org/abs/2409.00303}}
 ```
 
 ## Credits
