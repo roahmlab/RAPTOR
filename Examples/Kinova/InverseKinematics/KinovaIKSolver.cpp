@@ -28,8 +28,13 @@ bool KinovaIKSolver::set_parameters(
     trajPtr_ = std::make_shared<Plain>(model_input.nq);
     
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS);
-    VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS);
+    VecX JOINT_LIMITS_LOWER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS));
+
+    VecX JOINT_LIMITS_UPPER_VEC =
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
 
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 

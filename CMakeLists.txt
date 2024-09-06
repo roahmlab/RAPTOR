@@ -92,16 +92,15 @@ set(HSL_LIBRARY_DIR /usr/local/lib)
 include_directories(${HSL_INCLUDE_DIR})
 link_directories(${HSL_LIBRARY_DIR})
 
-# Find pardiso library
-set(PARDISO_INCLUDE_DIR /usr/local/include)
-set(PARDISO_LIBRARY_DIR /usr/local/lib)
-include_directories(${PARDISO_INCLUDE_DIR})
-link_directories(${PARDISO_LIBRARY_DIR})
+# # Find pardiso library
+# set(PARDISO_INCLUDE_DIR /usr/local/include)
+# set(PARDISO_LIBRARY_DIR /usr/local/lib)
+# include_directories(${PARDISO_INCLUDE_DIR})
+# link_directories(${PARDISO_LIBRARY_DIR})
 
 include_directories(Utils/include)
 
-
-# add_ ubdirectory
+# add_subdirectory
 add_subdirectory(Constraints)
 add_subdirectory(KinematicsDynamics)
 add_subdirectory(Optimization)
@@ -118,10 +117,6 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/Utils/include
 )
 
-
-
-
-
 ## Install
 install(TARGETS 
     trajlib
@@ -131,6 +126,5 @@ install(TARGETS
     Kinovalib
     Digitlib
     Taloslib
-    # DigitModifiedlib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

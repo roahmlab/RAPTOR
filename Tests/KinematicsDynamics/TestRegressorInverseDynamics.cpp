@@ -1,7 +1,7 @@
 #include "RegressorInverseDynamics.h"
 #include <chrono>
 #include "pinocchio/algorithm/rnea.hpp"
-#include "Trajectories.h"
+#include "Polynomials.h"
 
 using VecX = Eigen::VectorXd;
 using namespace RAPTOR;
@@ -14,16 +14,25 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::Data data(model);
+
+    // Disable rotor inertia, friction, and damping
+    model.friction.setZero();
+    model.damping.setZero();
+    model.rotorInertia.setZero();
+
     // Create a trajectory
-    int N = 50;  // number of time steps
+    int N = 5;  // number of time steps
     double T = 10.0;  // total time
-    std::shared_ptr<Trajectories> trajPtr = std::make_shared<Trajectories>(model.nv * 3 * N, T, N, model.nv, Uniform);
+    int degree = 5;  // degree of the polynomial
+    std::shared_ptr<Trajectories> trajPtr = 
+        std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
+
     // Initialize RegressorInverseDynamics
     RegressorInverseDynamics regressor_id(model, trajPtr);
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));
-    VecX z = M_PI * VecX::Random(trajPtr->varLength);
+    VecX z = 2 * M_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
 
     // Compute inverse dynamics using RegressorInverseDynamics
     auto start_clock = std::chrono::high_resolution_clock::now();
@@ -33,6 +42,7 @@ int main() {
     std::cout << "RegressorInverseDynamics: " << duration.count() << " nanoseconds" << std::endl;
 
     // Compute inverse dynamics using pinocchio::rnea
+    trajPtr->compute(z, false);
     start_clock = std::chrono::high_resolution_clock::now();
     VecX tau_pinocchio = pinocchio::rnea(model, data, trajPtr->q(0), trajPtr->q_d(0), trajPtr->q_dd(0));
     stop_clock = std::chrono::high_resolution_clock::now();
@@ -44,8 +54,6 @@ int main() {
     std::cout << regressor_id.tau(0).transpose() << std::endl;
     std::cout << "Pinocchio RNEA result:" << std::endl;
     std::cout << tau_pinocchio.transpose() << std::endl;
-
-
 
     return 0;
 }

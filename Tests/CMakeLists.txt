@@ -1,6 +1,3 @@
-# Tests CMakeLists.txt
-
-# Common libraries
 set(COMMON_LIBRARIES
     trajlib
     IDlib
@@ -64,17 +61,15 @@ target_link_libraries(CustomizedInverseDynamics_test PUBLIC
 target_compile_options(CustomizedInverseDynamics_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
-
-    #regressorInverseDynamics_test
 add_executable(RegressorInverseDynamics_test 
     KinematicsDynamics/TestRegressorInverseDynamics.cpp)
 
 target_link_libraries(RegressorInverseDynamics_test PUBLIC
-trajlib
-IDlib
-Conslib
-${BOOST_LIBRARIES} 
-pinocchio::pinocchio)
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
 
 target_compile_options(RegressorInverseDynamics_test PUBLIC
-${PINOCCHIO_FLAGS})
+    ${PINOCCHIO_FLAGS})
