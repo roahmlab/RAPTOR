@@ -10,7 +10,13 @@ add_library(Taloslib SHARED
 
 target_include_directories(Taloslib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include)
+
+
 
 target_link_libraries(Taloslib PUBLIC
     trajlib
@@ -32,8 +38,10 @@ target_link_libraries(TalosSingleStep_example PUBLIC
     Taloslib
     yaml-cpp
 )
+target_compile_options(TalosSingleStep_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
-
+######MultipleStep
 add_executable(TalosMultipleStep_example 
     TalosMultipleStep.cpp
 )
@@ -42,13 +50,24 @@ target_link_libraries(TalosMultipleStep_example PUBLIC
     Taloslib
     yaml-cpp
 )
+target_compile_options(TalosMultipleStep_example PUBLIC
+    ${PINOCCHIO_FLAGS})
 
+######FixedPosition
+add_executable(Talos_SingleStepFixedPosition
+    TalosSingleStepFixedPosition.cpp)
 
-add_executable(TalosSingleStepFixedPosition_example 
-    TalosSingleStepFixedPosition.cpp
-)
-
-target_link_libraries(TalosSingleStepFixedPosition_example PUBLIC
+target_link_libraries(Talos_SingleStepFixedPosition PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
     Taloslib
+    ipopt
+    coinhsl
     yaml-cpp
-)
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(Talos_SingleStepFixedPosition PUBLIC
+    ${PINOCCHIO_FLAGS})

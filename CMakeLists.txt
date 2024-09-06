@@ -63,9 +63,17 @@ link_directories(${GSL_LIBRARY_DIRS})
 find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+# Find Pinocchio library
 find_package(pinocchio REQUIRED)
 include_directories(${PINOCCHIO_INCLUDE_DIRS})
 link_directories(${PINOCCHIO_LIBRARY_DIRS})
+
+# Find ompl library
+find_package(ompl REQUIRED)
+set(OMPL_INCLUDE_DIRS /usr/local/include/ompl-1.6)
+set(OMPL_LIBRARY_DIRS /usr/local/share)
+include_directories(${OMPL_INCLUDE_DIRS})
+link_directories(${OMPL_LIBRARY_DIRS})
 
 set(PINOCCHIO_FLAGS
   ${pinocchio_CFLAGS_OTHER}
@@ -74,7 +82,6 @@ set(PINOCCHIO_FLAGS
   -DPINOCCHIO_URDFDOM_TYPEDEF_SHARED_PTR
   -DPINOCCHIO_URDFDOM_USE_STD_SHARED_PTR
 )
-
 # Find YAML library
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
@@ -92,15 +99,18 @@ set(HSL_LIBRARY_DIR /usr/local/lib)
 include_directories(${HSL_INCLUDE_DIR})
 link_directories(${HSL_LIBRARY_DIR})
 
-# # Find pardiso library
-# set(PARDISO_INCLUDE_DIR /usr/local/include)
-# set(PARDISO_LIBRARY_DIR /usr/local/lib)
-# include_directories(${PARDISO_INCLUDE_DIR})
-# link_directories(${PARDISO_LIBRARY_DIR})
 
+# Find pardiso library
+set(PARDISO_INCLUDE_DIR /usr/local/include)
+set(PARDISO_LIBRARY_DIR /usr/local/lib)
+include_directories(${PARDISO_INCLUDE_DIR})
+link_directories(${PARDISO_LIBRARY_DIR})
 include_directories(Utils/include)
 
-# add_subdirectory
+
+
+
+
 add_subdirectory(Constraints)
 add_subdirectory(KinematicsDynamics)
 add_subdirectory(Optimization)

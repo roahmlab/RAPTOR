@@ -10,7 +10,14 @@ add_library(Digitlib SHARED
 
 target_include_directories(Digitlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
+    )
+
+
 
 target_link_libraries(Digitlib PUBLIC
     trajlib
@@ -25,10 +32,38 @@ target_link_libraries(Digitlib PUBLIC
 )
 
 add_executable(Digit_example 
-    DigitSingleStep.cpp
-)
+    DigitSingleStep.cpp)
+    # Examples/Digit/DigitSingleStepSpeedTest.cpp)
+    # Examples/Digit/DigitSingleStepRobustnessTest.cpp)
+    # Examples/Digit/DigitSingleStepFixedPosition.cpp)
+    # Examples/Digit/VisualizationHelper.cpp)
 
 target_link_libraries(Digit_example PUBLIC
     Digitlib
     yaml-cpp
 )
+target_compile_options(Digit_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+####DigitMultipleStep
+add_executable(DigitMultipleStep_example 
+    DigitMultipleStep.cpp)
+
+
+target_link_libraries(DigitMultipleStep_example PRIVATE
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Digitlib
+    ipopt
+    coinhsl
+    yaml-cpp
+    ${GSL_LIBRARIES}
+    ${BOOST_LIBRARIES}
+    pinocchio::pinocchio)
+
+target_compile_options(DigitMultipleStep_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+   
