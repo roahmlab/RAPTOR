@@ -110,7 +110,9 @@ bool KinovaWaitrOptimizer::set_parameters(
 
     // Customized constraints (collision avoidance with obstacles)
     Model model_reduced;
-    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)(model_input.nv - 1), (pinocchio::JointIndex)model_input.nv};
+    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = 
+        {(pinocchio::JointIndex)(model_input.nv - 1), 
+         (pinocchio::JointIndex)model_input.nv};
     pinocchio::buildReducedModel(model_input, list_of_joints_to_lock_by_id, VecX::Zero(model_input.nv), model_reduced);
     Eigen::VectorXi jtype_reduced = jtype.head(model_reduced.nv);
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,

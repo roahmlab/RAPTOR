@@ -136,15 +136,15 @@ target_link_libraries(KinovaFilter_example PUBLIC
 
 
 ###
-add_executable(KinovaSysId_example 
+add_executable(KinovaExciting_example 
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
 
-target_include_directories(KinovaSysId_example PUBLIC
+target_include_directories(KinovaExciting_example PUBLIC
     ystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 
-target_link_libraries(KinovaSysId_example PUBLIC
+target_link_libraries(KinovaExciting_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -155,7 +155,7 @@ target_link_libraries(KinovaSysId_example PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 
-target_compile_options(KinovaSysId_example PUBLIC
+target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 

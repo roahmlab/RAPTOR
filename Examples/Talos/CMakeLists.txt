@@ -27,15 +27,16 @@ target_link_libraries(Taloslib PUBLIC
     pinocchio::pinocchio
 )
 
-add_executable(TalosSingleStep_example 
-    TalosSingleStep.cpp
-)
+add_executable(Talos_example 
+    # TalosSingleStep.cpp)
+    TalosSingleStepFixedPosition.cpp)
+    # VisualizationHelper.cpp)
 
-target_link_libraries(TalosSingleStep_example PUBLIC
+target_link_libraries(Talos_example PUBLIC
     Taloslib
     yaml-cpp
 )
-target_compile_options(TalosSingleStep_example PUBLIC
+target_compile_options(Talos_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(TalosMultipleStep_example 
@@ -47,22 +48,4 @@ target_link_libraries(TalosMultipleStep_example PUBLIC
     yaml-cpp
 )
 target_compile_options(TalosMultipleStep_example PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-add_executable(Talos_SingleStepFixedPosition
-    TalosSingleStepFixedPosition.cpp)
-
-target_link_libraries(Talos_SingleStepFixedPosition PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Taloslib
-    ipopt
-    coinhsl
-    yaml-cpp
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
-
-target_compile_options(Talos_SingleStepFixedPosition PUBLIC
     ${PINOCCHIO_FLAGS})

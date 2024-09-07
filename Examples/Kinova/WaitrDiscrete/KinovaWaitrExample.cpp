@@ -16,8 +16,6 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    const int actual_model_nq = model.nq - 1;
-
     model.gravity.linear()(2) = GRAVITY;
     model.rotorInertia.setZero();
     model.damping.setZero();
@@ -41,10 +39,10 @@ int main() {
 
     // Define trajectories
     ArmourTrajectoryParameters atp;
-    atp.q0 = Eigen::VectorXd::Zero(actual_model_nq);
+    atp.q0 = Eigen::VectorXd::Zero(NUM_JOINTS);
     atp.q0(1) = -M_PI / 2;
-    atp.q_d0 = Eigen::VectorXd::Zero(actual_model_nq);
-    atp.q_dd0 = Eigen::VectorXd::Zero(actual_model_nq);
+    atp.q_d0 = Eigen::VectorXd::Zero(NUM_JOINTS);
+    atp.q_dd0 = Eigen::VectorXd::Zero(NUM_JOINTS);
 
     const double T = 1;
     const int N = 32;
@@ -55,37 +53,37 @@ int main() {
     // TODO: define contact surface parameters
 
     // Define target
-    Eigen::VectorXd qdes(actual_model_nq);
+    Eigen::VectorXd qdes(NUM_JOINTS);
     qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
-    Eigen::VectorXd z(actual_model_nq);
+    Eigen::VectorXd z(NUM_JOINTS);
     z.setZero();
 
     // Define limits buffer
-    Eigen::VectorXd joint_limits_buffer(actual_model_nq);
+    Eigen::VectorXd joint_limits_buffer(NUM_JOINTS);
     joint_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd velocity_limits_buffer(actual_model_nq);
+    Eigen::VectorXd velocity_limits_buffer(NUM_JOINTS);
     velocity_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd torque_limits_buffer(actual_model_nq);
+    Eigen::VectorXd torque_limits_buffer(NUM_JOINTS);
     torque_limits_buffer.setConstant(0.0);
 
     // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<WaitrBezierCurves>(T, 
     //                                                N, 
-    //                                                actual_model_nq, 
+    //                                                NUM_JOINTS, 
     //                                                Chebyshev, 
     //                                                atp);
     // CustomizedInverseDynamics id(model, jtype, trajPtr_);
 
-    // Eigen::VectorXd x = -5 * Eigen::VectorXd::Ones(actual_model_nq);
+    // Eigen::VectorXd x = -5 * Eigen::VectorXd::Ones(NUM_JOINTS);
     // auto start = std::chrono::high_resolution_clock::now();
     // id.compute(x, true);
     // auto end = std::chrono::high_resolution_clock::now();
     // std::cout << "Total compute time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
     // const Eigen::MatrixXd& pv_pz = id.ptau_pz(10);
     // Eigen::MatrixXd pv_pz_ref = Eigen::MatrixXd::Zero(pv_pz.rows(), pv_pz.cols());
-    // for (int i = 0; i < actual_model_nq; i++) {
+    // for (int i = 0; i < NUM_JOINTS; i++) {
     //     Eigen::VectorXd x_plus = x;
     //     x_plus(i) += 1e-8;
     //     id.compute(x_plus, false);
