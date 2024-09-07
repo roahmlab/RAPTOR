@@ -16,8 +16,6 @@ target_include_directories(Taloslib PUBLIC
     ${CMAKE_SOURCE_DIR}/Optimization/include
     ${CMAKE_SOURCE_DIR}/Utils/include)
 
-
-
 target_link_libraries(Taloslib PUBLIC
     trajlib
     IDlib
@@ -29,7 +27,6 @@ target_link_libraries(Taloslib PUBLIC
     pinocchio::pinocchio
 )
 
-#execute
 add_executable(TalosSingleStep_example 
     TalosSingleStep.cpp
 )
@@ -41,7 +38,6 @@ target_link_libraries(TalosSingleStep_example PUBLIC
 target_compile_options(TalosSingleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-######MultipleStep
 add_executable(TalosMultipleStep_example 
     TalosMultipleStep.cpp
 )
@@ -53,7 +49,6 @@ target_link_libraries(TalosMultipleStep_example PUBLIC
 target_compile_options(TalosMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-######FixedPosition
 add_executable(Talos_SingleStepFixedPosition
     TalosSingleStepFixedPosition.cpp)
 

@@ -159,8 +159,7 @@ target_compile_options(KinovaSysId_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-
-# Python bindings 
+### Python bindings 
 nanobind_add_module(KinovaHLP_nanobind 
     NB_SHARED LTO
     WaypointPlanning/WaypointPlanningPybind.cpp)
@@ -183,7 +182,6 @@ nanobind_compile_options(KinovaHLP_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
 
 set_property(TARGET KinovaHLP_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO

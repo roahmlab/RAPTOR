@@ -2,6 +2,24 @@
 
 namespace RAPTOR {
 
+// [TNLP_reset]
+// Method to reset the optimizer
+void Optimizer::reset() {
+    numVars = 0;
+    numCons = 0;
+
+    constraintsPtrVec_.clear();
+    constraintsNameVec_.clear();
+
+    ifFeasibleCurrIter = false;
+    currentIpoptSolution = VecX();
+    currentIpoptObjValue = std::numeric_limits<Number>::max();
+    ifCurrentIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+    optimalIpoptSolution = VecX();
+    optimalIpoptObjValue = std::numeric_limits<Number>::max();
+    ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+}
+
 // [TNLP_get_bounds_info]
 // returns the variable bounds
 bool Optimizer::get_bounds_info(

@@ -17,8 +17,6 @@ target_include_directories(Digitlib PUBLIC
     ${CMAKE_SOURCE_DIR}/Utils/include
     )
 
-
-
 target_link_libraries(Digitlib PUBLIC
     trajlib
     IDlib
@@ -45,11 +43,8 @@ target_link_libraries(Digit_example PUBLIC
 target_compile_options(Digit_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-
-####DigitMultipleStep
 add_executable(DigitMultipleStep_example 
     DigitMultipleStep.cpp)
-
 
 target_link_libraries(DigitMultipleStep_example PRIVATE
     trajlib 

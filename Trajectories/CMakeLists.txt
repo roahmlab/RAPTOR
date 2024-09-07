@@ -11,4 +11,5 @@ add_library(trajlib SHARED
 
 target_include_directories(trajlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
 )

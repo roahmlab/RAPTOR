@@ -12,4 +12,5 @@ add_library(IDlib SHARED
 target_include_directories(IDlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
 )

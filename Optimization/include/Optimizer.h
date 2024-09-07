@@ -43,6 +43,9 @@ public:
     /** Default destructor */
     virtual ~Optimizer() = default;
 
+    /** Method to reset the optimizer */
+    void reset();
+
     /**@name Overloaded from TNLP */
     //@{
     /** Method to return some info about the NLP */

@@ -99,17 +99,12 @@ set(HSL_LIBRARY_DIR /usr/local/lib)
 include_directories(${HSL_INCLUDE_DIR})
 link_directories(${HSL_LIBRARY_DIR})
 
-
-# Find pardiso library
-set(PARDISO_INCLUDE_DIR /usr/local/include)
-set(PARDISO_LIBRARY_DIR /usr/local/lib)
-include_directories(${PARDISO_INCLUDE_DIR})
-link_directories(${PARDISO_LIBRARY_DIR})
-include_directories(Utils/include)
-
-
-
-
+# # Find pardiso library
+# set(PARDISO_INCLUDE_DIR /usr/local/include)
+# set(PARDISO_LIBRARY_DIR /usr/local/lib)
+# include_directories(${PARDISO_INCLUDE_DIR})
+# link_directories(${PARDISO_LIBRARY_DIR})
+# include_directories(Utils/include)
 
 add_subdirectory(Constraints)
 add_subdirectory(KinematicsDynamics)

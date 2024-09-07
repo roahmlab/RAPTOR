@@ -84,11 +84,11 @@ bool KinovaOptimizer::set_parameters(
                                                                JOINT_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("joint limits");
 
-    // // Velocity limits
-    // constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
-    //                                                               VELOCITY_LIMITS_LOWER_VEC, 
-    //                                                               VELOCITY_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("velocity limits");        
+    // Velocity limits
+    constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
+                                                                  VELOCITY_LIMITS_LOWER_VEC, 
+                                                                  VELOCITY_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("velocity limits");        
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
