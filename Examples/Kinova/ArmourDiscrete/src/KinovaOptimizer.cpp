@@ -48,25 +48,35 @@ bool KinovaOptimizer::set_parameters(
                                                trajPtr_);
     
     // read joint limits from KinovaConstants.h
-    VecX JOINT_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS) + 
-                                  joint_limits_buffer_input;
+    VecX JOINT_LIMITS_LOWER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_LOWER, NUM_JOINTS)) + 
+        joint_limits_buffer_input;
 
-    VecX JOINT_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS) -
-                                  joint_limits_buffer_input;
+    VecX JOINT_LIMITS_UPPER_VEC =
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS)) -
+        joint_limits_buffer_input;
 
     // read velocity limits from KinovaConstants.h
-    VecX VELOCITY_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_LOWER, NUM_JOINTS) + 
-                                     velocity_limits_buffer_input;
+    VecX VELOCITY_LIMITS_LOWER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_LOWER, NUM_JOINTS)) +
+        velocity_limits_buffer_input;
 
-    VecX VELOCITY_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_UPPER, NUM_JOINTS) -
-                                     velocity_limits_buffer_input;
+    VecX VELOCITY_LIMITS_UPPER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_UPPER, NUM_JOINTS)) -
+        velocity_limits_buffer_input;
 
     // read torque limits from KinovaConstants.h
-    VecX TORQUE_LIMITS_LOWER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_JOINTS) + 
-                                   torque_limits_buffer_input;
+    VecX TORQUE_LIMITS_LOWER_VEC = 
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_JOINTS) + 
+        torque_limits_buffer_input;
 
-    VecX TORQUE_LIMITS_UPPER_VEC = Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
-                                   torque_limits_buffer_input;
+    VecX TORQUE_LIMITS_UPPER_VEC = 
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
+        torque_limits_buffer_input;
 
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
@@ -74,11 +84,11 @@ bool KinovaOptimizer::set_parameters(
                                                                JOINT_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("joint limits");
 
-    // // Velocity limits
-    // constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
-    //                                                               VELOCITY_LIMITS_LOWER_VEC, 
-    //                                                               VELOCITY_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("velocity limits");        
+    // Velocity limits
+    constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
+                                                                  VELOCITY_LIMITS_LOWER_VEC, 
+                                                                  VELOCITY_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("velocity limits");        
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 

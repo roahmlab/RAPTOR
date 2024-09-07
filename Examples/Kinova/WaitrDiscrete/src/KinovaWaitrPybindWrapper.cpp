@@ -216,6 +216,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
 
     // Initialize Kinova optimizer
     try {
+        mynlp->reset();
 	    mynlp->set_parameters(z,
                               T,
                               N,

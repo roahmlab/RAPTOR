@@ -163,6 +163,7 @@ nb::tuple KinovaPybindWrapper::optimize() {
 
     // Initialize Kinova optimizer
     try {
+        mynlp->reset();
 	    mynlp->set_parameters(z0,
                               T,
                               N,
