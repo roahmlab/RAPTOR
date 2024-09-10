@@ -157,9 +157,9 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    VecX z0 = 0.5 * (atp.q0 + qdes);
+    // VecX z0 = 0.5 * (atp.q0 + qdes);
     // VecX z0 = atp.q0;
-    // VecX z0 = qdes;
+    VecX z0 = qdes;
 
     // Initialize Kinova optimizer
     try {
@@ -211,9 +211,10 @@ nb::tuple KinovaPybindWrapper::optimize() {
     set_trajectory_parameters_check = false;
     set_target_check = false;
     has_optimized = mynlp->ifFeasible;
+    solution = mynlp->solution;
 
     const size_t shape_ptr[] = {model.nv};
-    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
+    auto result = nb::ndarray<nb::numpy, const double>(solution.data(),
                                                        1,
                                                        shape_ptr,
                                                        nb::handle());
@@ -261,7 +262,7 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
+    trajInfo.resize(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
