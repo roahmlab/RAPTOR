@@ -19,6 +19,7 @@ bool KinovaIKSolver::set_parameters(
     const VecX& x0_input,
     const Model& model_input,
     const Transform& desiredTransform_input,
+    const Transform endT_input,
     Eigen::VectorXi jtype_input
 )
 {
@@ -54,7 +55,7 @@ bool KinovaIKSolver::set_parameters(
                                                                          model_input.nq, // the last joint
                                                                          0,
                                                                          desiredTransform_input,
-                                                                         Transform(),
+                                                                         endT_input,
                                                                          jtype_input));   
     constraintsNameVec_.push_back("kinematics constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         

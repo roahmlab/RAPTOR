@@ -17,8 +17,7 @@ int main() {
     // Compute forward kinematics at a random configuration first
     ForwardKinematicsSolver fkSolver(&model);
 
-    // std::srand(std::time(nullptr));
-    std::srand(1234);
+    std::srand(std::time(nullptr));
     const Eigen::VectorXd q = Eigen::VectorXd::Random(model.nq);
     fkSolver.compute(0, model.nq, q);
     Transform desiredTransform = fkSolver.getTransform();
@@ -94,7 +93,7 @@ int main() {
             throw std::runtime_error("Error solving optimization problem! Check previous error message!");
         }
 
-        // end effector moves forward at each iteration
+        // End effector moves forward at each iteration
         desiredTransform = desiredTransform * Transform(Eigen::Vector3d(0, 0, step_size));
 
         // Update initial guess
