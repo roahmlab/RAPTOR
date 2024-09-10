@@ -31,6 +31,7 @@ public:
         const VecX& x0_input,
         const Model& model_input,
         const Transform& desiredTransform_input,
+        const Transform endT_input = Transform(),
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 

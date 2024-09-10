@@ -19,6 +19,7 @@ bool KinovaIKSolver::set_parameters(
     const VecX& x0_input,
     const Model& model_input,
     const Transform& desiredTransform_input,
+    const Transform endT_input,
     Eigen::VectorXi jtype_input
 )
 {
@@ -36,11 +37,17 @@ bool KinovaIKSolver::set_parameters(
         Utils::deg2rad(
             Utils::initializeEigenVectorFromArray(JOINT_LIMITS_UPPER, NUM_JOINTS));
 
-    // Joint limits
-    constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
-                                                               JOINT_LIMITS_LOWER_VEC, 
-                                                               JOINT_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("joint limits");
+    // In this instance, the decision variables are the joint angles of the robot directly.
+    // You can see that we inherited the get_bounds_info function from the Optimizer class
+    // and we are modifing it (x_lb and x_ub) to directly set the bounds for the joint limits.
+    // As a result, the following joint limits constraints are not needed.
+    // It is equivalent to turn on this constraint and remove the inherited get_bounds_info function.
+
+    // // Joint limits
+    // constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
+    //                                                            JOINT_LIMITS_LOWER_VEC, 
+    //                                                            JOINT_LIMITS_UPPER_VEC));
+    // constraintsNameVec_.push_back("joint limits");
 
     // End effector kinematics constraints
     constraintsPtrVec_.push_back(std::make_unique<KinematicsConstraints>(trajPtr_,
@@ -48,7 +55,7 @@ bool KinovaIKSolver::set_parameters(
                                                                          model_input.nq, // the last joint
                                                                          0,
                                                                          desiredTransform_input,
-                                                                         Transform(),
+                                                                         endT_input,
                                                                          jtype_input));   
     constraintsNameVec_.push_back("kinematics constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
@@ -114,6 +121,12 @@ bool KinovaIKSolver::get_bounds_info(
         x_l[i] = JOINT_LIMITS_LOWER[i];
     }
 
+    // In this instance, the decision variables are the joint angles of the robot directly.
+    // You can see that we inherited the get_bounds_info function from the Optimizer class
+    // and we are modifing it (x_lb and x_ub) to directly set the bounds for the joint limits.
+    // As a result, the following joint limits constraints are not needed.
+    // It is equivalent to turn on this constraint and remove the inherited get_bounds_info function.
+
     // upper bounds  
     for( Index i = 0; i < n; i++ ) {
         x_u[i] = JOINT_LIMITS_UPPER[i];
@@ -148,14 +161,16 @@ bool KinovaIKSolver::get_bounds_info(
     }
 
     // report constraints distribution
-    std::cout << "Dimension of each constraints and their locations: \n";
-    iter = 0;
-    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        std::cout << constraintsNameVec_[c] << ": ";
-        std::cout << constraintsPtrVec_[c]->m << " [";
-        std::cout << iter << " ";
-        iter += constraintsPtrVec_[c]->m;
-        std::cout << iter << "]\n";
+    if (display_info) {
+        std::cout << "Dimension of each constraints and their locations: \n";
+        iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            std::cout << constraintsNameVec_[c] << ": ";
+            std::cout << constraintsPtrVec_[c]->m << " [";
+            std::cout << iter << " ";
+            iter += constraintsPtrVec_[c]->m;
+            std::cout << iter << "]\n";
+        }
     }
 
     return true;
