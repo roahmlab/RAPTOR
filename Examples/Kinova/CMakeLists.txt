@@ -51,6 +51,29 @@ target_link_libraries(KinovaIK_example PUBLIC
 target_compile_options(KinovaIK_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+
+###
+add_executable(KinovaIKMotion_example 
+    InverseKinematics/KinovaIKMotionExample.cpp)
+
+target_include_directories(KinovaIKMotion_example PUBLIC
+    InverseKinematics)
+
+target_link_libraries(KinovaIKMotion_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(KinovaIKMotion_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
 ###
 add_executable(KinovaHLP_example 
     WaypointPlanning/WaypointPlanningExample.cpp)
@@ -91,6 +114,7 @@ target_link_libraries(Kinova_example PUBLIC
 
 target_compile_options(Kinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
+
 
 ###
 add_executable(KinovaWaitr_example 
