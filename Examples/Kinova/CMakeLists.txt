@@ -6,6 +6,7 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
+    SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
 )
 
 target_include_directories(Kinovalib PUBLIC
@@ -156,6 +157,29 @@ target_link_libraries(KinovaExciting_example PUBLIC
     pinocchio::pinocchio)
 
 target_compile_options(KinovaExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+add_executable(KinovaExciting_example_Endeffector 
+    SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
+
+target_include_directories(KinovaExciting_example_Endeffector  PUBLIC
+    ystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaExciting_example_Endeffector  PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(KinovaExciting_example_Endeffector  PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
