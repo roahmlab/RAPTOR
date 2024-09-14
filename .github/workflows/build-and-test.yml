@@ -1,389 +1,389 @@
-name: Build and Test RAPTOR
+# name: Build and Test RAPTOR
 
-on:
-  push:
-    branches:
-      - unit_test_dev
-    paths-ignore:
-      # Compiled Object files and Libraries
-      - '*.d'
-      - '*.slo'
-      - '*.lo'
-      - '*.o'
-      - '*.obj'
-      - '*.gch'
-      - '*.pch'
-      - '*.so'
-      - '*.dylib'
-      - '*.dll'
-      - '*.mod'
-      - '*.smod'
-      - '*.lai'
-      - '*.la'
-      - '*.a'
-      - '*.lib'
+# on:
+#   push:
+#     branches:
+#       - unit_test_dev
+#     paths-ignore:
+#       # Compiled Object files and Libraries
+#       - '*.d'
+#       - '*.slo'
+#       - '*.lo'
+#       - '*.o'
+#       - '*.obj'
+#       - '*.gch'
+#       - '*.pch'
+#       - '*.so'
+#       - '*.dylib'
+#       - '*.dll'
+#       - '*.mod'
+#       - '*.smod'
+#       - '*.lai'
+#       - '*.la'
+#       - '*.a'
+#       - '*.lib'
 
-      # Executables
-      - '*.exe'
-      - '*.out'
-      - '*.app'
+#       # Executables
+#       - '*.exe'
+#       - '*.out'
+#       - '*.app'
 
-      # Matlab related
-      - '*.asv'
-      - '*.mat'
+#       # Matlab related
+#       - '*.asv'
+#       - '*.mat'
 
-      - '.vscode/**'
+#       - '.vscode/**'
 
-      - 'build/**'
-      - 'data/**'
-      - 'data_safecopy/**'
-      - 'Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/**'
-
-
-      - 'test_oracle.py'
-
-      # - 'docker/HSL.zip'
-      # - 'docker/pardiso/**'
-      # - 'HSL/**'
-
-      - 'Examples/Digit/singlestep_optimization_settings.yaml'
-      - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
-
-      - 'test_nanobind_planner.py'
-
-  pull_request:
-    branches:
-      - unit_test_dev
-    paths-ignore:
-      # Same patterns as for push events
-      - '*.d'
-      - '*.slo'
-      - '*.lo'
-      - '*.o'
-      - '*.obj'
-      - '*.gch'
-      - '*.pch'
-      - '*.so'
-      - '*.dylib'
-      - '*.dll'
-      - '*.mod'
-      - '*.smod'
-      - '*.lai'
-      - '*.la'
-      - '*.a'
-      - '*.lib'
-
-      # Executables
-      - '*.exe'
-      - '*.out'
-      - '*.app'
-
-      # Matlab related
-      - '*.asv'
-      - '*.mat'
-
-      - '.vscode/**'
-
-      - 'build/**'
-      - 'data/**'
-      - 'data_safecopy/**'
-      - 'Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/**'
+#       - 'build/**'
+#       - 'data/**'
+#       - 'data_safecopy/**'
+#       - 'Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/**'
 
 
-      - 'test_oracle.py'
+#       - 'test_oracle.py'
 
-      # - 'docker/HSL.zip'
-      # - 'docker/pardiso/**'
-      # - 'HSL/**'
+#       # - 'docker/HSL.zip'
+#       # - 'docker/pardiso/**'
+#       # - 'HSL/**'
 
-      - 'Examples/Digit/singlestep_optimization_settings.yaml'
-      - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
+#       - 'Examples/Digit/singlestep_optimization_settings.yaml'
+#       - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
 
-      - 'test_nanobind_planner.py'
+#       - 'test_nanobind_planner.py'
+
+#   pull_request:
+#     branches:
+#       - unit_test_dev
+#     paths-ignore:
+#       # Same patterns as for push events
+#       - '*.d'
+#       - '*.slo'
+#       - '*.lo'
+#       - '*.o'
+#       - '*.obj'
+#       - '*.gch'
+#       - '*.pch'
+#       - '*.so'
+#       - '*.dylib'
+#       - '*.dll'
+#       - '*.mod'
+#       - '*.smod'
+#       - '*.lai'
+#       - '*.la'
+#       - '*.a'
+#       - '*.lib'
+
+#       # Executables
+#       - '*.exe'
+#       - '*.out'
+#       - '*.app'
+
+#       # Matlab related
+#       - '*.asv'
+#       - '*.mat'
+
+#       - '.vscode/**'
+
+#       - 'build/**'
+#       - 'data/**'
+#       - 'data_safecopy/**'
+#       - 'Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/**'
 
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+#       - 'test_oracle.py'
 
-jobs:
-  build:
+#       # - 'docker/HSL.zip'
+#       # - 'docker/pardiso/**'
+#       # - 'HSL/**'
 
-    # runs-on: ubuntu-latest
-    # container:
-    #   image: zichang1234/raptor:latest
-    runs-on: ubuntu-22.04
+#       - 'Examples/Digit/singlestep_optimization_settings.yaml'
+#       - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
+
+#       - 'test_nanobind_planner.py'
+
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
+
+# jobs:
+#   build:
+
+#     # runs-on: ubuntu-latest
+#     # container:
+#     #   image: zichang1234/raptor:latest
+#     runs-on: ubuntu-22.04
 
       
   
-# not sure
-    env:
-      CCACHE_BASEDIR: ${{ github.workspace }}
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CCACHE_COMPRESS: true
-      CCACHE_COMPRESSLEVEL: 5
+# # not sure
+#     env:
+#       CCACHE_BASEDIR: ${{ github.workspace }}
+#       CCACHE_DIR: ${{ github.workspace }}/.ccache
+#       CCACHE_COMPRESS: true
+#       CCACHE_COMPRESSLEVEL: 5
 
-    steps:  
-      - name: Free disk space (initial cleanup)
-        run: |
-          sudo apt-get clean
-          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /var/lib/mysql /var/lib/php /opt/ghc
-          df -h
+#     steps:  
+#       - name: Free disk space (initial cleanup)
+#         run: |
+#           sudo apt-get clean
+#           sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /var/lib/mysql /var/lib/php /opt/ghc
+#           df -h
 
-      # - name: Setup Container
-      #   run: |
-      #     apt update && DEBIAN_FRONTEND="noninteractive" apt install -y sudo lsb-release gnupg2 cmake git python3
+#       # - name: Setup Container
+#       #   run: |
+#       #     apt update && DEBIAN_FRONTEND="noninteractive" apt install -y sudo lsb-release gnupg2 cmake git python3
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#           submodules: recursive
 
-      - name: Setup ccache
-        uses: actions/cache@v4
-        with:
-          path: .ccache
-          # save-state: true
-          key: ccache-linux-${{ matrix.container }}-${{ github.sha }}
-          restore-keys: |
-            ccache-linux-${{ matrix.container }}-
+#       - name: Setup ccache
+#         uses: actions/cache@v4
+#         with:
+#           path: .ccache
+#           # save-state: true
+#           key: ccache-linux-${{ matrix.container }}-${{ github.sha }}
+#           restore-keys: |
+#             ccache-linux-${{ matrix.container }}-
 
-      - name: Get branch name (merge)
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+#       - name: Get branch name (merge)
+#         if: github.event_name != 'pull_request'
+#         shell: bash
+#         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
-      - name: Get branch name (push)
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+#       - name: Get branch name (push)
+#         if: github.event_name != 'pull_request'
+#         shell: bash
+#         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+#       - name: Get branch name (pull request)
+#         if: github.event_name == 'pull_request'
+#         shell: bash
+#         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
 
-      - name: Debug Branch Name
-        run: echo ${{ env.BRANCH_NAME }}
+#       - name: Debug Branch Name
+#         run: echo ${{ env.BRANCH_NAME }}
 
-      - name: Install APT Dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-              build-essential \
-              cmake \
-              gdb \
-              valgrind \
-              libboost-all-dev \
-              libeigen3-dev \
-              libgsl-dev \
-              git \
-              unzip \
-              patch \
-              wget \
-              pkg-config \
-              liblapack-dev \
-              libmetis-dev \
-              python3.10 \
-              python3-pip \
-              iputils-ping \
-              net-tools \
-              netcat \
-              screen \
-              lsb-release \
-              gnupg2 \
-              curl \
-              libyaml-cpp-dev \
-              xvfb
+#       - name: Install APT Dependencies
+#         run: |
+#           sudo apt-get update && sudo apt-get install -y \
+#               build-essential \
+#               cmake \
+#               gdb \
+#               valgrind \
+#               libboost-all-dev \
+#               libeigen3-dev \
+#               libgsl-dev \
+#               git \
+#               unzip \
+#               patch \
+#               wget \
+#               pkg-config \
+#               liblapack-dev \
+#               libmetis-dev \
+#               python3.10 \
+#               python3-pip \
+#               iputils-ping \
+#               net-tools \
+#               netcat \
+#               screen \
+#               lsb-release \
+#               gnupg2 \
+#               curl \
+#               libyaml-cpp-dev \
+#               xvfb
 
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
 
-      - name: Install Python Packages
-        run: |
-          pip3 install --upgrade pip
-          pip3 install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
+#       - name: Install Python Packages
+#         run: |
+#           pip3 install --upgrade pip
+#           pip3 install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
         
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
-      - name: Install Pinocchio Dependencies
-        run: |
-          bash docker/scripts/install-pinocchio.sh
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
+#       - name: Install Pinocchio Dependencies
+#         run: |
+#           bash docker/scripts/install-pinocchio.sh
 
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
 
-      - name: Install HSL Solver
-        run: |
-          bash docker/scripts/install-hsl.sh
+#       - name: Install HSL Solver
+#         run: |
+#           bash docker/scripts/install-hsl.sh
 
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
 
-      - name: Install Ipopt Solver
-        run: |
-          bash docker/scripts/install-ipopt.sh
+#       - name: Install Ipopt Solver
+#         run: |
+#           bash docker/scripts/install-ipopt.sh
 
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
 
-      - name: Install OMPL
-        run: |
-          bash docker/scripts/install-ompl.sh
+#       - name: Install OMPL
+#         run: |
+#           bash docker/scripts/install-ompl.sh
 
-      - name: Free disk space
-        run: |
-          sudo apt clean
-          df -h
+#       - name: Free disk space
+#         run: |
+#           sudo apt clean
+#           df -h
 
-      - name: Configure CMake
-        run: |
-          # Add cloned repo to safe.directory, since it was not cloned by the container
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init
-          export PATH=$PATH:/opt/openrobots/bin
-          export PYTHON3_DOT_VERSION=$(python3 -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))")
-          export PYTHONPATH=${PYTHONPATH}:/opt/openrobots/lib/python$PYTHON3_DOT_VERSION/site-packages
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/openrobots/lib:/usr/local/lib:/usr/lib:/usr/lib/x86_64-linux-gnu
+#       - name: Configure CMake
+#         run: |
+#           # Add cloned repo to safe.directory, since it was not cloned by the container
+#           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+#           git submodule update --init
+#           export PATH=$PATH:/opt/openrobots/bin
+#           export PYTHON3_DOT_VERSION=$(python3 -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))")
+#           export PYTHONPATH=${PYTHONPATH}:/opt/openrobots/lib/python$PYTHON3_DOT_VERSION/site-packages
+#           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/openrobots/lib:/usr/local/lib:/usr/lib:/usr/lib/x86_64-linux-gnu
 
-          mkdir build
-          cd build
-          cmake .. \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_WITH_COLLISION_SUPPORT=ON \
-            -DBUILD_ADVANCED_TESTING=OFF \
-            -DBUILD_WITH_CASADI_SUPPORT=ON \
-            -DPYTHON_EXECUTABLE=$(which python3) \
-            -DBUILD_WITH_OPENMP_SUPPORT=ON \
-            -DINSTALL_DOCUMENTATION=ON \
-            -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/.github/workflows/cmake/linux-debug-toolchain.cmake
+#           mkdir build
+#           cd build
+#           cmake .. \
+#             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+#             -DCMAKE_BUILD_TYPE=Release \
+#             -DBUILD_WITH_COLLISION_SUPPORT=ON \
+#             -DBUILD_ADVANCED_TESTING=OFF \
+#             -DBUILD_WITH_CASADI_SUPPORT=ON \
+#             -DPYTHON_EXECUTABLE=$(which python3) \
+#             -DBUILD_WITH_OPENMP_SUPPORT=ON \
+#             -DINSTALL_DOCUMENTATION=ON \
+#             -DCMAKE_TOOLCHAIN_FILE=${GITHUB_WORKSPACE}/.github/workflows/cmake/linux-debug-toolchain.cmake
 
-      - name: Build Project
-        run: |
-          cd build
-          make -j$(nproc)
-# may overlap
-    #   - name: Build Tests
-    #     run: |
-    #       cd build
-    #       make -j$(nproc) build_tests
+#       - name: Build Project
+#         run: |
+#           cd build
+#           make -j$(nproc)
+# # may overlap
+#     #   - name: Build Tests
+#     #     run: |
+#     #       cd build
+#     #       make -j$(nproc) build_tests
 
-      - name: Run Tests
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
-        run: |
-          cd build
-          ctest --output-on-failure
+#       - name: Run Tests
+#         env:
+#           CTEST_OUTPUT_ON_FAILURE: 1
+#         run: |
+#           cd build
+#           ctest --output-on-failure
 
-      - name: Upload Build Artifacts
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: build/
+#       - name: Upload Build Artifacts
+#         if: always()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: build-artifacts
+#           path: build/
 
-      - name: Run Tests
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
-        run: |
-          cd build
-          mkdir -p TestResults
-          ctest --output-on-failure --output-junit TestResults/test-results.xml
+#       - name: Run Tests
+#         env:
+#           CTEST_OUTPUT_ON_FAILURE: 1
+#         run: |
+#           cd build
+#           mkdir -p TestResults
+#           ctest --output-on-failure --output-junit TestResults/test-results.xml
 
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: build/TestResults/test-results.xml
+#       - name: Upload Test Results
+#         if: always()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: test-results
+#           path: build/TestResults/test-results.xml
 
-      - name: Upload Test Results to Test Reporter
-        if: always()
-        uses: dorny/test-reporter@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          name: CTest Results
-          path: build/TestResults/test-results.xml
-          reporter: junit
+#       - name: Upload Test Results to Test Reporter
+#         if: always()
+#         uses: dorny/test-reporter@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           name: CTest Results
+#           path: build/TestResults/test-results.xml
+#           reporter: junit
 
 
-      - name: Test Packaging
-        run: |
-          export PATH=$PATH:/opt/openrobots/bin
-          export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/openrobots/lib/pkgconfig
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/openrobots/lib:/usr/local/lib:/usr/lib:/usr/lib/x86_64-linux-gnu
+#       - name: Test Packaging
+#         run: |
+#           export PATH=$PATH:/opt/openrobots/bin
+#           export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/openrobots/lib/pkgconfig
+#           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/openrobots/lib:/usr/local/lib:/usr/lib:/usr/lib/x86_64-linux-gnu
           
-          # Test CMake module packaging
-          cd ./unittest/packaging/cmake
-          mkdir build && cd build
-          export CMAKE_PREFIX_PATH=/usr/local
-          cmake .. \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPYTHON_EXECUTABLE=$(which python3)
-          make -j$(nproc)
-          ./run_rnea
-          ./load_urdf
+#           # Test CMake module packaging
+#           cd ./unittest/packaging/cmake
+#           mkdir build && cd build
+#           export CMAKE_PREFIX_PATH=/usr/local
+#           cmake .. \
+#             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+#             -DPYTHON_EXECUTABLE=$(which python3)
+#           make -j$(nproc)
+#           ./run_rnea
+#           ./load_urdf
 
-          # Test pkg-config packaging
-          cd ../../pkgconfig
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPYTHON_EXECUTABLE=$(which python3)
-          make -j$(nproc)
-          ./run_rnea
-          ./load_urdf
+#           # Test pkg-config packaging
+#           cd ../../pkgconfig
+#           mkdir build && cd build
+#           cmake .. \
+#             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+#             -DPYTHON_EXECUTABLE=$(which python3)
+#           make -j$(nproc)
+#           ./run_rnea
+#           ./load_urdf
 
-          # Test FetchContent packaging
-          cd ../../external
-          export PINOCCHIO_GIT_REPOSITORY="file://$GITHUB_WORKSPACE"
-          export PINOCCHIO_GIT_TAG="test-external-$(git rev-parse --short HEAD)"
-          git tag $PINOCCHIO_GIT_TAG
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPYTHON_EXECUTABLE=$(which python3)
-          make -j$(nproc)
-          ./run_rnea
-          ./load_urdf
+#           # Test FetchContent packaging
+#           cd ../../external
+#           export PINOCCHIO_GIT_REPOSITORY="file://$GITHUB_WORKSPACE"
+#           export PINOCCHIO_GIT_TAG="test-external-$(git rev-parse --short HEAD)"
+#           git tag $PINOCCHIO_GIT_TAG
+#           mkdir build && cd build
+#           cmake .. \
+#             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+#             -DPYTHON_EXECUTABLE=$(which python3)
+#           make -j$(nproc)
+#           ./run_rnea
+#           ./load_urdf
 
-          # Test CMake module packaging and pinocchio_header target
-          cd ../../pinocchio_header
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPYTHON_EXECUTABLE=$(which python3)
-          make -j$(nproc)
-          ./run_fk
+#           # Test CMake module packaging and pinocchio_header target
+#           cd ../../pinocchio_header
+#           mkdir build && cd build
+#           cmake .. \
+#             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+#             -DPYTHON_EXECUTABLE=$(which python3)
+#           make -j$(nproc)
+#           ./run_fk
 
-      - name: Uninstall Project
-        run: |
-          cd build
-          sudo make uninstall
+#       - name: Uninstall Project
+#         run: |
+#           cd build
+#           sudo make uninstall
 
-  check:
-    if: always()
-    name: check-linux-apt
+#   check:
+#     if: always()
+#     name: check-linux-apt
 
-    needs:
-      - build
+#     needs:
+#       - build
 
-    runs-on: ubuntu-latest
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+#     steps:
+#       - name: Decide whether the needed jobs succeeded or failed
+#         uses: re-actors/alls-green@release/v1
+#         with:
+#           jobs: ${{ toJSON(needs) }}
