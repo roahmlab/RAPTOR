@@ -198,7 +198,7 @@ jobs:
 
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
 
       - name: Install Python Packages
@@ -208,7 +208,7 @@ jobs:
         
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
       - name: Install Pinocchio Dependencies
         run: |
@@ -216,7 +216,7 @@ jobs:
 
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
 
       - name: Install HSL Solver
@@ -225,7 +225,7 @@ jobs:
 
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
 
       - name: Install Ipopt Solver
@@ -234,7 +234,7 @@ jobs:
 
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
 
       - name: Install OMPL
@@ -243,7 +243,7 @@ jobs:
 
       - name: Free disk space
         run: |
-          apt clean
+          sudo apt clean
           df -h
 
       - name: Configure CMake
