@@ -42,9 +42,9 @@ on:
 
       - 'test_oracle.py'
 
-      - 'docker/HSL.zip'
-      - 'docker/pardiso/**'
-      - 'HSL/**'
+      # - 'docker/HSL.zip'
+      # - 'docker/pardiso/**'
+      # - 'HSL/**'
 
       - 'Examples/Digit/singlestep_optimization_settings.yaml'
       - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
@@ -92,9 +92,9 @@ on:
 
       - 'test_oracle.py'
 
-      - 'docker/HSL.zip'
-      - 'docker/pardiso/**'
-      - 'HSL/**'
+      # - 'docker/HSL.zip'
+      # - 'docker/pardiso/**'
+      # - 'HSL/**'
 
       - 'Examples/Digit/singlestep_optimization_settings.yaml'
       - 'Examples/Digit-modified/singlestep_optimization_settings.yaml'
@@ -109,9 +109,10 @@ concurrency:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
-    container:
-      image: zichang1234/raptor:latest
+    # runs-on: ubuntu-latest
+    # container:
+    #   image: zichang1234/raptor:latest
+    runs-on: ubuntu-22.04
 
       
   
@@ -166,59 +167,79 @@ jobs:
       - name: Debug Branch Name
         run: echo ${{ env.BRANCH_NAME }}
 
-      # - name: Register robotpkg
-      #   run: |
-      #     sh -c "echo \"deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg\" >> /etc/apt/sources.list"
-      #     apt-key adv --fetch-keys http://robotpkg.openrobots.org/packages/debian/robotpkg.key
+      - name: Install APT Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+              build-essential \
+              cmake \
+              gdb \
+              valgrind \
+              libboost-all-dev \
+              libeigen3-dev \
+              libgsl-dev \
+              git \
+              unzip \
+              patch \
+              wget \
+              pkg-config \
+              liblapack-dev \
+              libmetis-dev \
+              python3.10 \
+              python3-pip \
+              iputils-ping \
+              net-tools \
+              netcat \
+              screen \
+              lsb-release \
+              gnupg2 \
+              curl \
+              libyaml-cpp-dev \
+              xvfb
 
-      # - name: Set and install dependencies
-      #   run: |
-      #     rm -rf /usr/local/share/boost/1.69.0
-      #     export PYTHON3_VERSION=$(python3 -c "import sys; print(str(sys.version_info.major)+str(sys.version_info.minor))")
-      #     export APT_DEPENDENCIES="doxygen \
-      #                              ccache \
-      #                              curl \
-      #                              cppcheck \
-      #                              libomp-dev \
-      #                              libomp5 \
-      #                              libboost-system-dev \
-      #                              libboost-test-dev \
-      #                              libboost-filesystem-dev \
-      #                              libboost-program-options-dev \
-      #                              libeigen3-dev \
-      #                              liburdfdom-dev \
-      #                              texlive-font-utils \
-      #                              libboost-python-dev \
-      #                              python3-numpy \
-      #                              python3-matplotlib \
-      #                              robotpkg-py${PYTHON3_VERSION}-eigenpy \
-      #                              robotpkg-py${PYTHON3_VERSION}-hpp-fcl \
-      #                              robotpkg-py${PYTHON3_VERSION}-casadi"
-      #     echo "APT Dependencies: $APT_DEPENDENCIES"
+      - name: Free disk space
+        run: |
+          apt clean
+          df -h
 
-      #     apt-get update -qq
-      #     DEBIAN_FRONTEND="noninteractive" apt-get install -qq ${APT_DEPENDENCIES}
+      - name: Install Python Packages
+        run: |
+          pip3 install --upgrade pip
+          pip3 install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
+        
+      - name: Free disk space
+        run: |
+          apt clean
+          df -h
+      - name: Install Pinocchio Dependencies
+        run: |
+          bash docker/scripts/install-pinocchio.sh
 
-      # - name: Install Python Packages
-      #   run: |
-      #     pip3 install --upgrade pip
-      #     pip3 install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
+      - name: Free disk space
+        run: |
+          apt clean
+          df -h
 
-      # - name: Install Pinocchio Dependencies
-      #   run: |
-      #     bash docker/scripts/install-pinocchio.sh
+      - name: Install HSL Solver
+        run: |
+          bash docker/scripts/install-hsl.sh
 
-      # - name: Install HSL Solver
-      #   run: |
-      #     bash docker/scripts/install-hsl.sh
+      - name: Free disk space
+        run: |
+          apt clean
+          df -h
 
-      # - name: Install Ipopt Solver
-      #   run: |
-      #     bash docker/scripts/install-ipopt.sh
+      - name: Install Ipopt Solver
+        run: |
+          bash docker/scripts/install-ipopt.sh
 
-      # - name: Install OMPL
-      #   run: |
-      #     bash docker/scripts/install-ompl.sh
+      - name: Free disk space
+        run: |
+          apt clean
+          df -h
+
+      - name: Install OMPL
+        run: |
+          bash docker/scripts/install-ompl.sh
 
       - name: Free disk space
         run: |
