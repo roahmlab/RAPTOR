@@ -110,11 +110,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
-    strategy:
-      matrix:
-        container: ['ubuntu:20.04', 'ubuntu:22.04', 'ubuntu:24.04']
-        cmake-version: [3.18.0, 3.22.0, 3.25.0]
+    # container: ${{ matrix.container }}
+    # strategy:
+    #   matrix:
+    #     container: ['ubuntu:20.04', 'ubuntu:22.04', 'ubuntu:24.04']
+    #     cmake-version: [3.18.0, 3.22.0, 3.25.0]
 # not sure
     env:
       CCACHE_BASEDIR: ${{ github.workspace }}
