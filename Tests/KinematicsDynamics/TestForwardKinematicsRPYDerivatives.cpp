@@ -1,3 +1,6 @@
+#define BOOST_TEST_MODULE FKGradientCheckerTest
+#include <boost/test/included/unit_test.hpp>
+
 #include "Optimizer.h"
 #include "ForwardKinematics.h"
 
@@ -173,7 +176,25 @@ public:
     const double yaw_weight = 1.0;
 };
 
-int main() {
+bool check_gradient_output(const std::string& filename, const std::string& keyword) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        BOOST_TEST_MESSAGE("Can not open file " + filename);
+        return false;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find(keyword) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+BOOST_AUTO_TEST_SUITE(FKGradientCheckerSuite)
+
+BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
+    
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
@@ -184,14 +205,15 @@ int main() {
 
     // Initialize gradient checker
     SmartPtr<FKGradientChecker> mynlp = new FKGradientChecker();
+
     try {
-	    mynlp->set_parameters(z0,
-                              model);
-    }
-    catch (std::exception& e) {
+        mynlp->set_parameters(z0, model);
+    } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
+        BOOST_FAIL("Error initializing Ipopt class! Check previous error message!");  
     }
+
+
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
@@ -205,19 +227,28 @@ int main() {
     app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
+
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
     status = app->Initialize();
     if( status != Solve_Succeeded ) {
-		throw std::runtime_error("Error during initialization of optimization!");
+		 BOOST_FAIL("Error during initialization of optimization!");
     }
 
     try {
         status = app->OptimizeTNLP(mynlp);
     }
     catch (std::exception& e) {
-        throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+        BOOST_FAIL("Error solving optimization problem! Check previous error message!");
     }
 
-    return 0;
+    std::cout <<"status" <<status <<std::endl;
+    BOOST_CHECK(status == 0 || status == 1);  // not sure the 
+
+    bool gradient_check_passed = check_gradient_output("ipopt.out", "No errors detected by derivative checker");
+    BOOST_CHECK_MESSAGE(gradient_check_passed, "Derivative_test not pass");
+
+    
 }
+
+BOOST_AUTO_TEST_SUITE_END()
