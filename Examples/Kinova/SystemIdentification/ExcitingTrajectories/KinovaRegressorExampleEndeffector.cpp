@@ -5,9 +5,6 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
-    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
-    // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
-    
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
@@ -21,7 +18,7 @@ int main(int argc, char* argv[]) {
 
     // Define trajectory parameters
     const double T = 10.0;
-    const int N = 50;
+    const int N = 100;
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
@@ -50,7 +47,6 @@ int main(int argc, char* argv[]) {
                               degree,
                               base_frequency,
                               model,
-                            //   regroupMatrixFileName,
                               joint_limits_buffer,
                               velocity_limits_buffer,
                               torque_limits_buffer);

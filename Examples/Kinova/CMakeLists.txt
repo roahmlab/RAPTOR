@@ -160,15 +160,15 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-add_executable(KinovaExciting_example_Endeffector 
+add_executable(KinovaEndeffectorExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
 
-target_include_directories(KinovaExciting_example_Endeffector  PUBLIC
+target_include_directories(KinovaEndeffectorExciting_example PUBLIC
     ystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 
-target_link_libraries(KinovaExciting_example_Endeffector  PUBLIC
+target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -179,7 +179,7 @@ target_link_libraries(KinovaExciting_example_Endeffector  PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 
-target_compile_options(KinovaExciting_example_Endeffector  PUBLIC
+target_compile_options(KinovaEndeffectorExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
