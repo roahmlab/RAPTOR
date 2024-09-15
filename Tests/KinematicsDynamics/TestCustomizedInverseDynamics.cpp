@@ -63,8 +63,8 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     // std::cout << "RAPTOR ID: " << duration.count() << " nanoseconds" << std::endl;
 
     // compare the results
-    std::cout << "Pinocchio: " << data.tau.transpose() << std::endl;
-    std::cout << "RAPTOR: " << cidPtr->tau(0).transpose() << std::endl;
+    // std::cout << "Pinocchio: " << data.tau.transpose() << std::endl;
+    // std::cout << "RAPTOR: " << cidPtr->tau(0).transpose() << std::endl;
     BOOST_CHECK_SMALL((data.tau - cidPtr->tau(0)).norm(), 1e-10);
 
 }
@@ -110,22 +110,28 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
                         trajPtr->q_d(0).head(model_reduced.nv), 
                         trajPtr->q_dd(0).head(model_reduced.nv));
     }
+    // compute inverse dynamics using RAPTOR
+    std::shared_ptr<CustomizedInverseDynamics> cidPtr = std::make_shared<CustomizedInverseDynamics>(
+        model, trajPtr, jtype);
+    cidPtr->compute(z, true);
+
+    
     // stop_clock = std::chrono::high_resolution_clock::now();
     // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
     // std::cout << "Pinocchio ID (fixed joints): " << duration.count() << " nanoseconds" << std::endl;
 
     // compute inverse dynamics using RAPTOR
-    std::shared_ptr<CustomizedInverseDynamics> cidPtr = std::make_shared<CustomizedInverseDynamics>(
-        model, trajPtr, jtype);
-    // auto start = std::chrono::high_resolution_clock::now();
-    cidPtr->compute(z, true);
+    // std::shared_ptr<CustomizedInverseDynamics> cidPtr = std::make_shared<CustomizedInverseDynamics>(
+    //     model, trajPtr, jtype);
+    // // auto start = std::chrono::high_resolution_clock::now();
+    // cidPtr->compute(z, true);
     // auto end = std::chrono::high_resolution_clock::now();
     // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
     // std::cout << "RAPTOR ID (fixed joints): " << duration.count() << " nanoseconds" << std::endl;
 
-    // compare the results
-    std::cout << "Pinocchio (fixed joints): " << data_reduced.tau.transpose() << std::endl;
-    std::cout << "RAPTOR (fixed joints): " << cidPtr->tau(0).transpose() << std::endl;
+    // // compare the results
+    // std::cout << "Pinocchio (fixed joints): " << data_reduced.tau.transpose() << std::endl;
+    // std::cout << "RAPTOR (fixed joints): " << cidPtr->tau(0).transpose() << std::endl;
 
 
     BOOST_CHECK_SMALL((data_reduced.tau - cidPtr->tau(0)).norm(), 1e-10);

@@ -47,17 +47,20 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
 
     // Compute inverse dynamics using pinocchio::rnea
     trajPtr->compute(z, false);
-    // start_clock = std::chrono::high_resolution_clock::now();
     VecX tau_pinocchio = pinocchio::rnea(model, data, trajPtr->q(0), trajPtr->q_d(0), trajPtr->q_dd(0));
+
+    // trajPtr->compute(z, false);
+    // // start_clock = std::chrono::high_resolution_clock::now();
+    // VecX tau_pinocchio = pinocchio::rnea(model, data, trajPtr->q(0), trajPtr->q_d(0), trajPtr->q_dd(0));
     // stop_clock = std::chrono::high_resolution_clock::now();
     // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
     // std::cout << "Pinocchio RNEA: " << duration.count() << " nanoseconds" << std::endl;
 
     // Compare the results
-    std::cout << "RegressorInverseDynamics result:" << std::endl;
-    std::cout << regressor_id.tau(0).transpose() << std::endl;
-    std::cout << "Pinocchio RNEA result:" << std::endl;
-    std::cout << tau_pinocchio.transpose() << std::endl;
+    // std::cout << "RegressorInverseDynamics result:" << std::endl;
+    // std::cout << regressor_id.tau(0).transpose() << std::endl;
+    // std::cout << "Pinocchio RNEA result:" << std::endl;
+    // std::cout << tau_pinocchio.transpose() << std::endl;
 
     BOOST_CHECK_SMALL((regressor_id.tau(0) -tau_pinocchio).norm(), 1e-10);
 

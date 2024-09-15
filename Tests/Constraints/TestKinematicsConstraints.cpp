@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
 
     // std::cout << "Analytical gradient: " << std::endl << J_analytical << std::endl << std::endl;
     // std::cout << "Numerical gradient: " << std::endl << J_numerical << std::endl << std::endl;
-    std::cout << J_analytical - J_numerical << std::endl << std::endl;
+    // std::cout << J_analytical - J_numerical << std::endl << std::endl;
     BOOST_CHECK_SMALL((J_analytical - J_numerical).norm(), 1e-10);
     }
 
@@ -135,19 +135,7 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
 
         
     }
-    // bool hasError = false;
-    // double max_diff = 0.0;
-    // for (int i = 0; i < z_test.size(); i++) {
-    //     for (int j = 0; j < 3; j++){
-    //         double diff = (H_analytical(j).row(i) - H_numerical_row.row(j) ).norm()
-    //         if (diff >1e-10){
-    //             hasError = true;
-    //             if (diff >max_diff) max_diff = diff;
-    //         }
-    //         error_message << "Discrepancy found at i=" << i << ", j=" << j 
-    //                           << " with difference: " << diff << "\n";
-    //     }
-    // }
+
     BOOST_CHECK_MESSAGE(!hasError, "Hessian discrepancies found:\n" + error_message.str());
 
 

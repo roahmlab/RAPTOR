@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     Eigen::Vector3d pinocchio_translation = data.oMi[model.getJointId("left_toe_B")].translation();
     Eigen::Vector3d raptor_translation = fkSolver.getTranslation();
 
-    std::cout << "Pinocchio: " << pinocchio_translation.transpose() << std::endl;
-    std::cout << "RAPTOR: " << raptor_translation.transpose() << std::endl;
+    // std::cout << "Pinocchio: " << pinocchio_translation.transpose() << std::endl;
+    // std::cout << "RAPTOR: " << raptor_translation.transpose() << std::endl;
 
     BOOST_CHECK_SMALL((pinocchio_translation - raptor_translation).norm(), 1e-10);
 }
