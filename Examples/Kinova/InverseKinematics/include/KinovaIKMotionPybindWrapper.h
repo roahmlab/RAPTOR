@@ -35,7 +35,7 @@ public:
     ~KinovaIKMotionPybindWrapper() = default;
 
     // Class methods
-    void set_desired_endeffector_transforms(const nb_2d_double desired_endeffector_transforms_inp);
+    void set_desired_endeffector_transforms(const nb_2d_double& desired_endeffector_transforms_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -46,7 +46,7 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    nb::tuple solve();
+    nb::tuple solve(const nb_1d_double& initial_guess);
 
     // Class members
     // robot model

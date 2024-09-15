@@ -17,7 +17,7 @@ KinovaIKMotionPybindWrapper::KinovaIKMotionPybindWrapper(const std::string urdf_
     endT = Transform(Vec3(M_PI, 0, 0), Vec3(0, 0, -0.061525));
 }
 
-void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d_double desired_endeffector_transforms_inp) {
+void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d_double& desired_endeffector_transforms_inp) {
     if (desired_endeffector_transforms_inp.shape(1) != 12) {
         throw std::invalid_argument("Input should be of shape (N, 12)!");
     }
@@ -79,16 +79,23 @@ void KinovaIKMotionPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-nb::tuple KinovaIKMotionPybindWrapper::solve() {
+nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) {
     if (!set_transform_check || 
         !set_ipopt_parameters_check) {
         throw std::runtime_error("parameters not set properly!");
+    }
+
+    if (initial_guess.shape(0) != model.nv) {
+        throw std::invalid_argument("Initial guess should be of shape (nv,)!");
     }
 
     solutions.resize(model.nv, desiredTransforms.size());
 
     // Define initial guess
     VecX z = VecX::Zero(model.nv);
+    for (size_t i = 0; i < model.nv; i++) {
+        z(i) = initial_guess(i);
+    }
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -121,7 +128,7 @@ nb::tuple KinovaIKMotionPybindWrapper::solve() {
         }
 
         // Update initial guess
-        solutions.col(pid++) = mynlp->solution;
+        solutions.col(pid++) = Utils::wrapToPi(mynlp->solution);
         z = mynlp->solution;
 
         // Update feasible flag
