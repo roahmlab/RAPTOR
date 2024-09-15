@@ -176,6 +176,7 @@ public:
     const double yaw_weight = 1.0;
 };
 
+// extract words from out file 
 bool check_gradient_output(const std::string& filename, const std::string& keyword) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -241,12 +242,14 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     catch (std::exception& e) {
         BOOST_FAIL("Error solving optimization problem! Check previous error message!");
     }
-
-    std::cout <<"status" <<status <<std::endl;
-    BOOST_CHECK(status == 0 || status == 1);  // not sure the 
-
+    // check the grad
     bool gradient_check_passed = check_gradient_output("ipopt.out", "No errors detected by derivative checker");
     BOOST_CHECK_MESSAGE(gradient_check_passed, "Derivative_test not pass");
+
+    // check the nlp
+    BOOST_CHECK(status == 0 || status == 1);  //success or feasible
+
+    
 
     
 }

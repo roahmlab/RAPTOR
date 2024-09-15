@@ -10,6 +10,8 @@ using namespace RAPTOR;
 
 
 BOOST_AUTO_TEST_SUITE(KinematicsConstraintsTest)
+
+// test gradient
 BOOST_AUTO_TEST_CASE(owngradientTest)
 {
     // Define robot model
@@ -19,7 +21,6 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Plain>(model.nv);
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
     ForwardKinematicsSolver fkSolver(&model);
 
@@ -34,21 +35,10 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
 
     // simple test when difference is small
     Eigen::VectorXd z_test = z.array() + 1e-6;
-    // kc.compute(z_test, false);
-    // std::cout << kc.g << std::endl << std::endl;
-
+  
     // simple test when difference is large
     // z_test = z.array() + 1.0;
 
-    // auto start_clock = std::chrono::high_resolution_clock::now();
-    // kc.compute(z_test, true, true);
-    // auto end_clock = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_clock - start_clock);
-    // std::cout << "Time taken (including gradient and hessian): " << duration.count() << " microseconds" << std::endl;
-
-    // std::cout << kc.g << std::endl << std::endl;
-
-    // test gradient
     const Eigen::MatrixXd J_analytical = kc.pg_pz;
     Eigen::MatrixXd J_numerical = Eigen::MatrixXd::Zero(J_analytical.rows(), J_analytical.cols());
     for (int i = 0; i < z_test.size(); i++) {
@@ -63,16 +53,12 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
         J_numerical.col(i) = (g_plus - g_minus) / 2e-7;
     }
 
-    // std::cout << "Analytical gradient: " << std::endl << J_analytical << std::endl << std::endl;
-    // std::cout << "Numerical gradient: " << std::endl << J_numerical << std::endl << std::endl;
-    // std::cout << J_analytical - J_numerical << std::endl << std::endl;
     BOOST_CHECK_SMALL((J_analytical - J_numerical).norm(), 1e-10);
-    }
+}
 
     
-    // test hessian
-
-    BOOST_AUTO_TEST_CASE(ownHessianTest){
+// test hessian
+BOOST_AUTO_TEST_CASE(ownHessianTest){
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
@@ -90,10 +76,6 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);
 
-    // check error
-    bool hasError = false;
-    double max_diff = 0.0;
-    std::stringstream error_message;
 
     KinematicsConstraints kc(trajPtr_, &model, end, 6, fkSolver.getTransform());
 
@@ -101,7 +83,13 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
     Eigen::VectorXd z_test = z.array() + 1e-6;
     Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic> H_analytical = kc.pg_pz_pz;
 
+    // simple test when difference is large
+    // z_test = z.array() + 1.0;
 
+    // params for error checking 
+    bool hasError = false;
+    double max_diff = 0.0;
+    std::stringstream error_message;
     
     for (int i = 0; i < z_test.size(); i++) {
         Eigen::VectorXd q_plus = z_test;
@@ -116,12 +104,10 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
 
         // check error 
         for (int j = 0; j < 3; j++) {
-            // sstd::cout << H_analytical(j).row(i) - H_numerical_row.row(j) << std::endl;
-
             //check each loop
             // BOOST_CHECK_SMALL((H_analytical(j).row(i) - H_numerical_row.row(j) ).norm(), 1e-10);
 
-            //check one time
+            //record the data, check when loop end
             double diff = (H_analytical(j).row(i) - H_numerical_row.row(j) ).norm();
             if (diff >1e-10){
                 hasError = true;
