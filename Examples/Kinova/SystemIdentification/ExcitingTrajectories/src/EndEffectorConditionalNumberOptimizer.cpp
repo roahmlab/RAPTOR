@@ -157,10 +157,10 @@ bool EndeffectorConditionNumberOptimizer::eval_f(
 
     ridPtr_->compute(z, false);
 
-    MatX ObservationMatrix = ridPtr_->Y;
-    
+    // get the endY
+    const MatX ObservationMatrix = ridPtr_->Y;
     int startCol = (joint_num - 1) * 10; 
-    MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
+    const MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
   
     Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
@@ -193,14 +193,11 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
 
     ridPtr_->compute(z, true);
 
- 
-    MatX ObservationMatrix = ridPtr_->Y;
-
+    // get the endY
+    const MatX ObservationMatrix = ridPtr_->Y;
     int startCol = (joint_num - 1) * 10; 
-    MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
+    const MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
  
-
-
     Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
 
@@ -216,10 +213,9 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
     // for analytical gradient of singular values
     for (Index i = 0; i < n; i++) {
 
-        MatX gradObservationMatrix = ridPtr_->pY_pz(i);
-
+        const MatX gradObservationMatrix = ridPtr_->pY_pz(i);
         int startCol = (joint_num - 1) * 10; 
-        MatX gradEndeffectorY = gradObservationMatrix.middleCols(startCol, 10);
+        const MatX gradEndeffectorY = gradObservationMatrix.middleCols(startCol, 10);
         
 
         Number gradSigmaMax = U.col(0).transpose()       * gradEndeffectorY * V.col(0);
