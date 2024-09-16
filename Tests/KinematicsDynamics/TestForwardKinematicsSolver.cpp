@@ -36,5 +36,4 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     // check the error
     BOOST_CHECK_SMALL((pinocchio_translation - raptor_translation).norm(), 1e-10);
 }
-
 BOOST_AUTO_TEST_SUITE_END()

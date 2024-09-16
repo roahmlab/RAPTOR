@@ -12,7 +12,6 @@ BOOST_AUTO_TEST_SUITE(RegressorInverseDynamicsSuite)
 BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
 {
     // Define robot model
-    
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
@@ -47,9 +46,5 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
 
     // compare the results
     BOOST_CHECK_SMALL((regressor_id.tau(0) -tau_pinocchio).norm(), 1e-10);
-
-
 }
-
-
 BOOST_AUTO_TEST_SUITE_END()

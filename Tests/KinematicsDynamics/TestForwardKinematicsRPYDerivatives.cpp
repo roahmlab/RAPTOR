@@ -193,9 +193,7 @@ bool check_gradient_output(const std::string& filename, const std::string& keywo
 }
 
 BOOST_AUTO_TEST_SUITE(FKGradientCheckerSuite)
-
-BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
-    
+BOOST_AUTO_TEST_CASE(test_FKGradientChecker){  
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
@@ -214,8 +212,6 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
         BOOST_FAIL("Error initializing Ipopt class! Check previous error message!");  
     }
 
-
-
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
 	app->Options()->SetNumericValue("max_wall_time", 1e-5);
@@ -227,7 +223,6 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     app->Options()->SetStringValue("derivative_test", "second-order");
     app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
-
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -248,10 +243,6 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
 
     // check the nlp
     BOOST_CHECK(status == 0 || status == 1);  //success or feasible
-
-    
-
-    
 }
 
 BOOST_AUTO_TEST_SUITE_END()

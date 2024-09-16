@@ -160,29 +160,6 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-add_executable(KinovaExciting_example_Endeffector 
-    SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
-
-target_include_directories(KinovaExciting_example_Endeffector  PUBLIC
-    ystemIdentification/DataFilter/include
-    SystemIdentification/ExcitingTrajectories/include
-    SystemIdentification/IterativeSystemIdentification/include)
-
-target_link_libraries(KinovaExciting_example_Endeffector  PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Kinovalib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
-
-target_compile_options(KinovaExciting_example_Endeffector  PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-
 ### Python bindings 
 nanobind_add_module(KinovaHLP_nanobind 
     NB_SHARED LTO

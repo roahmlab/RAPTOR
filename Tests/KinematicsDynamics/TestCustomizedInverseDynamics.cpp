@@ -10,8 +10,6 @@
 using namespace RAPTOR;
 
 BOOST_AUTO_TEST_SUITE(InverseDynamicsTestSuite)
-
-
  // Test without fixed joints
 BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
 {
@@ -55,7 +53,6 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
 
     //check the error
     BOOST_CHECK_SMALL((data.tau - cidPtr->tau(0)).norm(), 1e-10);
-
 }
 
 // Test with fixed joints
@@ -105,7 +102,5 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
 
     //check the error
     BOOST_CHECK_SMALL((data_reduced.tau - cidPtr->tau(0)).norm(), 1e-10);
-
- 
 }
 BOOST_AUTO_TEST_SUITE_END()
