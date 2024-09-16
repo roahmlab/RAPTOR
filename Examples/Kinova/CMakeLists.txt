@@ -6,7 +6,6 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
-    SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
 )
 
 target_include_directories(Kinovalib PUBLIC
