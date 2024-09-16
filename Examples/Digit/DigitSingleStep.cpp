@@ -3,30 +3,23 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-using namespace IDTO;
+#include <yaml-cpp/yaml.h>
+#include <iomanip>
+
+using namespace RAPTOR;
 using namespace Digit;
 using namespace Ipopt;
 
-using std::cout;
-using std::endl;
+const std::string filepath = "../Examples/Digit/data/";
 
-int main() {
+int main(int argc, char* argv[]) {
     // define robot model
-    const std::string urdf_filename = "/home/roahm/Documents/SafeDigit/DigitModel/KinematicsInfo/urdf/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    model.gravity.linear()(2) = -9.806;
-
-    // manually define the joint axis of rotation
-    // 1 for Rx, 2 for Ry, 3 for Rz
-    // 4 for Px, 5 for Py, 6 for Pz
-    // not sure how to extract this from a pinocchio model so define outside here.
-    Eigen::VectorXi jtype(model.nq);
-    jtype << 4, 5, 6, 1, 2, 3, 
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3,
-             3, 3, -3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3;
+    model.gravity.linear()(2) = GRAVITY;
     
     // ignore friction for now
     model.friction.setZero();
@@ -45,98 +38,101 @@ int main() {
     model.rotorInertia(model.getJointId("right_toe_A") - 1) = 0.036089475;
     model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
-    pinocchio::Data data(model);
+    // load settings
+    YAML::Node config;
 
-    const char stanceLeg = 'L';
+    const double T = 0.4;
+    TimeDiscretization time_discretization = Uniform;
+    int N = 14;
+    int degree = 5;
+    
+    GaitParameters gp;
 
-    Transform stance_foot_T_des(3, -M_PI / 2);
+    try {
+        config = YAML::LoadFile("../Examples/Digit/singlestep_optimization_settings.yaml");
 
-    const int N = 32;
+        N = config["N"].as<int>();
+        degree = config["degree"].as<int>();
+        std::string time_discretization_str = config["time_discretization"].as<std::string>();
+        time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-    FourierCurves fc(0.4, N, 12, Chebyshev, 6);
+        gp.eps_torso_angle = config["eps_torso_angle"].as<double>();
+        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
+        gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<double>();
+        gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<double>();
+    } 
+    catch (std::exception& e) {
+        std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
+    }
 
-    Eigen::VectorXd z(252);
-    z << -0.11109146887103597823, 0.84834384226477022040, -0.66541026041380646472, 0.58263811498498840891, 2.48714623151437175252, 0.19220565717908852377, 0.34687497932001681855, 0.16172991979402998042, -0.37635683762946570141, -0.11256661300020291694, 0.02717458499107647252, -0.02100945014581665979, 
-        -0.01742831194261194871, 11.76901098259756928144, 0.31156918315494569471, 1.03467727606208192981, -0.62328975878576509118, 0.07227534563290326231, 0.01012906449374933321, -0.00426236564982853446, -0.55668369923494298579, 0.80448196056949949906, 1.24554887494011023996, -0.41017830569240676386, 
-        -0.04629673726445340115, -0.01878592757874619421, 0.01738054810634838757, 12.57301274264597878982, -8.97351257773206967272, -26.87040885282691249358, 27.66190233475770554605, -8.19233197125679168948, -12.63508088910562143781, -4.68065175902507846217, -0.53105208067470599520, 1.44939784103564850426, 
-        2.02567814693920933422, 0.62936782397591195526, 0.44795755376786372537, -0.03725091644627713527, -0.12357215310273643449, 11.59003495815929518642, -11.25772250628561721442, -51.71653544170943206382, 45.35022117126981555657, -6.28137256869538074255, -26.40974813850033342533, -7.17325462266716407100, 
-        -11.14028337699130943861, -2.99378405510431910841, -1.44017901450531748964, -1.32203180022382027481, -0.69810338128694648940, -0.00441416615956360427, -1.04747526105167532151, 12.25593088605299918470, -0.29224492320581330063, -0.84522753120149440864, 0.53472035519430305417, -2.67516301546460333327, 
-        0.44634944057612102597, 0.76557708099529064860, 0.87947584624992791724, -1.18856119611949040404, -0.67883259766877379615, -1.03747494847933618978, 1.54471213745385416161, 0.28709462548397673975, 0.22619963156456529552, 8.32970255735735598535, -0.11305008784314241055, -0.60920762849420551088, 
-        0.69267911761540668092, -1.56258951342091512160, -0.56788975731392854485, -0.04509102232474253985, 0.51504998170545313041, 0.26225866224635269175, -0.60807085247185110877, 0.31384258952058263770, 0.50575334876664701511, -0.65948586832083855302, 0.69864503520547860393, 9.60939323797039257613, 
-        -0.39340895915250284620, -2.11979974666413184536, 2.94739786631211853063, 0.55759087450089106497, -1.63810229809724683392, -0.27065783608553611872, -2.30217582696675737708, -0.54400235272765629091, -2.57075404598062240424, -0.30464193289494667649, -1.09194193028561969960, 0.01740614979035023241, 
-        -0.07566677625570045196, 12.11110988046748992986, 1.39050180540355672321, 1.98808371012529372379, -2.29262962401298597825, 1.02867039839934060197, -0.68175614088205160890, -0.24024103707123478646, -0.35837565969287449308, 0.97372325285554639507, -1.73706602245833763298, -0.69314722550882545971, 
-        -1.94701024167037117785, -0.65653030083032715147, -0.58907499641362859322, 10.86991224084809637418, 5.29884244178106822432, 2.80297406982991503810, -2.74145171708251211840, 25.61268126428158709018, -18.83866881892104672147, 17.86032627970400454842, 6.02206322427582918522, 0.20664561366472117276, 
-        1.40480858791497298377, 3.12025270039467450545, 0.84749487265284362270, 1.26369220799312320658, 2.09113209623398610404, 6.32698577531110917249, -5.32386034373057892566, -4.08032178976901871437, 6.66181968818669023591, -29.86401910237904999690, 15.43452753185406400860, -7.38704331467935038091, 
-        -7.52363576985012194598, -1.82033381545548844649, -0.10072027455891263692, -2.20964651762191177653, -1.97123704022434997896, 0.26843866986070147318, -1.40225471018570790882, 7.04644582771768579477, 0.00972739272540661636, -0.54326957673493303513, -0.15719870761440069007, -0.95928540245879545534, 
-        0.17719247715112562691, -0.35116358324194901774, 0.71977736084598276101, -0.23351365839646306966, 1.46514843349017787055, 0.44060915941917350169, 1.28423685808827325872, 0.32007628208818605930, 0.35912343773621857590, 10.81049519027172323149, 0.93966340177294727098, 1.12396398626085392003, 
-        -0.75533724389428658075, 0.64325738087021844258, -0.95651408640387136639, -0.41433726443426260877, -0.80420847517750293498, -0.12435011911263518791, -1.06813677211686552937, -0.34670507142461520766, -1.07170818714559956675, -0.25081148319876644948, -0.34344421588577395132, 10.85807062524941279946, 
-        0.35823383649525158967, -0.01277719633451589870, 0.46143196171624611956, 0.74898843262303371748, -0.35656014637352806407, 0.00906395854354049603, -0.46069946696759167537, -0.74839096529395809920, -0.33597173590593826242, 0.32203949780971108385, 0.33533878513553261325, -0.32128648704649148682, 
-        -0.04123346241206938406, -0.01575567147071101765, 0.01332605035037683419, 0.03710505620828823126, -0.04048147829951193738, -0.01536230567254849577, 0.01140340707413285345, 0.03624201348997058841, -0.05272215286200387929, -0.02751321417440268438, -0.05196481209930344652, -0.02772111307592835250, 
-        0.10752400078303045450, -0.00007945424844185481, 0.00039762036924493021, -0.00052848220386404884, 0.05971043737208379248, -0.04595599427582321150, 0.04046841977884485519, 0.01535592664039949276, -0.01139820001628497927, -0.03625355906699730124, 0.03701583120417627909, -0.01252473584636985479, 
-        0.11745100398166137545, 0.04121931561175533332, 0.01573711616881728892, -0.01333100617398984104, -0.03706804735732457945, 0.03784911717795125946, -0.01289802312807664629, 0.11746492596669948216, 0.05194736709266332964, 0.02773045715195387659, 0.05234490067740293906, 0.02736362224858393880, 
-        -0.05457375556412457501, -0.00164946914911676796, -0.02966039813536103936, 0.00527707695196984183, -0.05498212007924202505, 0.00163596288063688625, -0.02928325351853813818, -0.00525920325798918432, -0.03635404308294171855, -0.00199243570478097000, -0.03717115159736006369, 0.00203830657706892144, 
-        0.00038458813055095465, -0.00000909104839630309, -0.00002510079491343187, -0.00036530710832835376, -0.00002171516730129016, -0.00002351277653179990, -0.02474826387110997533, 0.00075965425594898262, 0.00085540719199182357, -0.01182363949706763395, 0.00052115763573758547, 0.00092489003039906569, 
-        -0.00112879758399715116, -0.00090564279522249529, 0.00016241600970245775, 0.07755074614876585060, -0.06403574476803623738, -0.00652310256654513657, -0.05189995764122491695, -0.00414928211844821718, 0.06307652081922689169, 0.00210039713807914918, -0.00157419004013676592, 0.00262084454810661196;
-
-    // fc.compute(z);
-
-    // std::unique_ptr<DigitConstrainedInverseDynamics> dcidPtr_ = 
-    //     std::make_unique<DigitConstrainedInverseDynamics>(model, N, NUM_DEPENDENT_JOINTS, jtype, stanceLeg, stance_foot_T_des);
-
-    // Eigen::VectorXd q(model.nq);
-    // Eigen::VectorXd v(model.nv);
-    // Eigen::VectorXd a(model.nv);
-
-    // q << -0.12831249226154961551, -0.050885712343851141615, 1.0614679172132515106, 0.0073774793530243841858, 0.049058785586480094243, -1.5180708321333198363, 0.28570290714907209395, 0.028759399628236634316, 0.32966409584980715941, 0.42352716062122985896, 0.010051553145835194145, 0.42316561860981338761, -0.43505222618777200649, -0.19424091037798019155, 0.200940685855929696, -0.0078499378281531896617, 0.16417501673775528048, -0.16969648365280309843, 0.010576235977796055732, 0.18299183222973516849, -0.046924624298360015362, -0.42473891855683676422, -0.053625539377177657008, -0.34379976341406953688, -0.45331648806307678345, 0.011185829051532940673, -0.45294228797891228355, 0.46507379341545374007, 0.19160288170870407032, -0.19772511257401945151, -0.0091645982394020462924, -0.19289864539551346279, 0.19971255395880549433, 0.013727836742418328408, -0.19595631655339354471, -0.0018156818023019711487;
-    // v << 0.17242940005505141832, 0.010323854783934315396, 0.015363536716767418541, 0.0016875165451371385711, 0.13928387903187136598, -0.081519107915707156309, 0.036597168645223672467, 0.022187841668372648707, -0.0025779041585519239799, -0.015428681474291973397, -0.00057348974303929388212, -0.015422772167966170009, 0.015544250315079525745, 0.069859111563775555531, -0.073864279138392760493, -0.0036463555474242747428, 0.061395593181150842632, -0.064981847526031297213, 0.0096457296336293404243, -0.0060443274305403815044, 0.20411866514815718565, 0.012390074028320707811, -0.0047267822450325069905, -0.020550156661977236894, -0.065026801059171635, 0.0025345632837798252532, -0.064996282360668899969, 0.065554079360251329978, 0.054011588378201969007, -0.057259602252950063395, 0.0031055653368949366622, 0.064017521495437490486, -0.067612919841840507518, -0.0096872609162264432942, 0.0047472090223608081477, 0.18260600496795736936;
-    // a << 0.52613427196720141676, 0.082438547833338440829, -0.20409794912564185876, -2.0975324987270593802, -11.910245918022894784, -6.2671811083296828926, 12.781792334165430702, -5.5646383940662449419, 5.5838011524016533116, 2.6334915690024414126, 0.097902417893502846624, 2.6324822896332724653, -2.653222564058693056, -1.9306978421047935601, 1.9699514948644281098, -0.098943546785792410581, 2.5841396133729803708, -2.6709499351432350878, 0.17732227971750497142, 2.2864847391782059383, 1.0508423541001743473, 7.0112436648898981417, -5.041004981175826849, 47.178192546863705559, 69.338594020255584383, -2.7023708714141339016, 69.306065029707710323, -69.90074427257773948, -47.801117698051065474, 49.100084178332018325, 1.5548661250673021517, 43.911044309866767321, -45.169286170908051758, -2.2015987048788732139, 46.419454228868801238, -6.080739174089807797;
-
-    // dcidPtr_->dynamicsConstraintsPtr_->setupJointPositionVelocityAcceleration(q, v, a, true);
-
-    // cout << q.transpose() << endl;
-    // cout << v.transpose() << endl;
-    // cout << a.transpose() << endl;
-
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> qq(N);
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> vv(N);
-    // Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> aa(N);
-    // for (int i = 0; i < N; i++) {
-    //     qq(i) = q;
-    //     vv(i) = v;
-    //     aa(i) = a;
-    // }
-    // dcidPtr_->compute(qq, vv, aa, true);
-
-    // cout << dcidPtr_->tau(0).transpose() << endl;
+    // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
+    
+    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    if (argc > 1) {
+        char* end = nullptr;
+        std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
+    }
+    else {
+        std::srand(std::time(nullptr));
+    }
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
-	    mynlp->set_parameters(z.head(192),
+	    mynlp->set_parameters(z,
+                              T,
                               N,
+                              time_discretization,
+                              degree,
                               model,
-                              jtype,
-                              stanceLeg,
-                              stance_foot_T_des);
+                              gp);
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
-        return -1;
     }
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_wall_time", 10);
-	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma97");
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    try {
+        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
+        app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+        app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
+        app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
+        app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
+        app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 
-    // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
+        if (mynlp->enable_hessian) {
+            app->Options()->SetStringValue("hessian_approximation", "exact");
+        }
+        else {
+            app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+        }
+        // app->Options()->SetStringValue("nlp_scaling_method", "none");
+    }
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        throw std::runtime_error("Error setting optimization options! Check previous error message!");
+    }
+
+    if (config["gredient_check"].as<bool>()) {
+        app->Options()->SetStringValue("output_file", "ipopt.out");
+        if (mynlp->enable_hessian) {
+            app->Options()->SetStringValue("derivative_test", "second-order");
+        }
+        else {
+            app->Options()->SetStringValue("derivative_test", "first-order");
+        }
+        app->Options()->SetNumericValue("point_perturbation_radius", 1e-3);
+        // app->Options()->SetIntegerValue("derivative_test_first_index", 168);
+        app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+        app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
+    }
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -146,11 +142,111 @@ int main() {
     }
 
     try {
+        auto start = std::chrono::high_resolution_clock::now();
+
         // Ask Ipopt to solve the problem
         status = app->OptimizeTNLP(mynlp);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+
+        std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }
-    catch (int errorCode) {
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+    }
+
+    // Print the solution
+    if (mynlp->solution.size() == mynlp->numVars) {
+        // try {
+        //     const int N_simulate = 200;
+
+        //     SmartPtr<DigitSingleStepOptimizer> testnlp = new DigitSingleStepOptimizer();
+        //     testnlp->display_info = false;
+        //     testnlp->set_parameters(z,
+        //                             T,
+        //                             N_simulate,
+        //                             TimeDiscretization::Uniform,
+        //                             degree,
+        //                             model,
+        //                             gp,
+        //                             'L',
+        //                             Transform(3, -M_PI / 2),
+        //                             false);
+        //     Index n, m, nnz_jac_g, nnz_h_lag;
+        //     TNLP::IndexStyleEnum index_style;
+        //     testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+        //     Number ztry[testnlp->numVars], x_l[testnlp->numVars], x_u[testnlp->numVars];
+        //     Number g[testnlp->numCons], g_lb[testnlp->numCons], g_ub[testnlp->numCons];
+        //     for (int i = 0; i < testnlp->numVars; i++) {
+        //         ztry[i] = mynlp->solution[i];
+        //     }
+        //     testnlp->get_bounds_info(testnlp->numVars, x_l, x_u, testnlp->numCons, g_lb, g_ub);
+        //     testnlp->eval_g(testnlp->numVars, ztry, false, testnlp->numCons, g);
+        //     testnlp->summarize_constraints(testnlp->numCons, g, false);
+
+        //     std::ofstream solution(filepath + "trajectory-digit-forwardalot.txt");
+        //     for (int j = 0; j < N_simulate; j++) {
+        //         for (int i = 0; i < NUM_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->q(j)(i) << ' ';
+        //         }
+        //         for (int i = 0; i < NUM_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->v(j)(i) << ' ';
+        //         }
+        //         for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        //             solution << testnlp->cidPtr_->tau(j)(i) << ' ';
+        //         }
+        //         solution << std::endl;
+        //     }
+        // }
+        // catch (std::exception& e) {
+        //     std::cerr << e.what() << std::endl;
+        //     throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
+        // }
+
+        std::ofstream solution(filepath + 
+                               "visualize_solution.txt");
+
+        solution << std::setprecision(20);
+        for (int i = 0; i < mynlp->numVars; i++) {
+            solution << mynlp->solution[i] << std::endl;
+        }
+        solution.close();
+
+        // std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + output_name + ".txt");
+        // trajectory << std::setprecision(20);
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+        //     }
+        //     trajectory << std::endl;
+        // }
+        // trajectory.close();
     }
 
     return 0;

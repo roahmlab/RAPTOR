@@ -1,20 +1,19 @@
 #include "DigitConstrainedInverseDynamics.h"
 
-namespace IDTO {
+namespace RAPTOR {
 namespace Digit {
 
 DigitConstrainedInverseDynamics::DigitConstrainedInverseDynamics(const Model& model_input, 
-                                                                 int N_input, 
+                                                                 std::shared_ptr<Trajectories>& trajPtr_input,
                                                                  int NUM_DEPENDENT_JOINTS_input,
-                                                                 const Eigen::VectorXi& jtype_input, 
                                                                  char stanceLeg_input, 
                                                                  const Transform& stance_foot_T_des_input) :
-    ConstrainedInverseDynamics(model_input, N_input, NUM_DEPENDENT_JOINTS_input) {
-    dynamicsConstraintsPtr_ = std::make_unique<DigitDynamicsConstraints>(model_input, 
-                                                                         jtype_input, 
-                                                                         stanceLeg_input,
-                                                                         stance_foot_T_des_input);
+    ConstrainedInverseDynamics(model_input, trajPtr_input, NUM_DEPENDENT_JOINTS_input) {
+    ddcPtr_ = std::make_shared<DigitDynamicsConstraints>(modelPtr_, 
+                                                         stanceLeg_input,
+                                                         stance_foot_T_des_input);
+    dcPtr_ = ddcPtr_;
 }
 
 }; // namespace Digit
-}; // namespace IDTO
+}; // namespace RAPTOR

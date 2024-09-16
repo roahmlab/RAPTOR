@@ -3,21 +3,32 @@
 
 #include "Trajectories.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class FourierCurves : public Trajectories {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     FourierCurves() = default;
 
-    FourierCurves(const VecX& tspan_input, int Nact_input, int degree_input);
+    FourierCurves(const VecX& tspan_input, 
+                  int Nact_input, 
+                  int degree_input,
+                  VecX q0_input = VecX::Zero(0),
+                  VecX q_d0_input = VecX::Zero(0));
 
-    FourierCurves(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization, int degree_input);
+    FourierCurves(double T_input, 
+                  int N_input, 
+                  int Nact_input, 
+                  TimeDiscretization time_discretization, 
+                  int degree_input,
+                  VecX q0_input = VecX::Zero(0),
+                  VecX q_d0_input = VecX::Zero(0));
 
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) override;
 
     int degree = 0; // degree of the Fourier series
 
@@ -34,8 +45,13 @@ public:
 
     VecX pF0_pw;
     VecX pdF0_pw;
+
+    VecX q0;
+    VecX q_d0;
+    bool optimize_initial_position = true;
+    bool optimize_initial_velocity = true;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // FOURIERCURVES_H

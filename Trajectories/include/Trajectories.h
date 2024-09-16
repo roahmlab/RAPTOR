@@ -2,39 +2,63 @@
 #define TRAJECTORIES_H
 
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 #include <cmath>
 #include <cstdio>
+#include <memory>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include "Utils.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 enum TimeDiscretization {
-    Uniform, 
+    Uniform = 0, 
     Chebyshev
 };
 
 class Trajectories {
 public:
     using VecX = Eigen::VectorXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     Trajectories() = default;
 
     // Constructor
-    Trajectories(const VecX& tspan_input, int Nact_input);
+    Trajectories(const int varLength_input,
+                 const VecX& tspan_input, 
+                 int Nact_input);
 
     // Constructor
-    Trajectories(double T_input, int N_input, int Nact_input, TimeDiscretization time_discretization);
+    Trajectories(const int varLength_input,
+                 double T_input, 
+                 int N_input, 
+                 int Nact_input, 
+                 TimeDiscretization time_discretization);
 
     // Destructor
     ~Trajectories() = default;
 
     // class methods:
-    virtual void compute(const VecX& z, bool compute_derivatives = true);
+    void initialize_memory();
+
+    bool is_computed(const VecX& z, 
+                     bool compute_derivatives,
+                     bool compute_hessian);
+
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false);
+
+    // these methods are defined in TrajectoryGroup
+    virtual void add_trajectory(const std::string& name,    
+                        std::shared_ptr<Trajectories> trajectory){
+        throw std::runtime_error("add_trajectory is not implemented in Trajectories class");
+    }
+    virtual void gather_trajectories_information(const bool print_info = false) {
+        throw std::runtime_error("gather_trajectories_information is not implemented in Trajectories class");
+    }
 
     // class members:
     double T = 0; // total time of the trajectory
@@ -49,16 +73,22 @@ public:
     Eigen::Array<VecX, 1, Eigen::Dynamic> q_dd;
 
         // compute results are stored here
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_pz;
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_d_pz;
-    Eigen::Array<SpaMatX, 1, Eigen::Dynamic> pq_dd_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_d_pz;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pq_dd_pz;
 
-        // temporary variables updated in compute()
-    std::vector<Eigen::Triplet<double>> pq_pz_tripletList;
-    std::vector<Eigen::Triplet<double>> pq_d_pz_tripletList;
-    std::vector<Eigen::Triplet<double>> pq_dd_pz_tripletList;
+        // compute results are stored here
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_pz_pz;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_d_pz_pz;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> pq_dd_pz_pz;
+
+        // trajectory class is frequently used in the optimization problem
+        // so we store the computed results here to avoid recomputation
+    VecX current_z;
+    bool if_compute_derivatives = false;
+    bool if_compute_hessian = false;
 };
 
-}; // namespace IDTO    
+}; // namespace RAPTOR    
 
 #endif // TRAJECTORIES_H

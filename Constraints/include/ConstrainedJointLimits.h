@@ -4,20 +4,19 @@
 #include "JointLimits.h"
 #include "DynamicsConstraints.h"
 
-namespace IDTO {
+namespace RAPTOR {
 
 class ConstrainedJointLimits : public JointLimits {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using SpaMatX = Eigen::SparseMatrix<double, Eigen::RowMajor>;
 
     // Constructor
     ConstrainedJointLimits() = default;
 
     // Constructor
-    ConstrainedJointLimits(std::unique_ptr<Trajectories> trajPtr_input, 
-                           std::unique_ptr<DynamicsConstraints> dcPtr_input, 
+    ConstrainedJointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
+                           std::shared_ptr<DynamicsConstraints>& dcPtr_input, 
                            const VecX& lowerLimits_input, 
                            const VecX& upperLimits_input);
 
@@ -26,19 +25,21 @@ public:
 
     // class methods:
         // compute constraints
-    void compute(const VecX& z, bool compute_derivatives = true) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) override;
 
-        // compute constraints lower bound
-    void compute_lb() override;
+        // compute constraints lower bounds and upper bounds
+    virtual void compute_bounds() override;
 
-        // compute constraints upper bound
-    void compute_ub() override;
+        // print violation info
+    virtual void print_violation_info() override;
 
     // class variables:
     int NB = 0;
     std::shared_ptr<DynamicsConstraints> dcPtr_;
 };
 
-}; // namespace IDTO
+}; // namespace RAPTOR
 
 #endif // CONSTRAINEDJOINTLIMITS_H
