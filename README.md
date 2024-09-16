@@ -17,6 +17,9 @@ We sample a certain number of discrete points on the trajectory and evaluate the
 We use Ipopt as our optimization solver.
 For some of the constraints, we implement the analytical hessian so that Ipopt can converge faster.
 
+This branch attempts to implement the sparse gradient for Ipopt. 
+But it is unfinished right now and is not verified to be useful (significantly faster than dense gradient).
+
 ## Demos
 <img src="https://github.com/user-attachments/assets/6f0a94cd-9c90-4d8f-ad6a-e7de86b017b6" alt="Digit walking forward" width="300" height="300">
 
