@@ -27,8 +27,8 @@ namespace OptimizerConstants {
 
 class Optimizer : public Ipopt::TNLP {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd; 
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf; 
 
     /** Default constructor with setting openmp threads */
     Optimizer() {

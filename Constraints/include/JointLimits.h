@@ -11,8 +11,8 @@ namespace RAPTOR {
 
 class JointLimits : public Constraints {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     JointLimits() = default;

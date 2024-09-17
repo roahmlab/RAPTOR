@@ -19,8 +19,8 @@ enum TimeDiscretization {
 
 class Trajectories {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     Trajectories() = default;
@@ -32,7 +32,7 @@ public:
 
     // Constructor
     Trajectories(const int varLength_input,
-                 double T_input, 
+                 float T_input, 
                  int N_input, 
                  int Nact_input, 
                  TimeDiscretization time_discretization);
@@ -61,7 +61,7 @@ public:
     }
 
     // class members:
-    double T = 0; // total time of the trajectory
+    float T = 0; // total time of the trajectory
     int N = 0;    // number of time instances in tspan
     int Nact = 0;   // number of actuated joints in the system
     VecX tspan;   // a column vector of discrete time instances to check constraint violation

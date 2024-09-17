@@ -18,7 +18,7 @@ BezierCurves::BezierCurves(const VecX& tspan_input,
     }
 }
 
-BezierCurves::BezierCurves(double T_input, 
+BezierCurves::BezierCurves(float T_input, 
                            int N_input, 
                            int Nact_input, 
                            TimeDiscretization time_discretization, 
@@ -100,7 +100,7 @@ void BezierCurves::compute(const VecX& z,
     }
 
     for (int x = 0; x < N; x++) {
-        double t = tspan(x) / T;
+        float t = tspan(x) / T;
 
         q(x) = VecX::Zero(Nact);
         q_d(x) = VecX::Zero(Nact);

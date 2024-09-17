@@ -105,7 +105,7 @@ void TalosMultipleStepPeriodicityConstraints::compute(const VecX& z,
 
     if (compute_derivatives) {
         // compute derivatives with gravity turned off, we just need prnea_pq here
-        const double original_gravity = model.gravity.linear()(2);
+        const float original_gravity = model.gravity.linear()(2);
         model.gravity.linear()(2) = 0;
         pinocchio::computeRNEADerivatives(model, data, 
                                           q_minus, zeroVec, v_plus - v_minus,
@@ -156,14 +156,14 @@ void TalosMultipleStepPeriodicityConstraints::compute(const VecX& z,
     // (5) contact constraints
     VecX contactLambda = lambda.tail(6);
 
-    double contact_force         = contactLambda(2);
-    double friction_force_sq     = pow(contactLambda(0), 2) + pow(contactLambda(1), 2);
-    double max_friction_force_sq = pow(fp.mu * contact_force, 2);
-    double max_moment_z_sq       = pow(fp.gamma * contact_force, 2);
-    double mx_lower_limit        = -fp.Lx * contact_force;
-    double mx_upper_limit        = fp.Lx * contact_force;
-    double my_lower_limit        = -fp.Ly * contact_force;
-    double my_upper_limit        = fp.Ly * contact_force;
+    float contact_force         = contactLambda(2);
+    float friction_force_sq     = pow(contactLambda(0), 2) + pow(contactLambda(1), 2);
+    float max_friction_force_sq = pow(fp.mu * contact_force, 2);
+    float max_moment_z_sq       = pow(fp.gamma * contact_force, 2);
+    float mx_lower_limit        = -fp.Lx * contact_force;
+    float mx_upper_limit        = fp.Lx * contact_force;
+    float my_lower_limit        = -fp.Ly * contact_force;
+    float my_upper_limit        = fp.Ly * contact_force;
 
     // (1) positive contact force
     g5(0) = contact_force;

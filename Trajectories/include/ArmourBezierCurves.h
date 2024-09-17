@@ -15,15 +15,15 @@ The final position is the trajectory parameter to optimize.
 const int ARMOUR_BEZIER_CURVE_DEGREE = 5;
 
 typedef struct ArmourTrajectoryParameters_ {
-    Eigen::VectorXd q0;
-    Eigen::VectorXd q_d0;
-    Eigen::VectorXd q_dd0;
+    Eigen::VectorXf q0;
+    Eigen::VectorXf q_d0;
+    Eigen::VectorXf q_dd0;
 } ArmourTrajectoryParameters;
 
 class ArmourBezierCurves : public BezierCurves {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     ArmourBezierCurves() = default;
 
@@ -31,7 +31,7 @@ public:
                        int Nact_input, 
                        const ArmourTrajectoryParameters& atp_input);
 
-    ArmourBezierCurves(double T_input, 
+    ArmourBezierCurves(float T_input, 
                        int N_input, 
                        int Nact_input, 
                        TimeDiscretization time_discretization, 

@@ -10,7 +10,7 @@ constexpr int NUM_INDEPENDENT_JOINTS = 12;
 
 // pulled out from digit-v3.xml
 // This is in degree!!!
-constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
+constexpr float JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -1000,    // Px
     -1000,    // Py
     -1000,    // Pz
@@ -51,7 +51,7 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
 
 // pulled out from digit-v3.xml
 // This is in degree!!!
-constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
+constexpr float JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     1000,    // Px
     1000,    // Py
     1000,    // Pz
@@ -91,7 +91,7 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
 };
 
 // pulled out from digit-v3.xml
-constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
+constexpr float TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -113.000,   // left-hip-roll
     -79.1765,   // left-hip-yaw
     -216.928,   // left-hip-pitch
@@ -107,7 +107,7 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
 };
 
 // pulled out from digit-v3.xml
-constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
+constexpr float TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     113.000,   // left-hip-roll
     79.1765,   // left-hip-yaw
     216.928,   // left-hip-pitch
@@ -123,13 +123,13 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
 };
 
 // pulled out from digit-v3.xml
-constexpr double MU = 0.7;
-constexpr double GAMMA = 0.7;
-constexpr double FOOT_WIDTH = 0.04; // (m)
-constexpr double FOOT_LENGTH = 0.1175; // (m)
+constexpr float MU = 0.7;
+constexpr float GAMMA = 0.7;
+constexpr float FOOT_WIDTH = 0.04; // (m)
+constexpr float FOOT_LENGTH = 0.1175; // (m)
 
 // pulled out from digit-v3.xml
-constexpr double GRAVITY = -9.806; // m/s^2
+constexpr float GRAVITY = -9.806; // m/s^2
 
 }; // namespace Digit
 }; // namespace RAPTOR

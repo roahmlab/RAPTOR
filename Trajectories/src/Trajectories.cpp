@@ -43,7 +43,7 @@ Trajectories::Trajectories(const int varLength_input,
 }
 
 Trajectories::Trajectories(const int varLength_input,
-                           double T_input, 
+                           float T_input, 
                            int N_input, 
                            int Nact_input, 
                            TimeDiscretization time_discretization) :

@@ -11,7 +11,7 @@ namespace Digit {
 
 class DigitConstrainedInverseDynamics : public ConstrainedInverseDynamics {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<float>;
 
     // Constructor
     DigitConstrainedInverseDynamics() = default;

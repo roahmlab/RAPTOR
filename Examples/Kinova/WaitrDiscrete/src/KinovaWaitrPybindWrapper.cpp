@@ -6,7 +6,9 @@ namespace Kinova {
 KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filename,
                                                    const bool display_info) {
     // Define robot model
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::ModelTpl<double> model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
 
@@ -22,7 +24,7 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 }
 
-void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
+void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -43,12 +45,12 @@ void KinovaWaitrPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     has_optimized = false;
 }
 
-void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const double mu_inp,
-                                                              const double R_inp,
-                                                              const double maxSuctionForce_inp,
-                                                              const double contactForceBuffer_inp,
-                                                              const double frictionForceBuffer_inp,
-                                                              const double ZMPBuffer_inp) {
+void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const float mu_inp,
+                                                              const float R_inp,
+                                                              const float maxSuctionForce_inp,
+                                                              const float contactForceBuffer_inp,
+                                                              const float frictionForceBuffer_inp,
+                                                              const float ZMPBuffer_inp) {
     csp.mu = mu_inp;
     csp.R = R_inp;
     csp.maxSuctionForce = maxSuctionForce_inp;
@@ -60,10 +62,10 @@ void KinovaWaitrPybindWrapper::set_contact_surface_parameters(const double mu_in
     has_optimized = false;
 }
 
-void KinovaWaitrPybindWrapper::set_end_effector(const nb_1d_double contact_position,
-                                                const double object_mass,
-                                                const nb_1d_double object_com,
-                                                const nb_2d_double object_inertia) {
+void KinovaWaitrPybindWrapper::set_end_effector(const nb_1d_float contact_position,
+                                                const float object_mass,
+                                                const nb_1d_float object_com,
+                                                const nb_2d_float object_inertia) {
     if (contact_position.shape(0) != 3) {
         throw std::invalid_argument("contact_position must have 3 elements");
     }
@@ -98,10 +100,10 @@ void KinovaWaitrPybindWrapper::set_end_effector(const nb_1d_double contact_posit
     has_optimized = false;
 }
 
-void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
-                                                    const double constr_viol_tol,
-                                                    const double obj_scaling_factor,
-                                                    const double max_wall_time, 
+void KinovaWaitrPybindWrapper::set_ipopt_parameters(const float tol,
+                                                    const float constr_viol_tol,
+                                                    const float obj_scaling_factor,
+                                                    const float max_wall_time, 
                                                     const int print_level,
                                                     const std::string mu_strategy,
                                                     const std::string linear_solver,
@@ -128,10 +130,10 @@ void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
-                                                         const nb_1d_double qd0_inp,
-                                                         const nb_1d_double qdd0_inp,
-                                                         const double duration_inp) {
+void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
+                                                         const nb_1d_float qd0_inp,
+                                                         const nb_1d_float qdd0_inp,
+                                                         const float duration_inp) {
     if (q0_inp.shape(0) != NUM_JOINTS || 
         qd0_inp.shape(0) != NUM_JOINTS || 
         qdd0_inp.shape(0) != NUM_JOINTS) {
@@ -158,9 +160,9 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
     has_optimized = false;                         
 }
 
-void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                                          const nb_1d_double velocity_limits_buffer_inp,
-                                          const nb_1d_double torque_limits_buffer_inp) {
+void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_float joint_limits_buffer_inp,
+                                          const nb_1d_float velocity_limits_buffer_inp,
+                                          const nb_1d_float torque_limits_buffer_inp) {
     if (joint_limits_buffer_inp.shape(0) != NUM_JOINTS || 
         velocity_limits_buffer_inp.shape(0) != NUM_JOINTS || 
         torque_limits_buffer_inp.shape(0) != NUM_JOINTS) {
@@ -177,8 +179,8 @@ void KinovaWaitrPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer
     has_optimized = false;                                                  
 }
 
-void KinovaWaitrPybindWrapper::set_target(const nb_1d_double q_des_inp,
-                                          const double tplan_inp) {
+void KinovaWaitrPybindWrapper::set_target(const nb_1d_float q_des_inp,
+                                          const float tplan_inp) {
     tplan = tplan_inp;
 
     if (tplan <= 0.0 || tplan > T) {
@@ -211,7 +213,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    Eigen::VectorXd z(NUM_JOINTS);
+    Eigen::VectorXf z(NUM_JOINTS);
     z.setZero();
 
     // Initialize Kinova optimizer
@@ -246,7 +248,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     }
 
     // Run ipopt to solve the optimization problem
-    double solve_time = 0;
+    float solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -267,7 +269,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     has_optimized = mynlp->ifFeasible;
 
     const size_t shape_ptr[] = {NUM_JOINTS};
-    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
+    auto result = nb::ndarray<nb::numpy, const float>(mynlp->solution.data(),
                                                        1,
                                                        shape_ptr,
                                                        nb::handle());
@@ -316,7 +318,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
@@ -328,7 +330,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         trajInfo(i, 4 * NUM_JOINTS) = testnlp->trajPtr_->tspan(i);
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> contactInfo(N_simulate, 3);
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> contactInfo(N_simulate, 3);
     for (int i = 0; i < N_simulate; i++) {
         const Vec3& rotation_torque = testnlp->idPtr_->lambda(i).head(3);
         const Vec3& translation_force = testnlp->idPtr_->lambda(i).tail(3);
@@ -338,13 +340,13 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
     }
 
     const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
-    auto traj = nb::ndarray<nb::numpy, const double>(trajInfo.data(),
+    auto traj = nb::ndarray<nb::numpy, const float>(trajInfo.data(),
                                                      2,
                                                      shape_ptr1,
                                                      nb::handle());
 
     const size_t shape_ptr2[] = {N_simulate, 3};
-    auto contact = nb::ndarray<nb::numpy, const double>(contactInfo.data(),
+    auto contact = nb::ndarray<nb::numpy, const float>(contactInfo.data(),
                                                         2,
                                                         shape_ptr2,
                                                         nb::handle());

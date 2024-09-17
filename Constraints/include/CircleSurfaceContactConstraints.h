@@ -9,22 +9,22 @@
 namespace RAPTOR {
 
 typedef struct circleContactSurfaceParams_  {
-    double mu = 0.7; // friction coefficient
-    double R = 0.1; // radius of the contact surface (assumed to be circle)
-    double maxSuctionForce = 0; // maximum suction force of the suction cup
+    float mu = 0.7; // friction coefficient
+    float R = 0.1; // radius of the contact surface (assumed to be circle)
+    float maxSuctionForce = 0; // maximum suction force of the suction cup
 
-    double contactForceBuffer = 0; // buffer for positive contact force constraint
-    double frictionForceBuffer = 0; // buffer for translation friction cone constraint
-    double ZMPBuffer = 0; // buffer for ZMP constraint
+    float contactForceBuffer = 0; // buffer for positive contact force constraint
+    float frictionForceBuffer = 0; // buffer for translation friction cone constraint
+    float ZMPBuffer = 0; // buffer for ZMP constraint
 } circleContactSurfaceParams;
 
 class CircleSurfaceContactConstraints : public Constraints {
 public:
-    using Force = pinocchio::Data::Force;
-    using Vec3 = Eigen::Vector3d;
+    using Force = pinocchio::DataTpl<float>::Force;
+    using Vec3 = Eigen::Vector3f;
     using Vec6 = Vector6d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     CircleSurfaceContactConstraints() = default;

@@ -3,24 +3,24 @@
 namespace RAPTOR {
 
 namespace Box{ 
-void TensorProduct(const Eigen::Matrix3d& R, 
-                   const Eigen::Array<Eigen::MatrixXd, 3, 1>& inp,
-                   Eigen::Array<Eigen::MatrixXd, 3, 1>& out) {
+void TensorProduct(const Eigen::Matrix3f& R, 
+                   const Eigen::Array<Eigen::MatrixXf, 3, 1>& inp,
+                   Eigen::Array<Eigen::MatrixXf, 3, 1>& out) {
 	out(0) = R(0, 0) * inp(0) + R(0, 1) * inp(1) + R(0, 2) * inp(2);
 	out(1) = R(1, 0) * inp(0) + R(1, 1) * inp(1) + R(1, 2) * inp(2);
 	out(2) = R(2, 0) * inp(0) + R(2, 1) * inp(1) + R(2, 2) * inp(2);
 }
 }; // namespace Box
 
-double distancePointAndLineSegment(const Eigen::Vector3d& point, 
-                                   const Eigen::Vector3d& p1, 
-                                   const Eigen::Vector3d& p2) {
-    Eigen::Vector3d v = p2 - p1; //!< Vector representing the line segment
-    Eigen::Vector3d w = point - p1; //!< Vector from p1 to the point
+float distancePointAndLineSegment(const Eigen::Vector3f& point, 
+                                   const Eigen::Vector3f& p1, 
+                                   const Eigen::Vector3f& p2) {
+    Eigen::Vector3f v = p2 - p1; //!< Vector representing the line segment
+    Eigen::Vector3f w = point - p1; //!< Vector from p1 to the point
 
-    double lambda = w.dot(v) / v.dot(v);
-    double t = std::max(0.0, std::min(1.0, lambda));
-    Eigen::Vector3d projection = p1 + t * v; //!< Projected point on the line segment
+    float lambda = w.dot(v) / v.dot(v);
+    float t = fmaxf(0.0, fminf(1.0, lambda));
+    Eigen::Vector3f projection = p1 + t * v; //!< Projected point on the line segment
 
     // Compute the distance between the projected point and the given point
     return (projection - point).norm();
@@ -56,9 +56,9 @@ void BoxCollisionAvoidance::initialize() {
 		const Vec3& center = boxCenters[obs_id];
 		const Vec3& rpy = boxOrientation[obs_id];
 
-		Mat3 R = (Eigen::AngleAxisd(rpy[2], Vec3::UnitZ()) *
-				  Eigen::AngleAxisd(rpy[1], Vec3::UnitY()) *
-				  Eigen::AngleAxisd(rpy[0], Vec3::UnitX())).matrix();
+		Mat3 R = (Eigen::AngleAxisf(rpy[2], Vec3::UnitZ()) *
+				  Eigen::AngleAxisf(rpy[1], Vec3::UnitY()) *
+				  Eigen::AngleAxisf(rpy[0], Vec3::UnitX())).matrix();
 
 		// initialize vertices
 		vertices(obs_id, 0) = center + R * Vec3(half_size(0), half_size(1), half_size(2));
@@ -89,19 +89,19 @@ void BoxCollisionAvoidance::initialize() {
 	}
 }
 
-Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+Eigen::Vector3f BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
 											   			  				const int obs_id,
-																		double& isInside) const {
+																		float& isInside) const {
 	// Compute the closest point in the local frame of the box
 	Vec3 localPoint = boxR(obs_id).transpose() * (point - boxCenters[obs_id]);
 	Vec3 localClosestPoint;
 	isInside = -1.0;
-	double distancesWithFace[3][2];
+	float distancesWithFace[3][2];
 
 	for (int i = 0; i < 3; i++) {
 		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
 		distancesWithFace[i][1] = boxSize[obs_id](i) / 2.0 - localPoint(i);
-		localClosestPoint(i) = std::max(-boxSize[obs_id](i) / 2.0, std::min(localPoint(i), boxSize[obs_id](i) / 2.0));
+		localClosestPoint(i) = fmaxf(-boxSize[obs_id](i) / 2.0, fminf(localPoint(i), boxSize[obs_id](i) / 2.0));
 
 		if (localClosestPoint(i) != localPoint(i)) {
 			isInside = 1.0;
@@ -110,7 +110,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 
 	// The point is inside the box, find the closest point on the surface
 	if (isInside == -1.0) {
-		double minDist = 1e19;
+		float minDist = 1e19;
 		size_t faceIndex = 0, directionIndex = 0;
 		for (int i = 0; i < 3; i++) {
 			if (distancesWithFace[i][0] < minDist) {
@@ -136,11 +136,11 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 	return point - closestPoint;
 }
 
-Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+Eigen::Vector3f BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
 																		const MatX& ppoint_pz,
 																		const int obs_id,
 																		MatX& pdiff_pz,
-																		double& isInside) const {
+																		float& isInside) const {
 	pdiff_pz.resize(3, ppoint_pz.cols());	
 
 	// Compute the closest point in the local frame of the box
@@ -149,7 +149,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 	Vec3 localClosestPoint;
 	MatX plocalClosestPoint_pz(3, ppoint_pz.cols());
 	isInside = -1.0;
-	double distancesWithFace[3][2];
+	float distancesWithFace[3][2];
 
 	for (int i = 0; i < 3; i++) {
 		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
@@ -173,7 +173,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 
 	// The point is inside the box, find the closest point on the surface
 	if (isInside == -1.0) {
-		double minDist = 1e19;
+		float minDist = 1e19;
 		size_t faceIndex = 0, directionIndex = 0;
 		for (int i = 0; i < 3; i++) {
 			if (distancesWithFace[i][0] < minDist) {
@@ -203,13 +203,13 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 	return point - closestPoint;											
 }
 
-Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
+Eigen::Vector3f BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Vec3& point, 
 																		const MatX& ppoint_pz,
 																		const Eigen::Array<MatX, 3, 1>& ppoint_pz_pz,
 																		const int obs_id,
 																		MatX& pdiff_pz,
 																		Eigen::Array<MatX, 3, 1>& pdiff_pz_pz,
-																		double& isInside) const {
+																		float& isInside) const {
 	pdiff_pz.resize(3, ppoint_pz.cols());	
 	for (int i = 0; i < 3; i++) {
 		pdiff_pz_pz(i).resize(ppoint_pz.cols(), ppoint_pz.cols());
@@ -224,7 +224,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 	MatX plocalClosestPoint_pz(3, ppoint_pz.cols());
 	Eigen::Array<MatX, 3, 1> plocalClosestPoint_pz_pz;
 	isInside = -1.0;
-	double distancesWithFace[3][2];
+	float distancesWithFace[3][2];
 
 	for (int i = 0; i < 3; i++) {
 		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
@@ -251,7 +251,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 
 	// The point is inside the box, find the closest point on the surface
 	if (isInside == -1.0) {
-		double minDist = 1e19;
+		float minDist = 1e19;
 		size_t faceIndex = 0, directionIndex = 0;
 		for (int i = 0; i < 3; i++) {
 			if (distancesWithFace[i][0] < minDist) {
@@ -290,14 +290,14 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 void BoxCollisionAvoidance::computeDistance(const Vec3& point) {
 	minimumDistance = 1e19;
 	Vec3 diff;
-	double isInside = 1.0;
+	float isInside = 1.0;
 
 	for (int obs_id = 0; obs_id < numObstacles; obs_id++) {
 		diff = computeDifferenceWithCloestPoint(point, 
 												obs_id, 
 												isInside);
 
-		const double diffSquared = diff.dot(diff);
+		const float diffSquared = diff.dot(diff);
 		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
 								isInside * std::sqrt(diffSquared) : 
 								0.0;
@@ -318,7 +318,7 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 	minimumDistance = 1e19;
 	Vec3 diff;
 	MatX pdiff_pz;
-	double isInside = 1.0;
+	float isInside = 1.0;
 
 	pdistances_pz.resize(numObstacles, ppoint_pz.cols());
 
@@ -335,8 +335,8 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 													isInside);
 		}
 		
-		const double diffSquared = diff.dot(diff);
-		const double distanceNorm = std::sqrt(diffSquared);
+		const float diffSquared = diff.dot(diff);
+		const float distanceNorm = std::sqrt(diffSquared);
 		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
 								isInside * distanceNorm : 
 								0.0;
@@ -362,7 +362,7 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 												pdiff_pz,
 												isInside);
 
-		const double diffSquared = diff.dot(diff);
+		const float diffSquared = diff.dot(diff);
 		if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
 			pdistances_pz.row(minimumDistanceIndex) = isInside * diff.transpose() * pdiff_pz / std::sqrt(diffSquared);
 		}
@@ -396,7 +396,7 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 	Vec3 diff;
 	MatX pdiff_pz;
 	Eigen::Array<MatX, 3, 1> pdiff_pz_pz;
-	double isInside = 1.0;
+	float isInside = 1.0;
 
 	pdistances_pz.resize(numObstacles, ppoint_pz.cols());
 
@@ -418,8 +418,8 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 													isInside);
 		}
 
-		const double diffSquared = diff.dot(diff);
-		const double distanceNorm = std::sqrt(diffSquared);
+		const float diffSquared = diff.dot(diff);
+		const float distanceNorm = std::sqrt(diffSquared);
 		distances(obs_id) = (diffSquared > Box::SQUARE_ROOT_THRESHOLD) ?
 								isInside * distanceNorm : 
 								0.0;
@@ -454,9 +454,9 @@ void BoxCollisionAvoidance::computeDistance(const Vec3& point,
 												pdiff_pz, pdiff_pz_pz,
 												isInside);
 												
-		double diffSquared = diff.dot(diff);
+		float diffSquared = diff.dot(diff);
 		if (diffSquared > Box::SQUARE_ROOT_THRESHOLD) {
-			double dist = std::sqrt(diffSquared);
+			float dist = std::sqrt(diffSquared);
 			MatX pdiffSquare_pz = diff.transpose() * pdiff_pz;
 			pdistances_pz.row(minimumDistanceIndex) = isInside * pdiffSquare_pz / dist;
 

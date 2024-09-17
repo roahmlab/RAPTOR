@@ -20,8 +20,9 @@ int main(int argc, char* argv[]) {
     // define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
     
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
     model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
     // load settings
-    const double T = 0.4;
+    const float T = 0.4;
     const TimeDiscretization time_discretization = Chebyshev;
     int N = 16;
     int degree = 5;
@@ -84,7 +85,7 @@ int main(int argc, char* argv[]) {
 
                 for (int test_id = 1; test_id <= 100; test_id++) {
                     std::srand(test_id);
-                    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+                    Eigen::VectorXf z = 0.2 * Eigen::VectorXf::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
                     
                     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
                     try {
@@ -116,7 +117,7 @@ int main(int argc, char* argv[]) {
                         status = app->OptimizeTNLP(mynlp);
 
                         auto end = std::chrono::high_resolution_clock::now();
-                        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+                        float solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
 
                         experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
                     }

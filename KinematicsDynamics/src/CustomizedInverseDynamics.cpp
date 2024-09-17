@@ -49,7 +49,7 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
         
         // function mcI in Roy Featherstone's code (parallel axis theorem)
         const MatX CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
-        const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
+        const float mm = modelPtr_->inertias[pinocchio_joint_id].mass();
         const MatX II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();
         I(i) << mm * CC * CC.transpose() + II, mm * CC,
                 mm * CC.transpose(),           mm * MatX::Identity(3, 3);
@@ -76,8 +76,8 @@ CustomizedInverseDynamics::CustomizedInverseDynamics(const Model& model_input,
     plambda_pz.resize(1, N);
 }
 
-Eigen::VectorXd CustomizedInverseDynamics::get_full_joints(const VecX& q) const {
-    Eigen::VectorXd q_full(modelPtr_->nq);
+Eigen::VectorXf CustomizedInverseDynamics::get_full_joints(const VecX& q) const {
+    Eigen::VectorXf q_full(modelPtr_->nq);
     q_full.setZero();
     for (int i = 0; i < active_joints.size(); i++) {
         q_full(active_joints[i]) = q(i);
@@ -85,8 +85,8 @@ Eigen::VectorXd CustomizedInverseDynamics::get_full_joints(const VecX& q) const 
     return q_full;
 }
 
-Eigen::MatrixXd CustomizedInverseDynamics::get_full_joints_derivative(const MatX& q) const {
-    Eigen::MatrixXd q_full_derivative(modelPtr_->nq, q.cols());
+Eigen::MatrixXf CustomizedInverseDynamics::get_full_joints_derivative(const MatX& q) const {
+    Eigen::MatrixXf q_full_derivative(modelPtr_->nq, q.cols());
     q_full_derivative.setZero();
     for (int i = 0; i < active_joints.size(); i++) {
         q_full_derivative.row(active_joints[i]) = q.row(i);

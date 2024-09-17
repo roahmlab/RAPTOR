@@ -16,8 +16,9 @@ int main(int argc, char* argv[]) {
     // define robot model
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
     
     // ignore all motor dynamics
     model.rotorInertia.setZero();
@@ -25,16 +26,16 @@ int main(int argc, char* argv[]) {
     model.friction.setZero();
 
     // the robot start from this initial condition:
-    Eigen::VectorXd q0(NUM_INDEPENDENT_JOINTS);
+    Eigen::VectorXf q0(NUM_INDEPENDENT_JOINTS);
     q0 << 0, 0, -0.411354,  0.859395, -0.448041, -0.001708,
           0, 0, -0.411354,  0.859395, -0.448041, -0.001708;
-    Eigen::VectorXd q_d0(NUM_INDEPENDENT_JOINTS);
+    Eigen::VectorXf q_d0(NUM_INDEPENDENT_JOINTS);
     q_d0.setZero();
 
     // load settings
     YAML::Node config;
 
-    const double T = 0.8;
+    const float T = 0.8;
     TimeDiscretization time_discretization = Uniform;
     int N = 14;
     int degree = 5;
@@ -49,16 +50,16 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
-        gp.swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<double>();
-        gp.swingfoot_end_x_des = config["swingfoot_end_x_des"].as<double>();
+        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<float>();
+        gp.swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<float>();
+        gp.swingfoot_end_x_des = config["swingfoot_end_x_des"].as<float>();
     } 
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
     }
     
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos.txt");
-    Eigen::VectorXd z = Eigen::VectorXd::Zero((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+    // Eigen::VectorXf z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos.txt");
+    Eigen::VectorXf z = Eigen::VectorXf::Zero((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
     // if (argc > 1) {
     //     char* end = nullptr;
     //     std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]) {
     // else {
     //     std::srand(std::time(nullptr));
     // }
-    // Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    // Eigen::VectorXf z = 0.2 * Eigen::VectorXf::Random((degree - 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
     
     SmartPtr<TalosSingleStepOptimizer> mynlp = new TalosSingleStepOptimizer();
     try {
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
                               false,
                               q0,
                               q_d0);
-        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<float>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -92,16 +93,16 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     try {
-        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
+        app->Options()->SetNumericValue("tol", config["tol"].as<float>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<float>());
 
         app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
         // char* end = nullptr;
         // app->Options()->SetIntegerValue("max_iter", (unsigned int)std::strtoul(argv[1], &end, 10));
 
-        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
-        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<float>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<float>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
         app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
         app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -151,7 +152,7 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        double solve_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
+        float solve_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1e6;
 
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
         // experiment_output << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
@@ -165,7 +166,7 @@ int main(int argc, char* argv[]) {
     if (mynlp->solution.size() == mynlp->numVars) {
         // Evaluate the solution on a finer time discretization
         try {
-            const double dt_sim = 5e-4;
+            const float dt_sim = 5e-4;
             const int N_simulate = T / dt_sim;
 
             SmartPtr<TalosSingleStepOptimizer> testnlp = new TalosSingleStepOptimizer();

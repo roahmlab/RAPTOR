@@ -11,11 +11,11 @@ namespace RAPTOR {
 
 class KinematicsConstraints : public Constraints {
 public:
-    using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using Vec3 = Eigen::Vector3f;
+    using Mat3 = Eigen::Matrix3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     KinematicsConstraints() = default;

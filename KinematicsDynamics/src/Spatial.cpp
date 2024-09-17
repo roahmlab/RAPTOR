@@ -9,12 +9,12 @@ namespace RAPTOR {
 void jcalc(Matrix6d& Xj, 
            Vector6d& S, 
            const int jtyp, 
-           const double q) {
+           const float q) {
     Xj.setIdentity();
     S.setZero();
 
-    double c = cos(q);
-    double s = sin(q);
+    float c = cos(q);
+    float s = sin(q);
 
     if (jtyp < 0) { // reversed direction
         // c = cos(-q) = cos(q)
@@ -112,15 +112,15 @@ void jcalc(Matrix6d& Xj,
            Matrix6d& dXjdq,
            Vector6d& S, 
            const int jtyp, 
-           const double q) {
+           const float q) {
     Xj.setIdentity();
     dXjdq.setZero();
     S.setZero();
 
-    double c = cos(q);
-    double s = sin(q);
-    double dcdq = -s;
-    double dsdq = c;
+    float c = cos(q);
+    float s = sin(q);
+    float dcdq = -s;
+    float dsdq = c;
 
     if (jtyp < 0) { // reversed direction
         // c = cos(-q) = cos(q)
@@ -256,16 +256,16 @@ void jcalc(Matrix6d& Xj,
            Matrix6d& dXjdt,
            Vector6d& S, 
            const int jtyp, 
-           const double q,
-           const double q_d) {
+           const float q,
+           const float q_d) {
     Xj.setIdentity();
     dXjdt.setZero();
     S.setZero();
 
-    double c = cos(q);
-    double s = sin(q);
-    double dcdt = -s * q_d;
-    double dsdt = c * q_d;
+    float c = cos(q);
+    float s = sin(q);
+    float dcdt = -s * q_d;
+    float dsdt = c * q_d;
 
     if (jtyp < 0) { // reversed direction
         // c = cos(-q) = cos(q)

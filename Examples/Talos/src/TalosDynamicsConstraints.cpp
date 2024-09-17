@@ -141,7 +141,7 @@ void TalosDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, con
     }
 }
 
-Eigen::VectorXd TalosDynamicsConstraints::get_dependent_vector(const VecX& v) {
+Eigen::VectorXf TalosDynamicsConstraints::get_dependent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_DEPENDENT_JOINTS);
@@ -153,7 +153,7 @@ Eigen::VectorXd TalosDynamicsConstraints::get_dependent_vector(const VecX& v) {
     return r;
 }
 
-Eigen::VectorXd TalosDynamicsConstraints::get_independent_vector(const VecX& v) {
+Eigen::VectorXf TalosDynamicsConstraints::get_independent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_INDEPENDENT_JOINTS);

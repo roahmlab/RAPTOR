@@ -11,8 +11,9 @@ int main(int argc, char* argv[]) {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
@@ -20,25 +21,25 @@ int main(int argc, char* argv[]) {
     // model.rotorInertia.setZero();
 
     // Define trajectory parameters
-    const double T = 10.0;
+    const float T = 10.0;
     const int N = 50;
     const int degree = 5;
-    const double base_frequency = 2.0 * M_PI / T;
+    const float base_frequency = 2.0 * M_PI / T;
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 0.1;
+    Eigen::VectorXf z = 2 * 0.2 * Eigen::VectorXf::Random((2 * degree + 3) * model.nv).array() - 0.1;
     z.segment((2 * degree + 1) * model.nv, model.nv) = 
-        2 * 1.0 * Eigen::VectorXd::Random(model.nv).array() - 1.0;
+        2 * 1.0 * Eigen::VectorXf::Random(model.nv).array() - 1.0;
     z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
-        2 * 0.5 * Eigen::VectorXd::Random(model.nv).array() - 0.5;
+        2 * 0.5 * Eigen::VectorXf::Random(model.nv).array() - 0.5;
 
     // Define limits buffer
-    Eigen::VectorXd joint_limits_buffer(model.nq);
+    Eigen::VectorXf joint_limits_buffer(model.nq);
     joint_limits_buffer.setConstant(0.02);
-    Eigen::VectorXd velocity_limits_buffer(model.nq);
+    Eigen::VectorXf velocity_limits_buffer(model.nq);
     velocity_limits_buffer.setConstant(0.05);
-    Eigen::VectorXd torque_limits_buffer(model.nq);
+    Eigen::VectorXf torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.5);
 
     // Initialize Kinova optimizer
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Run ipopt to solve the optimization problem
-    double solve_time = 0;
+    float solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -102,7 +103,7 @@ int main(int argc, char* argv[]) {
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
 
-        const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv);
+        const Eigen::VectorXf initial_position_part = mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv);
         mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv) =
             Utils::wrapToPi(initial_position_part);
     }

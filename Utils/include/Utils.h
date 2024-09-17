@@ -10,32 +10,32 @@
 namespace RAPTOR {
 namespace Utils {
 
-inline double deg2rad(const double deg) {
+inline float deg2rad(const float deg) {
     return deg * M_PI / 180.0;
 }
 
-inline double rad2deg(const double rad) {
+inline float rad2deg(const float rad) {
     return rad * 180.0 / M_PI;
 }
 
-inline Eigen::Vector3d deg2rad(const Eigen::Vector3d& deg) {
+inline Eigen::Vector3f deg2rad(const Eigen::Vector3f& deg) {
     return deg * M_PI / 180.0;
 }
 
-inline Eigen::Vector3d rad2deg(const Eigen::Vector3d& rad) {
+inline Eigen::Vector3f rad2deg(const Eigen::Vector3f& rad) {
     return rad * 180.0 / M_PI;
 }
 
-inline Eigen::VectorXd deg2rad(const Eigen::VectorXd& deg) {
+inline Eigen::VectorXf deg2rad(const Eigen::VectorXf& deg) {
     return deg * M_PI / 180.0;
 }
 
-inline Eigen::VectorXd rad2deg(const Eigen::VectorXd& rad) {
+inline Eigen::VectorXf rad2deg(const Eigen::VectorXf& rad) {
     return rad * 180.0 / M_PI;
 }
 
-inline double wrapToPi(const double angle) {
-    double res = angle;
+inline float wrapToPi(const float angle) {
+    float res = angle;
     while (res > M_PI) {
         res -= 2.0 * M_PI;
     }
@@ -45,15 +45,15 @@ inline double wrapToPi(const double angle) {
     return res;
 }
 
-inline Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
-    Eigen::VectorXd res = angles;
+inline Eigen::VectorXf wrapToPi(const Eigen::VectorXf& angles) {
+    Eigen::VectorXf res = angles;
     for (int i = 0; i < res.size(); i++) {
         res(i) = wrapToPi(res(i));
     }
     return res;
 }
 
-inline double sign(double val, double eps = 1e-8) {
+inline float sign(float val, float eps = 1e-8) {
     if (val > eps) {
         return 1.0;
     } 
@@ -65,9 +65,9 @@ inline double sign(double val, double eps = 1e-8) {
     }
 }
 
-inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, 
-                             const Eigen::VectorXd& b, 
-                             double tol = 1e-10) {
+inline bool ifTwoVectorEqual(const Eigen::VectorXf& a, 
+                             const Eigen::VectorXf& b, 
+                             float tol = 1e-10) {
     if (a.size() != b.size()) {
         return false;
     }
@@ -79,9 +79,9 @@ inline bool ifTwoVectorEqual(const Eigen::VectorXd& a,
     return true;
 }
 
-inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, 
-                             const Eigen::MatrixXd& b, 
-                             double tol = 1e-10) {
+inline bool ifTwoMatrixEqual(const Eigen::MatrixXf& a, 
+                             const Eigen::MatrixXf& b, 
+                             float tol = 1e-10) {
     if (a.rows() != b.rows() || a.cols() != b.cols()) {
         return false;
     }
@@ -95,73 +95,73 @@ inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a,
     return true;
 }
 
-inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, 
+inline Eigen::MatrixXf reshape(const Eigen::VectorXf& vec, 
                                int rows, 
                                int cols) {
-    return Eigen::Map<const Eigen::MatrixXd>(vec.data(), rows, cols);
+    return Eigen::Map<const Eigen::MatrixXf>(vec.data(), rows, cols);
 }
 
-inline Eigen::Matrix3d skew(const Eigen::Vector3d& v) {
-    Eigen::Matrix3d res;
+inline Eigen::Matrix3f skew(const Eigen::Vector3f& v) {
+    Eigen::Matrix3f res;
     res << 0,    -v(2), v(1),
            v(2),  0,   -v(0),
           -v(1),  v(0), 0;
     return res;
 }
 
-inline Eigen::Vector3d skew(const Eigen::Matrix3d& m) {
-    Eigen::Vector3d res;
+inline Eigen::Vector3f skew(const Eigen::Matrix3f& m) {
+    Eigen::Vector3f res;
     res << m(2,1) - m(1,2), 
            m(0,2) - m(2,0), 
            m(1,0) - m(0,1);
     return 0.5 * res;
 }
 
-inline Eigen::Vector3d unskew(const Eigen::Matrix3d& m) {
-    Eigen::Vector3d res;
+inline Eigen::Vector3f unskew(const Eigen::Matrix3f& m) {
+    Eigen::Vector3f res;
     res << m(2,1), 
            m(0,2), 
            m(1,0);
     return res;
 }
 
-inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, 
-                                        const Eigen::Vector3d& p) {
-    Eigen::Matrix<double, 6, 6> res;
-    res << R,            Eigen::MatrixXd::Zero(3, 3),
+inline Eigen::Matrix<float, 6, 6> plux(const Eigen::Matrix3f& R, 
+                                        const Eigen::Vector3f& p) {
+    Eigen::Matrix<float, 6, 6> res;
+    res << R,            Eigen::MatrixXf::Zero(3, 3),
            -R * skew(p), R;
     return res;
 }
 
-inline Eigen::VectorXd initializeEigenVectorFromArray(const double* array, 
+inline Eigen::VectorXf initializeEigenVectorFromArray(const float* array, 
                                                       size_t size) {
-    Eigen::VectorXd res(size);
+    Eigen::VectorXf res(size);
     for (int i = 0; i < size; i++) {
         res(i) = array[i];
     }
     return res;
 }
 
-inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename) {
+inline Eigen::MatrixXf initializeEigenMatrixFromFile(const std::string filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file " + filename);
     }
 
-    std::vector<std::vector<double>> data;
+    std::vector<std::vector<float>> data;
     std::string line;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        std::vector<double> lineData;
-        double value;
+        std::vector<float> lineData;
+        float value;
         while (iss >> value) {
             lineData.push_back(value);
         }
         data.push_back(lineData);
     }
 
-    Eigen::MatrixXd res(data.size(), data[0].size());
+    Eigen::MatrixXf res(data.size(), data[0].size());
     for (int i = 0; i < data.size(); i++) {
         for (int j = 0; j < data[0].size(); j++) {
             res(i, j) = data[i][j];
@@ -171,7 +171,7 @@ inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename)
     return res;
 }
 
-inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix, 
+inline void writeEigenMatrixToFile(const Eigen::MatrixXf& matrix, 
                                    const std::string filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -188,9 +188,9 @@ inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix,
     file.close();
 }
 
-inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec, 
+inline Eigen::VectorXf uniformlySampleVector(const Eigen::VectorXf& vec, 
                                              int numSamples) {
-    Eigen::VectorXd samples(0);
+    Eigen::VectorXf samples(0);
 
     if (numSamples <= 0 || 
         vec.size() == 0) {
@@ -205,7 +205,7 @@ inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec,
     samples.resize(numSamples);
 
     // Calculate sampling interval
-    double interval = static_cast<double>(vec.size()) / numSamples;
+    float interval = static_cast<float>(vec.size()) / numSamples;
     
     for (int i = 0; i < numSamples; i++) {
         int idx = static_cast<int>(i * interval);
@@ -218,9 +218,9 @@ inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec,
     return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
+inline Eigen::MatrixXf uniformlySampleMatrixInRows(const Eigen::MatrixXf& mat, 
                                                    int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
+    Eigen::MatrixXf samples(0, 0);
 
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
@@ -236,7 +236,7 @@ inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat,
     samples.resize(numSamples, mat.cols());
 
     // Calculate sampling interval
-    double interval = static_cast<double>(mat.rows()) / numSamples;
+    float interval = static_cast<float>(mat.rows()) / numSamples;
     
     for (int i = 0; i < numSamples; i++) {
         int idx = static_cast<int>(i * interval);
@@ -248,9 +248,9 @@ inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat,
     return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
+inline Eigen::MatrixXf uniformlySampleMatrixInCols(const Eigen::MatrixXf& mat, 
                                                    int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
+    Eigen::MatrixXf samples(0, 0);
 
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
@@ -266,7 +266,7 @@ inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat,
     samples.resize(mat.rows(), numSamples);
 
     // Calculate sampling interval
-    double interval = static_cast<double>(mat.cols()) / numSamples;
+    float interval = static_cast<float>(mat.cols()) / numSamples;
     
     for (int i = 0; i < numSamples; i++) {
         int idx = static_cast<int>(i * interval);

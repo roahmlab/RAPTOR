@@ -18,10 +18,10 @@ namespace Kinova {
 
 class KinovaOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::Model;
-    using VecX = Eigen::VectorXd;
-    using Vec3 = Eigen::Vector3d;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using VecX = Eigen::VectorXf;
+    using Vec3 = Eigen::Vector3f;
+    using MatX = Eigen::MatrixXf;
 
     /** Default constructor */
     KinovaOptimizer() = default;
@@ -32,7 +32,7 @@ public:
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const double T_input,
+        const float T_input,
         const int N_input,
         const int degree_input,
         const Model& model_input, 
@@ -45,7 +45,7 @@ public:
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
-        const double collision_buffer_input = 0
+        const float collision_buffer_input = 0
     );
 
     /**@name Overloaded from TNLP */

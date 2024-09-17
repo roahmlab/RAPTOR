@@ -2,7 +2,7 @@
 
 namespace RAPTOR {
 
-Eigen::VectorXi convertPinocchioJointType(const pinocchio::Model& model) {
+Eigen::VectorXi convertPinocchioJointType(const pinocchio::ModelTpl<float>& model) {
     Eigen::VectorXi jtype(model.nq);
 
     for (int i = 0; i < model.nq; i++) {
@@ -70,9 +70,9 @@ Transform::Transform(const Mat3& R_in,
 Transform::Transform(const Vec3& rpy_in,
                      const Vec3& p_in) :
     p(p_in) {
-    R = Eigen::AngleAxisd(rpy_in(0), Eigen::Vector3d::UnitX()) * 
-        Eigen::AngleAxisd(rpy_in(1), Eigen::Vector3d::UnitY()) * 
-        Eigen::AngleAxisd(rpy_in(2), Eigen::Vector3d::UnitZ());
+    R = Eigen::AngleAxisf(rpy_in(0), Eigen::Vector3f::UnitX()) * 
+        Eigen::AngleAxisf(rpy_in(1), Eigen::Vector3f::UnitY()) * 
+        Eigen::AngleAxisf(rpy_in(2), Eigen::Vector3f::UnitZ());
     ifDerivative = false;
 }
 
@@ -83,7 +83,7 @@ Transform::Transform(const Vec3& p_in) :
 }
 
 Transform::Transform(const int jtype, 
-                     const double theta, 
+                     const float theta, 
                      const int order) {
     if (order == 0) { // Transform of rotation matrix
         R = Mat3::Identity();
@@ -358,7 +358,7 @@ Transform Transform::operator*=(const SE3& x) {
     return *this;
 }
 
-Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp) {
+Transform operator*(const pinocchio::SE3Tpl<float>& x, const Transform& sRp) {
     return Transform(x.rotation() * sRp.R, 
                      x.rotation() * sRp.p + x.translation(), 
                      sRp.ifDerivative);
@@ -369,12 +369,12 @@ Transform Transform::inverse() const {
     return Transform(R.transpose(), -R.transpose() * p, false);
 }
 
-Eigen::Vector3d Transform::getRPY() const {
+Eigen::Vector3f Transform::getRPY() const {
     // roll pitch yaw conversion does not make sense 
     // for the derivative of a transformation matrix
     assert(!ifDerivative);
 
-    Eigen::Vector3d rpy;
+    Eigen::Vector3f rpy;
     rpy << atan2(-R(1,2), R(2,2)),                   // roll
            HigherOrderDerivatives::safeasin(R(0,2)), // pitch
            atan2(-R(0,1), R(0,0));                   // yaw
@@ -382,8 +382,8 @@ Eigen::Vector3d Transform::getRPY() const {
     return rpy;
 }
 
-Eigen::Matrix<double, 6, 1> Transform::getXYZRPY() const {
-    Eigen::Matrix<double, 6, 1> xyzrpy;
+Eigen::Matrix<float, 6, 1> Transform::getXYZRPY() const {
+    Eigen::Matrix<float, 6, 1> xyzrpy;
     xyzrpy << p, getRPY();
     return xyzrpy;
 }

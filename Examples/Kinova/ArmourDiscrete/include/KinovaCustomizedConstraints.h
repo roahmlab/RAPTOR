@@ -31,20 +31,20 @@ const int SPHERE_OFFSET_AXIS[NUM_SPHERES] = {5, 5, 5, 5, 5, 5, 5, // spheres on 
                                              5, 5};               // spheres on link 6
 
 // the translation offset of the spheres to cover the links                                            
-const double SPHERE_OFFSET[NUM_SPHERES] = {-0.05, -0.11, -0.17, -0.24, -0.30, -0.36, -0.43, // spheres on link 2
+const float SPHERE_OFFSET[NUM_SPHERES] = {-0.05, -0.11, -0.17, -0.24, -0.30, -0.36, -0.43, // spheres on link 2
                                            -0.07, -0.14, -0.21, -0.28, -0.32,               // spheres on link 4
                                            -0.07, -0.14};                                   // spheres on link 6                                        
 
-const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.08, // spheres on link 2
+const float SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.08, // spheres on link 2
                                            0.07, 0.06, 0.06, 0.06, 0.07,             // spheres on link 4
                                            0.05, 0.05};                              // spheres on link 6
 
 class KinovaCustomizedConstraints : public Constraints {
 public:
-    using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using Vec3 = Eigen::Vector3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     KinovaCustomizedConstraints() = default;
@@ -55,7 +55,7 @@ public:
                                 const std::vector<Vec3>& boxCenters_input,
                                 const std::vector<Vec3>& boxOrientation_input,
                                 const std::vector<Vec3>& boxSize_input,
-                                const double collision_buffer_input = 0,
+                                const float collision_buffer_input = 0,
                                 Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
@@ -65,8 +65,8 @@ public:
         // add one more sphere to the collision avoidance
     void add_collision_sphere(int joint_id,
                               int offset_axis,
-                              double offset,
-                              double radius);
+                              float offset,
+                              float radius);
 
         // compute constraints
     void compute(const VecX& z, 
@@ -88,14 +88,14 @@ public:
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
-    double collision_buffer = 0;
+    float collision_buffer = 0;
 
         // sphere info
     int num_spheres = 0;
     std::vector<int> sphere_joint_id;
     std::vector<int> sphere_offset_axis;
-    std::vector<double> sphere_offset;
-    std::vector<double> sphere_radius;
+    std::vector<float> sphere_offset;
+    std::vector<float> sphere_radius;
 
         // the transform matrix at the beginning and at the end
     Transform startT;

@@ -9,7 +9,7 @@ constexpr int NUM_DEPENDENT_JOINTS = 6;
 constexpr int NUM_INDEPENDENT_JOINTS = 12;
 
 // pulled from talos_reduced_armfixed.urdf
-constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
+constexpr float JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -1000,           // Px
     -1000,           // Py
     -1000,           // Pz
@@ -31,7 +31,7 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
 };
 
 // pulled from talos_reduced_armfixed.urdf
-constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
+constexpr float JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     1000,           // Px
     1000,           // Py
     1000,           // Pz
@@ -52,7 +52,7 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     0.5236          // leg_right_6_joint
 };
 
-constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
+constexpr float TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -100, // leg_left_1_joint
     -160, // leg_left_2_joint
     -160, // leg_left_3_joint
@@ -67,7 +67,7 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -100  // leg_right_6_joint
 };
 
-constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
+constexpr float TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     100, // leg_left_1_joint
     160, // leg_left_2_joint
     160, // leg_left_3_joint
@@ -82,10 +82,10 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     100  // leg_right_6_joint
 };
 
-constexpr double MU = 0.7;
-constexpr double GAMMA = 0.7;
-constexpr double FOOT_WIDTH = 0.1344; // (m)
-constexpr double FOOT_LENGTH = 0.2208; // (m)
+constexpr float MU = 0.7;
+constexpr float GAMMA = 0.7;
+constexpr float FOOT_WIDTH = 0.1344; // (m)
+constexpr float FOOT_LENGTH = 0.2208; // (m)
 
 }; // namespace Talos
 }; // namespace RAPTOR

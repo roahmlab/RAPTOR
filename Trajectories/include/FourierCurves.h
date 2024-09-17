@@ -7,8 +7,8 @@ namespace RAPTOR {
 
 class FourierCurves : public Trajectories {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     FourierCurves() = default;
 
@@ -18,7 +18,7 @@ public:
                   VecX q0_input = VecX::Zero(0),
                   VecX q_d0_input = VecX::Zero(0));
 
-    FourierCurves(double T_input, 
+    FourierCurves(float T_input, 
                   int N_input, 
                   int Nact_input, 
                   TimeDiscretization time_discretization, 

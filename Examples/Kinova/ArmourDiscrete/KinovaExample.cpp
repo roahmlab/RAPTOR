@@ -11,16 +11,17 @@ int main() {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
 
     // Define obstacles
     const int num_obstacles = 5;
-    std::vector<Eigen::Vector3d> boxCenters;
-    std::vector<Eigen::Vector3d> boxOrientation;
-    std::vector<Eigen::Vector3d> boxSize;
+    std::vector<Eigen::Vector3f> boxCenters;
+    std::vector<Eigen::Vector3f> boxOrientation;
+    std::vector<Eigen::Vector3f> boxSize;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -34,29 +35,29 @@ int main() {
 
     // Define trajectories
     ArmourTrajectoryParameters atp;
-    atp.q0 = Eigen::VectorXd::Zero(model.nq);
-    atp.q_d0 = Eigen::VectorXd::Zero(model.nq);
-    atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
+    atp.q0 = Eigen::VectorXf::Zero(model.nq);
+    atp.q_d0 = Eigen::VectorXf::Zero(model.nq);
+    atp.q_dd0 = Eigen::VectorXf::Zero(model.nq);
 
-    const double T = 1;
+    const float T = 1;
     const int N = 16;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define target
-    Eigen::VectorXd qdes(model.nq);
+    Eigen::VectorXf qdes(model.nq);
     qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
-    Eigen::VectorXd z(model.nq);
+    Eigen::VectorXf z(model.nq);
     z.setRandom();
 
     // Define limits buffer
-    Eigen::VectorXd joint_limits_buffer(model.nq);
+    Eigen::VectorXf joint_limits_buffer(model.nq);
     joint_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd velocity_limits_buffer(model.nq);
+    Eigen::VectorXf velocity_limits_buffer(model.nq);
     velocity_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd torque_limits_buffer(model.nq);
+    Eigen::VectorXf torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.0);
 
     // Initialize Kinova optimizer
@@ -114,7 +115,7 @@ int main() {
     }
 
     // Run ipopt to solve the optimization problem
-    double solve_time = 0;
+    float solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 

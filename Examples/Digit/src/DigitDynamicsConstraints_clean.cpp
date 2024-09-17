@@ -187,7 +187,7 @@ void DigitDynamicsConstraints::fill_independent_rows(MatX& r, const MatX& m, con
     }
 }
 
-Eigen::VectorXd DigitDynamicsConstraints::get_dependent_vector(const VecX& v) {
+Eigen::VectorXf DigitDynamicsConstraints::get_dependent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_DEPENDENT_JOINTS);
@@ -199,7 +199,7 @@ Eigen::VectorXd DigitDynamicsConstraints::get_dependent_vector(const VecX& v) {
     return r;
 }
 
-Eigen::VectorXd DigitDynamicsConstraints::get_independent_vector(const VecX& v) {
+Eigen::VectorXf DigitDynamicsConstraints::get_independent_vector(const VecX& v) {
     assert(v.size() == modelPtr_->nv);
 
     VecX r(NUM_INDEPENDENT_JOINTS);
@@ -266,18 +266,18 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // to the later GSL iterative root-findings 
     // the code is modified from code generation by Matlab symbolic toolbox
     // right toe close loop
-    double q1 = q(modelPtr_->getJointId("right_toe_A") - 1);
-    double q2 = q(modelPtr_->getJointId("right_toe_B") - 1);
-    double t2 = cos(q1);
-    double t3 = cos(q2);
-    double t4 = sin(q1);
-    double t5 = sin(q2);
-    double t6 = q1*2.0;
-    double t7 = q2*2.0;
-    double t8 = cos(t6);
-    double t9 = cos(t7);
-    double t10 = sin(t6);
-    double t11 = sin(t7);
+    float q1 = q(modelPtr_->getJointId("right_toe_A") - 1);
+    float q2 = q(modelPtr_->getJointId("right_toe_B") - 1);
+    float t2 = cos(q1);
+    float t3 = cos(q2);
+    float t4 = sin(q1);
+    float t5 = sin(q2);
+    float t6 = q1*2.0;
+    float t7 = q2*2.0;
+    float t8 = cos(t6);
+    float t9 = cos(t7);
+    float t10 = sin(t6);
+    float t11 = sin(t7);
     qcopy(modelPtr_->getJointId("right_toe_A_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*5.114967905744713E-1+t3*4.072902857734452E-1+t4*5.15019991000208E-1-t5*7.189052210514619E-1-t8*1.914308797309167E-1+t9*1.020482430826409E-1+t10*2.762037569148706E-1+t11*4.461078267300372E-1-t2*t3*5.669643819573642E-1+t2*t5*9.826313004441752E-1+t3*t4*7.066611122892024E-1-t4*t5*8.751268427354268E-2-t2*t9*1.526013089230614E-1+t3*t8*2.146475284950957E-1-t2*t11*6.373722738059316E-1-t3*t10*4.061233553924697E-1-t4*t9*2.591685269591633E-1-t5*t8*3.141536266927853E-1+t4*t11*1.154141052196728E-1+t5*t10*5.111686735370716E-2+t8*t9*2.629326893467769E-2+t8*t11*2.261999172185061E-1+t9*t10*1.714455893661597E-1-t10*t11*5.322298539488757E-2-3.496118766033006E-1);
     qcopy(modelPtr_->getJointId("right_A2") - 1) = HigherOrderDerivatives::safeasin(t2*8.08508988653757+t3*8.033204820099098+t4*1.820663506981432+t5*9.760946687487468E-1-t8*2.143120822774579-t9*1.998293355526279-t10*1.095961671709748-t11*4.953901287885355E-1-t2*t3*1.273036938982479E+1-t2*t5*1.117825053271672-t3*t4*2.420405429552186+t4*t5*1.170037217867019+t2*t9*2.835751824751641+t3*t8*3.021210259875125+t2*t11*5.805706025081291E-1+t3*t10*1.468854423683356+t4*t9*5.420356015832145E-1+t5*t8*2.326217949887465E-1+t4*t11*1.600391744429722E-1+t5*t10*1.170908991628156E-1-t8*t9*4.40337591097512E-1-t8*t11*1.065731420572547E-1-t9*t10*3.400548068856727E-1-t10*t11*4.121086576936894E-1-4.663948776295725);
     qcopy(modelPtr_->getJointId("right_toe_B_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*(-6.277469604269263E-1)-t3*6.676022839778379E-1-t4*8.399423316628958E-1+t5*1.529719504893023E-1+t8*1.44381731007234E-1+t9*4.870768316848186E-1+t10*5.196004288358185E-1+t11*4.899787657102767E-1+t2*t3*1.038356653790214+t2*t5*1.224128324227442+t3*t4*1.136249345040226-t4*t5*2.962244825741616E-1-t2*t9*7.061936994304631E-1-t3*t8*2.508516890107657E-1-t2*t11*7.147313228957868E-1-t3*t10*7.361945978788478E-1-t4*t9*3.638713473685915E-1-t5*t8*4.137119943797418E-1+t4*t11*2.198247731883075E-1+t5*t10*1.190720324216782E-1+t8*t9*1.91374695742122E-1+t8*t11*2.674233531253601E-1+t9*t10*2.592073581826719E-1-t10*t11*1.033333326963321E-1+3.90361533934657E-1);

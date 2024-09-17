@@ -12,7 +12,7 @@ Polynomials::Polynomials(const VecX& tspan_input,
     ddP = VecX::Zero(degree + 1);
 }
 
-Polynomials::Polynomials(double T_input, 
+Polynomials::Polynomials(float T_input, 
                          int N_input, 
                          int Nact_input, 
                          TimeDiscretization time_discretization, 
@@ -39,7 +39,7 @@ void Polynomials::compute(const VecX& z,
     MatX coefficients = Utils::reshape(z.head((degree + 1) * Nact), degree + 1, Nact);
 
     for (int x = 0; x < N; x++) {
-        double t = tspan(x);
+        float t = tspan(x);
 
         q(x) = VecX::Zero(Nact);
         q_d(x) = VecX::Zero(Nact);
@@ -59,7 +59,7 @@ void Polynomials::compute(const VecX& z,
         dP(1)  = 1;
         ddP(1) = 0;
 
-        double powt = 1;
+        float powt = 1;
         for (int i = 2; i <= degree; i++) {
             ddP(i) = powt;
             dP(i)  = t * ddP(i) / (i-1);

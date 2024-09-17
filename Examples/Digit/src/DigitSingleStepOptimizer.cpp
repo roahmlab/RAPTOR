@@ -16,7 +16,7 @@ namespace Digit {
 
 bool DigitSingleStepOptimizer::set_parameters(
     const VecX& x0_input,
-    const double T_input,
+    const float T_input,
     const int N_input,
     const TimeDiscretization time_discretization_input,
     const int degree_input,
@@ -201,7 +201,7 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
         VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
-        const double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
+        const float norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
 
         if (norm >= 1e-10) {
             for ( Index j = 0; j < n; j++ ) {
@@ -215,7 +215,7 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 
     const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
     const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
-    const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
+    const float initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
     if (initial_velocity_norm > 1e-10) { // avoid singularity when initial_velocity_norm is close to 0
         for ( Index i = 0; i < n; i++ ) {
             grad_f[i] += 100 * initial_velocity_pz(i) / initial_velocity_norm;
@@ -224,7 +224,7 @@ bool DigitSingleStepOptimizer::eval_grad_f(
 
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
     const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
-    const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
+    const float initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
     if (initial_acceleration_norm > 1e-10) { // avoid singularity when initial_acceleration_norm is close to 0
         for ( Index i = 0; i < n; i++ ) {
             grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;

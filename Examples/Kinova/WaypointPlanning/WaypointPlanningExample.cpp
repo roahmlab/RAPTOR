@@ -25,14 +25,15 @@ int main() {
     // Initialize the robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     // Initialize obstacles
     const int num_obstacles = 12;
-    std::vector<Eigen::Vector3d> boxCenters;
-    std::vector<Eigen::Vector3d> boxOrientation;
-    std::vector<Eigen::Vector3d> boxSize;
+    std::vector<Eigen::Vector3f> boxCenters;
+    std::vector<Eigen::Vector3f> boxOrientation;
+    std::vector<Eigen::Vector3f> boxSize;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -85,12 +86,12 @@ int main() {
     // Set the bounds of the space
     ob::RealVectorBounds bounds(NUM_JOINTS);
     for (int i = 0; i < NUM_JOINTS; i++) {
-        const double lower_bound = 
+        const float lower_bound = 
             (JOINT_LIMITS_LOWER[i] == -1e19) ? 
                 -M_PI : 
                 JOINT_LIMITS_LOWER[i];
 
-        const double upper_bound = 
+        const float upper_bound = 
             (JOINT_LIMITS_UPPER[i] == 1e19) ? 
                 M_PI : 
                 JOINT_LIMITS_UPPER[i];
@@ -104,10 +105,10 @@ int main() {
     og::SimpleSetup ss(space);
 
     // Set state validity checker
-    const double buffer = 0.0;
+    const float buffer = 0.0;
     ss.setStateValidityChecker(
         [&collisionCheckerPtr_, &buffer](const ob::State *state) { 
-            Eigen::VectorXd joint_angles(NUM_JOINTS);
+            Eigen::VectorXf joint_angles(NUM_JOINTS);
             for (int i = 0; i < NUM_JOINTS; i++) {
                 joint_angles(i) = state->as<ob::RealVectorStateSpace::StateType>()->values[i];
             }

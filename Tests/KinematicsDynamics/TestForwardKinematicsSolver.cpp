@@ -7,15 +7,16 @@ int main() {
     // Define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::Data data(model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::DataTpl<float> data(model);
 
     ForwardKinematicsSolver fkSolver(&model);
 
     // set joint angles
     std::srand(std::time(nullptr));
-    Eigen::VectorXd q = 2 * M_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
+    Eigen::VectorXf q = 2 * M_PI * Eigen::VectorXf::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
     auto start_clock = std::chrono::high_resolution_clock::now();

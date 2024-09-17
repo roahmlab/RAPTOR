@@ -6,11 +6,11 @@ using namespace Ipopt;
 
 class FKGradientChecker : public Optimizer {
 public:
-    using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using Vec3 = Eigen::Vector3f;
+    using Mat3 = Eigen::Matrix3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     /** Default constructor */
     FKGradientChecker() = default;
@@ -168,19 +168,20 @@ public:
 
     std::unique_ptr<ForwardKinematicsSolver> fkPtr_;
 
-    const double roll_weight = 1.0;
-    const double pitch_weight = 1.0;
-    const double yaw_weight = 1.0;
+    const float roll_weight = 1.0;
+    const float pitch_weight = 1.0;
+    const float yaw_weight = 1.0;
 };
 
 int main() {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
-    Eigen::VectorXd z0 = Eigen::VectorXd::Random(model.nq);
+    Eigen::VectorXf z0 = Eigen::VectorXf::Random(model.nq);
 
     // Initialize gradient checker
     SmartPtr<FKGradientChecker> mynlp = new FKGradientChecker();

@@ -33,10 +33,10 @@ const std::string JOINT_MAP[NUM_INDEPENDENT_JOINTS][2] = {
 
 class DigitSingleStepPeriodicityConstraints : public Constraints {
 public:
-    using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using Data = pinocchio::DataTpl<float>;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     DigitSingleStepPeriodicityConstraints() = default;

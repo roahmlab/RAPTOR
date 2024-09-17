@@ -7,7 +7,7 @@
 namespace RAPTOR {
 namespace HigherOrderDerivatives {
 
-inline double safeasin(const double x,
+inline float safeasin(const float x,
                        const bool throw_exception = false) {
     if (x > 1.0) {
         if (throw_exception) {
@@ -24,7 +24,7 @@ inline double safeasin(const double x,
     return std::asin(x);
 }
 
-inline double safedasindx(const double x,
+inline float safedasindx(const float x,
                           const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -41,7 +41,7 @@ inline double safedasindx(const double x,
     return 1.0 / std::sqrt(1.0 - x * x);             
 }
 
-inline double safeddasinddx(const double x,
+inline float safeddasinddx(const float x,
                             const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -58,7 +58,7 @@ inline double safeddasinddx(const double x,
     return x / std::pow(1.0 - x * x, 1.5);
 }
 
-inline double safedddasindddx(const double x,
+inline float safedddasindddx(const float x,
                               const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -72,11 +72,11 @@ inline double safedddasindddx(const double x,
         }
         return -1e10; // a very large negative number
     } 
-    const double xSquare = x * x;
+    const float xSquare = x * x;
     return (1 + 2 * xSquare) / std::pow(1.0 - xSquare, 2.5);
 }
 
-inline double safeacos(const double x,
+inline float safeacos(const float x,
                        const bool throw_exception = false) {
     if (x > 1.0) {
         if (throw_exception) {
@@ -93,7 +93,7 @@ inline double safeacos(const double x,
     return std::acos(x);
 }
 
-inline double safedacosdx(const double x,
+inline float safedacosdx(const float x,
                           const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -110,7 +110,7 @@ inline double safedacosdx(const double x,
     return -1.0 / std::sqrt(1.0 - x * x);
 }
 
-inline double safeddacosddx(const double x,
+inline float safeddacosddx(const float x,
                             const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -127,7 +127,7 @@ inline double safeddacosddx(const double x,
     return -x / std::pow(1.0 - x * x, 1.5);
 }
 
-inline double safedddacosdddx(const double x,
+inline float safedddacosdddx(const float x,
                               const bool throw_exception = false) {
     if (x >= 1.0) {
         if (throw_exception) {
@@ -141,57 +141,57 @@ inline double safedddacosdddx(const double x,
         }
         return 1e10; // a very large positive number
     } 
-    const double xSquare = x * x;
+    const float xSquare = x * x;
     return -(1 + 2 * xSquare) / std::pow(1.0 - xSquare, 2.5);
 }
 
-inline double safexSinx(const double x,
-                        const double nearZeroThreshold = false) {
+inline float safexSinx(const float x,
+                        const float nearZeroThreshold = false) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
+        float xSquare = x * x;
+        float xFourth = xSquare * xSquare;
         return 1.0 + xSquare / 6.0 + 7.0 * xFourth / 360.0; // + O(x^6)
     }
     return x / std::sin(x);
 }
 
-inline double safedxSinxdx(const double x,
-                           double nearZeroThreshold = false) {
+inline float safedxSinxdx(const float x,
+                           float nearZeroThreshold = false) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xThird = x * xSquare;
-        double XFifth = xThird * xSquare;
+        float xSquare = x * x;
+        float xThird = x * xSquare;
+        float XFifth = xThird * xSquare;
         return x / 3.0 + 7.0 * xThird / 90.0 + 31.0 * XFifth / 2520.0; // + O(x^7)
     }
-    const double sinx = std::sin(x);
+    const float sinx = std::sin(x);
     return (sinx - x * std::cos(x)) / (sinx * sinx);
 }
 
-inline double safeddxSinxddx(const double x,
-                             const double nearZeroThreshold = false) {
+inline float safeddxSinxddx(const float x,
+                             const float nearZeroThreshold = false) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xFourth = xSquare * xSquare;
-        double xSixth = xFourth * xSquare;
+        float xSquare = x * x;
+        float xFourth = xSquare * xSquare;
+        float xSixth = xFourth * xSquare;
         return 1.0 / 3.0 + 7.0 * xSquare / 30.0 + 31.0 * xFourth / 504.0; // + O(x^6)
     }
-    const double sinx = std::sin(x);
-    const double cosx = std::cos(x);
-    const double sinxSquare = sinx * sinx;
+    const float sinx = std::sin(x);
+    const float cosx = std::cos(x);
+    const float sinxSquare = sinx * sinx;
     return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
 }
 
-inline double safedddxSinxdddx(const double x,
-                               const double nearZeroThreshold = false) {
+inline float safedddxSinxdddx(const float x,
+                               const float nearZeroThreshold = false) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
-        double xSquare = x * x;
-        double xThird = x * xSquare;
-        double XFifth = xThird * xSquare;
+        float xSquare = x * x;
+        float xThird = x * xSquare;
+        float XFifth = xThird * xSquare;
         return 7.0 * x / 15.0 + 31.0 * xThird / 126.0 + 127.0 * XFifth / 1800.0; // + O(x^7)
     }
-    const double sinx = std::sin(x);
-    const double cosx = std::cos(x);
-    const double sinxSquare = sinx * sinx;
+    const float sinx = std::sin(x);
+    const float cosx = std::cos(x);
+    const float sinxSquare = sinx * sinx;
     return x * cosx / sinxSquare +
            6 * cosx * cosx / (sinx * sinxSquare) -
            6 * x * cosx / (sinxSquare * sinxSquare) + 

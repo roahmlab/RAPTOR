@@ -9,26 +9,26 @@ namespace RAPTOR {
 #define PROJECT_POINT_ON_FACE_THRESHOLD 1e-4
 
 namespace Box {
-constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
+constexpr float SQUARE_ROOT_THRESHOLD = 1e-12;
 
 constexpr int HYPERPLANE_NUM = 6; // 3 * (3 - 1)
 constexpr int VERTICES_NUM = 8;
 
-void TensorProduct(const Eigen::Matrix3d& R, 
-                   const Eigen::Array<Eigen::MatrixXd, 3, 1>& inp,
-                   Eigen::Array<Eigen::MatrixXd, 3, 1>& out);
+void TensorProduct(const Eigen::Matrix3f& R, 
+                   const Eigen::Array<Eigen::MatrixXf, 3, 1>& inp,
+                   Eigen::Array<Eigen::MatrixXf, 3, 1>& out);
 };
 
-double distancePointAndLineSegment(const Eigen::Vector3d& point, 
-                                   const Eigen::Vector3d& p1, 
-                                   const Eigen::Vector3d& p2);
+float distancePointAndLineSegment(const Eigen::Vector3f& point, 
+                                   const Eigen::Vector3f& p1, 
+                                   const Eigen::Vector3f& p2);
 
 class BoxCollisionAvoidance : public CollisionAvoidance {
 public:
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Vec3 = Eigen::Vector3f;
+    using Mat3 = Eigen::Matrix3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     BoxCollisionAvoidance() = default;
@@ -45,13 +45,13 @@ public:
 
     Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
                                           const int obs_id,
-                                          double& isInside) const;
+                                          float& isInside) const;
 
     Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
                                           const MatX& ppoint_pz,
                                           const int obs_id,
                                           MatX& pdiff_pz,
-                                          double& isInside) const;
+                                          float& isInside) const;
 
     Vec3 computeDifferenceWithCloestPoint(const Vec3& point, 
                                           const MatX& ppoint_pz,
@@ -59,7 +59,7 @@ public:
                                           const int obs_id,
                                           MatX& pdiff_pz,
                                           Eigen::Array<MatX, 3, 1>& pdiff_pz_pz,
-                                          double& isInside) const;
+                                          float& isInside) const;
 
     void computeDistance(const Vec3& point) override;
 
@@ -79,7 +79,7 @@ public:
 
         // hyperplane representation
     Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> normals; //!< Normals of the box faces
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> intercepts; //!< Intercepts of the box faces
+    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic> intercepts; //!< Intercepts of the box faces
 
         // vertices representation
     Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> vertices; //!< Vertices of the box

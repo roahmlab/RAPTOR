@@ -17,13 +17,13 @@ namespace nb = nanobind;
 
 class KinovaWaitrPybindWrapper {
 public:
-    using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using Vec3 = Eigen::Vector3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
-    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_float = nb::ndarray<float, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_float = nb::ndarray<float, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     KinovaWaitrPybindWrapper() = default;
@@ -35,40 +35,40 @@ public:
     ~KinovaWaitrPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_double obstacles_inp);
+    void set_obstacles(const nb_2d_float obstacles_inp);
 
-    void set_contact_surface_parameters(const double mu_inp,
-                                        const double R_inp,
-                                        const double maxSuctionForce_inp = 0.0,
-                                        const double contactForceBuffer_inp = 0.0,
-                                        const double frictionForceBuffer_inp = 0.0,
-                                        const double ZMPBuffer_inp = 0.0);
+    void set_contact_surface_parameters(const float mu_inp,
+                                        const float R_inp,
+                                        const float maxSuctionForce_inp = 0.0,
+                                        const float contactForceBuffer_inp = 0.0,
+                                        const float frictionForceBuffer_inp = 0.0,
+                                        const float ZMPBuffer_inp = 0.0);
 
-    void set_end_effector(const nb_1d_double contact_position,
-                          const double object_mass,
-                          const nb_1d_double object_com,
-                          const nb_2d_double object_inertia);
+    void set_end_effector(const nb_1d_float contact_position,
+                          const float object_mass,
+                          const nb_1d_float object_com,
+                          const nb_2d_float object_inertia);
 
-    void set_ipopt_parameters(const double tol,
-                              const double constr_viol_tol,
-                              const double obj_scaling_factor,
-                              const double max_wall_time, 
+    void set_ipopt_parameters(const float tol,
+                              const float constr_viol_tol,
+                              const float obj_scaling_factor,
+                              const float max_wall_time, 
                               const int print_level,
                               const std::string mu_strategy,
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const nb_1d_double q0_inp,
-                                   const nb_1d_double qd0_inp,
-                                   const nb_1d_double qdd0_inp,
-                                   const double duration_inp);
+    void set_trajectory_parameters(const nb_1d_float q0_inp,
+                                   const nb_1d_float qd0_inp,
+                                   const nb_1d_float qdd0_inp,
+                                   const float duration_inp);
 
-    void set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                    const nb_1d_double velocity_limits_buffer_inp,
-                    const nb_1d_double torque_limits_buffer_inp);
+    void set_buffer(const nb_1d_float joint_limits_buffer_inp,
+                    const nb_1d_float velocity_limits_buffer_inp,
+                    const nb_1d_float torque_limits_buffer_inp);
 
-    void set_target(const nb_1d_double q_des_inp,
-                    const double tplan_inp);
+    void set_target(const nb_1d_float q_des_inp,
+                    const float tplan_inp);
 
     nb::tuple optimize();
 
@@ -88,11 +88,11 @@ public:
 
     // trajectory information
     ArmourTrajectoryParameters atp;
-    double T = 1;
+    float T = 1;
     int N = 32;
     int degree = ARMOUR_BEZIER_CURVE_DEGREE;
     VecX qdes;
-    double tplan = 0;
+    float tplan = 0;
     int tplan_n = 0;
 
     // contact surface parameters

@@ -15,10 +15,10 @@ namespace Kinova {
 
 class KinovaIKSolver : public Optimizer {
 public:
-    using Model = pinocchio::Model;
-    using VecX = Eigen::VectorXd;
-    using Vec3 = Eigen::Vector3d;
-    using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::ModelTpl<float>;
+    using VecX = Eigen::VectorXf;
+    using Vec3 = Eigen::Vector3f;
+    using MatX = Eigen::MatrixXf;
 
     /** Default constructor */
     KinovaIKSolver() = default;

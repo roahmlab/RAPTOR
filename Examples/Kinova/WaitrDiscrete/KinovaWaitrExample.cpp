@@ -13,8 +13,9 @@ int main() {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
     model.rotorInertia.setZero();
@@ -23,9 +24,9 @@ int main() {
 
     // Define obstacles
     const int num_obstacles = 2;
-    std::vector<Eigen::Vector3d> boxCenters;
-    std::vector<Eigen::Vector3d> boxOrientation;
-    std::vector<Eigen::Vector3d> boxSize;
+    std::vector<Eigen::Vector3f> boxCenters;
+    std::vector<Eigen::Vector3f> boxOrientation;
+    std::vector<Eigen::Vector3f> boxSize;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -39,12 +40,12 @@ int main() {
 
     // Define trajectories
     ArmourTrajectoryParameters atp;
-    atp.q0 = Eigen::VectorXd::Zero(NUM_JOINTS);
+    atp.q0 = Eigen::VectorXf::Zero(NUM_JOINTS);
     atp.q0(1) = -M_PI / 2;
-    atp.q_d0 = Eigen::VectorXd::Zero(NUM_JOINTS);
-    atp.q_dd0 = Eigen::VectorXd::Zero(NUM_JOINTS);
+    atp.q_d0 = Eigen::VectorXf::Zero(NUM_JOINTS);
+    atp.q_dd0 = Eigen::VectorXf::Zero(NUM_JOINTS);
 
-    const double T = 1;
+    const float T = 1;
     const int N = 32;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
@@ -53,20 +54,20 @@ int main() {
     // TODO: define contact surface parameters
 
     // Define target
-    Eigen::VectorXd qdes(NUM_JOINTS);
+    Eigen::VectorXf qdes(NUM_JOINTS);
     qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
-    Eigen::VectorXd z(NUM_JOINTS);
+    Eigen::VectorXf z(NUM_JOINTS);
     z.setZero();
 
     // Define limits buffer
-    Eigen::VectorXd joint_limits_buffer(NUM_JOINTS);
+    Eigen::VectorXf joint_limits_buffer(NUM_JOINTS);
     joint_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd velocity_limits_buffer(NUM_JOINTS);
+    Eigen::VectorXf velocity_limits_buffer(NUM_JOINTS);
     velocity_limits_buffer.setConstant(0.0);
-    Eigen::VectorXd torque_limits_buffer(NUM_JOINTS);
+    Eigen::VectorXf torque_limits_buffer(NUM_JOINTS);
     torque_limits_buffer.setConstant(0.0);
 
     // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<WaitrBezierCurves>(T, 
@@ -76,22 +77,22 @@ int main() {
     //                                                atp);
     // CustomizedInverseDynamics id(model, jtype, trajPtr_);
 
-    // Eigen::VectorXd x = -5 * Eigen::VectorXd::Ones(NUM_JOINTS);
+    // Eigen::VectorXf x = -5 * Eigen::VectorXf::Ones(NUM_JOINTS);
     // auto start = std::chrono::high_resolution_clock::now();
     // id.compute(x, true);
     // auto end = std::chrono::high_resolution_clock::now();
     // std::cout << "Total compute time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds.\n";
-    // const Eigen::MatrixXd& pv_pz = id.ptau_pz(10);
-    // Eigen::MatrixXd pv_pz_ref = Eigen::MatrixXd::Zero(pv_pz.rows(), pv_pz.cols());
+    // const Eigen::MatrixXf& pv_pz = id.ptau_pz(10);
+    // Eigen::MatrixXf pv_pz_ref = Eigen::MatrixXf::Zero(pv_pz.rows(), pv_pz.cols());
     // for (int i = 0; i < NUM_JOINTS; i++) {
-    //     Eigen::VectorXd x_plus = x;
+    //     Eigen::VectorXf x_plus = x;
     //     x_plus(i) += 1e-8;
     //     id.compute(x_plus, false);
-    //     const Eigen::VectorXd v_plus = id.tau(10);
-    //     Eigen::VectorXd x_minus = x;
+    //     const Eigen::VectorXf v_plus = id.tau(10);
+    //     Eigen::VectorXf x_minus = x;
     //     x_minus(i) -= 1e-8;
     //     id.compute(x_minus, false);
-    //     const Eigen::VectorXd v_minus = id.tau(10);
+    //     const Eigen::VectorXf v_minus = id.tau(10);
     //     pv_pz_ref.col(i) = (v_plus - v_minus) / 2e-8;
     // }
     // // std::cout << "pv_pz: " << pv_pz << std::endl;
@@ -156,7 +157,7 @@ int main() {
     }
 
     // Run ipopt to solve the optimization problem
-    double solve_time = 0;
+    float solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 

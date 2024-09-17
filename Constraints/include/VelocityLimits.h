@@ -11,8 +11,8 @@ namespace RAPTOR {
 
 class VelocityLimits : public Constraints {
 public:
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     // Constructor
     VelocityLimits() = default;

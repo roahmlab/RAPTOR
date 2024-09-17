@@ -19,7 +19,7 @@ There are papers that incorporate the duration as one of the optimization decisi
 Adaptive changes over the distribution of time instances are also widely discussed in the context of direct collocation methods or spectral methods.
 But these are not the focus of our method for now.
 
-Specifically, the core function of all trajectory classes is `compute(const Eigen::VectorXd& z, bool compute_derivatives)`.
+Specifically, the core function of all trajectory classes is `compute(const Eigen::VectorXf& z, bool compute_derivatives)`.
 This function takes in the decision variable `z` of the optimization problem and updates the class member `q`, `q_d`, `q_dd`.
 
  - `q` is an Eigen array of Eigen vectors.
@@ -37,7 +37,7 @@ For more information, please refer to [README](../Trajectories/README.md) in `Tr
 
  ### Kinematics & Dynamics
 For some of the constraints, such as end effector position, or torque limits, we need to compute the forward kinematics and inverse dynamics of the robot.
-The core function is also called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`
+The core function is also called `compute(const Eigen::VectorXf& z, bool compute_derivatives)`
 
  - The forward kinematics or the inverse dynamics class usually requires a shared pointer of a trajectory class in the constructor.
  - In `compute`, the `compute` of the trajectory class will first be called, to update the trajectories of all joints.
@@ -50,7 +50,7 @@ For more information, please refer to [README](../KinematicsDynamics/README.md) 
  ### Constraints
 This class implements different types of constraints that will be later put into the optimization.
 Specifically, we would like to provide the formulation `g_lb <= g(z) <= g_ub`.
-The core function is called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`. 
+The core function is called `compute(const Eigen::VectorXf& z, bool compute_derivatives)`. 
 The constraint class usually requires a shared pointer of a trajectory class in the constructor, and a shared pointer of a forward kinematics and inverse dynamics class. 
 The results are stored in `g`, which is a class member, for the optimizer class to access.
 The gradient is stored in `pg_pz`.

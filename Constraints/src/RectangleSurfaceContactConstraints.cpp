@@ -36,14 +36,14 @@ void RectangleSurfaceContactConstraints::compute(const VecX& z,
         // assume the contact wrench is always located at the end
         const VecX& lambda = cidPtr_->lambda(i).tail(6);
 
-        double contact_force      = lambda(2);
-        double friction_force     = sqrt(pow(lambda(0), 2) + pow(lambda(1), 2));
-        double max_friction_force = fp.mu * contact_force;
-        double max_moment_z       = fp.gamma * contact_force;
-        double mx_lower_limit     = -fp.Lx * contact_force;
-        double mx_upper_limit     = fp.Lx * contact_force;
-        double my_lower_limit     = -fp.Ly * contact_force;
-        double my_upper_limit     = fp.Ly * contact_force;
+        float contact_force      = lambda(2);
+        float friction_force     = sqrt(pow(lambda(0), 2) + pow(lambda(1), 2));
+        float max_friction_force = fp.mu * contact_force;
+        float max_moment_z       = fp.gamma * contact_force;
+        float mx_lower_limit     = -fp.Lx * contact_force;
+        float mx_upper_limit     = fp.Lx * contact_force;
+        float my_lower_limit     = -fp.Ly * contact_force;
+        float my_upper_limit     = fp.Ly * contact_force;
 
         // (1) positive contact force
         g(i * 7 + 0) = contact_force;

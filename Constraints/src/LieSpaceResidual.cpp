@@ -3,10 +3,10 @@
 namespace RAPTOR {
 namespace LieSpaceResidual {
 
-Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
-                                    const Eigen::Vector3d& desiredPosition,
-                                    Eigen::MatrixXd* gradientPtr_,
-                                    Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
+Eigen::Vector3f translationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                    const Eigen::Vector3f& desiredPosition,
+                                    Eigen::MatrixXf* gradientPtr_,
+                                    Eigen::Array<Eigen::MatrixXf, 3, 1>* hessianPtr_) {
     if (gradientPtr_ != nullptr) {
         *gradientPtr_ = fkPtr_->getTranslationJacobian();
     }
@@ -18,10 +18,10 @@ Eigen::Vector3d translationResidual(const std::unique_ptr<ForwardKinematicsSolve
     return fkPtr_->getTranslation() - desiredPosition;
 }
 
-Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
-                                 const Eigen::Matrix3d& desiredRotation,
-                                 Eigen::MatrixXd* gradientPtr_,
-                                 Eigen::Array<Eigen::MatrixXd, 3, 1>* hessianPtr_) {
+Eigen::Vector3f rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>& fkPtr_,
+                                 const Eigen::Matrix3f& desiredRotation,
+                                 Eigen::MatrixXf* gradientPtr_,
+                                 Eigen::Array<Eigen::MatrixXf, 3, 1>* hessianPtr_) {
     bool compute_derivatives = (gradientPtr_ != nullptr) ||
                                (hessianPtr_ != nullptr);
     bool compute_hessian = (hessianPtr_ != nullptr);
@@ -29,12 +29,12 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
     // kinematics chain (derivative is only related to these joints)
     const auto& chain = fkPtr_->chain;
 
-    const Eigen::Matrix3d currentRotation = fkPtr_->getRotation();
-    Eigen::Matrix3d residualMatrix = desiredRotation.transpose() * currentRotation;
+    const Eigen::Matrix3f currentRotation = fkPtr_->getRotation();
+    Eigen::Matrix3f residualMatrix = desiredRotation.transpose() * currentRotation;
 
-    Eigen::Array<Eigen::Matrix3d, Eigen::Dynamic, 1> dRdq;
-    Eigen::Array<Eigen::Matrix3d, Eigen::Dynamic, Eigen::Dynamic> ddRddq;
-    Eigen::Tensor<Eigen::Matrix3d, 3> dddRdddq;
+    Eigen::Array<Eigen::Matrix3f, Eigen::Dynamic, 1> dRdq;
+    Eigen::Array<Eigen::Matrix3f, Eigen::Dynamic, Eigen::Dynamic> ddRddq;
+    Eigen::Tensor<Eigen::Matrix3f, 3> dddRdddq;
     if (compute_derivatives) {
         fkPtr_->getRotationJacobian(dRdq);
 
@@ -53,19 +53,19 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
     }
 
-    double traceR = residualMatrix.trace();
+    float traceR = residualMatrix.trace();
 
-    Eigen::VectorXd dtraceRdq;
-    Eigen::MatrixXd ddtraceRddq;
-    Eigen::Tensor<double, 3> dddtraceRdddq;
+    Eigen::VectorXf dtraceRdq;
+    Eigen::MatrixXf ddtraceRddq;
+    Eigen::Tensor<float, 3> dddtraceRdddq;
     if (compute_derivatives) {
-        dtraceRdq = Eigen::VectorXd::Zero(dRdq.size());
+        dtraceRdq = Eigen::VectorXf::Zero(dRdq.size());
         for (auto i : chain) {
             dtraceRdq(i) = dRdq(i).trace();
         }
 
         if (compute_hessian) {
-            ddtraceRddq = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
+            ddtraceRddq = Eigen::MatrixXf::Zero(ddRddq.rows(), ddRddq.cols());
             for (auto i : chain) {
                 for (auto j : chain) {
                     ddtraceRddq(i, j) = ddRddq(i, j).trace();
@@ -74,23 +74,23 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
     }
 
-    double theta = HigherOrderDerivatives::safeacos((traceR - 1) / 2);
+    float theta = HigherOrderDerivatives::safeacos((traceR - 1) / 2);
 
-    Eigen::VectorXd dthetadq;
-    Eigen::MatrixXd ddthetaddq;
-    Eigen::Tensor<double, 3> dddthetadddq;
+    Eigen::VectorXf dthetadq;
+    Eigen::MatrixXf ddthetaddq;
+    Eigen::Tensor<float, 3> dddthetadddq;
     if (compute_derivatives) {
-        const double dacosdxTraceR = HigherOrderDerivatives::safedacosdx((traceR - 1) / 2);
+        const float dacosdxTraceR = HigherOrderDerivatives::safedacosdx((traceR - 1) / 2);
         
-        dthetadq = Eigen::VectorXd::Zero(dRdq.size());
+        dthetadq = Eigen::VectorXf::Zero(dRdq.size());
         for (auto i : chain) {
             dthetadq(i) = 0.5 * dacosdxTraceR * dtraceRdq(i);
         }
 
         if (compute_hessian) {
-            const double ddacosddxTraceR = HigherOrderDerivatives::safeddacosddx((traceR - 1) / 2);
+            const float ddacosddxTraceR = HigherOrderDerivatives::safeddacosddx((traceR - 1) / 2);
 
-            ddthetaddq = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
+            ddthetaddq = Eigen::MatrixXf::Zero(ddRddq.rows(), ddRddq.cols());
             for (auto i : chain) {
                 for (auto j : chain) {
                     ddthetaddq(i, j) = 0.5 * 
@@ -101,51 +101,51 @@ Eigen::Vector3d rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
     }
 
-    const double st = std::sin(theta);
-    const double ct = std::cos(theta);
-    const double xSinxTheta = HigherOrderDerivatives::safexSinx(theta);
-    const Eigen::Matrix3d RRT = residualMatrix - residualMatrix.transpose();
+    const float st = std::sin(theta);
+    const float ct = std::cos(theta);
+    const float xSinxTheta = HigherOrderDerivatives::safexSinx(theta);
+    const Eigen::Matrix3f RRT = residualMatrix - residualMatrix.transpose();
 
-    Eigen::Matrix3d logR = 0.5 * xSinxTheta * RRT;
+    Eigen::Matrix3f logR = 0.5 * xSinxTheta * RRT;
 
     if (compute_derivatives) {
-        const double dxSinxTheta = HigherOrderDerivatives::safedxSinxdx(theta);
+        const float dxSinxTheta = HigherOrderDerivatives::safedxSinxdx(theta);
 
         if (gradientPtr_ != nullptr) {
-            Eigen::MatrixXd& gradient = *gradientPtr_;
-            gradient = Eigen::MatrixXd::Zero(3, dRdq.size());
+            Eigen::MatrixXf& gradient = *gradientPtr_;
+            gradient = Eigen::MatrixXf::Zero(3, dRdq.size());
 
             for (auto i : chain) {
-                Eigen::Matrix3d temp1 = 
+                Eigen::Matrix3f temp1 = 
                     dxSinxTheta * dthetadq(i) * RRT;
-                Eigen::Matrix3d temp2 = 
+                Eigen::Matrix3f temp2 = 
                     xSinxTheta * (dRdq(i) - dRdq(i).transpose());
                 gradient.col(i) = Utils::unskew(0.5 * (temp1 + temp2));
             }
         }
 
         if (compute_hessian) {
-            const double ddxSinxddx = HigherOrderDerivatives::safeddxSinxddx(theta);
+            const float ddxSinxddx = HigherOrderDerivatives::safeddxSinxddx(theta);
 
-            Eigen::Array<Eigen::MatrixXd, 3, 1>& hessian = *hessianPtr_;
-            hessian(0) = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
-            hessian(1) = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
-            hessian(2) = Eigen::MatrixXd::Zero(ddRddq.rows(), ddRddq.cols());
+            Eigen::Array<Eigen::MatrixXf, 3, 1>& hessian = *hessianPtr_;
+            hessian(0) = Eigen::MatrixXf::Zero(ddRddq.rows(), ddRddq.cols());
+            hessian(1) = Eigen::MatrixXf::Zero(ddRddq.rows(), ddRddq.cols());
+            hessian(2) = Eigen::MatrixXf::Zero(ddRddq.rows(), ddRddq.cols());
 
             for (auto i : chain) {
                 for (auto j : chain) {
-                    Eigen::Matrix3d temp1_1 = 
+                    Eigen::Matrix3f temp1_1 = 
                         ddxSinxddx * dthetadq(i) * dthetadq(j) * RRT;
-                    Eigen::Matrix3d temp1_2 = 
+                    Eigen::Matrix3f temp1_2 = 
                         dxSinxTheta * ddthetaddq(i, j) * RRT;
-                    Eigen::Matrix3d temp2 = 
+                    Eigen::Matrix3f temp2 = 
                         dxSinxTheta * dthetadq(i) * (dRdq(j) - dRdq(j).transpose());
-                    Eigen::Matrix3d temp3 = 
+                    Eigen::Matrix3f temp3 = 
                         dxSinxTheta * dthetadq(j) * (dRdq(i) - dRdq(i).transpose());
-                    Eigen::Matrix3d temp4 = 
+                    Eigen::Matrix3f temp4 = 
                         xSinxTheta * (ddRddq(i, j) - ddRddq(i, j).transpose());
 
-                    Eigen::Vector3d h = 
+                    Eigen::Vector3f h = 
                         Utils::unskew(
                             0.5 * ((temp1_1 + temp1_2) + temp2 + temp3 + temp4));
 

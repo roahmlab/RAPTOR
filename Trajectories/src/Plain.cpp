@@ -89,7 +89,7 @@ void Plain::compute(const VecX& z,
 
         if (compute_derivatives) {
             pq_pz(i).resize(Nact, varLength);
-            pq_pz(i).block(0, i * Nact, Nact, Nact) = Eigen::MatrixXd::Identity(Nact, Nact);
+            pq_pz(i).block(0, i * Nact, Nact, Nact) = Eigen::MatrixXf::Identity(Nact, Nact);
             // pq_d_pz(i).resize(Nact, varLength);
             // pq_dd_pz(i).resize(Nact, varLength);
         }

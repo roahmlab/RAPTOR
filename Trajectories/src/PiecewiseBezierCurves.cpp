@@ -2,7 +2,7 @@
 
 namespace RAPTOR {
 
-PiecewiseBezierCurves::PiecewiseBezierCurves(double T_input, 
+PiecewiseBezierCurves::PiecewiseBezierCurves(float T_input, 
                                              int N_input, 
                                              int Nact_input, 
                                              int degree_input,
@@ -61,18 +61,18 @@ void PiecewiseBezierCurves::compute(const VecX& z,
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
     const int seg_size = N / (degree + 1);
-    const double localT = T / (degree + 1);
+    const float localT = T / (degree + 1);
 
     for (int x = 0; x < N; x++) {
         // determine which Bezier curve we are at right now
         int id = x / seg_size;
 
         // determine the local time within the Bezier curve (scaled to [0, 1])
-        double t = (tspan(x) - id * localT) / localT;
+        float t = (tspan(x) - id * localT) / localT;
 
         // useful constants
-        double velocity_factor = localT / 5.0;
-        double acceleration_factor = localT * localT / 20.0;
+        float velocity_factor = localT / 5.0;
+        float acceleration_factor = localT * localT / 20.0;
 
         // determine the initial and end position, velocity and acceleration for each piece of Bezier curve
         VecX begin_q, begin_q_d, begin_q_dd;

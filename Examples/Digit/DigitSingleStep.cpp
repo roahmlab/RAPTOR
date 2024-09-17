@@ -16,8 +16,9 @@ int main(int argc, char* argv[]) {
     // define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
     
@@ -41,7 +42,7 @@ int main(int argc, char* argv[]) {
     // load settings
     YAML::Node config;
 
-    const double T = 0.4;
+    const float T = 0.4;
     TimeDiscretization time_discretization = Uniform;
     int N = 14;
     int degree = 5;
@@ -56,10 +57,10 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-        gp.eps_torso_angle = config["eps_torso_angle"].as<double>();
-        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<double>();
-        gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<double>();
-        gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<double>();
+        gp.eps_torso_angle = config["eps_torso_angle"].as<float>();
+        gp.swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<float>();
+        gp.swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<float>();
+        gp.swingfoot_end_y_des = config["swingfoot_end_y_des"].as<float>();
     } 
     catch (std::exception& e) {
         std::cerr << "Error parsing YAML file: " << e.what() << std::endl;
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
 
     // const std::string output_name = std::string(argv[1]) + "-" + std::string(argv[2]);
     
-    // Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    // Eigen::VectorXf z = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
     if (argc > 1) {
         char* end = nullptr;
         std::srand((unsigned int)std::strtoul(argv[1], &end, 10));
@@ -75,8 +76,8 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
-    // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+    Eigen::VectorXf z = 0.2 * Eigen::VectorXf::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    // Eigen::VectorXf z = Eigen::VectorXf::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
     try {
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
                               degree,
                               model,
                               gp);
-        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<float>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -97,12 +98,12 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     try {
-        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
+        app->Options()->SetNumericValue("tol", config["tol"].as<float>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<float>());
         app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
-        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
-        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<float>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<float>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
         app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
         app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        float solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
 
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }

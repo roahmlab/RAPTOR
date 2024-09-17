@@ -625,7 +625,7 @@ void Optimizer::summarize_constraints(
         Index max_constr_violation_id1 = 0;
         Index max_constr_violation_id2 = 0;
         for (Index i = 0; i < constraintsPtrVec_[c]->m; i++) {
-            Number constr_violation = std::max(constraintsPtrVec_[c]->g_lb(i) - g[iter], 
+            Number constr_violation = fmaxf(constraintsPtrVec_[c]->g_lb(i) - g[iter], 
                                                g[iter] - constraintsPtrVec_[c]->g_ub(i));
            
             if (constr_violation > max_constr_violation) {

@@ -16,14 +16,14 @@
 
 namespace RAPTOR {
 
-Eigen::VectorXi convertPinocchioJointType(const pinocchio::Model& model);
+Eigen::VectorXi convertPinocchioJointType(const pinocchio::ModelTpl<float>& model);
 
 // 6x6 spatial transform matrix
 class Transform {
 public:
-    using SE3 = pinocchio::SE3Tpl<double>;
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
+    using SE3 = pinocchio::SE3Tpl<float>;
+    using Vec3 = Eigen::Vector3f;
+    using Mat3 = Eigen::Matrix3f;
 
     // Constructor
     Transform();
@@ -42,7 +42,7 @@ public:
 
     // Constructor
     Transform(const int jtype, 
-              const double theta, 
+              const float theta, 
               const int order = 0);
 
     // Destructor
@@ -63,7 +63,7 @@ public:
 
     Vec3 getRPY() const;
 
-    Eigen::Matrix<double, 6, 1> getXYZRPY() const;
+    Eigen::Matrix<float, 6, 1> getXYZRPY() const;
 
     // class members:
     Mat3 R; // rotation matrix
@@ -74,7 +74,7 @@ public:
     bool ifDerivative = false; 
 };
 
-Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp);
+Transform operator*(const pinocchio::SE3Tpl<float>& x, const Transform& sRp);
 
 std::ostream& operator<<(std::ostream& os, const Transform& sRp);
 

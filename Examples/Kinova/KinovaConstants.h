@@ -8,19 +8,19 @@ constexpr int NUM_JOINTS = 7;
 
  // [-1e19, 1e19] means it is a continuous joint (360 degree)
  // so we don't need to set the joint limits
-constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {-1e19, -128.9, -1e19, -147.8, -1e19, -120.3, -1e19}; // degree
+constexpr float JOINT_LIMITS_LOWER[NUM_JOINTS] = {-1e19, -128.9, -1e19, -147.8, -1e19, -120.3, -1e19}; // degree
                                                
-constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {1e19, 128.9, 1e19, 147.8, 1e19, 120.3, 1e19}; // degree
+constexpr float JOINT_LIMITS_UPPER[NUM_JOINTS] = {1e19, 128.9, 1e19, 147.8, 1e19, 120.3, 1e19}; // degree
 
-constexpr double VELOCITY_LIMITS_LOWER[NUM_JOINTS] = {-100, -100, -100, -100, -180, -180, -180}; // degree/s
+constexpr float VELOCITY_LIMITS_LOWER[NUM_JOINTS] = {-100, -100, -100, -100, -180, -180, -180}; // degree/s
 
-constexpr double VELOCITY_LIMITS_UPPER[NUM_JOINTS] = {100, 100, 100, 100, 180, 180, 180}; // degree/s
+constexpr float VELOCITY_LIMITS_UPPER[NUM_JOINTS] = {100, 100, 100, 100, 180, 180, 180}; // degree/s
 
-constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4}; // N*m
+constexpr float TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4}; // N*m
 
-constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m
+constexpr float TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m
 
-constexpr double GRAVITY = -9.81; // m/s^2
+constexpr float GRAVITY = -9.81; // m/s^2
 
 }; // namespace Kinova
 }; // namespace RAPTOR

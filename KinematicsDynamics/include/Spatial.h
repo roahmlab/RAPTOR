@@ -14,27 +14,27 @@
 
 namespace RAPTOR {
 
-typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-typedef Eigen::Matrix<double, 6, 1> Vector6d;
+typedef Eigen::Matrix<float, 6, 6> Matrix6d;
+typedef Eigen::Matrix<float, 6, 1> Vector6d;
  
 // [Xj,S] = jcalc( jtyp, q )
 void jcalc(Matrix6d& Xj, 
            Vector6d& S, 
            const int jtyp, 
-           const double q);
+           const float q);
 
 void jcalc(Matrix6d& Xj, 
            Matrix6d& dXjdq,
            Vector6d& S, 
            const int jtyp, 
-           const double q);
+           const float q);
 
 void jcalc(Matrix6d& Xj, 
            Matrix6d& dXjdt,
            Vector6d& S, 
            const int jtyp, 
-           const double q,
-           const double q_d);
+           const float q,
+           const float q_d);
 
 Matrix6d crm(const Vector6d& v);
 

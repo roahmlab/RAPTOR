@@ -16,8 +16,9 @@ int main(int argc, char* argv[]) {
     // define robot model
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<float> model = model_double.cast<float>();
     
     // ignore all motor dynamics
     model.rotorInertia.setZero();
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
     // load settings
     YAML::Node config;
 
-    const double T = 0.4;
+    const float T = 0.4;
     int NSteps = 2;
     TimeDiscretization time_discretization = Uniform;
     int N = 14;
@@ -44,9 +45,9 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-        auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<double>>();
-        auto swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<std::vector<double>>();
-        auto swingfoot_end_x_des = config["swingfoot_end_x_des"].as<std::vector<double>>();
+        auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<float>>();
+        auto swingfoot_begin_x_des = config["swingfoot_begin_x_des"].as<std::vector<float>>();
+        auto swingfoot_end_x_des = config["swingfoot_end_x_des"].as<std::vector<float>>();
 
         if (swingfoot_midstep_z_des.size() != NSteps || 
             swingfoot_begin_x_des.size() != NSteps || 
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos-multiple-step.txt");
+    Eigen::VectorXf z = Utils::initializeEigenMatrixFromFile(filepath + "initial-talos-multiple-step.txt");
 
     SmartPtr<TalosMultipleStepOptimizer> mynlp = new TalosMultipleStepOptimizer();
     try {
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
                               degree,
                               model,
                               gps);
-        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<float>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -88,12 +89,12 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     try {
-        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
+        app->Options()->SetNumericValue("tol", config["tol"].as<float>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<float>());
         app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
-        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
-        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<float>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<float>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
         app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
         app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -139,7 +140,7 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        float solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
         
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }

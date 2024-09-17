@@ -17,18 +17,18 @@ struct customizedUserDataForSphere {
                                 const int link_id_input) : 
         name(name_input),
         linkId(link_id_input){
-        ppoint_pz = Eigen::MatrixXd::Zero(0, 0);
+        ppoint_pz = Eigen::MatrixXf::Zero(0, 0);
     }
     customizedUserDataForSphere(const std::string name_input,
                                 const int link_id_input,
-                                const Eigen::MatrixXd& ppoint_pz_input) : 
+                                const Eigen::MatrixXf& ppoint_pz_input) : 
         name(name_input),
         linkId(link_id_input),
         ppoint_pz(ppoint_pz_input) {}
 
     std::string name = ""; //!< Name of the object
     int linkId = 0; //!< The link that this sphere belongs to (we don't check collision between adajacent links)
-    Eigen::MatrixXd ppoint_pz; //!< Derivative of the center of the sphere (this is only for sphere!)
+    Eigen::MatrixXf ppoint_pz; //!< Derivative of the center of the sphere (this is only for sphere!)
 };
 
 struct customizedUserDataForBox {
@@ -42,14 +42,14 @@ struct customizedUserDataForBox {
 
 struct CustomizedDistanceData {
     CustomizedDistanceData() { 
-        result.min_distance = std::numeric_limits<double>::max();
-        min_distance = std::numeric_limits<double>::max();
+        result.min_distance = std::numeric_limits<float>::max();
+        min_distance = std::numeric_limits<float>::max();
         done = false; 
     }
 
     void reset() {
-        result.min_distance = std::numeric_limits<double>::max();
-        min_distance = std::numeric_limits<double>::max();
+        result.min_distance = std::numeric_limits<float>::max();
+        min_distance = std::numeric_limits<float>::max();
         done = false;
     }
 
@@ -61,26 +61,26 @@ struct CustomizedDistanceData {
     // the following are customized values
     std::string name1 = "";               //!< Name of the first object in the collision pair.
     std::string name2 = "";               //!< Name of the second object in the collision pair.
-    double min_distance = 0.0;            //!< Minimum distance between two collision managers.
-    Eigen::VectorXd pmin_distance_pz;     //!< Derivative of the minimum distances between two collision managers.
+    float min_distance = 0.0;            //!< Minimum distance between two collision managers.
+    Eigen::VectorXf pmin_distance_pz;     //!< Derivative of the minimum distances between two collision managers.
 };
 
 bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1, 
                                 fcl::CollisionObjectd* o2, 
                                 void* cdata_, 
-                                double& dist);
+                                float& dist);
 
 bool CustomizedDistanceFunctionDerivative(fcl::CollisionObjectd* o1, 
                                           fcl::CollisionObjectd* o2, 
                                           void* cdata_, 
-                                          double& dist);
+                                          float& dist);
 
 class fclCollisionAvoidance {
 public:
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using Vec3 = Eigen::Vector3f;
+    using Mat3 = Eigen::Matrix3f;
+    using VecX = Eigen::VectorXf;
+    using MatX = Eigen::MatrixXf;
 
     fclCollisionAvoidance() {
         fclBroadPhaseManagerPtr_ = std::make_shared<fcl::DynamicAABBTreeCollisionManagerd>();
@@ -102,7 +102,7 @@ public:
     void addRobotSphere(const std::string& name, 
                         const int linkId,
                         const Vec3& sphereCenter,
-                        const double sphereRadius,
+                        const float sphereRadius,
                         const MatX& ppoint_pz = MatX::Zero(0, 0));
 
     void clear();
