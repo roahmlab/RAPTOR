@@ -257,7 +257,8 @@ bool DigitMultipleStepOptimizer::get_bounds_info(
     }
 
     for ( Index i = 0; i < stepOptVec_.size(); i++ ) {
-        std::cout << "gait " << i << " bounds infomation:" << std::endl;
+        if(display_info) std::cout << "gait " << i << " bounds infomation:" << std::endl;
+
         stepOptVec_[i]->get_bounds_info(n_local[i], x_l + n_position[i], x_u + n_position[i], 
                                         m_local[i], g_l + m_position[i], g_u + m_position[i]);
     }
@@ -266,15 +267,17 @@ bool DigitMultipleStepOptimizer::get_bounds_info(
         const Index start_pos = m_position[stepOptVec_.size() + i];
         const Index end_pos = m_position[stepOptVec_.size() + i + 1];
 
-        if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
-            std::cout << "gait " << i << " - " << 0 << " continuous constraint: "
-                      << periodConsVec_[i]->m 
-                      << " [" << start_pos << " " << end_pos << "]" << std::endl;
-        }
-        else {
-            std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: "
-                      << periodConsVec_[i]->m 
-                      << " [" << start_pos << " " << end_pos << "]" << std::endl;
+        if (display_info) {
+            if (i == periodConsVec_.size() - 1 && periodConsVec_.size() == stepOptVec_.size()) {
+                std::cout << "gait " << i << " - " << 0 << " continuous constraint: "
+                          << periodConsVec_[i]->m 
+                          << " [" << start_pos << " " << end_pos << "]" << std::endl;
+            }
+            else {
+                std::cout << "gait " << i << " - " << i + 1 << " continuous constraint: "
+                          << periodConsVec_[i]->m 
+                          << " [" << start_pos << " " << end_pos << "]" << std::endl;
+            }
         }
 
         periodConsVec_[i]->compute_bounds();
