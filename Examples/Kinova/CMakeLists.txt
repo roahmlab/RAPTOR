@@ -7,6 +7,7 @@ add_library(Kinovalib SHARED
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
+    SystemIdentification/QRDecompositionSolver.cpp
 )
 
 target_include_directories(Kinovalib PUBLIC
@@ -17,6 +18,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
+
 )
 
 target_link_libraries(Kinovalib PUBLIC
@@ -181,6 +183,31 @@ target_link_libraries(KinovaExciting_example_Endeffector  PUBLIC
 
 target_compile_options(KinovaExciting_example_Endeffector  PUBLIC
     ${PINOCCHIO_FLAGS})
+
+
+add_executable(QRDecompositionTest
+    SystemIdentification/QRDecompositionTest.cpp)
+
+target_include_directories(QRDecompositionTest  PUBLIC
+    SystemIdentification
+    SystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(QRDecompositionTest  PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecompositionTest PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 
 
 ### Python bindings 
