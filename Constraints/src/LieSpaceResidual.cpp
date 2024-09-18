@@ -101,8 +101,8 @@ Eigen::Vector3f rotationResidual(const std::unique_ptr<ForwardKinematicsSolver>&
         }
     }
 
-    const float st = std::sin(theta);
-    const float ct = std::cos(theta);
+    const float st = sinf(theta);
+    const float ct = cosf(theta);
     const float xSinxTheta = HigherOrderDerivatives::safexSinx(theta);
     const Eigen::Matrix3f RRT = residualMatrix - residualMatrix.transpose();
 

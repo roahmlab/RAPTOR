@@ -13,12 +13,12 @@ void jcalc(Matrix6d& Xj,
     Xj.setIdentity();
     S.setZero();
 
-    float c = cos(q);
-    float s = sin(q);
+    float c = cosf(q);
+    float s = sinf(q);
 
     if (jtyp < 0) { // reversed direction
-        // c = cos(-q) = cos(q)
-        s = -s; // s = sin(-q) = -sin(q)
+        // c = cosf(-q) = cosf(q)
+        s = -s; // s = sinf(-q) = -sinf(q)
     }
 
     switch (jtyp)
@@ -117,14 +117,14 @@ void jcalc(Matrix6d& Xj,
     dXjdq.setZero();
     S.setZero();
 
-    float c = cos(q);
-    float s = sin(q);
+    float c = cosf(q);
+    float s = sinf(q);
     float dcdq = -s;
     float dsdq = c;
 
     if (jtyp < 0) { // reversed direction
-        // c = cos(-q) = cos(q)
-        s = -s; // s = sin(-q) = -sin(q)
+        // c = cosf(-q) = cosf(q)
+        s = -s; // s = sinf(-q) = -sinf(q)
         dsdq = -dsdq;
     }
 
@@ -262,14 +262,14 @@ void jcalc(Matrix6d& Xj,
     dXjdt.setZero();
     S.setZero();
 
-    float c = cos(q);
-    float s = sin(q);
+    float c = cosf(q);
+    float s = sinf(q);
     float dcdt = -s * q_d;
     float dsdt = c * q_d;
 
     if (jtyp < 0) { // reversed direction
-        // c = cos(-q) = cos(q)
-        s = -s; // s = sin(-q) = -sin(q)
+        // c = cosf(-q) = cosf(q)
+        s = -s; // s = sinf(-q) = -sinf(q)
         dsdt = -dsdt;   
     }
 

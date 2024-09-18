@@ -38,8 +38,8 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
         }
 
         stance_foot_endT.R << 0,             1, 0,
-                              -0.5,          0, sin(M_PI / 3),
-                              sin(M_PI / 3), 0, 0.5;
+                              -0.5,          0, sinf(M_PI / 3),
+                              sinf(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
@@ -51,8 +51,8 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
         }
 
         stance_foot_endT.R << 0,             -1, 0,
-                              0.5,           0,  -sin(M_PI / 3),
-                              sin(M_PI / 3), 0,  0.5;
+                              0.5,           0,  -sinf(M_PI / 3),
+                              sinf(M_PI / 3), 0,  0.5;
         stance_foot_endT.p << 0, 0.05456, -0.0315;
     }
 
@@ -88,8 +88,8 @@ void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
         }
 
         stance_foot_endT.R << 0,            1, 0,
-                              -0.5,          0, sin(M_PI / 3),
-                              sin(M_PI / 3), 0, 0.5;
+                              -0.5,          0, sinf(M_PI / 3),
+                              sinf(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
@@ -101,8 +101,8 @@ void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
         }
 
         stance_foot_endT.R << 0,             -1, 0,
-                              0.5,           0,  -sin(M_PI / 3),
-                              sin(M_PI / 3), 0,  0.5;
+                              0.5,           0,  -sinf(M_PI / 3),
+                              sinf(M_PI / 3), 0,  0.5;
         stance_foot_endT.p << 0, 0.05456, -0.0315;
     }
 }
@@ -268,16 +268,16 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // right toe close loop
     float q1 = q(modelPtr_->getJointId("right_toe_A") - 1);
     float q2 = q(modelPtr_->getJointId("right_toe_B") - 1);
-    float t2 = cos(q1);
-    float t3 = cos(q2);
-    float t4 = sin(q1);
-    float t5 = sin(q2);
+    float t2 = cosf(q1);
+    float t3 = cosf(q2);
+    float t4 = sinf(q1);
+    float t5 = sinf(q2);
     float t6 = q1*2.0;
     float t7 = q2*2.0;
-    float t8 = cos(t6);
-    float t9 = cos(t7);
-    float t10 = sin(t6);
-    float t11 = sin(t7);
+    float t8 = cosf(t6);
+    float t9 = cosf(t7);
+    float t10 = sinf(t6);
+    float t11 = sinf(t7);
     qcopy(modelPtr_->getJointId("right_toe_A_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*5.114967905744713E-1+t3*4.072902857734452E-1+t4*5.15019991000208E-1-t5*7.189052210514619E-1-t8*1.914308797309167E-1+t9*1.020482430826409E-1+t10*2.762037569148706E-1+t11*4.461078267300372E-1-t2*t3*5.669643819573642E-1+t2*t5*9.826313004441752E-1+t3*t4*7.066611122892024E-1-t4*t5*8.751268427354268E-2-t2*t9*1.526013089230614E-1+t3*t8*2.146475284950957E-1-t2*t11*6.373722738059316E-1-t3*t10*4.061233553924697E-1-t4*t9*2.591685269591633E-1-t5*t8*3.141536266927853E-1+t4*t11*1.154141052196728E-1+t5*t10*5.111686735370716E-2+t8*t9*2.629326893467769E-2+t8*t11*2.261999172185061E-1+t9*t10*1.714455893661597E-1-t10*t11*5.322298539488757E-2-3.496118766033006E-1);
     qcopy(modelPtr_->getJointId("right_A2") - 1) = HigherOrderDerivatives::safeasin(t2*8.08508988653757+t3*8.033204820099098+t4*1.820663506981432+t5*9.760946687487468E-1-t8*2.143120822774579-t9*1.998293355526279-t10*1.095961671709748-t11*4.953901287885355E-1-t2*t3*1.273036938982479E+1-t2*t5*1.117825053271672-t3*t4*2.420405429552186+t4*t5*1.170037217867019+t2*t9*2.835751824751641+t3*t8*3.021210259875125+t2*t11*5.805706025081291E-1+t3*t10*1.468854423683356+t4*t9*5.420356015832145E-1+t5*t8*2.326217949887465E-1+t4*t11*1.600391744429722E-1+t5*t10*1.170908991628156E-1-t8*t9*4.40337591097512E-1-t8*t11*1.065731420572547E-1-t9*t10*3.400548068856727E-1-t10*t11*4.121086576936894E-1-4.663948776295725);
     qcopy(modelPtr_->getJointId("right_toe_B_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*(-6.277469604269263E-1)-t3*6.676022839778379E-1-t4*8.399423316628958E-1+t5*1.529719504893023E-1+t8*1.44381731007234E-1+t9*4.870768316848186E-1+t10*5.196004288358185E-1+t11*4.899787657102767E-1+t2*t3*1.038356653790214+t2*t5*1.224128324227442+t3*t4*1.136249345040226-t4*t5*2.962244825741616E-1-t2*t9*7.061936994304631E-1-t3*t8*2.508516890107657E-1-t2*t11*7.147313228957868E-1-t3*t10*7.361945978788478E-1-t4*t9*3.638713473685915E-1-t5*t8*4.137119943797418E-1+t4*t11*2.198247731883075E-1+t5*t10*1.190720324216782E-1+t8*t9*1.91374695742122E-1+t8*t11*2.674233531253601E-1+t9*t10*2.592073581826719E-1-t10*t11*1.033333326963321E-1+3.90361533934657E-1);
@@ -288,16 +288,16 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
     // left toe close loop
     q1 = q(modelPtr_->getJointId("left_toe_A") - 1);
     q2 = q(modelPtr_->getJointId("left_toe_B") - 1);
-    t2 = cos(q1);
-    t3 = cos(q2);
-    t4 = sin(q1);
-    t5 = sin(q2);
+    t2 = cosf(q1);
+    t3 = cosf(q2);
+    t4 = sinf(q1);
+    t5 = sinf(q2);
     t6 = q1*2.0;
     t7 = q2*2.0;
-    t8 = cos(t6);
-    t9 = cos(t7);
-    t10 = sin(t6);
-    t11 = sin(t7);
+    t8 = cosf(t6);
+    t9 = cosf(t7);
+    t10 = sinf(t6);
+    t11 = sinf(t7);
     qcopy(modelPtr_->getJointId("left_toe_A_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*(-5.114926838701811E-1)-t3*4.072861778028993E-1+t4*5.150198314974532E-1-t5*7.189053388109297E-1+t8*1.914297694169048E-1-t9*1.020493568564005E-1+t10*2.762038362432678E-1+t11*4.461078824742524E-1+t2*t3*5.669587551620541E-1+t2*t5*9.826314482751646E-1+t3*t4*7.066613185154341E-1+t4*t5*8.751254943270917E-2+t2*t9*1.526028367712922E-1-t3*t8*2.146460048968412E-1-t2*t11*6.3737234338624E-1-t3*t10*4.061234579946822E-1-t4*t9*2.591685735898548E-1-t5*t8*3.141536565807085E-1-t4*t11*1.15414032157577E-1-t5*t10*5.111679397817798E-2-t8*t9*2.629368451925844E-2+t8*t11*2.261999309581469E-1+t9*t10*1.714456126031132E-1+t10*t11*5.322294548977349E-2+3.49608876912165E-1);
     qcopy(modelPtr_->getJointId("left_A2") - 1) = HigherOrderDerivatives::safeasin(t2*8.085018160207163+t3*8.033133064086231-t4*1.820662389025083-t5*9.760941431166779E-1-t8*2.143101587807895-t9*1.998274051537184+t10*1.095961134647075+t11*4.953899201857669E-1-t2*t3*1.273027136495291E+1+t2*t5*1.11782444127773+t3*t4*2.420403987960523+t4*t5*1.17003991016308+t2*t9*2.835725404415498+t3*t8*3.021183922843985-t2*t11*5.805703711334091E-1-t3*t10*1.468853731639082-t4*t9*5.420352775054091E-1-t5*t8*2.326217084069311E-1+t4*t11*1.600377315075955E-1+t5*t10*1.170894522681423E-1-t8*t9*4.403304524513951E-1+t8*t11*1.065731191784157E-1+t9*t10*3.400546515442943E-1-t10*t11*4.121078791939159E-1-4.663896238435751);
     qcopy(modelPtr_->getJointId("left_toe_B_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*6.277394162562625E-1+t3*6.6759473381467E-1-t4*8.399421448959555E-1+t5*1.52972128181329E-1-t8*1.443797201746081E-1-t9*4.870748185116889E-1+t10*5.196003431996498E-1+t11*4.899786813403554E-1-t2*t3*1.038346357873659+t2*t5*1.224128102824049+t3*t4*1.13624910964581+t4*t5*2.962247949009167E-1+t2*t9*7.06190949266457E-1+t3*t8*2.508489399062072E-1-t2*t11*7.147312184882999E-1-t3*t10*7.361944907642444E-1-t4*t9*3.638712999144287E-1-t5*t8*4.137119506580644E-1-t4*t11*2.198249429188003E-1-t5*t10*1.190722007592886E-1-t8*t9*1.913739574570494E-1+t8*t11*2.67423333074767E-1+t9*t10*2.592073373292207E-1+t10*t11*1.033334244581574E-1-3.903559984881447E-1);
@@ -307,22 +307,22 @@ void DigitDynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivati
 
     // right knee close loop
     q1 = q(modelPtr_->getJointId("right_knee") - 1);
-    t2 = cos(q1);
-    t3 = sin(q1);
+    t2 = cosf(q1);
+    t3 = sinf(q1);
     t4 = q1*2.0;
-    t5 = cos(t4);
-    t6 = sin(t4);
+    t5 = cosf(t4);
+    t6 = sinf(t4);
     qcopy(modelPtr_->getJointId("right_tarsus") - 1) = -HigherOrderDerivatives::safeasin(t2*1.155848969647063E-3+t3*1.004686948291003+t5*1.274417498011625E-4-t6*1.785981355062532E-3-1.132590494159057E-2);
     qcopy(modelPtr_->getJointId("right_achilles_rod") - 1) = -HigherOrderDerivatives::safeasin(t2*(-1.587289102030986E-3)-t3*1.001736520672665+t5*3.407131509821247E-4+t6*9.646678263881318E-4+1.539911054998293E-3);
     qcopy(modelPtr_->getJointId("right_ach2") - 1) = HigherOrderDerivatives::safeasin(t2*(-7.197863326636346E-2)-t3*8.929579539511397E-3+t5*2.669904889172627E-4+t6*8.46571305589265E-5+7.18964949007849E-2);
 
     // left knee close loop
     q1 = q(modelPtr_->getJointId("left_knee") - 1);
-    t2 = cos(q1);
-    t3 = sin(q1);
+    t2 = cosf(q1);
+    t3 = sinf(q1);
     t4 = q1*2.0;
-    t5 = cos(t4);
-    t6 = sin(t4);
+    t5 = cosf(t4);
+    t6 = sinf(t4);
     qcopy(modelPtr_->getJointId("left_tarsus") - 1) = HigherOrderDerivatives::safeasin(t2*1.155848972188414E-3-t3*1.004686948291033+t5*1.274417489907877E-4+t6*1.785981355072367E-3-1.132590494335349E-2);
     qcopy(modelPtr_->getJointId("left_achilles_rod") - 1) = HigherOrderDerivatives::safeasin(t2*(-1.587289102219775E-3)+t3*1.001736520672708+t5*3.407131510426615E-4-t6*9.646678264174077E-4+1.539911055129276E-3);
     qcopy(modelPtr_->getJointId("left_ach2") - 1) = HigherOrderDerivatives::safeasin(t2*(-7.197863326651638E-2)+t3*8.929579539517018E-3+t5*2.669904889661342E-4-t6*8.465713056222183E-5+7.189649490089099E-2);

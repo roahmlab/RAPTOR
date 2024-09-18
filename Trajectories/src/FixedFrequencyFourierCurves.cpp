@@ -144,8 +144,8 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
 
             for (int j = 0; j < degree; j++) {
                 float jt = (j + 1) * t;
-                float sinjwt = sin(w * jt);
-                float cosjwt = cos(w * jt);
+                float sinjwt = sinf(w * jt);
+                float cosjwt = cosf(w * jt);
 
                 ddF(2 * j + 1) = cosjwt;
                 ddF(2 * j + 2) = sinjwt;

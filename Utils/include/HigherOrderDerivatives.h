@@ -21,7 +21,7 @@ inline float safeasin(const float x,
         }
         return -M_PI / 2.0;
     } 
-    return std::asin(x);
+    return asinf(x);
 }
 
 inline float safedasindx(const float x,
@@ -90,7 +90,7 @@ inline float safeacos(const float x,
         }
         return M_PI;
     } 
-    return std::acos(x);
+    return acosf(x);
 }
 
 inline float safedacosdx(const float x,
@@ -146,51 +146,51 @@ inline float safedddacosdddx(const float x,
 }
 
 inline float safexSinx(const float x,
-                        const float nearZeroThreshold = false) {
+                        const float nearZeroThreshold = 1e-4) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         float xSquare = x * x;
         float xFourth = xSquare * xSquare;
         return 1.0 + xSquare / 6.0 + 7.0 * xFourth / 360.0; // + O(x^6)
     }
-    return x / std::sin(x);
+    return x / sinf(x);
 }
 
 inline float safedxSinxdx(const float x,
-                           float nearZeroThreshold = false) {
+                           float nearZeroThreshold = 1e-4) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         float xSquare = x * x;
         float xThird = x * xSquare;
         float XFifth = xThird * xSquare;
         return x / 3.0 + 7.0 * xThird / 90.0 + 31.0 * XFifth / 2520.0; // + O(x^7)
     }
-    const float sinx = std::sin(x);
-    return (sinx - x * std::cos(x)) / (sinx * sinx);
+    const float sinx = sinf(x);
+    return (sinx - x * cosf(x)) / (sinx * sinx);
 }
 
 inline float safeddxSinxddx(const float x,
-                             const float nearZeroThreshold = false) {
+                             const float nearZeroThreshold = 1e-4) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         float xSquare = x * x;
         float xFourth = xSquare * xSquare;
         float xSixth = xFourth * xSquare;
         return 1.0 / 3.0 + 7.0 * xSquare / 30.0 + 31.0 * xFourth / 504.0; // + O(x^6)
     }
-    const float sinx = std::sin(x);
-    const float cosx = std::cos(x);
+    const float sinx = sinf(x);
+    const float cosx = cosf(x);
     const float sinxSquare = sinx * sinx;
     return (x * sinxSquare - 2 * cosx * sinx + 2 * x * cosx * cosx) / (sinxSquare * sinx);
 }
 
 inline float safedddxSinxdddx(const float x,
-                               const float nearZeroThreshold = false) {
+                               const float nearZeroThreshold = 1e-4) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         float xSquare = x * x;
         float xThird = x * xSquare;
         float XFifth = xThird * xSquare;
         return 7.0 * x / 15.0 + 31.0 * xThird / 126.0 + 127.0 * XFifth / 1800.0; // + O(x^7)
     }
-    const float sinx = std::sin(x);
-    const float cosx = std::cos(x);
+    const float sinx = sinf(x);
+    const float cosx = cosf(x);
     const float sinxSquare = sinx * sinx;
     return x * cosx / sinxSquare +
            6 * cosx * cosx / (sinx * sinxSquare) -
