@@ -91,6 +91,10 @@ public:
     SmartPtr<KinovaOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
+    // results
+    VecX solution;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo;
+
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;
     bool set_ipopt_parameters_check = false;

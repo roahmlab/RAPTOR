@@ -146,7 +146,7 @@ inline double safedddacosdddx(const double x,
 }
 
 inline double safexSinx(const double x,
-                        const double nearZeroThreshold = false) {
+                        const double nearZeroThreshold = 1e-6) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         double xSquare = x * x;
         double xFourth = xSquare * xSquare;
@@ -156,7 +156,7 @@ inline double safexSinx(const double x,
 }
 
 inline double safedxSinxdx(const double x,
-                           double nearZeroThreshold = false) {
+                           const double nearZeroThreshold = 1e-6) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         double xSquare = x * x;
         double xThird = x * xSquare;
@@ -168,7 +168,7 @@ inline double safedxSinxdx(const double x,
 }
 
 inline double safeddxSinxddx(const double x,
-                             const double nearZeroThreshold = false) {
+                             const double nearZeroThreshold = 1e-6) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         double xSquare = x * x;
         double xFourth = xSquare * xSquare;
@@ -182,7 +182,7 @@ inline double safeddxSinxddx(const double x,
 }
 
 inline double safedddxSinxdddx(const double x,
-                               const double nearZeroThreshold = false) {
+                               const double nearZeroThreshold = 1e-6) {
     if (fabs(x) < nearZeroThreshold) { // use Taylor expansion to approximate
         double xSquare = x * x;
         double xThird = x * xSquare;

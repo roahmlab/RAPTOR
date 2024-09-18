@@ -25,6 +25,7 @@ Plain::Plain(const int Nact_input) {
         q_dd(i) = VecX::Zero(Nact);
 
         pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_pz(i).middleCols(i * Nact, Nact).setIdentity();
         pq_d_pz(i) = MatX::Zero(Nact, varLength);
         pq_dd_pz(i) = MatX::Zero(Nact, varLength);
 
@@ -60,6 +61,7 @@ Plain::Plain(const int N_input,
         q_dd(i) = VecX::Zero(Nact);
 
         pq_pz(i) = MatX::Zero(Nact, varLength);
+        pq_pz(i).middleCols(i * Nact, Nact).setIdentity();
         pq_d_pz(i) = MatX::Zero(Nact, varLength);
         pq_dd_pz(i) = MatX::Zero(Nact, varLength);
 
@@ -88,15 +90,14 @@ void Plain::compute(const VecX& z,
         // q_dd(i) = 0;
 
         if (compute_derivatives) {
-            pq_pz(i).resize(Nact, varLength);
-            pq_pz(i).block(0, i * Nact, Nact, Nact) = Eigen::MatrixXd::Identity(Nact, Nact);
+            // pq_pz(i).middleCols(i * Nact, Nact).setIdentity(); // We have already done that in the constructor
             // pq_d_pz(i).resize(Nact, varLength);
             // pq_dd_pz(i).resize(Nact, varLength);
         }
 
         if (compute_hessian) {
             for (int j = 0; j < Nact; j++) {
-                pq_pz_pz(j, i).setZero();
+                // pq_pz_pz(j, i).setZero(); // We have already done that in the constructor
                 // pq_d_pz_pz(j, i).setZero();
                 // pq_dd_pz_pz(j, i).setZero();
             }

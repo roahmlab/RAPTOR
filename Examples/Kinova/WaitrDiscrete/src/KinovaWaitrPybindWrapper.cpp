@@ -265,9 +265,10 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
     set_trajectory_parameters_check = false;
     set_target_check = false;
     has_optimized = mynlp->ifFeasible;
+    solution = mynlp->solution;
 
     const size_t shape_ptr[] = {NUM_JOINTS};
-    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
+    auto result = nb::ndarray<nb::numpy, const double>(solution.data(),
                                                        1,
                                                        shape_ptr,
                                                        nb::handle());
@@ -316,7 +317,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
+    trajInfo.resize(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
@@ -328,7 +329,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
         trajInfo(i, 4 * NUM_JOINTS) = testnlp->trajPtr_->tspan(i);
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> contactInfo(N_simulate, 3);
+    contactInfo.resize(N_simulate, 3);
     for (int i = 0; i < N_simulate; i++) {
         const Vec3& rotation_torque = testnlp->idPtr_->lambda(i).head(3);
         const Vec3& translation_force = testnlp->idPtr_->lambda(i).tail(3);

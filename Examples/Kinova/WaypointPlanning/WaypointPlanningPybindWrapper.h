@@ -167,7 +167,7 @@ public:
             throw std::runtime_error("Failed to find a solution");
         }
 
-        ss->simplifySolution();
+        // ss->simplifySolution();
         auto sol = ss->getSolutionPath();
         sol.interpolate();
 

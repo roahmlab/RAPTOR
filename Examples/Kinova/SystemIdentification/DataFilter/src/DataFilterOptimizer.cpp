@@ -141,14 +141,16 @@ bool DataFilterOptimizer::get_bounds_info(
     }
 
     // report constraints distribution
-    std::cout << "Dimension of each constraints and their locations: \n";
-    iter = 0;
-    for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
-        std::cout << constraintsNameVec_[c] << ": ";
-        std::cout << constraintsPtrVec_[c]->m << " [";
-        std::cout << iter << " ";
-        iter += constraintsPtrVec_[c]->m;
-        std::cout << iter << "]\n";
+    if (display_info) {
+        std::cout << "Dimension of each constraints and their locations: \n";
+        iter = 0;
+        for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
+            std::cout << constraintsNameVec_[c] << ": ";
+            std::cout << constraintsPtrVec_[c]->m << " [";
+            std::cout << iter << " ";
+            iter += constraintsPtrVec_[c]->m;
+            std::cout << iter << "]\n";
+        }
     }
 
     return true;
