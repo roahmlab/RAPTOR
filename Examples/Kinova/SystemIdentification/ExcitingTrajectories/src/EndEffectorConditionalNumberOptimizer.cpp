@@ -158,9 +158,8 @@ bool EndeffectorConditionNumberOptimizer::eval_f(
     ridPtr_->compute(z, false);
 
     // get the endY
-    const MatX ObservationMatrix = ridPtr_->Y;
-    int startCol = (joint_num - 1) * 10; 
-    const MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
+    const int startCol = (joint_num - 1) * 10; 
+    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
   
     Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
@@ -168,8 +167,8 @@ bool EndeffectorConditionNumberOptimizer::eval_f(
     const MatX& U = svd.matrixU();
     const MatX& V = svd.matrixV();
 
-    Number sigmaMax = singularValues(0);
-    Number sigmaMin = singularValues(singularValues.size() - 1);
+    const Number sigmaMax = singularValues(0);
+    const Number sigmaMin = singularValues(singularValues.size() - 1);
 
     // log of 2-norm condition number (sigmaMax / sigmaMin)
     obj_value = std::log(sigmaMax) - std::log(sigmaMin);
@@ -194,9 +193,8 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
     ridPtr_->compute(z, true);
 
     // get the endY
-    const MatX ObservationMatrix = ridPtr_->Y;
-    int startCol = (joint_num - 1) * 10; 
-    const MatX EndeffectorY = ObservationMatrix.middleCols(startCol, 10);
+    const int startCol = (joint_num - 1) * 10; 
+    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
  
     Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
@@ -205,21 +203,18 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
     const MatX& U = svd.matrixU();
     const MatX& V = svd.matrixV();
 
-    Index lastRow = singularValues.size() - 1;
-    Number sigmaMax = singularValues(0);
-    Number sigmaMin = singularValues(lastRow);
+    const Index lastRow = singularValues.size() - 1;
+    const Number sigmaMax = singularValues(0);
+    const Number sigmaMin = singularValues(lastRow);
 
     // refer to https://j-towns.github.io/papers/svd-derivative.pdf
     // for analytical gradient of singular values
     for (Index i = 0; i < n; i++) {
-
-        const MatX gradObservationMatrix = ridPtr_->pY_pz(i);
-        int startCol = (joint_num - 1) * 10; 
-        const MatX gradEndeffectorY = gradObservationMatrix.middleCols(startCol, 10);
+        const int startCol = (joint_num - 1) * 10; 
+        const MatX& gradEndeffectorY = ridPtr_->pY_pz(i).middleCols(startCol, 10);
         
-
-        Number gradSigmaMax = U.col(0).transpose()       * gradEndeffectorY * V.col(0);
-        Number gradSigmaMin = U.col(lastRow).transpose() * gradEndeffectorY * V.col(lastRow);
+        const Number gradSigmaMax = U.col(0).transpose()       * gradEndeffectorY * V.col(0);
+        const Number gradSigmaMin = U.col(lastRow).transpose() * gradEndeffectorY * V.col(lastRow);
 
         grad_f[i] = gradSigmaMax / sigmaMax - gradSigmaMin / sigmaMin;
     }
