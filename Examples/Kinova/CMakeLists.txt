@@ -31,6 +31,25 @@ target_link_libraries(Kinovalib PUBLIC
     ompl
 )
 
+# Armour
+add_library(Armourlib SHARED
+    Armour/src/PZsparse.cpp
+    Armour/src/RobotInfo.cpp
+    Armour/src/ParameterizedTrajectory.cpp
+    Armour/src/PZDynamics.cpp
+)
+
+target_include_directories(Armourlib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
+)
+
+target_link_libraries(Armourlib PUBLIC
+    ${Boost_LIBRARIES} 
+    yaml-cpp
+    pinocchio::pinocchio
+)
+
 ###
 add_executable(KinovaIK_example 
     InverseKinematics/KinovaIKExample.cpp)

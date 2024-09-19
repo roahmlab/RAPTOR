@@ -41,7 +41,7 @@ public:
     WaypointPlanningPybindWrapper() = default;
 
     WaypointPlanningPybindWrapper(const std::string urdf_filename) {
-        pinocchio::ModelTpl<double> model_double;
+        pinocchio::Model model_double;
         pinocchio::urdf::buildModel(urdf_filename, model_double);
         model = model_double.cast<float>();
 
