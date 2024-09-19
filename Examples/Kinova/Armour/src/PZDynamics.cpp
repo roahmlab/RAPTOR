@@ -4,7 +4,7 @@ namespace RAPTOR {
 namespace Armour {
 
 KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
-                                       const std::shared_ptr<BezierCurve>& trajPtr_input) :
+                                       const std::shared_ptr<BezierCurveInterval>& trajPtr_input) :
     robotInfoPtr_(robotInfoPtr_input),
     trajPtr_(trajPtr_input) {
     const pinocchio::ModelTpl<float>& model = robotInfoPtr_->model;
@@ -64,7 +64,7 @@ KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotIn
     }
 }
 
-void KinematicsDynamics::reset_trajectory(const std::shared_ptr<BezierCurve>& trajPtr_input) {
+void KinematicsDynamics::reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input) {
     trajPtr_ = trajPtr_input;
 }
 

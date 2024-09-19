@@ -37,6 +37,7 @@ add_library(Armourlib SHARED
     Armour/src/RobotInfo.cpp
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
+    Armour/src/ReachableSets.cpp
 )
 
 target_include_directories(Armourlib PUBLIC

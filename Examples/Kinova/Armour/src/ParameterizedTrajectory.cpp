@@ -3,7 +3,7 @@
 namespace RAPTOR {
 namespace Armour {
 
-BezierCurve::BezierCurve() {
+BezierCurveInterval::BezierCurveInterval() {
     q0 = VecX::Zero(NUM_FACTORS);
     qd0 = VecX::Zero(NUM_FACTORS);
     qdd0 = VecX::Zero(NUM_FACTORS);
@@ -27,7 +27,7 @@ BezierCurve::BezierCurve() {
     ds = 1.0 / num_time_steps;
 }
 
-BezierCurve::BezierCurve(const VecX& q0_inp, 
+BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp, 
                          const VecX& qd0_inp, 
                          const VecX& qdd0_inp,
                          const VecX& k_center_inp,
@@ -44,68 +44,11 @@ BezierCurve::BezierCurve(const VecX& q0_inp,
     Tqd0 = qd0 * duration; 
     TTqdd0 = qdd0 * duration * duration; 
 
-    if (false) {
-        // compute a near-optimal time partition
-        // first compute a finer trajectory for all joints at the center and record the extrema
-        const float k[NUM_FACTORS] = {0.0};
-        MatX qdd_traj = MatX::Zero(4, 2048);
-        VecX qdd_min(4); qdd_min.setConstant(1e19);
-        VecX qdd_max(4); qdd_max.setConstant(-1e19);
-        for (int i = 0; i < 2048; i++) {
-            float s = i / 2048.0;
-            for (int j = 0; j < 4; j++) {
-                qdd_traj(j, i) = qdd_des_func(q0[j], Tqd0[j], TTqdd0[j], k[j], s, duration);
-            }
-            qdd_min = qdd_min.cwiseMin(qdd_traj.col(i));
-            qdd_max = qdd_max.cwiseMax(qdd_traj.col(i));
-        }
-
-        // compute the desired interval
-        VecX qdd_range = qdd_max - qdd_min;
-        float interval_size = qdd_range.maxCoeff() / 60;
-
-        s_intervals.reserve(70 + 1);
-        s_intervals.push_back(0.0);
-
-        // forward propagate to compute the time partition
-        int current_lb_idx = 0;
-        int current_ub_idx = 0;
-        float current_ub = 0.0;
-        VecX current_qdd_min(NUM_FACTORS); current_qdd_min.setConstant(1e19);
-        VecX current_qdd_max(NUM_FACTORS); current_qdd_max.setConstant(-1e19);
-        while (current_ub_idx < 2048) {
-            current_qdd_min = qdd_traj.col(current_lb_idx);
-            current_qdd_max = qdd_traj.col(current_ub_idx);
-            int p = current_lb_idx + 1;
-            for (; p < 2048; p++) {
-                current_qdd_min = current_qdd_min.cwiseMin(qdd_traj.col(p));
-                current_qdd_max = current_qdd_max.cwiseMax(qdd_traj.col(p));
-                if ((current_qdd_max - current_qdd_min).maxCoeff() > interval_size) {
-                    current_ub_idx = p;
-                    current_ub = current_ub_idx / 2048.0;
-                    break;
-                }
-            }
-
-            if (p == 2048) {
-                s_intervals.push_back(1.0);
-                break;
-            }
-
-            s_intervals.push_back(current_ub);
-
-            current_lb_idx = current_ub_idx;
-        }
-
-        num_time_steps = s_intervals.size() - 1;
-    }
-    else {
-        // compute a uniform time partition
-        num_time_steps = NUM_TIME_STEPS;
-        s_intervals.reserve(num_time_steps + 1);
-        for (int i = 0; i <= num_time_steps; i++) {
-            s_intervals.push_back(i / (float)num_time_steps);
-        }
+    // compute a uniform time partition
+    num_time_steps = NUM_TIME_STEPS;
+    s_intervals.reserve(num_time_steps + 1);
+    for (int i = 0; i <= num_time_steps; i++) {
+        s_intervals.push_back(i / (float)num_time_steps);
     }
 
     // pre-allocate memory
@@ -142,12 +85,12 @@ BezierCurve::BezierCurve(const VecX& q0_inp,
     ds = 1.0 / num_time_steps;
 }
 
-void BezierCurve::setTrajectoryParameters(const VecX& q0_inp, 
-                                          const VecX& qd0_inp, 
-                                          const VecX& qdd0_inp,
-                                          const VecX& k_center_inp,
-                                          const VecX& k_range_inp,
-                                          const float duration_inp) {
+void BezierCurveInterval::setTrajectoryParameters(const VecX& q0_inp, 
+                                                  const VecX& qd0_inp, 
+                                                  const VecX& qdd0_inp,
+                                                  const VecX& k_center_inp,
+                                                  const VecX& k_range_inp,
+                                                  const float duration_inp) {
     q0 = q0_inp;
     qd0 = qd0_inp;
     qdd0 = qdd0_inp;
@@ -183,7 +126,7 @@ void BezierCurve::setTrajectoryParameters(const VecX& q0_inp,
     }                                          
 }
 
-void BezierCurve::makePolyZono(const int s_ind) {
+void BezierCurveInterval::makePolyZono(const int s_ind) {
     assert(s_ind < num_time_steps);
 
     // const float s_lb = s_ind * ds;
@@ -199,7 +142,7 @@ void BezierCurve::makePolyZono(const int s_ind) {
         // Part 1: q_des
         float k_dep_coeff_lb = pow(s_lb,3) * (6 * pow(s_lb,2) - 15 * s_lb + 10);
         float k_dep_coeff_ub = pow(s_ub,3) * (6 * pow(s_ub,2) - 15 * s_ub + 10);
-        float k_dep_coeff_center = (k_dep_coeff_ub + k_dep_coeff_lb) * 0.5;
+        float k_dep_coeff_center = (k_dep_coeff_ub + k_dep_coeff_lb) * 0.5 * k_range_elt;
         float k_dep_coeff_radius = (k_dep_coeff_ub - k_dep_coeff_lb) * 0.5 * k_range_elt;
         
         float k_indep_lb = q_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], s_lb, duration);
@@ -228,12 +171,12 @@ void BezierCurve::makePolyZono(const int s_ind) {
         // Part 1.a: cosf(q_des) 
         float cos_q_des_center = cosf(q_des_center);
         Interval cos_q_des_radius_int = - q_des_radius_int * sinf(q_des_center) 
-                                        - 0.5f * cos(q_des_center + k_dep_coeff_center * Interval(-k_range_elt, k_range_elt) + q_des_radius_int) 
-                                            * pow(q_des_radius_int + k_dep_coeff_center * Interval(-k_range_elt, k_range_elt), 2);
+                                        - 0.5f * cos(q_des_center + Interval(-k_dep_coeff_center, k_dep_coeff_center) + q_des_radius_int) 
+                                            * pow(q_des_radius_int + Interval(-k_dep_coeff_center, k_dep_coeff_center), 2);
 
         cos_q_des_center += getCenter(cos_q_des_radius_int);
         cos_q_des_radius_int = cos_q_des_radius_int - getCenter(cos_q_des_radius_int);
-        float cos_q_des_coeff[] = {-k_dep_coeff_center * k_range_elt * sinf(q_des_center), getRadius(cos_q_des_radius_int)}; 
+        float cos_q_des_coeff[] = {-k_dep_coeff_center * sinf(q_des_center), getRadius(cos_q_des_radius_int)};
 
         // cos_q_des_int = cos_q_des_center + cos_q_des_coeff[0] * k + cos_q_des_coeff[1] * cosqe;
         uint32_t cos_q_des_degree[2][NUM_FACTORS * 6] = {0};
@@ -245,12 +188,12 @@ void BezierCurve::makePolyZono(const int s_ind) {
         // Part 1.b: sinf(q_des) 
         float sin_q_des_center = sinf(q_des_center);
         Interval sin_q_des_radius_int = q_des_radius_int * cosf(q_des_center) 
-                                        - 0.5f * sin(q_des_center + k_dep_coeff_center * Interval(-k_range_elt, k_range_elt) + q_des_radius_int) 
-                                            * pow(q_des_radius_int + k_dep_coeff_center * Interval(-k_range_elt, k_range_elt), 2);
+                                        - 0.5f * sin(q_des_center + Interval(-k_dep_coeff_center, k_dep_coeff_center) + q_des_radius_int) 
+                                            * pow(q_des_radius_int + Interval(-k_dep_coeff_center, k_dep_coeff_center), 2);
 
         sin_q_des_center += getCenter(sin_q_des_radius_int);
         sin_q_des_radius_int = sin_q_des_radius_int - getCenter(sin_q_des_radius_int);
-        float sin_q_des_coeff[] = {k_dep_coeff_center * k_range_elt * cosf(q_des_center), getRadius(sin_q_des_radius_int)};
+        float sin_q_des_coeff[] = {k_dep_coeff_center * cosf(q_des_center), getRadius(sin_q_des_radius_int)};
 
         // sin_q_des_int = sin_q_des_center + sin_q_des_coeff[0] * k + sin_q_des_coeff[1] * sinqe;
         uint32_t sin_q_des_degree[2][NUM_FACTORS * 6] = {0};
@@ -365,7 +308,7 @@ void BezierCurve::makePolyZono(const int s_ind) {
     }
 }
 
-void BezierCurve::returnJointPositionExtremum(float* extremum, const float* k) const {
+void BezierCurveInterval::returnJointPositionExtremum(float* extremum, const float* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         float k_actual = k_center(i) + k_range(i) * k[i];
@@ -399,7 +342,7 @@ void BezierCurve::returnJointPositionExtremum(float* extremum, const float* k) c
     }
 }
 
-void BezierCurve::returnJointPositionExtremumGradient(float* extremumGradient, const float* k) const {
+void BezierCurveInterval::returnJointPositionExtremumGradient(float* extremumGradient, const float* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         float k_actual = k_center(i) + k_range(i) * k[i];
@@ -508,7 +451,7 @@ void BezierCurve::returnJointPositionExtremumGradient(float* extremumGradient, c
     }
 }
 
-void BezierCurve::returnJointVelocityExtremum(float* extremum, const float* k) const {
+void BezierCurveInterval::returnJointVelocityExtremum(float* extremum, const float* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         float k_actual = k_center(i) + k_range(i) * k[i];
@@ -542,7 +485,7 @@ void BezierCurve::returnJointVelocityExtremum(float* extremum, const float* k) c
     }
 }
 
-void BezierCurve::returnJointVelocityExtremumGradient(float* extremumGradient, const float* k) const {
+void BezierCurveInterval::returnJointVelocityExtremumGradient(float* extremumGradient, const float* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         float k_actual = k_center(i) + k_range(i) * k[i];

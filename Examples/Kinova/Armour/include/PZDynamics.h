@@ -15,7 +15,7 @@ public:
 
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 
-	std::shared_ptr<BezierCurve> trajPtr_ = nullptr;
+	std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
 
 	PZsparseArray com_arr;
     PZsparseArray mass_nominal_arr;
@@ -38,9 +38,9 @@ public:
 	PZsparseArray contact_moment_int;
 
 	KinematicsDynamics(const std::shared_ptr<RobotInfo>& robot_info_input,
-					   const std::shared_ptr<BezierCurve>& trajPtr_input);
+					   const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
 
-	void reset_trajectory(const std::shared_ptr<BezierCurve>& trajPtr_input);
+	void reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
 
 	// generate link PZs through forward kinematics
 	void fk(const size_t s_ind);

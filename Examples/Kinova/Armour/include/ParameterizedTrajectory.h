@@ -6,7 +6,7 @@
 namespace RAPTOR {
 namespace Armour {
 
-constexpr size_t NUM_TIME_STEPS = 256; // Number of time intervals partitioning the trajectory
+constexpr size_t NUM_TIME_STEPS = 128; // Number of time intervals partitioning the trajectory
 
 // These values are specifically corresponded with a Bezuer curve parameterization
 constexpr float QDD_DES_K_DEP_MAXIMA = (0.5 - sqrtf(3.0f) / 6);
@@ -34,7 +34,7 @@ constexpr float QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0f) / 6);
 // qdd_des = 60*t*(2*t^2 - 3*t + 1) * k_actual + 
 //           -(t - 1)*(qdd0 - 36*qd0*t - 8*qdd0*t + 60*qd0*t^2 + 10*qdd0*t^2)
 //
-class BezierCurve{
+class BezierCurveInterval{
 public:
     using VecX = Eigen::VectorXf;
     using MatX = Eigen::MatrixXf;
@@ -88,25 +88,27 @@ public:
     // joint acceleration
     PZsparseArray qdda_des;
 
-    BezierCurve();
+    BezierCurveInterval();
 
-    BezierCurve(const VecX& q0_inp, 
-                const VecX& qd0_inp, 
-                const VecX& qdd0_inp,
-                const VecX& k_center_inp,
-                const VecX& k_range_inp,
-                const float duration_inp,
-                const ultimate_bound& ultimate_bound_info_inp);
+    BezierCurveInterval(
+        const VecX& q0_inp, 
+        const VecX& qd0_inp, 
+        const VecX& qdd0_inp,
+        const VecX& k_center_inp,
+        const VecX& k_range_inp,
+        const float duration_inp,
+        const ultimate_bound& ultimate_bound_info_inp);
 
-    ~BezierCurve() {};
+    ~BezierCurveInterval() {};
 
     // set up the trajectory parameters
-    void setTrajectoryParameters(const VecX& q0_inp, 
-                                 const VecX& qd0_inp, 
-                                 const VecX& qdd0_inp,
-                                 const VecX& k_center_inp,
-                                 const VecX& k_range_inp,
-                                 const float duration_inp);
+    void setTrajectoryParameters(
+        const VecX& q0_inp, 
+        const VecX& qd0_inp, 
+        const VecX& qdd0_inp,
+        const VecX& k_center_inp,
+        const VecX& k_range_inp,
+        const float duration_inp);
 
     // convert to polynomial zonotope using 1st/2nd order Taylor expansion
     void makePolyZono(const int s_ind);

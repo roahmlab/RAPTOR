@@ -159,7 +159,7 @@ void PZsparse::simplify() {
 //     polynomial = polynomial_new;
 // }
 
-Interval PZsparse::slice(const float* factor) const {
+Interval PZsparse::slice(const float factor[]) const {
     if (independent < 0) {
         throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
     }
@@ -171,7 +171,7 @@ Interval PZsparse::slice(const float* factor) const {
     for (auto it : polynomial) {
         float resTemp = it.coeff;
 
-        if (it.degree < (1 << (2 * NUM_FACTORS))) { // only dependent on k
+        if (it.degree < pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
             convertHashToDegree(degreeArray, it.degree);
 
             for (size_t j = 0; j < NUM_FACTORS; j++) {
@@ -188,7 +188,41 @@ Interval PZsparse::slice(const float* factor) const {
     return Interval(res_center - res_radius, res_center + res_radius);
 }
 
-void PZsparse::slice(float* gradient, const float* factor) const {
+Interval PZsparse::slice(const Eigen::VectorXf& factor) const {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+    }
+
+    if (factor.size() != NUM_FACTORS) {
+        throw std::runtime_error("PZsparse error: slice(): factor size does not match NUM_FACTORS!");
+    }
+
+    float res_center = center;
+    float res_radius = independent;
+
+    uint32_t degreeArray[NUM_FACTORS * 6];
+
+    for (auto it : polynomial) {
+        float resTemp = it.coeff;
+
+        if (it.degree < pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
+            convertHashToDegree(degreeArray, it.degree);
+
+            for (size_t j = 0; j < NUM_FACTORS; j++) {
+                resTemp *= pow(factor(j), degreeArray[j]);
+            }
+
+            res_center += resTemp;
+        }
+        else { // this line should never be triggered if you run reduce first
+            res_radius += fabs(resTemp);
+        }
+    }
+
+    return Interval(res_center - res_radius, res_center + res_radius);
+}
+
+void PZsparse::slice(float gradient[], const float factor[]) const {
     if (independent < 0) {
         throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
     }
@@ -200,7 +234,7 @@ void PZsparse::slice(float* gradient, const float* factor) const {
     uint32_t degreeArray[NUM_FACTORS * 6];
 
     for (auto it : polynomial) {
-        if (it.degree <= (1 << (2 * NUM_FACTORS))) { // only dependent on k
+        if (it.degree <= pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
             for (size_t k = 0; k < NUM_FACTORS; k++) {
                 resTemp[k] = it.coeff;
             }

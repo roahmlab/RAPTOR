@@ -110,9 +110,11 @@ public:
 
     // void reduce();
 
-    Interval slice(const float* factor) const;
+    Interval slice(const float factor[]) const;
 
-    void slice(float* gradient, const float* factor) const; // 1st-order gradient of slice of a 1-dim PZ
+    Interval slice(const Eigen::VectorXf& factor) const;
+
+    void slice(float gradient[], const float factor[]) const; // 1st-order gradient of slice of a 1-dim PZ
 
     Interval toInterval();
 

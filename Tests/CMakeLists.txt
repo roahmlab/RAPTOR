@@ -81,3 +81,13 @@ add_executable(PZsparse_test
 target_link_libraries(PZsparse_test PUBLIC
     Armourlib
     ${BOOST_LIBRARIES})
+
+add_executable(ReachableSets_test 
+    Armour/ReachableSetsTest.cpp)
+
+target_link_libraries(ReachableSets_test PUBLIC
+    trajlib
+    Armourlib
+    ${BOOST_LIBRARIES}
+    yaml-cpp
+    pinocchio::pinocchio)
