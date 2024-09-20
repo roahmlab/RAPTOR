@@ -30,10 +30,10 @@ void GenerateLinkAndTorquePZs(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
             // compute link PZs through forward kinematics
             kdPtr_->fk(t_ind);
 
-            // // reduce non-only-k-dependent generators so that slice takes less time
-            // for (int i = 0; i < 3 * robotInfoPtr_->num_spheres; i++) {
-            //     kdPtr_->sphere_centers(i, t_ind).reduce();
-            // }
+            // reduce non-only-k-dependent generators so that slice takes less time
+            for (int i = 0; i < 3 * robotInfoPtr_->num_spheres; i++) {
+                kdPtr_->sphere_centers(i, t_ind).reduce();
+            }
 
             // compute nominal torque
             kdPtr_->rnea_nominal(t_ind);
@@ -46,16 +46,16 @@ void GenerateLinkAndTorquePZs(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
                 kdPtr_->torque_int(i, t_ind) = kdPtr_->torque_int(i, t_ind) - kdPtr_->torque_nom(i, t_ind);
             }
 
-            // // reduce non-only-k-dependent generators so that slice takes less time
-            // for (int i = 0; i < NUM_FACTORS; i++) {
-            //     kdPtr_->torque_nom(i, t_ind).reduce();
-            // }
+            // reduce non-only-k-dependent generators so that slice takes less time
+            for (int i = 0; i < NUM_FACTORS; i++) {
+                kdPtr_->torque_nom(i, t_ind).reduce();
+            }
 
-            // // reduce non-only-k-dependent generators so that slice takes less time for contact wrench
-            // for (int i = 0; i < 3 * (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors); i++) {
-            //     kdPtr_->contact_force_int(i, t_ind).reduce();
-            //     kdPtr_->contact_moment_int(i, t_ind).reduce();
-            // }
+            // reduce non-only-k-dependent generators so that slice takes less time for contact wrench
+            for (int i = 0; i < 3 * (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors); i++) {
+                kdPtr_->contact_force_int(i, t_ind).reduce();
+                kdPtr_->contact_moment_int(i, t_ind).reduce();
+            }
         }
     }
     catch (const std::exception& e) {

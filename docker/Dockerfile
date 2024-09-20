@@ -7,9 +7,9 @@ WORKDIR /app
 SHELL ["/bin/bash", "-c"]
 
 # Copy the HSL source code folder into the Docker image
-COPY docker/HSL.zip /app
+# COPY docker/HSL.zip /app
 COPY docker/hsl_ma57.zip /app
-COPY docker/hsl_ma86.zip /app
+# COPY docker/hsl_ma86.zip /app
 
 # # Copy the pardiso libraries into the Docker image
 # COPY docker/pardiso/include/pardiso.h /usr/local/include/pardiso.h

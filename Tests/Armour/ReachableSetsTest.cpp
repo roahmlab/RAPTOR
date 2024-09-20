@@ -1,5 +1,6 @@
 #include "ReachableSets.h"
 #include "ArmourBezierCurves.h"
+#include "InverseDynamics.h"
 
 using namespace RAPTOR;
 using namespace Armour;
@@ -16,11 +17,11 @@ int main() {
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
     // turn off tracking error for validation
-    robotInfoPtr_->ultimate_bound_info.eps = 0;
-    robotInfoPtr_->ultimate_bound_info.qe = 0;
-    robotInfoPtr_->ultimate_bound_info.qde = 0;
-    robotInfoPtr_->ultimate_bound_info.qdae = 0;
-    robotInfoPtr_->ultimate_bound_info.qddae = 0;
+    // robotInfoPtr_->ultimate_bound_info.eps = 0;
+    // robotInfoPtr_->ultimate_bound_info.qe = 0;
+    // robotInfoPtr_->ultimate_bound_info.qde = 0;
+    // robotInfoPtr_->ultimate_bound_info.qdae = 0;
+    // robotInfoPtr_->ultimate_bound_info.qddae = 0;
     
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
@@ -30,14 +31,7 @@ int main() {
 
         // trajectory parameters and their ranges
     const Eigen::VectorXf k_center = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf k_range = M_PI / 240 * Eigen::VectorXf::Ones(robotInfoPtr_->num_motors);
-
-    std::cout << q0.transpose() << std::endl;
-    std::cout << q_d0.transpose() << std::endl;
-    std::cout << q_dd0.transpose() << std::endl << std::endl;
-
-    std::cout << k_center.transpose() << std::endl;
-    std::cout << k_range.transpose() << std::endl << std::endl;
+    const Eigen::VectorXf k_range = M_PI / 24 * Eigen::VectorXf::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
     const float duration = 2.0;
@@ -82,9 +76,6 @@ int main() {
     // randomly choose a trajectory parameter inside the range
     const Eigen::VectorXf factor = Eigen::VectorXf::Random(robotInfoPtr_->num_motors); // [-1, 1]
     const Eigen::VectorXf k = k_center + k_range.cwiseProduct(factor);
-
-    std::cout << factor.transpose() << std::endl;
-    std::cout << k.transpose() << std::endl;
 
     // create a trajectory instance (compute trajectory on discrete time instances)
     ArmourTrajectoryParameters atp;
@@ -172,6 +163,14 @@ int main() {
             }
         }
     }
+
+    // validate the torque PZs
+    // TODO: Implement torque PZ validation
+    std::shared_ptr<InverseDynamics> idPtr_ = 
+        std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
+    idPtr_->compute(k, false);
+
+    const Eigen::VectorXf torque = idPtr_->tau(0);
     
     return 0;
 }

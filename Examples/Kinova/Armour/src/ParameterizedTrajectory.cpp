@@ -161,46 +161,47 @@ void BezierCurveInterval::makePolyZono(const int s_ind) {
         float k_indep_radius = (k_indep_ub - k_indep_lb) * 0.5;
         float q_des_center = (k_indep_lb + k_indep_ub) * 0.5;
         
-        // q_des_k_dep = k_dep_coeff_center * k;
-        Interval q_des_radius_int(-k_dep_coeff_radius - k_indep_radius - ultimate_bound_info.qe, 
-                                  k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qe);
-        
-        // q_des_int = q_des_center + q_des_k_dep + q_des_radius_int;
+        // PZsparse of q_des
+        uint32_t q_des_degree[2][NUM_VARIABLES] = {0};
+        float q_des_coeff[2] = {0};
+        q_des_degree[0][i] = 1; // k
+        q_des_coeff[0] = k_dep_coeff_center; // k
+        q_des_degree[1][i + NUM_FACTORS * 1] = 1; // qe
+        q_des_coeff[1] = k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qe; // qe
+        PZsparse q_des_range(0, q_des_coeff, q_des_degree, 2);
 
-        // first order Taylor expansion
-        // Part 1.a: cosf(q_des) 
-        float cos_q_des_center = cosf(q_des_center);
-        Interval cos_q_des_radius_int = - q_des_radius_int * sinf(q_des_center) 
-                                        - 0.5f * cos(q_des_center + Interval(-k_dep_coeff_center, k_dep_coeff_center) + q_des_radius_int) 
-                                            * pow(q_des_radius_int + Interval(-k_dep_coeff_center, k_dep_coeff_center), 2);
+        // third order Taylor expansion
+        // Part 1.a: cos(q_des) 
+        cos_q_des(i, s_ind) =
+            cosf(q_des_center) + 
+            (-sinf(q_des_center)) * q_des_range +
+            (-0.5f * cosf(q_des_center)) * q_des_range * q_des_range;
 
-        cos_q_des_center += getCenter(cos_q_des_radius_int);
-        cos_q_des_radius_int = cos_q_des_radius_int - getCenter(cos_q_des_radius_int);
-        float cos_q_des_coeff[] = {-k_dep_coeff_center * sinf(q_des_center), getRadius(cos_q_des_radius_int)};
+            // Lagrange remainder of cos(q_des)
+        Interval lag_rem_cos_int = 
+            ((1.0f / 6.0f) * sin(q_des_center + q_des_range.toInterval())) 
+                * q_des_range.toInterval();
+        uint32_t lag_rem_cos_degree[1][NUM_VARIABLES] = {0};
+        float lag_rem_cos_coeff[1] = {0};
+        lag_rem_cos_degree[0][i + NUM_FACTORS * 2] = 1; // cosqe
+        lag_rem_cos_coeff[0] = getRadius(lag_rem_cos_int); // cosqe
+        cos_q_des(i, s_ind) += PZsparse(getCenter(lag_rem_cos_int), lag_rem_cos_coeff, lag_rem_cos_degree, 1);
 
-        // cos_q_des_int = cos_q_des_center + cos_q_des_coeff[0] * k + cos_q_des_coeff[1] * cosqe;
-        uint32_t cos_q_des_degree[2][NUM_FACTORS * 6] = {0};
-        cos_q_des_degree[0][i] = 1; // k
-        cos_q_des_degree[1][i + NUM_FACTORS * 4] = 1; // cosqe
+        // Part 1.b: sin(q_des)
+        sin_q_des(i, s_ind) =
+            sinf(q_des_center) + 
+            (cosf(q_des_center)) * q_des_range +
+            (-0.5f * sinf(q_des_center)) * q_des_range * q_des_range;
 
-        cos_q_des(i, s_ind) = PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2);
-
-        // Part 1.b: sinf(q_des) 
-        float sin_q_des_center = sinf(q_des_center);
-        Interval sin_q_des_radius_int = q_des_radius_int * cosf(q_des_center) 
-                                        - 0.5f * sin(q_des_center + Interval(-k_dep_coeff_center, k_dep_coeff_center) + q_des_radius_int) 
-                                            * pow(q_des_radius_int + Interval(-k_dep_coeff_center, k_dep_coeff_center), 2);
-
-        sin_q_des_center += getCenter(sin_q_des_radius_int);
-        sin_q_des_radius_int = sin_q_des_radius_int - getCenter(sin_q_des_radius_int);
-        float sin_q_des_coeff[] = {k_dep_coeff_center * cosf(q_des_center), getRadius(sin_q_des_radius_int)};
-
-        // sin_q_des_int = sin_q_des_center + sin_q_des_coeff[0] * k + sin_q_des_coeff[1] * sinqe;
-        uint32_t sin_q_des_degree[2][NUM_FACTORS * 6] = {0};
-        sin_q_des_degree[0][i] = 1; // k
-        sin_q_des_degree[1][i + NUM_FACTORS * 5] = 1; // sinqe
-
-        sin_q_des(i, s_ind) = PZsparse(sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2);
+            // Lagrange remainder of sin(q_des)
+        Interval lag_rem_sin_q_des = 
+            (-(1.0f / 6.0f) * cos(q_des_center + q_des_range.toInterval())) 
+                * q_des_range.toInterval();
+        uint32_t lag_rem_sin_degree[1][NUM_VARIABLES] = {0};
+        float lag_rem_sin_coeff[1] = {0};
+        lag_rem_sin_degree[0][i + NUM_FACTORS * 3] = 1; // sinqe
+        lag_rem_sin_coeff[0] = getRadius(lag_rem_sin_q_des); // sinqe
+        sin_q_des(i, s_ind) += PZsparse(getCenter(lag_rem_sin_q_des), lag_rem_sin_coeff, lag_rem_sin_degree, 1);
 
         // Part 2: qd_des
         if (s_ub <= 0.5) {
@@ -238,18 +239,18 @@ void BezierCurveInterval::makePolyZono(const int s_ind) {
 
         float qd_des_coeff[] = {k_dep_coeff_center, k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qde};
 
-        uint32_t qd_des_degree[2][NUM_FACTORS * 6] = {0};
+        uint32_t qd_des_degree[2][NUM_VARIABLES] = {0};
         qd_des_degree[0][i] = 1; // k
-        qd_des_degree[1][i + NUM_FACTORS * 1] = 1; // qde
+        qd_des_degree[1][i + NUM_FACTORS * 4] = 1; // qde
 
         // qd_des_int = qd_des_center + qd_des_coeff[0] * k + qd_des_coeff[1] * qde;
         qd_des(i, s_ind) = PZsparse(qd_des_center, qd_des_coeff, qd_des_degree, 2);
 
         float qda_des_coeff[] = {k_dep_coeff_center, k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qdae};
 
-        uint32_t qda_des_degree[2][NUM_FACTORS * 6] = {0};
+        uint32_t qda_des_degree[2][NUM_VARIABLES] = {0};
         qda_des_degree[0][i] = 1; // k
-        qda_des_degree[1][i + NUM_FACTORS * 2] = 1; // qdae
+        qda_des_degree[1][i + NUM_FACTORS * 5] = 1; // qdae
 
         // qda_des_int = qd_des_center + qda_des_coeff[0] * k + qda_des_coeff[1] * qdae;
         qda_des(i, s_ind) = PZsparse(qd_des_center, qda_des_coeff, qda_des_degree, 2);
@@ -299,9 +300,9 @@ void BezierCurveInterval::makePolyZono(const int s_ind) {
 
         float qdd_des_coeff[] = {k_dep_coeff_center, k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qddae};
 
-        uint32_t qdd_des_degree[2][NUM_FACTORS * 6] = {0};
+        uint32_t qdd_des_degree[2][NUM_VARIABLES] = {0};
         qdd_des_degree[0][i] = 1; // k
-        qdd_des_degree[1][i + NUM_FACTORS * 3] = 1; // qddae
+        qdd_des_degree[1][i + NUM_FACTORS * 6] = 1; // qddae
 
         // qdd_des_int = qdd_des_center + qdd_des_coeff[0] * k + qdd_des_coeff[1] * qdde;
         qdda_des(i, s_ind) = PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);

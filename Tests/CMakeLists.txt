@@ -87,6 +87,7 @@ add_executable(ReachableSets_test
 
 target_link_libraries(ReachableSets_test PUBLIC
     trajlib
+    IDlib
     Armourlib
     ${BOOST_LIBRARIES}
     yaml-cpp

@@ -52,7 +52,7 @@ PZsparse::PZsparse(float center_inp, Interval independent_inp) {
     independent = getRadius(independent_inp);
 }
 
-PZsparse::PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_FACTORS * 6], size_t num_monomials) {
+PZsparse::PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials) {
     center = center_inp;
 
     polynomial.reserve(num_monomials);
@@ -66,7 +66,7 @@ PZsparse::PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM
     simplify();
 }
 
-PZsparse::PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_FACTORS * 6], size_t num_monomials, Interval independent_inp) {
+PZsparse::PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials, Interval independent_inp) {
     center = center_inp + getCenter(independent_inp);
 
     polynomial.reserve(num_monomials);
@@ -139,25 +139,25 @@ void PZsparse::simplify() {
     }
 }
 
-// void PZsparse::reduce() {
-//     if (independent < 0) {
-//         throw std::runtime_error("PZsparse error: reduce(): independent generator matrix has negative entry!");
-//     }
+void PZsparse::reduce() {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: reduce(): independent generator matrix has negative entry!");
+    }
 
-//     std::vector<Monomial> polynomial_new;
-//     polynomial_new.reserve(polynomial.size());
+    std::vector<Monomial> polynomial_new;
+    polynomial_new.reserve(polynomial.size());
 
-//     for (auto it : polynomial) {
-//         if (it.degree < max_hash_dependent_k_only) { // only dependent on k
-//             polynomial_new.emplace_back(it.coeff, it.degree);
-//         }
-//         else {
-//             independent += fabs(it.coeff);
-//         }
-//     }
+    for (auto it : polynomial) {
+        if (it.degree < pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
+            polynomial_new.emplace_back(it.coeff, it.degree);
+        }
+        else {
+            independent += fabs(it.coeff);
+        }
+    }
 
-//     polynomial = polynomial_new;
-// }
+    polynomial = polynomial_new;
+}
 
 Interval PZsparse::slice(const float factor[]) const {
     if (independent < 0) {
@@ -166,7 +166,7 @@ Interval PZsparse::slice(const float factor[]) const {
     float res_center = center;
     float res_radius = independent;
 
-    uint32_t degreeArray[NUM_FACTORS * 6];
+    uint32_t degreeArray[NUM_VARIABLES];
 
     for (auto it : polynomial) {
         float resTemp = it.coeff;
@@ -200,7 +200,7 @@ Interval PZsparse::slice(const Eigen::VectorXf& factor) const {
     float res_center = center;
     float res_radius = independent;
 
-    uint32_t degreeArray[NUM_FACTORS * 6];
+    uint32_t degreeArray[NUM_VARIABLES];
 
     for (auto it : polynomial) {
         float resTemp = it.coeff;
@@ -231,7 +231,7 @@ void PZsparse::slice(float gradient[], const float factor[]) const {
 
     Eigen::Array<float, NUM_FACTORS, 1> resTemp;
 
-    uint32_t degreeArray[NUM_FACTORS * 6];
+    uint32_t degreeArray[NUM_VARIABLES];
 
     for (auto it : polynomial) {
         if (it.degree <= pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
@@ -279,7 +279,7 @@ Interval PZsparse::toInterval() {
 }
 
 void convertHashToDegree(uint32_t degreeArray[], cpp_int degree) {
-    for (size_t i = 0; i < NUM_FACTORS * 6; i++) {
+    for (size_t i = 0; i < NUM_VARIABLES; i++) {
         cpp_int res = degree % MOVE_INC;
         degreeArray[i] = res.convert_to<uint32_t>();    
         degree /= MOVE_INC;
@@ -292,7 +292,7 @@ cpp_int convertDegreeToHash(const uint32_t degreeArray[]) {
     cpp_int degree = 0;
     cpp_int move_bit = 1;
 
-    for (size_t i = 0; i < NUM_FACTORS * 6; i++) {
+    for (size_t i = 0; i < NUM_VARIABLES; i++) {
         if (degreeArray[i] > MOVE_INC) {
             throw std::runtime_error("degree can not be larger than " + std::to_string(MOVE_INC.convert_to<uint32_t>()) + "!");
         }
@@ -306,7 +306,7 @@ cpp_int convertDegreeToHash(const uint32_t degreeArray[]) {
 std::ostream& operator<<(std::ostream& os, const PZsparse& a) {
     os << a.center << " +...\n";
 
-    uint32_t degreeArray[NUM_FACTORS * 6];
+    uint32_t degreeArray[NUM_VARIABLES];
 
     for (auto it : a.polynomial) {
         os << '(' << it.coeff << ')';
@@ -319,33 +319,39 @@ std::ostream& operator<<(std::ostream& os, const PZsparse& a) {
         }
         os << ") ";
 
-        os << " * qde^(";
+        os << " * qe^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 1];
         }
         os << ") ";
 
-        os << " * qdae^(";
+        os << " * cosqe^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 2];
         }
         os << ") ";
 
-        os << " * qddae^(";
+        os << " * sinqe^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 3];
         }
         os << ") ";
 
-        os << " * cosqe^(";
+        os << " * qde^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 4];
         }
         os << ") ";
 
-        os << " * sinqe^(";
+        os << " * qdae^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 5];
+        }
+        os << ") ";
+
+        os << " * qddae^(";
+        for (size_t j = 0; j < NUM_FACTORS; j++) {
+            os << degreeArray[j + NUM_FACTORS * 6];
         }
         os << ") ";
 

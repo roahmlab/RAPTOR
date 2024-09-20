@@ -9,7 +9,7 @@ namespace Armour {
 using namespace boost::multiprecision;
 
 // monomials with a coefficient smaller than this number will be reduced
-#define SIMPLIFY_THRESHOLD 1e-5
+#define SIMPLIFY_THRESHOLD 5e-5
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -18,36 +18,17 @@ using namespace boost::multiprecision;
 
 // A specialized implementation of PZsparse
 // so that more variables can be tracked
-// qddae
-// qdae
-// qde
-// sinqe
-// cosqe
 // k
-// 6 * 7 = 42 variables in total
-// sinqe (maximum degree 2 bits (3))
-// cosqe (maximum degree 2 bits (3))
-// qddae (maximum degree 1 bit (1))
-// qdae  (maximum degree 1 bit (1))
-// qde   (maximum degree 1 bit (1))
-// k     (maximum degree 2 bits (3))
-// 9 * 7 = 63 digits stored in one cpp_int
+// qe
+// cosqe
+// sinqe
+// qde
+// qdae
+// qddae
+// 7 * 7 = 49 variables in total
+#define NUM_VARIABLES (NUM_FACTORS * 7)
 
-// const cpp_int MOVE_BIT_INC[NUM_FACTORS * 6] = {2, 2, 2, 2, 2, 2, 2,
-//                                                 1, 1, 1, 1, 1, 1, 1,
-//                                                 1, 1, 1, 1, 1, 1, 1,
-//                                                 1, 1, 1, 1, 1, 1, 1,
-//                                                 2, 2, 2, 2, 2, 2, 2,
-//                                                 2, 2, 2, 2, 2, 2, 2};
-
-// const cpp_int DEGREE_MASK[NUM_FACTORS * 6] = {3, 3, 3, 3, 3, 3, 3,
-//                                                1, 1, 1, 1, 1, 1, 1,
-//                                                1, 1, 1, 1, 1, 1, 1,
-//                                                1, 1, 1, 1, 1, 1, 1,
-//                                                3, 3, 3, 3, 3, 3, 3,
-//                                                3, 3, 3, 3, 3, 3, 3,};
-
-const cpp_int MOVE_INC = 10;
+const cpp_int MOVE_INC = 7;
 
 // const cpp_int max_hash_dependent_k_only = ((cpp_int)1 << (cpp_int)(2 * NUM_FACTORS));
 
@@ -97,9 +78,9 @@ public:
 
     PZsparse(float center_inp, Interval independent_inp);
 
-    PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_FACTORS * 6], size_t num_monomials);
+    PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials);
 
-    PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_FACTORS * 6], size_t num_monomials, Interval independent_inp);
+    PZsparse(float center_inp, float* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials, Interval independent_inp);
 
     ~PZsparse() = default;
 
@@ -108,7 +89,7 @@ public:
     */
     void simplify();
 
-    // void reduce();
+    void reduce();
 
     Interval slice(const float factor[]) const;
 
