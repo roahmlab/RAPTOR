@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    Eigen::VectorXd z = 0.1 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
     // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
         //                             model,
         //                             gp,
         //                             'L',
-        //                             Transform(3, -M_PI / 2),
+        //                             Transform(3, -M_PI_2),
         //                             false);
         //     Index n, m, nnz_jac_g, nnz_h_lag;
         //     TNLP::IndexStyleEnum index_style;

@@ -40,7 +40,7 @@ int main() {
     // Define trajectories
     ArmourTrajectoryParameters atp;
     atp.q0 = Eigen::VectorXd::Zero(NUM_JOINTS);
-    atp.q0(1) = -M_PI / 2;
+    atp.q0(1) = -M_PI_2;
     atp.q_d0 = Eigen::VectorXd::Zero(NUM_JOINTS);
     atp.q_dd0 = Eigen::VectorXd::Zero(NUM_JOINTS);
 

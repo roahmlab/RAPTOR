@@ -43,8 +43,8 @@ bool DigitMultipleStepOptimizer::set_parameters(
             'L' : 
             'R';
         Transform stance_foot_T_des = (i % 2 == 0) ? 
-            Transform(3, -M_PI / 2) : 
-            Transform(3, M_PI / 2);
+            Transform(3, -M_PI_2) : 
+            Transform(3, M_PI_2);
 
         stepOptVec_[i]->set_parameters(x0_input,
                                        T_input,
