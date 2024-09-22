@@ -169,8 +169,29 @@ int main() {
     std::shared_ptr<InverseDynamics> idPtr_ = 
         std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
     idPtr_->compute(k, false);
+    //std::shared_ptr<KinematicsDynamics> pzPtr_ = 
+    //    std::make_shared<KinematicsDynamics>(robotInfoPtr_, trajDiscretePtr_);
+    
+    for (int i = 0; i < idPtr_->N; i++) {
+        for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
+            Interval torqueRange = kdPtr->torque_int(i, j).slice(factor);
+            const float actualTorque = idPtr_->tau(i)(j);
+            if (actualTorque < torqueRange.lower() - 1e-3 || 
+                actualTorque > torqueRange.upper() + 1e-3) {
+                std::cerr << "Validation failed for tau at time step " << i 
+                          << " for motor " << j << ": "
+                          << actualTorque << " not in [ " 
+                          << torqueRange.lower() << ", " 
+                          << torqueRange.upper() << " ]" << std::endl;
+            }
+            else{
+                std::cout << actualTorque << " in [ " 
+                          << torqueRange.lower() << ", " 
+                          << torqueRange.upper() << " ]" << std::endl;
+            }
+        }
+    }
 
     const Eigen::VectorXf torque = idPtr_->tau(0);
-    
     return 0;
 }
