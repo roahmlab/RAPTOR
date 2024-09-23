@@ -18,7 +18,7 @@ int main() {
     // Disable rotor inertia, friction, and damping
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
 
     // Create a trajectory
     int N = 5;  // number of time steps

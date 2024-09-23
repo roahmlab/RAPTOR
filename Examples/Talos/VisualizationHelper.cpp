@@ -15,7 +15,7 @@ int main() {
     // ignore friction for now
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     
     const int numSteps = 2;
     const int degree = 5;

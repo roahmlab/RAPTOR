@@ -59,7 +59,7 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
 
         phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
                                                      modelPtr_->damping(i),
-                                                     modelPtr_->rotorInertia(i);
+                                                     modelPtr_->armature(i);
     }
 
     a_grav << modelPtr_->gravity.angular(),

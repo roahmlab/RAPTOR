@@ -17,7 +17,7 @@ int main() {
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = GRAVITY;
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 
