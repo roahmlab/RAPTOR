@@ -47,7 +47,7 @@ void QRDecompositionSolver::getData() {
 
     // Generate random joint positions, velocities, and accelerations (not accurate)
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    VecX z = 2 * M_PI * VecX::Random(trajPtr_->varLength).array() - M_PI;
+    VecX z = M_2_PI * VecX::Random(trajPtr_->varLength).array() - M_PI;
 
     // Assuming compute is a member function of RegressorInverseDynamics
     ridPtr_->compute(z, false);

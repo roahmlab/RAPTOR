@@ -32,7 +32,7 @@ int main() {
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));
-    VecX z = 2 * M_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
+    VecX z = M_2_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
 
     // Compute inverse dynamics using RegressorInverseDynamics
     auto start_clock = std::chrono::high_resolution_clock::now();
