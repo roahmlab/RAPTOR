@@ -78,7 +78,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
 
     model.friction = map_to_vector(RobotConfig["friction"], num_motors);
     model.damping = map_to_vector(RobotConfig["damping"], num_motors);
-    model.rotorInertia = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
+    model.armature = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
     position_limits_lb = map_to_vector(RobotConfig["position_limits_lb"], num_motors);
     position_limits_ub = map_to_vector(RobotConfig["position_limits_ub"], num_motors);
     velocity_limits = map_to_vector(RobotConfig["velocity_limits"], num_motors);
@@ -133,7 +133,7 @@ void RobotInfo::print() const {
     std::cout << "Gravity:\n    " << model.gravity.linear().transpose() << std::endl;
     std::cout << "Friction:\n    " << model.friction.transpose() << std::endl;
     std::cout << "Damping:\n    " << model.damping.transpose() << std::endl;
-    std::cout << "Rotor Inertia:\n    " << model.rotorInertia.transpose() << std::endl;
+    std::cout << "Rotor Inertia:\n    " << model.armature.transpose() << std::endl;
     std::cout << "Position Limits Lower Bound:\n    " << position_limits_lb.transpose() << std::endl;
     std::cout << "Position Limits Upper Bound:\n    " << position_limits_ub.transpose() << std::endl;
     std::cout << "Velocity Limits:\n    " << velocity_limits.transpose() << std::endl;

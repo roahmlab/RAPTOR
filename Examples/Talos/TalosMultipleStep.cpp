@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     pinocchio::ModelTpl<float> model = model_double.cast<float>();
     
     // ignore all motor dynamics
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 

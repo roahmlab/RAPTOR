@@ -529,7 +529,8 @@ void KinematicsDynamics::rnea(const size_t s_ind,
         const PZsparse& cq = trajPtr_->cos_q_des(i, s_ind);
         const PZsparse& sq = trajPtr_->sin_q_des(i, s_ind);
         const PZsparse& qd = trajPtr_->qd_des(i, s_ind);
-        const PZsparse& qdda = trajPtr_->qda_des(i, s_ind);
+        const PZsparse& qda = trajPtr_->qda_des(i, s_ind);
+        const PZsparse& qdda = trajPtr_->qdda_des(i, s_ind);
         const std::string jointName = model.joints[i + 1].shortname();
 
         if (i == model.nv - 1) {
@@ -613,7 +614,7 @@ void KinematicsDynamics::rnea(const size_t s_ind,
                 throw std::invalid_argument("robotInfoPtr_->num_motorsinvalid joint type!");
             }
 
-            u(i, s_ind) += model.damping[i] * qd + model.rotorInertia[i] * qdda;
+            u(i, s_ind) += model.damping[i] * qd + model.armature[i] * qdda;
 
             // friction is directly applied on the torque limits
         }
