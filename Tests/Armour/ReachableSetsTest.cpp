@@ -173,7 +173,7 @@ int main() {
     
     for (int i = 0; i < idPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
+            const Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
             const float actualTorque = idPtr_->tau(i)(j);
 
             if (actualTorque < torqueRange.lower() - 1e-3 || 
