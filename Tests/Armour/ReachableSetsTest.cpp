@@ -6,8 +6,7 @@ using namespace RAPTOR;
 using namespace Armour;
 
 int main() {
-    std::srand(1234);
-    // std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
 // INITIALIZATION
     // read robot model and info
@@ -17,11 +16,14 @@ int main() {
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
     // turn off tracking error for validation
-    // robotInfoPtr_->ultimate_bound_info.eps = 0;
-    // robotInfoPtr_->ultimate_bound_info.qe = 0;
-    // robotInfoPtr_->ultimate_bound_info.qde = 0;
-    // robotInfoPtr_->ultimate_bound_info.qdae = 0;
-    // robotInfoPtr_->ultimate_bound_info.qddae = 0;
+    robotInfoPtr_->ultimate_bound_info.eps = 0;
+    robotInfoPtr_->ultimate_bound_info.qe = 0;
+    robotInfoPtr_->ultimate_bound_info.qde = 0;
+    robotInfoPtr_->ultimate_bound_info.qdae = 0;
+    robotInfoPtr_->ultimate_bound_info.qddae = 0;
+
+    // turn off friction for validation
+    robotInfoPtr_->model.friction.setZero();
     
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
@@ -165,17 +167,15 @@ int main() {
     }
 
     // validate the torque PZs
-    // TODO: Implement torque PZ validation
     std::shared_ptr<InverseDynamics> idPtr_ = 
         std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
     idPtr_->compute(k, false);
-    //std::shared_ptr<KinematicsDynamics> pzPtr_ = 
-    //    std::make_shared<KinematicsDynamics>(robotInfoPtr_, trajDiscretePtr_);
     
     for (int i = 0; i < idPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
             const float actualTorque = idPtr_->tau(i)(j);
+
             if (actualTorque < torqueRange.lower() - 1e-3 || 
                 actualTorque > torqueRange.upper() + 1e-3) {
                 std::cerr << "Validation failed for tau at time step " << i 
@@ -184,14 +184,8 @@ int main() {
                           << torqueRange.lower() << ", " 
                           << torqueRange.upper() << " ]" << std::endl;
             }
-            else{
-                std::cout << actualTorque << " in [ " 
-                          << torqueRange.lower() << ", " 
-                          << torqueRange.upper() << " ]" << std::endl;
-            }
         }
     }
 
-    const Eigen::VectorXf torque = idPtr_->tau(0);
     return 0;
 }

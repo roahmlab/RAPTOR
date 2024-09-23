@@ -266,13 +266,13 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
             if (j < trajPtr_->Nact) {
                 tau(i)(j) = S(j).transpose() * f(j) + 
-                            modelPtr_->rotorInertia(j) * q_dd(j) +
+                            modelPtr_->armature(j) * q_dd(j) +
                             modelPtr_->damping(j) * q_d(j) +
                             modelPtr_->friction(j) * Utils::sign(q_d(j));
 
                 if (compute_derivatives) {
                     ptau_pz(i).row(j) = S(j).transpose() * pf_pz(j) + 
-                                        modelPtr_->rotorInertia(j) * pq_dd_pz.row(j) +
+                                        modelPtr_->armature(j) * pq_dd_pz.row(j) +
                                         modelPtr_->damping(j) * pq_d_pz.row(j);
                 }
             }

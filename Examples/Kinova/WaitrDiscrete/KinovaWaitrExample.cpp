@@ -18,7 +18,7 @@ int main() {
     pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
     model.gravity.linear()(2) = GRAVITY;
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 

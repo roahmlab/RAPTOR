@@ -14,7 +14,7 @@ int main() {
     pinocchio::urdf::buildModel(urdf_filename, model_double);
     pinocchio::ModelTpl<float> model = model_double.cast<float>();
 
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 

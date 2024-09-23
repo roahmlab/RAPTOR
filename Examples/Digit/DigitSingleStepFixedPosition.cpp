@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     // ignore friction for now
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
 
     // the robot start from this initial condition:
     Eigen::VectorXf q0(NUM_INDEPENDENT_JOINTS);

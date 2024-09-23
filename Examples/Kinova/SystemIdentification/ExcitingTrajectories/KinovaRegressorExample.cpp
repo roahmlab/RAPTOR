@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
     // model.damping.setZero();
-    // model.rotorInertia.setZero();
+    // model.armature.setZero();
 
     // Define trajectory parameters
     const float T = 10.0;
