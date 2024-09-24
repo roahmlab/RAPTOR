@@ -9,8 +9,8 @@ KinovaWithSuctionCup:
   position_limits_ub: [1000.0, 2.41, 1000.0, 2.66, 1000.0, 2.23, 1000.0]
   velocity_limits: [1.7453, 1.7453, 1.7453, 1.7453, 3.14159, 3.14159, 3.14159]
   torque_limits: [56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4]
-  mass_uncertainty: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
-  inertia_uncertainty: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
+  mass_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.10]
+  inertia_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.10]
   ultimate_bound:
     alpha: 10.0
     V_m: 0.02

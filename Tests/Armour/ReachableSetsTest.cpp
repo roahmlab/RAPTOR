@@ -187,5 +187,22 @@ int main() {
         }
     }
 
+    // // validate that torque_int overapproximate torque_nom
+    // // you need to comment out line 44 - 47 in ReachableSets.cpp
+    // for (int i = 0; i < idPtr_->N; i++) {
+    //     for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
+    //         const Interval torqueRange = kdPtr->torque_int(j, i).slice(factor);
+    //         const Interval torqueNomRange = kdPtr->torque_nom(j, i).slice(factor);
+    //         if (!((torqueRange.lower() < torqueNomRange.lower() - 1e-3) &&
+    //               (torqueRange.upper() > torqueNomRange.upper() + 1e-3)))
+    //         {
+    //             std::cerr << "Validation failed for torque_int at time step " << i
+    //                       << " for motor " << j << ": "
+    //                       << torqueNomRange << " not in"
+    //                       << torqueRange << std::endl;
+    //         }
+    //     }
+    // }
+
     return 0;
 }
