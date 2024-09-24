@@ -1,6 +1,7 @@
 #include "ReachableSets.h"
 #include "ArmourBezierCurves.h"
 #include "InverseDynamics.h"
+#include "CustomizedInverseDynamics.h"
 
 using namespace RAPTOR;
 using namespace Armour;
@@ -187,5 +188,35 @@ int main() {
         }
     }
 
+    // validate the contact force PZs
+    Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
+    jtype(jtype.size() - 1) = 0;
+    std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
+        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
+    cidPtr_->compute(k, false);
+    
+    for (int i = 0; i < idPtr_->N; i++) {
+        const Vector6d actualLambda = cidPtr_->lambda(i);
+        for (int j = 0; j < 3; j++) {
+            const Interval forceRange = kdPtr->contact_force_nom(j, i).slice(factor);
+            const Interval momentRange = kdPtr->contact_moment_nom(j, i).slice(factor);            
+            if (actualLambda(j) < forceRange.lower() - 1e-3 || 
+                    actualLambda(j) > forceRange.upper() + 1e-3) {
+                    std::cerr << "Validation failed for contact force at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j) << " not in [ " 
+                          << forceRange.lower() << ", " 
+                          << forceRange.upper() << " ]" << std::endl;
+            }
+            if (actualLambda(j+3) < momentRange.lower() - 1e-3 || 
+                    actualLambda(j) > momentRange.upper() + 1e-3) {
+                    std::cerr << "Validation failed for contact force at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j) << " not in [ " 
+                          << momentRange.lower() << ", " 
+                          << momentRange.upper() << " ]" << std::endl;
+            }
+        }
+    }
     return 0;
 }
