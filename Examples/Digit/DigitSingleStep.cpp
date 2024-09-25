@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
         //                             model,
         //                             gp,
         //                             'L',
-        //                             Transform(3, -M_PI / 2),
+        //                             Transform(3, -M_PI_2),
         //                             false);
         //     Index n, m, nnz_jac_g, nnz_h_lag;
         //     TNLP::IndexStyleEnum index_style;

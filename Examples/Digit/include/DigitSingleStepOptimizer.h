@@ -42,7 +42,7 @@ public:
         const Model& model_input, 
         const GaitParameters& gp_input,
         const char stanceLeg = 'L', // stance foot is left foot by default
-        const Transform& stance_foot_T_des = Transform(3, -M_PI / 2),
+        const Transform& stance_foot_T_des = Transform(3, -M_PI_2),
         bool periodic = true,
         const VecX q0_input = VecX(0),  // optional initial position
         const VecX q_d0_input = VecX(0) // optional initial velocity

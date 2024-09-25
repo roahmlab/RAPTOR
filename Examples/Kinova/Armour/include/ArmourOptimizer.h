@@ -2,14 +2,14 @@
 #define ARMOUR_OPTIMIZER_H
 
 #include "KinovaConstants.h"
-
 #include "ReachableSets.h"
+#include "Optimizer.h"
 
 namespace RAPTOR {
 namespace Armour {
 namespace Kinova {
 
-class KinovaOptimizer : public Optimizer {
+class ArmourOptimizer : public Optimizer {
 public:
     using Model = pinocchio::ModelTpl<float>;
     using VecX = Eigen::VectorXf;
@@ -17,28 +17,25 @@ public:
     using MatX = Eigen::MatrixXf;
 
     /** Default constructor */
-    KinovaOptimizer() = default;
+    ArmourOptimizer() = default;
 
     /** Default destructor */
-    ~KinovaOptimizer() = default;
+    ~ArmourOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
-        const VecX& x0_input,
-        const float T_input,
-        const int N_input,
-        const int degree_input,
-        const Model& model_input, 
-        const ArmourTrajectoryParameters& atp_input,
+        const VecX& q_des_input,
+        Number t_plan_input,
+        const RobotInfo* robotInfoPtr_input,
+        const BezierCurveInterval* trajPtr_input,
+        const KinematicsDynamics* kdPtr_input,
+        const MatX& torque_radius_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input,
-        const VecX& qdes_input,
-        const int tplan_n_input,
-        const VecX& joint_limits_buffer_input,
-        const VecX& velocity_limits_buffer_input,
-        const VecX& torque_limits_buffer_input,
-        const float collision_buffer_input = 0
+        Number suction_force_input = 0.0,
+        Number mu_input = 0.7,
+        Number suction_radius_input = 0.05
     );
 
     /**@name Overloaded from TNLP */
@@ -50,6 +47,29 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
+    ) final override;
+
+    /** Method to return the bounds for my problem */
+    bool get_bounds_info(
+        Index   n,
+        Number* x_l,
+        Number* x_u,
+        Index   m,
+        Number* g_l,
+        Number* g_u
+    ) final override;
+
+    /** Method to return the starting point for the algorithm */
+    bool get_starting_point(
+        Index   n,
+        bool    init_x,
+        Number* x,
+        bool    init_z,
+        Number* z_L,
+        Number* z_U,
+        Index   m,
+        bool    init_lambda,
+        Number* lambda
     ) final override;
 
     /** Method to return the objective value */
@@ -68,13 +88,37 @@ public:
         Number*       grad_f
     ) final override;
 
-    /** Method to return the hessian of the objective */
-    bool eval_hess_f(
+    /** Method to return the constraint residuals */
+    bool eval_g(
         Index         n,
         const Number* x,
         bool          new_x,
-        MatX&         hess_f
+        Index         m,
+        Number*       g
     ) final override;
+
+    /** Method to return:
+    *   1) The structure of the jacobian (if "values" is NULL)
+    *   2) The values of the jacobian (if "values" is not NULL)
+    */
+    bool eval_jac_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Index         nele_jac,
+        Index*        iRow,
+        Index*        jCol,
+        Number*       values
+    ) final override;
+
+    /** This method summarizes constraint violation for each type of constraints */
+    void summarize_constraints(
+        Index                      m,
+        const Number*              g,
+        const bool                 verbose = true
+    ) final override;
+    //@}
 
     /**@name Methods to block default compiler methods.
     *
@@ -87,20 +131,35 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    KinovaOptimizer(
-       const KinovaOptimizer&
+    ArmourOptimizer(
+       const ArmourOptimizer&
     );
 
-    KinovaOptimizer& operator=(
-       const KinovaOptimizer&
+    ArmourOptimizer& operator=(
+       const ArmourOptimizer&
     );
 
-    std::shared_ptr<Trajectories> trajPtr_;
+    const RobotInfo* robotInfoPtr_ = nullptr;
+    const BezierCurveInterval* trajPtr_ = nullptr;
+    const KinematicsDynamics* kdPtr_ = nullptr;
 
-    std::shared_ptr<InverseDynamics> idPtr_;
+    MatX torque_radius;
 
-    VecX qdes;
-    int tplan_n = 0;
+    Number suction_force = 0.0; // suction force
+    Number mu = 0.5; // friction coefficient
+    Number suction_radius = 0.1; // suction cup radius
+
+    size_t num_time_steps = 0;
+    size_t num_spheres = 0;
+    size_t num_fixed_joints = 0;
+    size_t num_obstacles = 0;
+    size_t constraint_number = 0;
+
+    VecX q_des;
+    Number t_plan = 0;
+
+    std::vector<Number> joint_sliced_center;
+    std::vector<Number> dk_joint_sliced_center;
 };
 
 }; // namespace Kinova

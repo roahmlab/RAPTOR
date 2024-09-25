@@ -38,6 +38,7 @@ add_library(Armourlib SHARED
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
     Armour/src/ReachableSets.cpp
+    Armour/src/ArmourOptimizer.cpp
 )
 
 target_include_directories(Armourlib PUBLIC
@@ -48,6 +49,8 @@ target_include_directories(Armourlib PUBLIC
 target_link_libraries(Armourlib PUBLIC
     ${Boost_LIBRARIES} 
     yaml-cpp
+    Optlib
+    ipopt
     pinocchio::pinocchio
 )
 
