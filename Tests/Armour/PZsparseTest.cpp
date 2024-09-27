@@ -7,17 +7,17 @@ using namespace Armour;
 
 int main() {
     // Test the PZsparse class
-    PZsparse pz1(5.0f);
-    PZsparse pz2(3.0f, 0.1f);
+    PZsparse pz1(5.0);
+    PZsparse pz2(3.0, 0.1f);
     
     // Test addition
     PZsparse pz3 = pz1 + pz2;
     
     // Test multiplication
-    PZsparse pz4 = pz1 * 2.0f;
+    PZsparse pz4 = pz1 * 2.0;
     
     // Test division
-    PZsparse pz5 = pz2 / 2.0f;
+    PZsparse pz5 = pz2 / 2.0;
     
     // Output results
     std::cout << "pz1: " << pz1 << std::endl;
@@ -28,8 +28,8 @@ int main() {
 
     // Create a nontrivial PZsparse object
     // pz6 = 2 + 3 * k1 + 5 * qe1 ^ 2
-    float pz6center = 2.0f;
-    float pz6coeff[] = {3.0f, 5.0f};
+    double pz6center = 2.0;
+    double pz6coeff[] = {3.0, 5.0};
     uint32_t pz6degree[2][NUM_VARIABLES] = {0};
     pz6degree[0][0] = 1; // k1
     pz6degree[1][NUM_FACTORS] = 2; // qe1
@@ -40,8 +40,8 @@ int main() {
     // pz7 = pz6 * pz6
     //     = (2 + 3 * k1 + 5 * qe1 ^ 2) * (2 + 3 * k1 + 5 * qe1 ^ 2)
     //     = 4 + 12 * k1 + 20 * qe1 ^ 2 + 9 * k1 ^ 2 + 30 * k1 * qe1 ^ 2 + 25 * qe1 ^ 4
-    float pz7center = 4.0f;
-    float pz7coeff[] = {12.0f, 20.0f, 9.0f, 30.0f, 25.0f};
+    double pz7center = 4.0;
+    double pz7coeff[] = {12.0, 20.0, 9.0, 30.0, 25.0};
     uint32_t pz7degree[5][NUM_VARIABLES] = {0};
     pz7degree[0][0] = 1; // k1
     pz7degree[1][NUM_FACTORS] = 2; // qe1

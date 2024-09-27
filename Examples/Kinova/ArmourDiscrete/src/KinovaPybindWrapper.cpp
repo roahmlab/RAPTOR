@@ -8,7 +8,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     // Define robot model
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    model = model_double.cast<float>();
+    model = model_double.cast<double>();
     
     model.gravity.linear()(2) = GRAVITY;
 
@@ -26,7 +26,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
 }
 
 void KinovaPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp,
-                                        const float collision_buffer_inp) {
+                                        const double collision_buffer_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -48,10 +48,10 @@ void KinovaPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp,
     has_optimized = false;
 }
 
-void KinovaPybindWrapper::set_ipopt_parameters(const float tol,
-                                               const float constr_viol_tol,
-                                               const float obj_scaling_factor,
-                                               const float max_wall_time, 
+void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
+                                               const double constr_viol_tol,
+                                               const double obj_scaling_factor,
+                                               const double max_wall_time, 
                                                const int print_level,
                                                const std::string mu_strategy,
                                                const std::string linear_solver,
@@ -80,7 +80,7 @@ void KinovaPybindWrapper::set_ipopt_parameters(const float tol,
 void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
                                                     const nb_1d_float qd0_inp,
                                                     const nb_1d_float qdd0_inp,
-                                                    const float duration_inp) {
+                                                    const double duration_inp) {
     if (q0_inp.shape(0) != model.nv || 
         qd0_inp.shape(0) != model.nv || 
         qdd0_inp.shape(0) != model.nv) {
@@ -127,7 +127,7 @@ void KinovaPybindWrapper::set_buffer(const nb_1d_float joint_limits_buffer_inp,
 }
 
 void KinovaPybindWrapper::set_target(const nb_1d_float q_des_inp,
-                                     const float tplan_inp) {
+                                     const double tplan_inp) {
     tplan = tplan_inp;
 
     if (tplan <= 0.0 || tplan > T) {
@@ -143,7 +143,7 @@ void KinovaPybindWrapper::set_target(const nb_1d_float q_des_inp,
     }
 
     tplan_n = int(tplan / T * N);
-    tplan_n = fminf(fmaxf(0, tplan_n), N - 1);
+    tplan_n = fmin(fmax(0, tplan_n), N - 1);
 
     set_target_check = true;
     has_optimized = false;
@@ -195,7 +195,7 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Run ipopt to solve the optimization problem
-    float solve_time = 0;
+    double solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -215,14 +215,14 @@ nb::tuple KinovaPybindWrapper::optimize() {
     has_optimized = mynlp->ifFeasible;
 
     const size_t shape_ptr[] = {model.nv};
-    auto result = nb::ndarray<nb::numpy, const float>(mynlp->solution.data(),
+    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
                                                        1,
                                                        shape_ptr,
                                                        nb::handle());
     return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
-nb::ndarray<nb::numpy, float, nb::shape<2, -1>> KinovaPybindWrapper::analyze_solution() {
+nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_solution() {
     if (!has_optimized) {
         throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
     }
@@ -263,7 +263,7 @@ nb::ndarray<nb::numpy, float, nb::shape<2, -1>> KinovaPybindWrapper::analyze_sol
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
@@ -276,7 +276,7 @@ nb::ndarray<nb::numpy, float, nb::shape<2, -1>> KinovaPybindWrapper::analyze_sol
     }
 
     const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
-    auto traj = nb::ndarray<nb::numpy, float, nb::shape<2, -1>>(
+    auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
         trajInfo.data(),
         2,
         shape_ptr1,

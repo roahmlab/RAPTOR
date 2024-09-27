@@ -45,9 +45,9 @@ namespace ZonotopeParams {
 
 class ZonotopeCollisionAvoidance : public CollisionAvoidance {
 public:
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     const int MAX_OBSTACLE_GENERATOR_NUM = ZonotopeParams::MAX_OBSTACLE_GENERATOR_NUM;
     const int HYPERPLANE_NUM = ZonotopeParams::HYPERPLANE_NUM;
@@ -82,13 +82,13 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> zonotopeGenerators;
 
         // hyperplane representation
-    float* A = nullptr;
-    float* b = nullptr;
+    double* A = nullptr;
+    double* b = nullptr;
 
         // vertices representation
     int* v_start_idx = nullptr;
     int* v_size = nullptr;
-    float* v = nullptr;
+    double* v = nullptr;
 };
 
 }; // namespace RAPTOR

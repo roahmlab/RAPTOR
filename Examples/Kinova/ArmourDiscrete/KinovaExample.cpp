@@ -13,15 +13,15 @@ int main() {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.gravity.linear()(2) = GRAVITY;
 
     // Define obstacles
     const int num_obstacles = 5;
-    std::vector<Eigen::Vector3f> boxCenters;
-    std::vector<Eigen::Vector3f> boxOrientation;
-    std::vector<Eigen::Vector3f> boxSize;
+    std::vector<Eigen::Vector3d> boxCenters;
+    std::vector<Eigen::Vector3d> boxOrientation;
+    std::vector<Eigen::Vector3d> boxSize;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -35,29 +35,29 @@ int main() {
 
     // Define trajectories
     ArmourTrajectoryParameters atp;
-    atp.q0 = Eigen::VectorXf::Zero(model.nq);
-    atp.q_d0 = Eigen::VectorXf::Zero(model.nq);
-    atp.q_dd0 = Eigen::VectorXf::Zero(model.nq);
+    atp.q0 = Eigen::VectorXd::Zero(model.nq);
+    atp.q_d0 = Eigen::VectorXd::Zero(model.nq);
+    atp.q_dd0 = Eigen::VectorXd::Zero(model.nq);
 
-    const float T = 1;
+    const double T = 1;
     const int N = 16;
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define target
-    Eigen::VectorXf qdes(model.nq);
+    Eigen::VectorXd qdes(model.nq);
     qdes.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
-    Eigen::VectorXf z(model.nq);
+    Eigen::VectorXd z(model.nq);
     z.setRandom();
 
     // Define limits buffer
-    Eigen::VectorXf joint_limits_buffer(model.nq);
+    Eigen::VectorXd joint_limits_buffer(model.nq);
     joint_limits_buffer.setConstant(0.0);
-    Eigen::VectorXf velocity_limits_buffer(model.nq);
+    Eigen::VectorXd velocity_limits_buffer(model.nq);
     velocity_limits_buffer.setConstant(0.0);
-    Eigen::VectorXf torque_limits_buffer(model.nq);
+    Eigen::VectorXd torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.0);
 
     // Initialize Kinova optimizer
@@ -115,7 +115,7 @@ int main() {
     }
 
     // Run ipopt to solve the optimization problem
-    float solve_time = 0;
+    double solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 

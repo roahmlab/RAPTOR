@@ -18,10 +18,10 @@ namespace Kinova {
 
 class ConditionNumberOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
     ConditionNumberOptimizer() = default;
@@ -32,10 +32,10 @@ public:
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const float T_input,
+        const double T_input,
         const int N_input,
         const int degree_input,
-        const float base_frequency_input,
+        const double base_frequency_input,
         const Model& model_input, 
         const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,

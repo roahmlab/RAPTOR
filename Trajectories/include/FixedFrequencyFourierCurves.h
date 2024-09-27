@@ -7,8 +7,8 @@ namespace RAPTOR {
 
 class FixedFrequencyFourierCurves : public Trajectories {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     FixedFrequencyFourierCurves() = default;
@@ -16,16 +16,16 @@ public:
     FixedFrequencyFourierCurves(const VecX& tspan_input, 
                                 int Nact_input, 
                                 int degree_input,
-                                float base_frequency_input = 10,
+                                double base_frequency_input = 10,
                                 VecX q0_input = VecX::Zero(0),
                                 VecX q_d0_input = VecX::Zero(0));
 
-    FixedFrequencyFourierCurves(float T_input, 
+    FixedFrequencyFourierCurves(double T_input, 
                                 int N_input, 
                                 int Nact_input, 
                                 TimeDiscretization time_discretization, 
                                 int degree_input,
-                                float base_frequency_input = 10,
+                                double base_frequency_input = 10,
                                 VecX q0_input = VecX::Zero(0),
                                 VecX q_d0_input = VecX::Zero(0));
 
@@ -36,7 +36,7 @@ public:
                  bool compute_hessian = false) override;
 
     // class variables:
-    float w = 10; // base frequency
+    double w = 10; // base frequency
 
     int degree = 0; // degree of the Fourier series
 

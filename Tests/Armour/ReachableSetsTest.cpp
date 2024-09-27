@@ -27,16 +27,16 @@ int main() {
     
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
-    const Eigen::VectorXf q0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf q_d0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf q_dd0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXf k_center = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf k_range = M_PI / 24 * Eigen::VectorXf::Ones(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
-    const float duration = 2.0;
+    const double duration = 2.0;
 
     std::shared_ptr<BezierCurveInterval> trajPtr_ = 
         std::make_shared<BezierCurveInterval>(
@@ -76,8 +76,8 @@ int main() {
 
 // VALIDATION
     // randomly choose a trajectory parameter inside the range
-    const Eigen::VectorXf factor = Eigen::VectorXf::Random(robotInfoPtr_->num_motors); // [-1, 1]
-    const Eigen::VectorXf k = k_center + k_range.cwiseProduct(factor);
+    const Eigen::VectorXd factor = Eigen::VectorXd::Random(robotInfoPtr_->num_motors); // [-1, 1]
+    const Eigen::VectorXd k = k_center + k_range.cwiseProduct(factor);
 
     // create a trajectory instance (compute trajectory on discrete time instances)
     ArmourTrajectoryParameters atp;
@@ -92,7 +92,7 @@ int main() {
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         // randomly sample inside each time interval
         trajDiscretePtr_->tspan(i) = 
-            (i + static_cast<float>(std::rand()) / RAND_MAX) * 
+            (i + static_cast<double>(std::rand()) / RAND_MAX) * 
                 (duration / trajPtr_->num_time_steps);
     }
 
@@ -104,7 +104,7 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             // slice the JRS PZ at k (the actual trajectory parameter)
             const Interval cos_q_range = trajPtr_->cos_q_des(j, i).slice(factor);
-            const float actual_cos_q = cosf(trajDiscretePtr_->q(i)(j));
+            const double actual_cos_q = cos(trajDiscretePtr_->q(i)(j));
 
             // check if actual_cos_q is inside the range
             if (actual_cos_q < cos_q_range.lower() - 1e-5 || 
@@ -122,7 +122,7 @@ int main() {
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval sin_q_range = trajPtr_->sin_q_des(j, i).slice(factor);
-            const float actual_sin_q = sinf(trajDiscretePtr_->q(i)(j));
+            const double actual_sin_q = sin(trajDiscretePtr_->q(i)(j));
             if (actual_sin_q < sin_q_range.lower() - 1e-5 || 
                 actual_sin_q > sin_q_range.upper() + 1e-5) {
                 std::cerr << "Validation failed for sin(q) at time step " << i 
@@ -138,7 +138,7 @@ int main() {
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval q_d_range = trajPtr_->qd_des(j, i).slice(factor);
-            const float actual_q_d = trajDiscretePtr_->q_d(i)(j);
+            const double actual_q_d = trajDiscretePtr_->q_d(i)(j);
             if (actual_q_d < q_d_range.lower() - 1e-4 || 
                 actual_q_d > q_d_range.upper() + 1e-4) {
                 std::cerr << "Validation failed for q_d at time step " << i 
@@ -154,7 +154,7 @@ int main() {
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             Interval q_dd_range = trajPtr_->qdda_des(j, i).slice(factor);
-            const float actual_q_dd = trajDiscretePtr_->q_dd(i)(j);
+            const double actual_q_dd = trajDiscretePtr_->q_dd(i)(j);
             if (actual_q_dd < q_dd_range.lower() - 1e-3 || 
                 actual_q_dd > q_dd_range.upper() + 1e-3) {
                 std::cerr << "Validation failed for q_dd at time step " << i 
@@ -174,7 +174,7 @@ int main() {
     for (int i = 0; i < idPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
-            const float actualTorque = idPtr_->tau(i)(j);
+            const double actualTorque = idPtr_->tau(i)(j);
 
             if (actualTorque < torqueRange.lower() - 1e-3 || 
                 actualTorque > torqueRange.upper() + 1e-3) {

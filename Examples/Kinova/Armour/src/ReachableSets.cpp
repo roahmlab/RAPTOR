@@ -64,10 +64,10 @@ void GenerateLinkAndTorquePZs(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
     }
 }
 
-Eigen::MatrixXf ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
+Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
                                          std::shared_ptr<BezierCurveInterval>& trajPtr_,
                                          std::shared_ptr<KinematicsDynamics>& kdPtr_) {
-    const float robust_input_bound = 
+    const double robust_input_bound = 
         0.5 * robotInfoPtr_->ultimate_bound_info.alpha * 
             (robotInfoPtr_->ultimate_bound_info.M_max - robotInfoPtr_->ultimate_bound_info.M_min) * 
                 robotInfoPtr_->ultimate_bound_info.eps;                            
@@ -75,10 +75,10 @@ Eigen::MatrixXf ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
     const size_t num_time_steps = trajPtr_->num_time_steps;
     const size_t num_motors = robotInfoPtr_->num_motors;
 
-    Eigen::MatrixXf torque_radius(num_motors, num_time_steps);
+    Eigen::MatrixXd torque_radius(num_motors, num_time_steps);
 
     try {
-        std::vector<float> sphere_center_uncertainty(robotInfoPtr_->num_spheres, 0.0);
+        std::vector<double> sphere_center_uncertainty(robotInfoPtr_->num_spheres, 0.0);
 
         for(int t_ind = 0; t_ind < num_time_steps; t_ind++) {
             // (1) add the bound of robust input (||v||)
@@ -109,10 +109,10 @@ Eigen::MatrixXf ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
         
             // compute the maximum of uncertainty in the sphere centers over all time intervals
             for (int i = 0; i < robotInfoPtr_->num_spheres; i++) {
-                const float x_uncertainty = kdPtr_->sphere_centers(3 * i + 0, t_ind).independent;
-                const float y_uncertainty = kdPtr_->sphere_centers(3 * i + 1, t_ind).independent;
-                const float z_uncertainty = kdPtr_->sphere_centers(3 * i + 2, t_ind).independent;
-                const float total_uncertainty = sqrtf(x_uncertainty * x_uncertainty + 
+                const double x_uncertainty = kdPtr_->sphere_centers(3 * i + 0, t_ind).independent;
+                const double y_uncertainty = kdPtr_->sphere_centers(3 * i + 1, t_ind).independent;
+                const double z_uncertainty = kdPtr_->sphere_centers(3 * i + 2, t_ind).independent;
+                const double total_uncertainty = sqrtf(x_uncertainty * x_uncertainty + 
                                                       y_uncertainty * y_uncertainty + 
                                                       z_uncertainty * z_uncertainty);
 

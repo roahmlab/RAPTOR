@@ -5,7 +5,7 @@ namespace RAPTOR {
 bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1, 
                                 fcl::CollisionObjectd* o2, 
                                 void* cdata_, 
-                                float& dist) {
+                                double& dist) {
     assert(cdata_ != nullptr);
     auto* cdata = static_cast<CustomizedDistanceData*>(cdata_);
     const fcl::DistanceRequestd& request = cdata->request;
@@ -24,7 +24,7 @@ bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1,
     if (o1type == fcl::GEOM_BOX && 
         o2type == fcl::GEOM_SPHERE) {
         const auto sphereGeomtry = static_cast<const fcl::Sphered*>(o2->collisionGeometry().get());
-        const float sphere_radius = sphereGeomtry->radius;
+        const double sphere_radius = sphereGeomtry->radius;
 
         dist = computeBoxPointDistance(o1, o2->getTranslation()) - sphere_radius;
 
@@ -36,7 +36,7 @@ bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1,
     else if (o1type == fcl::GEOM_SPHERE && 
              o2type == fcl::GEOM_BOX) {
         const auto sphereGeomtry = static_cast<const fcl::Sphered*>(o1->collisionGeometry().get());
-        const float sphere_radius = sphereGeomtry->radius;
+        const double sphere_radius = sphereGeomtry->radius;
 
         dist = computeBoxPointDistance(o2, o1->getTranslation()) - sphere_radius;
 
@@ -52,13 +52,13 @@ bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1,
 
         // we don't check collision between adajacent links
         if (std::abs(userData1->linkId - userData2->linkId) <= 1) {
-            dist = std::numeric_limits<float>::max();
+            dist = std::numeric_limits<double>::max();
         }
         else {
             const auto sphereGeomtry1 = static_cast<const fcl::Sphered*>(o1->collisionGeometry().get());
             const auto sphereGeomtry2 = static_cast<const fcl::Sphered*>(o2->collisionGeometry().get());
-            const float sphere_radius1 = sphereGeomtry1->radius;
-            const float sphere_radius2 = sphereGeomtry2->radius;
+            const double sphere_radius1 = sphereGeomtry1->radius;
+            const double sphere_radius2 = sphereGeomtry2->radius;
 
             dist = (o1->getTranslation() - o2->getTranslation()).norm() - (sphere_radius1 + sphere_radius2);
         }
@@ -89,7 +89,7 @@ bool CustomizedDistanceFunction(fcl::CollisionObjectd* o1,
 bool CustomizedDistanceFunctionDerivative(fcl::CollisionObjectd* o1, 
                                           fcl::CollisionObjectd* o2, 
                                           void* cdata_, 
-                                          float& dist) {
+                                          double& dist) {
     assert(cdata_ != nullptr);
     auto* cdata = static_cast<CustomizedDistanceData*>(cdata_);
     const fcl::DistanceRequestd& request = cdata->request;
@@ -103,18 +103,18 @@ bool CustomizedDistanceFunctionDerivative(fcl::CollisionObjectd* o1,
     const fcl::NODE_TYPE o1type = o1->getNodeType(); 
     const fcl::NODE_TYPE o2type = o2->getNodeType();
     dist = 0;
-    Eigen::VectorXf pdistance_pz;
+    Eigen::VectorXd pdistance_pz;
     std::string name1, name2;
 
     if (o1type == fcl::GEOM_BOX && 
         o2type == fcl::GEOM_SPHERE) {
         const auto userData1 = (customizedUserDataForBox*)(o1->getUserData());
         const auto userData2 = (customizedUserDataForSphere*)(o2->getUserData());
-        const Eigen::MatrixXf& ppoint_pz = userData2->ppoint_pz;
+        const Eigen::MatrixXd& ppoint_pz = userData2->ppoint_pz;
         const auto sphereGeomtry = static_cast<const fcl::Sphered*>(o2->collisionGeometry().get());
-        const float sphere_radius = sphereGeomtry->radius;
+        const double sphere_radius = sphereGeomtry->radius;
 
-        std::pair<float, Eigen::VectorXf> distRes = 
+        std::pair<double, Eigen::VectorXd> distRes = 
             computeBoxPointDistance(o1, o2->getTranslation(), ppoint_pz);
 
         dist = distRes.first - sphere_radius;
@@ -127,11 +127,11 @@ bool CustomizedDistanceFunctionDerivative(fcl::CollisionObjectd* o1,
              o2type == fcl::GEOM_BOX) {
         const auto userData1 = (customizedUserDataForSphere*)(o1->getUserData());
         const auto userData2 = (customizedUserDataForBox*)(o2->getUserData());
-        const Eigen::MatrixXf& ppoint_pz = userData1->ppoint_pz;
+        const Eigen::MatrixXd& ppoint_pz = userData1->ppoint_pz;
         const auto sphereGeomtry = static_cast<const fcl::Sphered*>(o1->collisionGeometry().get());
-        const float sphere_radius = sphereGeomtry->radius;
+        const double sphere_radius = sphereGeomtry->radius;
 
-        std::pair<float, Eigen::VectorXf> distRes = 
+        std::pair<double, Eigen::VectorXd> distRes = 
             computeBoxPointDistance(o2, o1->getTranslation(), ppoint_pz);
         
         dist = distRes.first - sphere_radius;
@@ -147,15 +147,15 @@ bool CustomizedDistanceFunctionDerivative(fcl::CollisionObjectd* o1,
 
         // we don't check collision between adajacent links
         if (std::abs(userData1->linkId - userData2->linkId) <= 1) {
-            dist = std::numeric_limits<float>::max();
+            dist = std::numeric_limits<double>::max();
         }
         else {
-            const Eigen::MatrixXf& ppoint_pz1 = userData1->ppoint_pz;
-            const Eigen::MatrixXf& ppoint_pz2 = userData2->ppoint_pz;
+            const Eigen::MatrixXd& ppoint_pz1 = userData1->ppoint_pz;
+            const Eigen::MatrixXd& ppoint_pz2 = userData2->ppoint_pz;
             const auto sphereGeomtry1 = static_cast<const fcl::Sphered*>(o1->collisionGeometry().get());
             const auto sphereGeomtry2 = static_cast<const fcl::Sphered*>(o2->collisionGeometry().get());
-            const float sphere_radius1 = sphereGeomtry1->radius;
-            const float sphere_radius2 = sphereGeomtry2->radius;
+            const double sphere_radius1 = sphereGeomtry1->radius;
+            const double sphere_radius2 = sphereGeomtry2->radius;
 
             dist = (o1->getTranslation() - o2->getTranslation()).norm();
 
@@ -202,9 +202,9 @@ void fclCollisionAvoidance::addObstacleBox(const std::string& name,
                                                         boxSize(1), 
                                                         boxSize(2)));
 
-    Mat3 R = (Eigen::AngleAxisf(boxOrientation[0], Vec3::UnitX())
-                * Eigen::AngleAxisf(boxOrientation[1], Vec3::UnitY())
-                * Eigen::AngleAxisf(boxOrientation[2], Vec3::UnitZ())).matrix();
+    Mat3 R = (Eigen::AngleAxisd(boxOrientation[0], Vec3::UnitX())
+                * Eigen::AngleAxisd(boxOrientation[1], Vec3::UnitY())
+                * Eigen::AngleAxisd(boxOrientation[2], Vec3::UnitZ())).matrix();
     
     fclObjectCollection[name] = new fcl::CollisionObjectd(boxGeomtry, 
                                                           R, 
@@ -220,7 +220,7 @@ void fclCollisionAvoidance::addObstacleBox(const std::string& name,
 void fclCollisionAvoidance::addRobotSphere(const std::string& name, 
                                            const int linkId,
                                            const Vec3& sphereCenter,
-                                           const float sphereRadius,
+                                           const double sphereRadius,
                                            const MatX& ppoint_pz) {
     std::shared_ptr<fcl::Sphered> sphereGeomtry(new fcl::Sphered(sphereRadius));
     fclObjectCollection[name] = new fcl::CollisionObjectd(sphereGeomtry,

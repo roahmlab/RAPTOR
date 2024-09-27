@@ -8,7 +8,7 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
                                                          const std::vector<Vec3>& boxCenters_input,
                                                          const std::vector<Vec3>& boxOrientation_input,
                                                          const std::vector<Vec3>& boxSize_input,
-                                                         const float collision_buffer_input,
+                                                         const double collision_buffer_input,
                                                          Eigen::VectorXi jtype_input) :
     trajPtr_(trajPtr_input),
     collision_buffer(collision_buffer_input) {
@@ -43,8 +43,8 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
 
 void KinovaCustomizedConstraints::add_collision_sphere(int joint_id,
                                                        int offset_axis,
-                                                       float offset,
-                                                       float radius) {
+                                                       double offset,
+                                                       double radius) {
     num_spheres++;
     sphere_joint_id.push_back(joint_id);
     sphere_offset_axis.push_back(offset_axis);

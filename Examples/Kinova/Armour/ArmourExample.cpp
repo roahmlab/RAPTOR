@@ -4,6 +4,8 @@ using namespace RAPTOR;
 using namespace Armour;
 
 int main() {
+    std::srand(std::time(nullptr));
+
     #ifdef NUM_THREADS
         omp_set_num_threads(NUM_THREADS);
     #else
@@ -19,16 +21,16 @@ int main() {
 
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
-    const Eigen::VectorXf q0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf q_d0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf q_dd0 = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXf k_center = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXf k_range = M_PI / 48 * Eigen::VectorXf::Ones(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_range = M_PI / 48 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
-    const float duration = 2.0;
+    const double duration = 3.0;
 
     std::shared_ptr<BezierCurveInterval> trajPtr_ = 
         std::make_shared<BezierCurveInterval>(
@@ -43,9 +45,9 @@ int main() {
 
     // define obstacles
     const int num_obstacles = 5;
-    std::vector<Eigen::Vector3f> boxCenters;
-    std::vector<Eigen::Vector3f> boxOrientation;
-    std::vector<Eigen::Vector3f> boxSize;
+    std::vector<Eigen::Vector3d> boxCenters;
+    std::vector<Eigen::Vector3d> boxOrientation;
+    std::vector<Eigen::Vector3d> boxSize;
 
     boxCenters.resize(num_obstacles);
     boxOrientation.resize(num_obstacles);
@@ -58,13 +60,13 @@ int main() {
     }
 
     // suction cup info
-    const float suction_force = 0.0; // N
-    const float mu = 0.7; // friction coefficient
-    const float suction_radius = 0.1; // m
+    const double suction_force = 0.0; // N
+    const double mu = 0.7; // friction coefficient
+    const double suction_radius = 0.1; // m
 
     // targets
-    Eigen::VectorXf q_des = Eigen::VectorXf::Random(robotInfoPtr_->num_motors);
-    float t_plan = 0.5 * duration;
+    Eigen::VectorXd q_des = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    double t_plan = 0.5 * duration;
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
@@ -85,7 +87,7 @@ int main() {
 
     // compute Robust Input Bounds
     auto start3 = std::chrono::high_resolution_clock::now();
-    Eigen::MatrixXf torque_radius = ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr);
+    Eigen::MatrixXd torque_radius = ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr);
     auto end3 = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to compute Robust Input Bounds: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
@@ -122,10 +124,10 @@ int main() {
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-5);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

@@ -7,13 +7,13 @@ namespace RAPTOR {
 
 class PiecewiseBezierCurves : public BezierCurves {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     PiecewiseBezierCurves() = default;
 
-    PiecewiseBezierCurves(float T_input, 
+    PiecewiseBezierCurves(double T_input, 
                           int N_input, 
                           int Nact_input, 
                           int degree_input, 

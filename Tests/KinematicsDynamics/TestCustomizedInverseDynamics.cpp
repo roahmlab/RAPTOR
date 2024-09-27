@@ -12,21 +12,21 @@ int main() {
 
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 
-    pinocchio::DataTpl<float> data(model);
+    pinocchio::DataTpl<double> data(model);
 
     // set joint configurations
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<BezierCurves>(
-            Eigen::VectorXf::LinSpaced(5, 0, 1), model.nq, 5);
+            Eigen::VectorXd::LinSpaced(5, 0, 1), model.nq, 5);
 
     std::srand(std::time(nullptr));
-    Eigen::VectorXf z = Eigen::VectorXf::Random(trajPtr->varLength);
+    Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
     trajPtr->compute(z);
 
 // Test without fixed joints
@@ -59,14 +59,14 @@ int main() {
     Eigen::VectorXi jtype = convertPinocchioJointType(model);    
     jtype(jtype.size() - 1) = 0; // fix the last joint
 
-    pinocchio::ModelTpl<float> model_reduced;
+    pinocchio::ModelTpl<double> model_reduced;
     std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
-    pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXf::Zero(model.nv), model_reduced);
-    pinocchio::DataTpl<float> data_reduced(model_reduced);
+    pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
+    pinocchio::DataTpl<double> data_reduced(model_reduced);
 
-    z = Eigen::VectorXf::Random(trajPtr->varLength);
+    z = Eigen::VectorXd::Random(trajPtr->varLength);
     trajPtr = std::make_shared<BezierCurves>(
-        Eigen::VectorXf::LinSpaced(5, 0, 1), model_reduced.nq, 5);
+        Eigen::VectorXd::LinSpaced(5, 0, 1), model_reduced.nq, 5);
     trajPtr->compute(z);
 
     // compute inverse dynamics using pinocchio

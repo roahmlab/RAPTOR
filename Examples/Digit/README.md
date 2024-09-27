@@ -183,7 +183,7 @@ This region is decided by the previous point, by overapproximating based on the 
 Finally, the initial guess of the optimization needs to be chosen carefully so that all joint angles on the initial trajectory stays inside the feasible region.
 As you can see in `DigitSingleStep.cpp`:
 ```C++
-Eigen::VectorXf z = 0.2 * Eigen::VectorXf::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
 ```
 Randomly sampling from $[-0.1, 0.1]$ for all decision variables (in other words, Bezier coefficients) would be enough.
 Our method is robust towards random initial guess since the optimization will still converge in most cases (more quantitative discussion later).

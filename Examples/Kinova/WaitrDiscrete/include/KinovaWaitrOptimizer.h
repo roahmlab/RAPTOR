@@ -21,10 +21,10 @@ namespace Kinova {
 
 class KinovaWaitrOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
     KinovaWaitrOptimizer() = default;
@@ -35,7 +35,7 @@ public:
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const float T_input,
+        const double T_input,
         const int N_input,
         const int degree_input,
         const Model& model_input, 

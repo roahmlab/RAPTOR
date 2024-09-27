@@ -8,11 +8,11 @@ namespace RAPTOR {
 
 class ForwardKinematicsSolver {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-	using Vec3 = Eigen::Vector3f;
-	using Mat3 = Eigen::Matrix3f;
-    using VecX = Eigen::VectorXf;
-	using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+	using Vec3 = Eigen::Vector3d;
+	using Mat3 = Eigen::Matrix3d;
+    using VecX = Eigen::VectorXd;
+	using MatX = Eigen::MatrixXd;
 
     // Constructor
 	ForwardKinematicsSolver() = default;

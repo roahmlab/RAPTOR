@@ -3,11 +3,11 @@
 namespace RAPTOR {
 namespace Armour {
 
-Eigen::VectorXf map_to_vector(const YAML::Node& node, int size) {
-    std::vector<float> vec;
+Eigen::VectorXd map_to_vector(const YAML::Node& node, int size) {
+    std::vector<double> vec;
     
     try {
-        vec = node.as<std::vector<float>>();
+        vec = node.as<std::vector<double>>();
     }
     catch (const std::exception& e) {
         throw std::runtime_error("Failed to load the vector of " + node.begin()->first.as<std::string>() + ".");
@@ -17,7 +17,7 @@ Eigen::VectorXf map_to_vector(const YAML::Node& node, int size) {
         throw std::runtime_error("Size of the vector of " + node.begin()->first.as<std::string>() + " does not match the expected size.");
     }
 
-    Eigen::VectorXf result(size);
+    Eigen::VectorXd result(size);
 
     for (int i = 0; i < size; ++i) {
         result(i) = vec[i];
@@ -47,7 +47,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     try {
         pinocchio::Model model_double;
         pinocchio::urdf::buildModel(urdf_filename, model_double);
-        model = model_double.cast<float>();
+        model = model_double.cast<double>();
     }
     catch (const std::exception& e) {
         throw std::runtime_error("Failed to load the URDF file: " + std::string(e.what()));
@@ -88,11 +88,11 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
 
     try {
         const YAML::Node& ultimate_bound_node = RobotConfig["ultimate_bound"];
-        ultimate_bound_info.alpha = ultimate_bound_node["alpha"].as<float>();
-        ultimate_bound_info.V_m = ultimate_bound_node["V_m"].as<float>();
-        ultimate_bound_info.M_max = ultimate_bound_node["M_max"].as<float>();
-        ultimate_bound_info.M_min = ultimate_bound_node["M_min"].as<float>();
-        ultimate_bound_info.Kr = ultimate_bound_node["Kr"].as<float>();
+        ultimate_bound_info.alpha = ultimate_bound_node["alpha"].as<double>();
+        ultimate_bound_info.V_m = ultimate_bound_node["V_m"].as<double>();
+        ultimate_bound_info.M_max = ultimate_bound_node["M_max"].as<double>();
+        ultimate_bound_info.M_min = ultimate_bound_node["M_min"].as<double>();
+        ultimate_bound_info.Kr = ultimate_bound_node["Kr"].as<double>();
 
         ultimate_bound_info.eps = sqrt(2 * ultimate_bound_info.V_m / ultimate_bound_info.M_min);
         ultimate_bound_info.qe = ultimate_bound_info.eps / ultimate_bound_info.Kr;
@@ -109,14 +109,14 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         std::string link_name = entry.first.as<std::string>();
         const YAML::Node& spheres = entry.second;
 
-        std::vector<std::pair<Vec3, float>> spheres_info;
+        std::vector<std::pair<Vec3, double>> spheres_info;
 
         for (const auto& sphere : spheres) {
             const YAML::Node& offset_node = sphere["offset"];
 
             Vec3 offset;
-            offset << offset_node[0].as<float>(), offset_node[1].as<float>(), offset_node[2].as<float>();
-            float radius = sphere["radius"].as<float>();
+            offset << offset_node[0].as<double>(), offset_node[1].as<double>(), offset_node[2].as<double>();
+            double radius = sphere["radius"].as<double>();
 
             spheres_info.emplace_back(offset, radius);
         }

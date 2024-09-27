@@ -12,9 +12,9 @@ It is used to compute the distance between a point and all obstacles.
 
 class CollisionAvoidance {
 public:
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     CollisionAvoidance() = default;
@@ -40,7 +40,7 @@ public:
     MatX pdistances_pz;
     Eigen::Array<MatX, Eigen::Dynamic, 1> pdistances_pz_pz;
 
-    float minimumDistance = 0;
+    double minimumDistance = 0;
     size_t minimumDistanceIndex = 0;
 
     bool onlyComputeDerivativesForMinimumDistance = false;

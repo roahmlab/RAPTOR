@@ -7,8 +7,8 @@ namespace RAPTOR {
 
 class Polynomials : public Trajectories {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     Polynomials() = default;
 
@@ -16,7 +16,7 @@ public:
                 int Nact_input, 
                 int degree_input);
 
-    Polynomials(float T_input,
+    Polynomials(double T_input,
                 int N_input, 
                 int Nact_input, 
                 TimeDiscretization time_discretization, 

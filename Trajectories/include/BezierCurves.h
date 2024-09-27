@@ -7,8 +7,8 @@ namespace RAPTOR {
 
 class BezierCurves : public Trajectories {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     BezierCurves() = default;
 
@@ -16,7 +16,7 @@ public:
                  int Nact_input, 
                  int degree_input);
 
-    BezierCurves(float T_input, 
+    BezierCurves(double T_input, 
                  int N_input, 
                  int Nact_input, 
                  TimeDiscretization time_discretization, 

@@ -11,19 +11,19 @@ namespace RAPTOR {
 namespace Talos {
 
 typedef struct GaitParameters_ {
-    float eps_torso_angle = Utils::deg2rad(1.5); // 3 degrees
-    float swingfoot_midstep_z_des = 0.10; // meters
-    float swingfoot_begin_x_des = 0.00; // meters 
-    float swingfoot_begin_y_des = -0.17; // meters
-    float swingfoot_end_x_des = 0.00; // meters
-    float swingfoot_end_y_des = -0.17; // meters
+    double eps_torso_angle = Utils::deg2rad(1.5); // 3 degrees
+    double swingfoot_midstep_z_des = 0.10; // meters
+    double swingfoot_begin_x_des = 0.00; // meters 
+    double swingfoot_begin_y_des = -0.17; // meters
+    double swingfoot_end_x_des = 0.00; // meters
+    double swingfoot_end_y_des = -0.17; // meters
 } GaitParameters;
 
 class TalosCustomizedConstraints : public Constraints {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     TalosCustomizedConstraints() = default;

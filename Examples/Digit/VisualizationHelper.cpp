@@ -11,7 +11,7 @@ int main() {
 
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.gravity.linear()(2) = GRAVITY;
     
@@ -22,12 +22,12 @@ int main() {
     
     const int numSteps = 6;
     const int degree = 5;
-    const float T = 0.4;
-    const float FPS = 30.0;
+    const double T = 0.4;
+    const double FPS = 30.0;
     const int N = T * FPS;
     GaitParameters gp;
     
-    const Eigen::VectorXf solution = Utils::initializeEigenMatrixFromFile(filepath + "solution-digit-multiple-step.txt");
+    const Eigen::VectorXd solution = Utils::initializeEigenMatrixFromFile(filepath + "solution-digit-multiple-step.txt");
 
     std::ofstream trajectories(filepath + "full-trajectories_multiple-step-2.txt");
 
@@ -41,7 +41,7 @@ int main() {
     for (int step = 0; step < numSteps; step++) {
         testnlps.push_back(new DigitSingleStepOptimizer());
 
-        Eigen::VectorXf z((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+        Eigen::VectorXd z((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
         for (int i = 0; i < z.size(); i++) {
             z(i) = solution(offset + i);
         }
@@ -49,7 +49,7 @@ int main() {
 
         char stanceLeg = (step % 2 == 0) ? 'L' : 'R';
 
-        // Eigen::VectorXf z;
+        // Eigen::VectorXd z;
         // if (stanceLeg == 'R') {
         //     z = switchSolutionFromLeftToRight(solution, degree);
         // }
@@ -92,7 +92,7 @@ int main() {
         }
 
         // compute swing foot end config, which is stance foot start config for next step
-        Eigen::VectorXf swingfoot_xyzrpy;
+        Eigen::VectorXd swingfoot_xyzrpy;
         for (size_t j = 0; j < testnlp->constraintsNameVec_.size(); j++) {
             if (testnlp->constraintsNameVec_[j] == "customized constraints") {
                 const auto& constraintsPtr_ = testnlp->constraintsPtrVec_[j];
@@ -106,7 +106,7 @@ int main() {
         }
 
         previousStandingFootTransform = Transform(
-            Eigen::Vector3f(swingfoot_xyzrpy.tail(3)), 
-            Eigen::Vector3f(swingfoot_xyzrpy.head(3)));
+            Eigen::Vector3d(swingfoot_xyzrpy.tail(3)), 
+            Eigen::Vector3d(swingfoot_xyzrpy.head(3)));
     }
 }

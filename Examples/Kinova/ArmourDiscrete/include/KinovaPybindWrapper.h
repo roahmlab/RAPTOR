@@ -17,13 +17,13 @@ namespace nb = nanobind;
 
 class KinovaPybindWrapper {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<float, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<float, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     KinovaPybindWrapper() = default;
@@ -36,12 +36,12 @@ public:
 
     // Class methods
     void set_obstacles(const nb_2d_float obstacles_inp,
-                       const float collision_buffer_inp);
+                       const double collision_buffer_inp);
 
-    void set_ipopt_parameters(const float tol,
-                              const float constr_viol_tol,
-                              const float obj_scaling_factor,
-                              const float max_wall_time, 
+    void set_ipopt_parameters(const double tol,
+                              const double constr_viol_tol,
+                              const double obj_scaling_factor,
+                              const double max_wall_time, 
                               const int print_level,
                               const std::string mu_strategy,
                               const std::string linear_solver,
@@ -50,18 +50,18 @@ public:
     void set_trajectory_parameters(const nb_1d_float q0_inp,
                                    const nb_1d_float qd0_inp,
                                    const nb_1d_float qdd0_inp,
-                                   const float duration_inp);
+                                   const double duration_inp);
 
     void set_buffer(const nb_1d_float joint_limits_buffer_inp,
                     const nb_1d_float velocity_limits_buffer_inp,
                     const nb_1d_float torque_limits_buffer_inp);
 
     void set_target(const nb_1d_float q_des_inp,
-                    const float tplan_inp);
+                    const double tplan_inp);
 
     nb::tuple optimize();
 
-    nb::ndarray<nb::numpy, float, nb::shape<2, -1>> analyze_solution();
+    nb::ndarray<nb::numpy, double, nb::shape<2, -1>> analyze_solution();
 
     // Class members
     // robot model
@@ -72,15 +72,15 @@ public:
     std::vector<Vec3> boxCenters;
     std::vector<Vec3> boxOrientation;
     std::vector<Vec3> boxSize;
-    float collision_buffer = 0;
+    double collision_buffer = 0;
 
     // trajectory information
     ArmourTrajectoryParameters atp;
-    float T = 1;
+    double T = 1;
     int N = 17;
     int degree = 5;
     VecX qdes;
-    float tplan = 0;
+    double tplan = 0;
     int tplan_n = 0;
 
     // buffer information

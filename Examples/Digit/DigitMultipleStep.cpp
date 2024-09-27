@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.gravity.linear()(2) = GRAVITY;
     
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     // load settings
     YAML::Node config;
 
-    const float T = 0.4;
+    const double T = 0.4;
     int NSteps = 2;
     TimeDiscretization time_discretization = Uniform;
     int N = 14;
@@ -59,9 +59,9 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
-        auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<float>>();
-        auto swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<std::vector<float>>();
-        auto swingfoot_end_y_des = config["swingfoot_end_y_des"].as<std::vector<float>>();
+        auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<double>>();
+        auto swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<std::vector<double>>();
+        auto swingfoot_end_y_des = config["swingfoot_end_y_des"].as<std::vector<double>>();
 
         if (swingfoot_midstep_z_des.size() != NSteps || 
             swingfoot_begin_y_des.size() != NSteps || 
@@ -81,14 +81,14 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXf z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
-    Eigen::VectorXf z0(z_onestep.size() * NSteps);
+    Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    Eigen::VectorXd z0(z_onestep.size() * NSteps);
     for (int i = 0; i < NSteps; i++) {
         z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
     }
     // add noise to initial guess to explore the solution space
     // std::srand(std::time(nullptr));
-    // z = z + 0.01 * Eigen::VectorXf::Random(z.size());
+    // z = z + 0.01 * Eigen::VectorXd::Random(z.size());
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
                               model,
                               gps,
                               true);
-        mynlp->constr_viol_tol = config["constr_viol_tol"].as<float>();
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -111,12 +111,12 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     try {
-        app->Options()->SetNumericValue("tol", config["tol"].as<float>());
+        app->Options()->SetNumericValue("tol", config["tol"].as<double>());
         app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<float>());
+        app->Options()->SetNumericValue("max_wall_time", config["max_wall_time"].as<double>());
         app->Options()->SetIntegerValue("max_iter", config["max_iter"].as<int>());
-        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<float>());
-        app->Options()->SetIntegerValue("print_level", config["print_level"].as<float>());
+        app->Options()->SetNumericValue("obj_scaling_factor", config["obj_scaling_factor"].as<double>());
+        app->Options()->SetIntegerValue("print_level", config["print_level"].as<double>());
         app->Options()->SetStringValue("mu_strategy", config["mu_strategy"].as<std::string>().c_str());
         app->Options()->SetStringValue("linear_solver", config["linear_solver"].as<std::string>().c_str());
         app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
         status = app->OptimizeTNLP(mynlp);
 
         auto end = std::chrono::high_resolution_clock::now();
-        float solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+        double solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
         
         std::cout << "Data needed for comparison: " << mynlp->obj_value_copy << ' ' << mynlp->final_constr_violation << ' ' << solve_time << std::endl;
     }

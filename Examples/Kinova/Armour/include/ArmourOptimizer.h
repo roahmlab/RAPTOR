@@ -10,10 +10,10 @@ namespace Armour {
 
 class ArmourOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using VecX = Eigen::VectorXf;
-    using Vec3 = Eigen::Vector3f;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using VecX = Eigen::VectorXd;
+    using Vec3 = Eigen::Vector3d;
+    using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
     ArmourOptimizer() = default;

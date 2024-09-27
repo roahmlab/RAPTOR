@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.gravity.linear()(2) = GRAVITY;
     
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     model.armature(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
     // load settings
-    const float T = 0.4;
+    const double T = 0.4;
     int N = 16;
     int degree = 5;
     
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
                 std::cerr << "EXPERIMENT: Degree: " << degree << ", mu_strategy: " << mu_strategy_str[mu_strategy_choice] << ", time discretization: " << time_discretization_str[discretization_choice] << std::endl;
                 // experiment_output << "EXPERIMENT: Degree: " << degree << ", mu_strategy: " << mu_strategy_str[mu_strategy_choice] << ", time discretization: " << time_discretization_str[discretization_choice] << std::endl;
 
-                Eigen::VectorXf z = Utils::initializeEigenMatrixFromFile(filepath + "robustness_test_solution_" + std::to_string(degree) + ".txt");
+                Eigen::VectorXd z = Utils::initializeEigenMatrixFromFile(filepath + "robustness_test_solution_" + std::to_string(degree) + ".txt");
                 
                 SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
                 try {
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Solve the optimization problem
-                float solve_time = 0.0;
+                double solve_time = 0.0;
                 try {
                     auto start = std::chrono::high_resolution_clock::now();
 

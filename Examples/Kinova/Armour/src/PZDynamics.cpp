@@ -7,7 +7,7 @@ KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotIn
                                        const std::shared_ptr<BezierCurveInterval>& trajPtr_input) :
     robotInfoPtr_(robotInfoPtr_input),
     trajPtr_(trajPtr_input) {
-    const pinocchio::ModelTpl<float>& model = robotInfoPtr_->model;
+    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
 
     // pre-allocate memory
     com_arr = PZsparseArray(model.nv, 3);
@@ -31,7 +31,7 @@ KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotIn
         const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
 
         const Vec3 com = model.inertias[pinocchio_joint_id].lever();
-        const float mass = model.inertias[pinocchio_joint_id].mass();
+        const double mass = model.inertias[pinocchio_joint_id].mass();
         const Mat3 inertia = model.inertias[pinocchio_joint_id].inertia().matrix();
 
         com_arr(i, 0) = PZsparse(com(0));
@@ -69,7 +69,7 @@ void KinematicsDynamics::reset_trajectory(const std::shared_ptr<BezierCurveInter
 }
 
 void KinematicsDynamics::fk(const size_t s_ind) {
-    const pinocchio::ModelTpl<float>& model = robotInfoPtr_->model;
+    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
     const auto& collision_spheres = robotInfoPtr_->collision_spheres;
     
     // The rotational part of the transformation matrix
@@ -247,7 +247,7 @@ void KinematicsDynamics::rnea(const size_t s_ind,
                               PZsparseArray& u,
                               PZsparseArray& contact_force,
 			                  PZsparseArray& contact_moment) {
-    const pinocchio::ModelTpl<float>& model = robotInfoPtr_->model;
+    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
 
     // the following terms are automatically initialized to zero
     PZsparse w1;

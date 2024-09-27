@@ -226,24 +226,24 @@ Transform ForwardKinematicsSolver::getTransform() const {
     return T;
 }
 
-Eigen::Vector3f ForwardKinematicsSolver::getTranslation() const {
+Eigen::Vector3d ForwardKinematicsSolver::getTranslation() const {
     return T.p;
 }
 
-Eigen::Matrix3f ForwardKinematicsSolver::getRotation() const {
+Eigen::Matrix3d ForwardKinematicsSolver::getRotation() const {
     return T.R;
 }
 
-Eigen::Vector3f ForwardKinematicsSolver::getRPY() const {
+Eigen::Vector3d ForwardKinematicsSolver::getRPY() const {
     return T.getRPY();
 }
 
-Eigen::MatrixXf ForwardKinematicsSolver::getTranslationJacobian() const {
+Eigen::MatrixXd ForwardKinematicsSolver::getTranslationJacobian() const {
     if (dTdq.size() != modelPtr_->nv) {
         throw std::runtime_error("dTdq is not computed yet!");
     }
 
-    Eigen::MatrixXf J = Eigen::MatrixXf::Zero(3, modelPtr_->nv);
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, modelPtr_->nv);
     for (auto i : chain) {
         J.col(i) = dTdq[i].p;
     }
@@ -266,17 +266,17 @@ void ForwardKinematicsSolver::getRotationJacobian(Eigen::Array<Mat3, Eigen::Dyna
     }
 }
 
-Eigen::MatrixXf ForwardKinematicsSolver::getRPYJacobian() const {
+Eigen::MatrixXd ForwardKinematicsSolver::getRPYJacobian() const {
     if (dTdq.size() != modelPtr_->nv) {
         throw std::runtime_error("dTdq is not computed yet!");
     }
     
     const Mat3& R = T.R; // so that the code is cleaner
 
-    const float rollDenom = R(1,2) * R(1,2) + R(2,2) * R(2,2);
-    const float yawDenom = R(0,0) * R(0,0) + R(0,1) * R(0,1);
+    const double rollDenom = R(1,2) * R(1,2) + R(2,2) * R(2,2);
+    const double yawDenom = R(0,0) * R(0,0) + R(0,1) * R(0,1);
 
-    Eigen::MatrixXf J = Eigen::MatrixXf::Zero(3, modelPtr_->nv);
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, modelPtr_->nv);
     for (auto i : chain) {
         const Mat3& dRdq = dTdq[i].R; // so that the code is cleaner
 
@@ -300,7 +300,7 @@ void ForwardKinematicsSolver::getTranslationHessian(Eigen::Array<MatX, 3, 1>& re
     }
 
     for (int i = 0; i < 3; i++) {
-        result(i) = Eigen::MatrixXf::Zero(modelPtr_->nv, modelPtr_->nv);
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
     }
 
     for (auto i : chain) {
@@ -319,7 +319,7 @@ void ForwardKinematicsSolver::getRotationHessian(Eigen::Array<MatX, 3, 3>& resul
 
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            result(i, j) = Eigen::MatrixXf::Zero(modelPtr_->nv, modelPtr_->nv);
+            result(i, j) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
         }
     }
 
@@ -359,23 +359,23 @@ void ForwardKinematicsSolver::getRPYHessian(Eigen::Array<MatX, 3, 1>& result) co
     }
 
     for (int i = 0; i < 3; i++) {
-        result(i) = Eigen::MatrixXf::Zero(modelPtr_->nv, modelPtr_->nv);
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
     }
 
     const Mat3& R = T.R; // so that the code is cleaner
 
-    const float R12Square = R(1,2) * R(1,2);
-    const float R22Square = R(2,2) * R(2,2);
-    const float rollDenom = R12Square + R22Square;
-    const float rollDenomSquare = rollDenom * rollDenom;
+    const double R12Square = R(1,2) * R(1,2);
+    const double R22Square = R(2,2) * R(2,2);
+    const double rollDenom = R12Square + R22Square;
+    const double rollDenomSquare = rollDenom * rollDenom;
 
-    const float R00Square = R(0,0) * R(0,0);
-    const float R01Square = R(0,1) * R(0,1);
-    const float yawDenom =  R00Square + R01Square;
-    const float yawDenomSquare = yawDenom * yawDenom;
+    const double R00Square = R(0,0) * R(0,0);
+    const double R01Square = R(0,1) * R(0,1);
+    const double yawDenom =  R00Square + R01Square;
+    const double yawDenomSquare = yawDenom * yawDenom;
 
-    const float dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
-    const float ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
+    const double dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
+    const double ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
 
     for (auto i : chain) {
         const Mat3& dRdqi = dTdq[i].R; // so that the code is cleaner
@@ -418,7 +418,7 @@ void ForwardKinematicsSolver::getTranslationThirdOrderTensor(const VecX& x, Eige
     }
 
     for (int i = 0; i < 3; i++) {
-        result(i) = Eigen::MatrixXf::Zero(modelPtr_->nv, modelPtr_->nv);
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
     }
 
     for (auto i : chain) {
@@ -442,41 +442,41 @@ void ForwardKinematicsSolver::getRPYThirdOrderTensor(const VecX& x, Eigen::Array
     }
 
     for (int i = 0; i < 3; i++) {
-        result(i) = Eigen::MatrixXf::Zero(modelPtr_->nv, modelPtr_->nv);
+        result(i) = Eigen::MatrixXd::Zero(modelPtr_->nv, modelPtr_->nv);
     }
 
     const Mat3& R = T.R; // so that the code is cleaner
 
-    const float R12Square = R(1,2) * R(1,2);
-    const float R22Square = R(2,2) * R(2,2);
-    const float rollDenom = R12Square + R22Square;
-    const float rollDenomSquare = rollDenom * rollDenom;
-    const float rollDenomThird = rollDenomSquare * rollDenom;
+    const double R12Square = R(1,2) * R(1,2);
+    const double R22Square = R(2,2) * R(2,2);
+    const double rollDenom = R12Square + R22Square;
+    const double rollDenomSquare = rollDenom * rollDenom;
+    const double rollDenomThird = rollDenomSquare * rollDenom;
 
-    const float R00Square = R(0,0) * R(0,0);
-    const float R01Square = R(0,1) * R(0,1);
-    const float yawDenom =  R00Square + R01Square;
-    const float yawDenomSquare = yawDenom * yawDenom;
-    const float yawDenomThird = yawDenomSquare * yawDenom;
+    const double R00Square = R(0,0) * R(0,0);
+    const double R01Square = R(0,1) * R(0,1);
+    const double yawDenom =  R00Square + R01Square;
+    const double yawDenomSquare = yawDenom * yawDenom;
+    const double yawDenomThird = yawDenomSquare * yawDenom;
 
-    const float dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
-    const float ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
-    const float dddasindddx = HigherOrderDerivatives::safedddasindddx(R(0,2));
+    const double dasindx = HigherOrderDerivatives::safedasindx(R(0,2));
+    const double ddasinddx = HigherOrderDerivatives::safeddasinddx(R(0,2));
+    const double dddasindddx = HigherOrderDerivatives::safedddasindddx(R(0,2));
 
     for (auto i : chain) {
         const Mat3& dRdqi = dTdq[i].R; // so that the code is cleaner
 
-        const float temp1 = 2.0 * R(1,2) * dRdqi(1,2) / rollDenomSquare;
-        const float temp2 = 2.0 * R(2,2) * dRdqi(2,2) / rollDenomSquare;
-        const float temp3 = 8.0 * R(1,2) * dRdqi(1,2) * R22Square / rollDenomThird;
-        const float temp4 = 8.0 * R(2,2) * dRdqi(2,2) * R12Square / rollDenomThird;
-        const float temp5 = temp1 - temp2 + temp4 - temp3;
+        const double temp1 = 2.0 * R(1,2) * dRdqi(1,2) / rollDenomSquare;
+        const double temp2 = 2.0 * R(2,2) * dRdqi(2,2) / rollDenomSquare;
+        const double temp3 = 8.0 * R(1,2) * dRdqi(1,2) * R22Square / rollDenomThird;
+        const double temp4 = 8.0 * R(2,2) * dRdqi(2,2) * R12Square / rollDenomThird;
+        const double temp5 = temp1 - temp2 + temp4 - temp3;
 
-        const float temp6 = 2.0 * R(0,1) * dRdqi(0,1) / yawDenomSquare;
-        const float temp7 = 2.0 * R(0,0) * dRdqi(0,0) / yawDenomSquare;
-        const float temp8 = 8.0 * R(0,1) * dRdqi(0,1) * R00Square / yawDenomThird;
-        const float temp9 = 8.0 * R(0,0) * dRdqi(0,0) * R01Square / yawDenomThird;
-        const float temp10 = temp6 - temp7 + temp9 - temp8;
+        const double temp6 = 2.0 * R(0,1) * dRdqi(0,1) / yawDenomSquare;
+        const double temp7 = 2.0 * R(0,0) * dRdqi(0,0) / yawDenomSquare;
+        const double temp8 = 8.0 * R(0,1) * dRdqi(0,1) * R00Square / yawDenomThird;
+        const double temp9 = 8.0 * R(0,0) * dRdqi(0,0) * R01Square / yawDenomThird;
+        const double temp10 = temp6 - temp7 + temp9 - temp8;
 
         for (auto j : chain) {
             const Mat3& dRdqj = dTdq[j].R; // so that the code is cleaner
@@ -487,7 +487,7 @@ void ForwardKinematicsSolver::getRPYThirdOrderTensor(const VecX& x, Eigen::Array
                 const Mat3& ddRdqjdqk = ddTddq[j][k].R; // so that the code is cleaner
                 const Mat3& dddRdqdqdq = dddTdddq[i][j][k].R; // so that the code is cleaner
 
-                const float T0_i_j_k = 
+                const double T0_i_j_k = 
                     -ddRdqjdqk(2,2) * (R(1,2) * temp2 + dRdqi(1,2) / rollDenom - dRdqi(1,2) * R22Square / rollDenomSquare * 2.0) 
                     + ddRdqjdqk(1,2) * (R(2,2) * temp1 + dRdqi(2,2) / rollDenom - dRdqi(2,2) * R12Square / rollDenomSquare * 2.0)
                     + dRdqk(1,2) * (
@@ -526,14 +526,14 @@ void ForwardKinematicsSolver::getRPYThirdOrderTensor(const VecX& x, Eigen::Array
                     - R(2,2) * dddRdqdqdq(1,2) / rollDenom;
 
 
-                const float T1_i_j_k = 
+                const double T1_i_j_k = 
                     dddasindddx * dRdqi(0,2) * dRdqj(0,2) * dRdqk(0,2) +
                     ddasinddx * ddRdqidqk(0,2) * dRdqj(0,2) +
                     ddasinddx * ddRdqjdqk(0,2) * dRdqi(0,2) +
                     ddasinddx * ddRdqidqj(0,2) * dRdqk(0,2) +
                     dasindx * dddRdqdqdq(0,2);
 
-                const float T2_i_j_k = 
+                const double T2_i_j_k = 
                     -ddRdqjdqk(0,0) * (R(0,1) * temp7 + dRdqi(0,1) / yawDenom - dRdqi(0,1) * R00Square / yawDenomSquare * 2.0) 
                     + ddRdqjdqk(0,1) * (R(0,0) * temp6 + dRdqi(0,0) / yawDenom - dRdqi(0,0) * R01Square / yawDenomSquare * 2.0)
                     + dRdqk(0,1) * (

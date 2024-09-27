@@ -9,8 +9,8 @@ namespace Armour {
 constexpr size_t NUM_TIME_STEPS = 128; // Number of time intervals partitioning the trajectory
 
 // These values are specifically corresponded with a Bezuer curve parameterization
-constexpr float QDD_DES_K_DEP_MAXIMA = (0.5 - sqrtf(3.0f) / 6);
-constexpr float QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0f) / 6);
+constexpr double QDD_DES_K_DEP_MAXIMA = (0.5 - sqrtf(3.0) / 6);
+constexpr double QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0) / 6);
 
 // 5th order Bezier curve
 // The initial position/velocity/acceleration is equal to q0/qd0/qdd0
@@ -36,18 +36,18 @@ constexpr float QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0f) / 6);
 //
 class BezierCurveInterval{
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     ultimate_bound ultimate_bound_info;
 
     VecX k_center;
     VecX k_range;
 
-    float duration = 1.0;
+    double duration = 1.0;
 
     size_t num_time_steps = 0;
-    std::vector<float> s_intervals;
+    std::vector<double> s_intervals;
 
     VecX q0;
     VecX qd0;
@@ -56,22 +56,22 @@ public:
     VecX Tqd0; // qd0 * T
     VecX TTqdd0; // qdd0 * T ^ 2
 
-    float q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    float q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    float q_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    float q_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    float qd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    float qd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    float qd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    float qd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    float qdd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    float qdd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    float qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    float qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    float ds = 0;
+    double ds = 0;
 
     // rotation matrix (and its transpose) of each joint
     PZsparseArray cos_q_des;
@@ -96,7 +96,7 @@ public:
         const VecX& qdd0_inp,
         const VecX& k_center_inp,
         const VecX& k_range_inp,
-        const float duration_inp,
+        const double duration_inp,
         const ultimate_bound& ultimate_bound_info_inp);
 
     ~BezierCurveInterval() {};
@@ -108,52 +108,52 @@ public:
         const VecX& qdd0_inp,
         const VecX& k_center_inp,
         const VecX& k_range_inp,
-        const float duration_inp);
+        const double duration_inp);
 
     // convert to polynomial zonotope using 1st/2nd order Taylor expansion
     void makePolyZono(const int s_ind);
 
     // return the min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremum(float* extremum, const float* k) const;
+    void returnJointPositionExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremumGradient(float* extremumGradient, const float* k) const;
+    void returnJointPositionExtremumGradient(double* extremumGradient, const double* k) const;
 
     // return the min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremum(float* extremum, const float* k) const;
+    void returnJointVelocityExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremumGradient(float* extremumGradient, const float* k) const;
+    void returnJointVelocityExtremumGradient(double* extremumGradient, const double* k) const;
 };
 
 // helper functions
 // q0, qd0, qdd0, k here are scalars since all joints are using the same Bezier curve representation
-float q_des_func(const float q0, const float Tqd0, const float TTqdd0, const float k, const float s);
+double q_des_func(const double q0, const double Tqd0, const double TTqdd0, const double k, const double s);
 
-float qd_des_func(const float q0, const float Tqd0, const float TTqdd0, const float k, const float s, const float T);
+double qd_des_func(const double q0, const double Tqd0, const double TTqdd0, const double k, const double s, const double T);
 
-float qdd_des_func(const float q0, const float Tqd0, const float TTqdd0, const float k, const float s, const float T);
+double qdd_des_func(const double q0, const double Tqd0, const double TTqdd0, const double k, const double s, const double T);
 
 // derivative of the second extrema of q_des (when qd_des = 0) w.r.t k 
-float q_des_extrema2_k_derivative(float q0, float Tqd0, float TTqdd0, float k);
+double q_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // derivative of the third extrema of q_des (when qd_des = 0) w.r.t k 
-float q_des_extrema3_k_derivative(float q0, float Tqd0, float TTqdd0, float k);
+double q_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // derivative of the second extrema of qd_des (when qdd_des = 0) w.r.t k 
-float qd_des_extrema2_k_derivative(float q0, float Tqd0, float TTqdd0, float k);
+double qd_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // derivative of the third extrema of qd_des (when qdd_des = 0) w.r.t k 
-float qd_des_extrema3_k_derivative(float q0, float Tqd0, float TTqdd0, float k);
+double qd_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // k-independent part of q_des
-float q_des_k_indep(float q0, float Tqd0, float TTqdd0, float kc, float s, float duration);
+double q_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double s, double duration);
 
 // k-independent part of qd_des
-float qd_des_k_indep(float q0, float Tqd0, float TTqdd0, float kc, float s, float duration);
+double qd_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double s, double duration);
 
 // k-independent part of qdd_des
-float qdd_des_k_indep(float q0, float Tqd0, float TTqdd0, float kc, float s, float duration);
+double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double s, double duration);
 
 }; // namespace Armour
 }; // namespace RAPTOR

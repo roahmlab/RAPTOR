@@ -9,14 +9,14 @@ int main() {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
-    pinocchio::DataTpl<float> data(model);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::DataTpl<double> data(model);
 
     ForwardKinematicsSolver fkSolver(&model);
 
     // set joint angles
     std::srand(std::time(nullptr));
-    Eigen::VectorXf q = M_2_PI * Eigen::VectorXf::Random(model.nq).array() - M_PI;
+    Eigen::VectorXd q = M_2_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
     auto start_clock = std::chrono::high_resolution_clock::now();

@@ -9,16 +9,16 @@
 namespace RAPTOR {
 
 typedef struct rectangleContactSurfaceParams_  {
-    float mu = 0.7;
-    float gamma = 0.7;
-    float Lx = 0.1;
-    float Ly = 0.1;
+    double mu = 0.7;
+    double gamma = 0.7;
+    double Lx = 0.1;
+    double Ly = 0.1;
 
     rectangleContactSurfaceParams_(
-        float mu_input, 
-        float gamma_input, 
-        float Lx_input, 
-        float Ly_input) :
+        double mu_input, 
+        double gamma_input, 
+        double Lx_input, 
+        double Ly_input) :
         mu(mu_input), 
         gamma(gamma_input), 
         Lx(Lx_input), 

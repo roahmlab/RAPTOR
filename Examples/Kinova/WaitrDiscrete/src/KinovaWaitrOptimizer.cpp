@@ -17,7 +17,7 @@ namespace Kinova {
 // [TNLP_set_parameters]
 bool KinovaWaitrOptimizer::set_parameters(
     const VecX& x0_input,
-    const float T_input,
+    const double T_input,
     const int N_input,
     const int degree_input,
     const Model& model_input, 

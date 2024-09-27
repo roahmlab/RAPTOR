@@ -40,7 +40,7 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         
         // function mcI in Roy Featherstone's code (parallel axis theorem)
         const Mat3 CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
-        const float mm = modelPtr_->inertias[pinocchio_joint_id].mass();
+        const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
         const Mat3 II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();
 
         // apply parallel axis theorem
@@ -250,19 +250,19 @@ void RegressorInverseDynamics::compute(const VecX& z,
                 }
             }
 
-            const float& v1 = v(j)(0);
-            const float& v2 = v(j)(1);
-            const float& v3 = v(j)(2);
-            const float& v4 = v(j)(3);
-            const float& v5 = v(j)(4);
-            const float& v6 = v(j)(5);
+            const double& v1 = v(j)(0);
+            const double& v2 = v(j)(1);
+            const double& v3 = v(j)(2);
+            const double& v4 = v(j)(3);
+            const double& v5 = v(j)(4);
+            const double& v6 = v(j)(5);
 
-            const float& a1 = a(j)(0);
-            const float& a2 = a(j)(1);
-            const float& a3 = a(j)(2);
-            const float& a4 = a(j)(3);
-            const float& a5 = a(j)(4);
-            const float& a6 = a(j)(5);
+            const double& a1 = a(j)(0);
+            const double& a2 = a(j)(1);
+            const double& a3 = a(j)(2);
+            const double& a4 = a(j)(3);
+            const double& a5 = a(j)(4);
+            const double& a6 = a(j)(5);
 
             Yfull.block(6 * j, 10 * j, 6, 10) << 
                 a1,    a2 - v1*v3,    a3 + v1*v2, -v2*v3, v2*v2 - v3*v3,  v2*v3,                  0, a6 + v1*v5 - v2*v4, v1*v6 - a5 - v3*v4,                  0,
@@ -274,19 +274,19 @@ void RegressorInverseDynamics::compute(const VecX& z,
                  
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
-                    const float& pv1 = pv_pz(j)(0, k);
-                    const float& pv2 = pv_pz(j)(1, k);
-                    const float& pv3 = pv_pz(j)(2, k);
-                    const float& pv4 = pv_pz(j)(3, k);
-                    const float& pv5 = pv_pz(j)(4, k);
-                    const float& pv6 = pv_pz(j)(5, k);
+                    const double& pv1 = pv_pz(j)(0, k);
+                    const double& pv2 = pv_pz(j)(1, k);
+                    const double& pv3 = pv_pz(j)(2, k);
+                    const double& pv4 = pv_pz(j)(3, k);
+                    const double& pv5 = pv_pz(j)(4, k);
+                    const double& pv6 = pv_pz(j)(5, k);
 
-                    const float& pa1 = pa_pz(j)(0, k);
-                    const float& pa2 = pa_pz(j)(1, k);
-                    const float& pa3 = pa_pz(j)(2, k);
-                    const float& pa4 = pa_pz(j)(3, k);
-                    const float& pa5 = pa_pz(j)(4, k);
-                    const float& pa6 = pa_pz(j)(5, k);
+                    const double& pa1 = pa_pz(j)(0, k);
+                    const double& pa2 = pa_pz(j)(1, k);
+                    const double& pa3 = pa_pz(j)(2, k);
+                    const double& pa4 = pa_pz(j)(3, k);
+                    const double& pa5 = pa_pz(j)(4, k);
+                    const double& pa6 = pa_pz(j)(5, k);
 
                     pYfull_pz(k).block(6 * j, 10 * j, 6, 10) <<
                                  pa1, pa2 - v1*pv3 - pv1*v3, pa3 + v1*pv2 + pv1*v2, -pv2*v3 - v2*pv3,   2*v2*pv2 - 2*v3*pv3,  pv2*v3 + v2*pv3,                                       0, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4, v1*pv6 + pv1*v6 - pa5 - v3*pv4 - pv3*v4,                                       0,

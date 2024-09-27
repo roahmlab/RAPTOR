@@ -41,7 +41,7 @@ ArmourBezierCurves::ArmourBezierCurves(const VecX& tspan_input,
     }
 }
 
-ArmourBezierCurves::ArmourBezierCurves(float T_input, 
+ArmourBezierCurves::ArmourBezierCurves(double T_input, 
                                        int N_input, 
                                        int Nact_input, 
                                        TimeDiscretization time_discretization, 
@@ -99,7 +99,7 @@ void ArmourBezierCurves::compute(const VecX& z,
     coefficients.row(3) = qfinal.transpose();
 
     for (int x = 0; x < N; x++) {
-        float t = tspan(x) / T;
+        double t = tspan(x) / T;
 
         q(x) = VecX::Zero(Nact);
         q_d(x) = VecX::Zero(Nact);

@@ -8,10 +8,10 @@ namespace Armour {
 
 class KinematicsDynamics {
 public:
-	using Vec3 = Eigen::Vector3f;
-	using VecX = Eigen::VectorXf;
-	using Mat3 = Eigen::Matrix3f;
-	using MatX = Eigen::MatrixXf;
+	using Vec3 = Eigen::Vector3d;
+	using VecX = Eigen::VectorXd;
+	using Mat3 = Eigen::Matrix3d;
+	using MatX = Eigen::MatrixXd;
 
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 
@@ -25,7 +25,7 @@ public:
 
 	// sphere center PZs
 	PZsparseArray sphere_centers;
-	std::vector<float> sphere_radii;
+	std::vector<double> sphere_radii;
 
 	// dynamics-related PZs
     PZsparseArray torque_nom;

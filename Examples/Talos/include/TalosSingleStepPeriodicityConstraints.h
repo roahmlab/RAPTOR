@@ -33,10 +33,10 @@ const std::string JOINT_MAP[NUM_INDEPENDENT_JOINTS][2] = {
 
 class TalosSingleStepPeriodicityConstraints : public Constraints {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Data = pinocchio::DataTpl<float>;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Data = pinocchio::DataTpl<double>;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     TalosSingleStepPeriodicityConstraints() = default;

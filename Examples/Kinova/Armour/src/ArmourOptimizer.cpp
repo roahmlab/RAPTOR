@@ -451,7 +451,7 @@ void ArmourOptimizer::summarize_constraints(
     // control input constraints
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            const Number constr_violation = fmaxf(
+            const Number constr_violation = fmax(
                 g[i * NUM_FACTORS + j] - (robotInfoPtr_->torque_limits[j] - torque_radius(j, i)), 
                 -(robotInfoPtr_->torque_limits[j] - torque_radius(j, i)) - g[i * NUM_FACTORS + j]);
 
@@ -503,7 +503,7 @@ void ArmourOptimizer::summarize_constraints(
     // state limit constraints
     //     minimum joint position
     for( Index i = offset; i < offset + 2 * NUM_FACTORS; i++ ) {
-        const Number constr_violation = fmaxf(
+        const Number constr_violation = fmax(
             g[i] - (robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe), 
             -(robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe) - g[i]);
 
@@ -528,7 +528,7 @@ void ArmourOptimizer::summarize_constraints(
 
     //     minimum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        const Number constr_violation = fmaxf(
+        const Number constr_violation = fmax(
             g[i] - (robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde), 
             -(robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde) - g[i]);
 

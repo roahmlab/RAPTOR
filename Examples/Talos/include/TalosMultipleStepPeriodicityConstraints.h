@@ -9,10 +9,10 @@ namespace Talos {
 
 class TalosMultipleStepPeriodicityConstraints : public Constraints {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Data = pinocchio::DataTpl<float>;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Data = pinocchio::DataTpl<double>;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     TalosMultipleStepPeriodicityConstraints() = default;

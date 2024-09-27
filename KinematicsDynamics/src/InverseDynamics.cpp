@@ -174,7 +174,7 @@ void InverseDynamics::compute(const VecX& z,
     }
 }
 
-Eigen::MatrixXf InverseDynamics::chipFromTensor3x(const Ten3& tensor3x, 
+Eigen::MatrixXd InverseDynamics::chipFromTensor3x(const Ten3& tensor3x, 
                                                   const Eigen::Index offset, 
                                                   const Eigen::Index dim) {
     const auto& dims = tensor3x.dimensions();
@@ -195,7 +195,7 @@ Eigen::MatrixXf InverseDynamics::chipFromTensor3x(const Ten3& tensor3x,
         throw std::invalid_argument("dim should be 0, 1, or 2.");
     }
 
-    Eigen::MatrixXf result(dim0, dim1);
+    Eigen::MatrixXd result(dim0, dim1);
 
     if (dim == 0) {
         for (Eigen::Index i = 0; i < dim0; i++) {

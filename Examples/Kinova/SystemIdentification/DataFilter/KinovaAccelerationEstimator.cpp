@@ -6,13 +6,13 @@ using namespace Ipopt;
 
 int main () {
     // Define Data
-    Eigen::MatrixXf temp;
+    Eigen::MatrixXd temp;
     temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/SinExperiment_1703028519/feedback_pos.csv");
-    Eigen::MatrixXf q_data = temp.transpose();
+    Eigen::MatrixXd q_data = temp.transpose();
     temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/SinExperiment_1703028519/feedback_vel.csv");
-    Eigen::MatrixXf q_d_data = temp.transpose();
+    Eigen::MatrixXd q_d_data = temp.transpose();
     temp = Utils::initializeEigenMatrixFromFile("../Examples/Kinova/SystemIdentification/DataFilter/data/SinExperiment_1703028519/frame_ts.csv");
-    Eigen::VectorXf tspan = temp.array() - temp(0);
+    Eigen::VectorXd tspan = temp.array() - temp(0);
 
     const int num_samples = 2000;
 
@@ -21,9 +21,9 @@ int main () {
     const int base_frequency = 5;
 
     // Define initial guess
-    Eigen::VectorXf z = Eigen::VectorXf::Zero((2 * degree + 1) * 7);
+    Eigen::VectorXd z = Eigen::VectorXd::Zero((2 * degree + 1) * 7);
 
-    // Eigen::VectorXf z = Eigen::VectorXf::Zero((2 * degree + 2) * 7).array();
+    // Eigen::VectorXd z = Eigen::VectorXd::Zero((2 * degree + 2) * 7).array();
     // for (int i = 0; i < 7; i++) {
     //     z((2 * degree + 2) * i + (2 * degree + 1)) = 5 * (i + 1);
     // }
@@ -80,7 +80,7 @@ int main () {
     }
 
     // Run ipopt to solve the optimization problem
-    float solve_time = 0;
+    double solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 

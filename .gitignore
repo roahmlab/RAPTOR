@@ -52,3 +52,4 @@ Examples/Digit-modified/singlestep_optimization_settings.yaml
 
 test_nanobind_planner.py
 
+backup/

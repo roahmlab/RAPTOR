@@ -11,10 +11,10 @@ using namespace Ipopt;
 
 class DigitMultipleStepOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Data = pinocchio::DataTpl<float>;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Data = pinocchio::DataTpl<double>;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
     DigitMultipleStepOptimizer() = default;
@@ -26,7 +26,7 @@ public:
     bool set_parameters(
         const int NSteps_input,
         const VecX& x0_input,
-        const float T_input,
+        const double T_input,
         const int N_input,
         const TimeDiscretization time_discretization_input,
         const int degree_input,

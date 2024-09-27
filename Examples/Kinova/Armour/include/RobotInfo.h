@@ -14,31 +14,31 @@ namespace Armour {
     
 struct ultimate_bound {
     // controller information
-    float alpha = 0;
-    float V_m = 0;
-    float M_max = 0;
-    float M_min = 0;
-    float Kr = 0;
+    double alpha = 0;
+    double V_m = 0;
+    double M_max = 0;
+    double M_min = 0;
+    double Kr = 0;
 
     // ultimate bound information
-    float eps = 0;
-    float qe = 0;
-    float qde = 0;
-    float qdae = 0;
-    float qddae = 0;
+    double eps = 0;
+    double qe = 0;
+    double qde = 0;
+    double qdae = 0;
+    double qddae = 0;
 };
 
-Eigen::VectorXf map_to_vector(const YAML::Node& node, int size);
+Eigen::VectorXd map_to_vector(const YAML::Node& node, int size);
 
 class RobotInfo {
 public:
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
 
     int num_motors = 0;
     int num_joints = 0;
 
-    pinocchio::ModelTpl<float> model;
+    pinocchio::ModelTpl<double> model;
 
     VecX mass_uncertainty;
     VecX inertia_uncertainty;
@@ -51,7 +51,7 @@ public:
     ultimate_bound ultimate_bound_info;
 
     int num_spheres = 0;
-    std::unordered_map<std::string, std::vector<std::pair<Vec3, float>>> collision_spheres;
+    std::unordered_map<std::string, std::vector<std::pair<Vec3, double>>> collision_spheres;
 
     RobotInfo() = default;
 

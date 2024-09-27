@@ -11,8 +11,8 @@ namespace RAPTOR {
 // This is the base (abstract) class for all constraints
 class Constraints {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     Constraints() = default;

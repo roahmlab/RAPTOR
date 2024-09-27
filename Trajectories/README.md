@@ -14,7 +14,7 @@ There are papers that incorporate the duration as one of the optimization decisi
 Adaptive changes over the distribution of time instances are also widely discussed in the context of direct collocation methods or spectral methods.
 But these are not the focus of our method for now.
 
-Specifically, the core function of all trajectory classes is `compute(const Eigen::VectorXf& z, bool compute_derivatives)`.
+Specifically, the core function of all trajectory classes is `compute(const Eigen::VectorXd& z, bool compute_derivatives)`.
 This function takes in the decision variable `z` of the optimization problem and updates the class member `q`, `q_d`, `q_dd`.
 
  - `q` is an Eigen array of Eigen vectors.

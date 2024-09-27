@@ -17,7 +17,7 @@ namespace Kinova {
 // [TNLP_set_parameters]
 bool KinovaOptimizer::set_parameters(
     const VecX& x0_input,
-    const float T_input,
+    const double T_input,
     const int N_input,
     const int degree_input,
     const Model& model_input, 
@@ -30,7 +30,7 @@ bool KinovaOptimizer::set_parameters(
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
-    const float collision_buffer_input
+    const double collision_buffer_input
  ) 
 {
     enable_hessian = true;

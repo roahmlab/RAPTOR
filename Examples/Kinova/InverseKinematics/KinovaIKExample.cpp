@@ -13,18 +13,18 @@ int main() {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
     
     // Compute forward kinematics at a random configuration first
     ForwardKinematicsSolver fkSolver(&model);
 
     std::srand(std::time(nullptr));
-    Eigen::VectorXf q = Eigen::VectorXf::Random(model.nq);
+    Eigen::VectorXd q = Eigen::VectorXd::Random(model.nq);
     fkSolver.compute(0, model.nq, q);
     const Transform desiredTransform = fkSolver.getTransform();
 
     // Define initial guess
-    Eigen::VectorXf z = Eigen::VectorXf::Random(model.nq);
+    Eigen::VectorXd z = Eigen::VectorXd::Random(model.nq);
 
     // Initialize Kinova optimizer
     SmartPtr<KinovaIKSolver> mynlp = new KinovaIKSolver();
@@ -70,7 +70,7 @@ int main() {
     }
 
     // Run ipopt to solve the optimization problem
-    float solve_time = 0;
+    double solve_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
 

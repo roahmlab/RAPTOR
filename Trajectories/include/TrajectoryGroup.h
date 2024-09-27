@@ -9,8 +9,8 @@ namespace RAPTOR {
 
 class TrajectoryGroup : public Trajectories {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     TrajectoryGroup() = default;

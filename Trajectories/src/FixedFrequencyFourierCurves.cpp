@@ -5,7 +5,7 @@ namespace RAPTOR {
 FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input, 
                                                          int Nact_input, 
                                                          int degree_input,
-                                                         float base_frequency_input,
+                                                         double base_frequency_input,
                                                          VecX q0_input,
                                                          VecX q_d0_input) :
     Trajectories((2 * degree_input + 1) * Nact_input, tspan_input, Nact_input),
@@ -40,12 +40,12 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(const VecX& tspan_input
     initialize_memory();
 }
 
-FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(float T_input, 
+FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input, 
                                                          int N_input, 
                                                          int Nact_input, 
                                                          TimeDiscretization time_discretization, 
                                                          int degree_input,
-                                                         float base_frequency_input,
+                                                         double base_frequency_input,
                                                          VecX q0_input,
                                                          VecX q_d0_input) :
     Trajectories((2 * degree_input + 1) * Nact_input, T_input, N_input, Nact_input, time_discretization),
@@ -101,7 +101,7 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
 
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
-    Eigen::MatrixXf temp = z.head((2 * degree + 1) * Nact);
+    Eigen::MatrixXd temp = z.head((2 * degree + 1) * Nact);
     MatX coefficients = Utils::reshape(temp, 2 * degree + 1, Nact);
 
     if (optimize_initial_position) {
@@ -117,7 +117,7 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
     }
 
     for (int x = 0; x < N; x++) {
-        float t = tspan(x);
+        double t = tspan(x);
 
         q(x) = VecX::Zero(Nact);
         q_d(x) = VecX::Zero(Nact);
@@ -143,19 +143,19 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
             F0(0) = 0;
 
             for (int j = 0; j < degree; j++) {
-                float jt = (j + 1) * t;
-                float sinjwt = sinf(w * jt);
-                float cosjwt = cosf(w * jt);
+                double jt = (j + 1) * t;
+                double sinjwt = sin(w * jt);
+                double cosjwt = cos(w * jt);
 
                 ddF(2 * j + 1) = cosjwt;
                 ddF(2 * j + 2) = sinjwt;
 
-                float jw = (j + 1) * w;
+                double jw = (j + 1) * w;
                 dF(2 * j + 1) = sinjwt / jw;
                 dF(2 * j + 2) = -cosjwt / jw;
                 dF0(2 * j + 2) = -1 / jw;
 
-                float j2w2 = jw * jw;
+                double j2w2 = jw * jw;
                 F(2 * j + 1) = -cosjwt / j2w2;
                 F(2 * j + 2) = -sinjwt / j2w2;
                 F0(2 * j + 1) = -1 / j2w2;
@@ -163,12 +163,12 @@ void FixedFrequencyFourierCurves::compute(const VecX& z,
 
             q_dd(x)(i) = ddF.dot(kernel);
 
-            float q_d_raw = dF.dot(kernel);
-            float q_d_raw0 = dF0.dot(kernel);
+            double q_d_raw = dF.dot(kernel);
+            double q_d_raw0 = dF0.dot(kernel);
             q_d(x)(i) = q_d_raw + (q_d0(i) - q_d_raw0);
 
-            float q_raw = F.dot(kernel) + (q_d0(i) - q_d_raw0) * t;
-            float q_raw0 = F0.dot(kernel);
+            double q_raw = F.dot(kernel) + (q_d0(i) - q_d_raw0) * t;
+            double q_raw0 = F0.dot(kernel);
             q(x)(i) = q_raw + (q0(i) - q_raw0);
 
             if (compute_derivatives) {

@@ -29,13 +29,13 @@ namespace og = ompl::geometric;
 
 class WaypointPlanningPybindWrapper {
 public:
-    using Model = pinocchio::ModelTpl<float>;
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Model = pinocchio::ModelTpl<double>;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<float, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<float, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     WaypointPlanningPybindWrapper() = default;
@@ -43,7 +43,7 @@ public:
     WaypointPlanningPybindWrapper(const std::string urdf_filename) {
         pinocchio::Model model_double;
         pinocchio::urdf::buildModel(urdf_filename, model_double);
-        model = model_double.cast<float>();
+        model = model_double.cast<double>();
 
         // Construct the robot configuration space
         space = std::make_shared<ob::RealVectorStateSpace>(NUM_JOINTS);
@@ -51,12 +51,12 @@ public:
         // Set the bounds of the space
         ob::RealVectorBounds bounds(NUM_JOINTS);
         for (int i = 0; i < NUM_JOINTS; i++) {
-            const float lower_bound = 
+            const double lower_bound = 
                 (JOINT_LIMITS_LOWER[i] == -1e19) ? 
                     -M_PI : 
                     JOINT_LIMITS_LOWER[i];
 
-            const float upper_bound = 
+            const double upper_bound = 
                 (JOINT_LIMITS_UPPER[i] == 1e19) ? 
                     M_PI : 
                     JOINT_LIMITS_UPPER[i];
@@ -80,7 +80,7 @@ public:
 
     // Class methods
     void set_obstacles(const nb_2d_float obstacles_inp,
-                       const float buffer_inp) {
+                       const double buffer_inp) {
         if (obstacles_inp.shape(1) != 9) {
             throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
         }
@@ -126,7 +126,7 @@ public:
         set_start_goal_check = true;
     };
 
-    nb::ndarray<nb::numpy, const float> plan(const float timeout) {
+    nb::ndarray<nb::numpy, const double> plan(const double timeout) {
         if (!set_obstacles_check ||
             !set_start_goal_check) {
             throw std::runtime_error("Obstacles and start/goal must be set before planning");
@@ -143,11 +143,11 @@ public:
                 boxSize
             );
 
-        const float buffer_local = buffer;
+        const double buffer_local = buffer;
 
         ss->setStateValidityChecker(
         [&collisionCheckerPtr_, &buffer_local](const ob::State *state) { 
-            Eigen::VectorXf joint_angles(NUM_JOINTS);
+            Eigen::VectorXd joint_angles(NUM_JOINTS);
             for (int i = 0; i < NUM_JOINTS; i++) {
                 joint_angles(i) = state->as<ob::RealVectorStateSpace::StateType>()->values[i];
             }
@@ -173,7 +173,7 @@ public:
         auto sol = ss->getSolutionPath();
         sol.interpolate();
 
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> path(sol.getStateCount(), NUM_JOINTS);
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> path(sol.getStateCount(), NUM_JOINTS);
         for (int i = 0; i < sol.getStateCount(); i++) {
             auto state = sol.getState(i);
             for (int j = 0; j < NUM_JOINTS; j++) {
@@ -184,7 +184,7 @@ public:
         set_start_goal_check = false;
 
         const size_t shape_ptr[] = {sol.getStateCount(), NUM_JOINTS};
-        return nb::ndarray<nb::numpy, const float>(
+        return nb::ndarray<nb::numpy, const double>(
             path.data(),
             2,
             shape_ptr,
@@ -201,7 +201,7 @@ public:
     std::vector<Vec3> boxCenters;
     std::vector<Vec3> boxOrientation;
     std::vector<Vec3> boxSize;
-    float buffer = 0.0;
+    double buffer = 0.0;
 
     // planner information
     std::shared_ptr<ob::RealVectorStateSpace> space;

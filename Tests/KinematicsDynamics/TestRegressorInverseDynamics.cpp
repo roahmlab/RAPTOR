@@ -3,7 +3,7 @@
 #include "pinocchio/algorithm/rnea.hpp"
 #include "Polynomials.h"
 
-using VecX = Eigen::VectorXf;
+using VecX = Eigen::VectorXd;
 using namespace RAPTOR;
 
 int main() {
@@ -13,8 +13,8 @@ int main() {
     
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<float> model = model_double.cast<float>();
-    pinocchio::DataTpl<float> data(model);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::DataTpl<double> data(model);
 
     // Disable rotor inertia, friction, and damping
     model.friction.setZero();
@@ -23,7 +23,7 @@ int main() {
 
     // Create a trajectory
     int N = 5;  // number of time steps
-    float T = 10.0;  // total time
+    double T = 10.0;  // total time
     int degree = 5;  // degree of the polynomial
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);

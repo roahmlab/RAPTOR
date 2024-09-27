@@ -21,7 +21,7 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
         const Number T_input,
         const int N_input,
         const int degree_input,
-        const float base_frequency_input,
+        const double base_frequency_input,
         const Model& model_input, 
         // const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,

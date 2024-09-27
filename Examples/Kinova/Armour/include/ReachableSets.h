@@ -16,7 +16,7 @@ void GenerateLinkAndTorquePZs(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
                               std::shared_ptr<KinematicsDynamics>& kdPtr_);
 
 // Part III: Compute bounds for robust input
-Eigen::MatrixXf ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
+Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
                                          std::shared_ptr<BezierCurveInterval>& trajPtr_,
                                          std::shared_ptr<KinematicsDynamics>& kdPtr_);
 

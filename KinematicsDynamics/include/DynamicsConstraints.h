@@ -10,8 +10,8 @@ constexpr int MAX_BUFFER_SIZE = 128;
 
 class DynamicsConstraints {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
     using QRSolver = Eigen::ColPivHouseholderQR<MatX>;
 
     struct BufferData {

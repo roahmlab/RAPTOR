@@ -29,10 +29,10 @@ namespace bn = boost::numeric;
 namespace bi = bn::interval_lib;
 
 using Interval = bn::interval<
-    float, 
+    double, 
     bi::policies<
-        bi::save_state<bi::rounded_transc_std<float>>,
-        bi::checking_base<float>
+        bi::save_state<bi::rounded_transc_std<double>>,
+        bi::checking_base<double>
     > 
 >;
 

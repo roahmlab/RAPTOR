@@ -15,9 +15,9 @@ namespace Kinova {
 
 class DataFilterOptimizer : public Optimizer {
 public:
-    using Vec3 = Eigen::Vector3f;
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using Vec3 = Eigen::Vector3d;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
     DataFilterOptimizer() = default;

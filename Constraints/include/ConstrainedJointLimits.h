@@ -8,8 +8,8 @@ namespace RAPTOR {
 
 class ConstrainedJointLimits : public JointLimits {
 public:
-    using VecX = Eigen::VectorXf;
-    using MatX = Eigen::MatrixXf;
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
 
     // Constructor
     ConstrainedJointLimits() = default;
