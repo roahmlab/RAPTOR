@@ -1,4 +1,6 @@
-#include "PZsparse.h"
+#include "ReachableSets.h"
+#include "ArmourBezierCurves.h"
+#include "InverseDynamics.h"
 
 using namespace RAPTOR;
 using namespace Armour;

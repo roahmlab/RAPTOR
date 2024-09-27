@@ -64,9 +64,9 @@ void GenerateLinkAndTorquePZs(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
     }
 }
 
-void ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
-                              std::shared_ptr<BezierCurveInterval>& trajPtr_,
-                              std::shared_ptr<KinematicsDynamics>& kdPtr_) {
+Eigen::MatrixXf ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
+                                         std::shared_ptr<BezierCurveInterval>& trajPtr_,
+                                         std::shared_ptr<KinematicsDynamics>& kdPtr_) {
     const float robust_input_bound = 
         0.5 * robotInfoPtr_->ultimate_bound_info.alpha * 
             (robotInfoPtr_->ultimate_bound_info.M_max - robotInfoPtr_->ultimate_bound_info.M_min) * 
@@ -75,12 +75,12 @@ void ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
     const size_t num_time_steps = trajPtr_->num_time_steps;
     const size_t num_motors = robotInfoPtr_->num_motors;
 
+    Eigen::MatrixXf torque_radius(num_motors, num_time_steps);
+
     try {
         std::vector<float> sphere_center_uncertainty(robotInfoPtr_->num_spheres, 0.0);
 
         for(int t_ind = 0; t_ind < num_time_steps; t_ind++) {
-            Eigen::VectorXf torque_radius(num_motors);
-
             // (1) add the bound of robust input (||v||)
             Interval rho_max_temp = Interval(0.0);
             for (int i = 0; i < num_motors; i++) {
@@ -88,17 +88,17 @@ void ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
                 Interval temp = kdPtr_->torque_int(i, t_ind).toInterval(); // should be a 1-dim Interval
                 rho_max_temp += temp * temp;
 
-                torque_radius(i) = robust_input_bound + 0.5 * std::max(abs(temp.lower()), abs(temp.upper()));
+                torque_radius(i, t_ind) = robust_input_bound + 0.5 * std::max(abs(temp.lower()), abs(temp.upper()));
             }
             rho_max_temp = sqrt(rho_max_temp);
             
             for (int i = 0; i < num_motors; i++) {
-                torque_radius(i) += 0.5 * rho_max_temp.upper();
+                torque_radius(i, t_ind) += 0.5 * rho_max_temp.upper();
             }
 
             // (2) add friction
             for (int i = 0; i < num_motors; i++) {
-                torque_radius(i) += robotInfoPtr_->model.friction[i];
+                torque_radius(i, t_ind) += robotInfoPtr_->model.friction[i];
             }
 
             // (3) add the radius back to the nominal input PZ (after reducing)
@@ -129,6 +129,8 @@ void ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
         std::cerr << "Error computing robust input bounds! " << e.what() << std::endl;
         throw std::runtime_error("Error computing robust input bounds! Check previous error message!");
     }
+
+    return torque_radius;
 }
 
 }; // namespace Armour

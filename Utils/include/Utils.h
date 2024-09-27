@@ -126,7 +126,7 @@ inline Eigen::Vector3f unskew(const Eigen::Matrix3f& m) {
 }
 
 inline Eigen::Matrix<float, 6, 6> plux(const Eigen::Matrix3f& R, 
-                                        const Eigen::Vector3f& p) {
+                                       const Eigen::Vector3f& p) {
     Eigen::Matrix<float, 6, 6> res;
     res << R,            Eigen::MatrixXf::Zero(3, 3),
            -R * skew(p), R;

@@ -2,14 +2,13 @@
 
 namespace RAPTOR {
 namespace Armour {
-namespace Kinova {
 
 bool ArmourOptimizer::set_parameters(
     const VecX& q_des_input,
     Number t_plan_input,
-    const RobotInfo* robotInfoPtr_input,
-    const BezierCurveInterval* trajPtr_input,
-    const KinematicsDynamics* kdPtr_input,
+    const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
+    const std::shared_ptr<BezierCurveInterval>& trajPtr_input,
+    const std::shared_ptr<KinematicsDynamics>& kdPtr_input,
     const MatX& torque_radius_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
@@ -37,7 +36,12 @@ bool ArmourOptimizer::set_parameters(
 
     kdPtr_ = kdPtr_input;
 
-    num_obstacles = boxCenters_input.size();
+    bcaPtrs.resize(num_time_steps);
+    for (size_t i = 0; i < num_time_steps; i++) {
+        bcaPtrs[i] = std::make_shared<BoxCollisionAvoidance>(
+            boxCenters_input, boxOrientation_input, boxSize_input);
+        bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
+    }
 
     torque_radius = torque_radius_input;
     
@@ -45,12 +49,9 @@ bool ArmourOptimizer::set_parameters(
     mu = mu_input;
     suction_radius = suction_radius_input;
 
-    joint_sliced_center.resize(num_spheres * num_time_steps * 3);
-    dk_joint_sliced_center.resize(num_spheres * num_time_steps * 3 * NUM_FACTORS);
-
     constraint_number = NUM_FACTORS * num_time_steps + // torque limits
                         3 * num_fixed_joints * num_time_steps + // contact constraints
-                        num_time_steps * num_spheres * num_obstacles + // obstacle avoidance constraints
+                        num_time_steps * num_spheres + // obstacle avoidance constraints
                         NUM_FACTORS * 4; // joint position, velocity limits
 
     return true;
@@ -66,9 +67,11 @@ bool ArmourOptimizer::get_nlp_info(
 )
 {
     // The problem described NUM_FACTORS variables, x[NUM_FACTORS] through x[NUM_FACTORS] for each joint
+    numVars = NUM_FACTORS;
     n = NUM_FACTORS;
 
     // number of inequality constraint
+    numCons = constraint_number;
     m = constraint_number;
 
     nnz_jac_g = m * n;
@@ -130,11 +133,11 @@ bool ArmourOptimizer::get_bounds_info(
     offset += 3 * num_fixed_joints * num_time_steps;
 
     // collision avoidance constraints
-    for( Index i = offset; i < offset + num_time_steps * num_spheres * num_obstacles; i++ ) {
+    for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
         g_l[i] = 0.0;
         g_u[i] = 1e19;
     }
-    offset += num_time_steps * num_spheres * num_obstacles;
+    offset += num_time_steps * num_spheres;
 
     // state limit constraints
     //     minimum joint position
@@ -255,7 +258,7 @@ bool ArmourOptimizer::eval_grad_f(
         THROW_EXCEPTION(IpoptException, "Error wrong value of n in eval_grad_f!");
     }
 
-    for(Index i = 0; i < n; i++){
+    for (Index i = 0; i < n; i++) {
         const Number k_actual = trajPtr_->k_center[i] + trajPtr_->k_range[i] * x[i];
         Number q_plan = q_des_func(
             trajPtr_->q0[i], trajPtr_->Tqd0[i], trajPtr_->TTqdd0[i], 
@@ -294,20 +297,11 @@ bool ArmourOptimizer::eval_g(
 
     try {
         Index i = 0, offset = 0;
-        #pragma omp parallel for shared(kdPtr_, x, g, joint_sliced_center) private(i) schedule(dynamic)
+        #pragma omp parallel for shared(kdPtr_, x, g) private(i) schedule(dynamic)
         for (i = 0; i < num_time_steps; i++) {
             for (int j = 0; j < NUM_FACTORS; j++) {
                 const Interval res = kdPtr_->torque_nom(j, i).slice(x);
                 g[i * NUM_FACTORS + j] = getCenter(res);
-            }
-
-            for (int j = 0; j < num_spheres; j++) {
-                const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
-                const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
-                const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
-                joint_sliced_center[3 * (j * num_time_steps + i) + 0] = getCenter(x_res);
-                joint_sliced_center[3 * (j * num_time_steps + i) + 1] = getCenter(y_res);
-                joint_sliced_center[3 * (j * num_time_steps + i) + 2] = getCenter(z_res);
             }
         }
         offset += num_time_steps * NUM_FACTORS;
@@ -317,13 +311,28 @@ bool ArmourOptimizer::eval_g(
 
         offset += 3 * num_fixed_joints * num_time_steps;
 
-        // TODO: add obstacle avoidance constraints
-        std::memset(g, 0, num_time_steps * num_spheres * num_obstacles * sizeof(Number));
+        // obstacle avoidance constraints
+        #pragma omp parallel for shared(kdPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
+        for (i = 0; i < num_time_steps; i++) {
+            for (int j = 0; j < num_spheres; j++) {
+                const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
+                const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
+                const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
 
-        offset += num_time_steps * num_spheres * num_obstacles;
+                Vec3 sphere_center;
+                sphere_center << getCenter(x_res), 
+                                 getCenter(y_res), 
+                                 getCenter(z_res);
+
+                bcaPtrs[i]->computeDistance(sphere_center);
+                g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - kdPtr_->sphere_radii[j];
+            }
+        }
+        offset += num_time_steps * num_spheres;
 
         trajPtr_->returnJointPositionExtremum(g + offset, x);
         offset += NUM_FACTORS * 2;
+
         trajPtr_->returnJointVelocityExtremum(g + offset, x);
     }
     catch (const std::exception& e) {
@@ -369,26 +378,10 @@ bool ArmourOptimizer::eval_jac_g(
     else {
         try {
             Index i = 0, offset = 0;
-            #pragma omp parallel for shared(kdPtr_, x, values, joint_sliced_center, dk_joint_sliced_center) private(i) schedule(dynamic)
+            #pragma omp parallel for shared(kdPtr_, x, values) private(i) schedule(dynamic)
             for(i = 0; i < num_time_steps; i++) {
                 for (int j = 0; j < NUM_FACTORS; j++) {
                     kdPtr_->torque_nom(j, i).slice(values + (i * NUM_FACTORS + j) * NUM_FACTORS, x);
-                }
-
-                for (int j = 0; j < num_spheres; j++) {
-                    const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
-                    const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
-                    const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
-                    joint_sliced_center[3 * (j * num_time_steps + i) + 0] = getCenter(x_res);
-                    joint_sliced_center[3 * (j * num_time_steps + i) + 1] = getCenter(y_res);
-                    joint_sliced_center[3 * (j * num_time_steps + i) + 2] = getCenter(z_res);
-
-                    kdPtr_->sphere_centers(3 * j + 0, i).slice(
-                        dk_joint_sliced_center.data() + ((j * num_time_steps + i) * 3 + 0) * NUM_FACTORS, x);
-                    kdPtr_->sphere_centers(3 * j + 1, i).slice(
-                        dk_joint_sliced_center.data() + ((j * num_time_steps + i) * 3 + 1) * NUM_FACTORS, x);
-                    kdPtr_->sphere_centers(3 * j + 2, i).slice(
-                        dk_joint_sliced_center.data() + ((j * num_time_steps + i) * 3 + 2) * NUM_FACTORS, x);
                 }
             }
             offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
@@ -398,11 +391,38 @@ bool ArmourOptimizer::eval_jac_g(
 
             offset += 3 * num_fixed_joints * num_time_steps * NUM_FACTORS;
 
-            // TODO: add obstacle avoidance constraints gradient
-            std::memset(values, 0, num_time_steps * num_spheres * num_obstacles * NUM_FACTORS * sizeof(Number));
+            // obstacle avoidance constraints gradient
+            #pragma omp parallel for shared(kdPtr_, x, values) private(i) schedule(dynamic)
+            for(i = 0; i < num_time_steps; i++) {
+                for (int j = 0; j < num_spheres; j++) {
+                    const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
+                    const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
+                    const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
 
-            offset += num_time_steps * num_spheres * num_obstacles * NUM_FACTORS;
+                    Vec3 sphere_center;
+                    sphere_center << getCenter(x_res), 
+                                     getCenter(y_res), 
+                                     getCenter(z_res);
 
+                    VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
+                    kdPtr_->sphere_centers(3 * j + 0, i).slice(dk_x_res, x);
+                    kdPtr_->sphere_centers(3 * j + 1, i).slice(dk_y_res, x);
+                    kdPtr_->sphere_centers(3 * j + 2, i).slice(dk_z_res, x);
+
+                    MatX dk_sphere_center(3, NUM_FACTORS);
+                    dk_sphere_center.row(0) = dk_x_res;
+                    dk_sphere_center.row(1) = dk_y_res;
+                    dk_sphere_center.row(2) = dk_z_res;
+
+                    bcaPtrs[i]->computeDistance(sphere_center, dk_sphere_center);
+
+                    const VecX& dk_distances = bcaPtrs[i]->pdistances_pz.row(bcaPtrs[i]->minimumDistanceIndex);
+                    std::memcpy(values + (i * num_spheres + j) * NUM_FACTORS + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
+                }
+            }
+            offset += num_time_steps * num_spheres * NUM_FACTORS;
+
+            // state limit constraints
             trajPtr_->returnJointPositionExtremumGradient(values + offset, x);
             offset += NUM_FACTORS * 2 * NUM_FACTORS;
 
@@ -431,9 +451,9 @@ void ArmourOptimizer::summarize_constraints(
     // control input constraints
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            Number constr_violation = fmaxf(
+            const Number constr_violation = fmaxf(
                 g[i * NUM_FACTORS + j] - (robotInfoPtr_->torque_limits[j] - torque_radius(j, i)), 
-                -g[i * NUM_FACTORS + j] + (robotInfoPtr_->torque_limits[j] - torque_radius(j, i)));
+                -(robotInfoPtr_->torque_limits[j] - torque_radius(j, i)) - g[i * NUM_FACTORS + j]);
 
             if (constr_violation > final_constr_violation) {
                 final_constr_violation = constr_violation;
@@ -458,16 +478,34 @@ void ArmourOptimizer::summarize_constraints(
 
     offset += 3 * num_fixed_joints * num_time_steps;
 
-    // TODO: fill in obstacle avoidance constraints
+    // obstacle avoidance constraints
+    for( Index i = 0; i < num_time_steps; i++ ) {
+        for( Index j = 0; j < num_spheres; j++ ) {
+            const Number constr_violation = -g[i * num_spheres + j + offset];
 
-    offset += num_time_steps * num_spheres * num_obstacles;
+            if (constr_violation > final_constr_violation) {
+                final_constr_violation = constr_violation;
+            }
+
+            if (constr_violation > constr_viol_tol) {
+                ifFeasible = false;
+                
+                if (verbose) {
+                    std::cout << "ArmourOptimizer.cpp: Sphere " << j << 
+                                " at time interval " << i << " collides with obstacles!\n";
+                    std::cout << "    distance: " << g[i * num_spheres + j + offset] << "\n";
+                }
+            }
+        }
+    }
+    offset += num_time_steps * num_spheres;
 
     // state limit constraints
     //     minimum joint position
     for( Index i = offset; i < offset + 2 * NUM_FACTORS; i++ ) {
-        Number constr_violation = fmaxf(
-            g[i] - (robotInfoPtr_->position_limits_ub[i - offset] - robotInfoPtr_->ultimate_bound_info.qe), 
-            -g[i] + (robotInfoPtr_->position_limits_lb[i - offset] + robotInfoPtr_->ultimate_bound_info.qe));
+        const Number constr_violation = fmaxf(
+            g[i] - (robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe), 
+            -(robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe) - g[i]);
 
         if (constr_violation > final_constr_violation) {
             final_constr_violation = constr_violation;
@@ -490,9 +528,9 @@ void ArmourOptimizer::summarize_constraints(
 
     //     minimum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        Number constr_violation = fmaxf(
-            g[i] - (robotInfoPtr_->velocity_limits[i - offset] - robotInfoPtr_->ultimate_bound_info.qde), 
-            -g[i] + (-robotInfoPtr_->velocity_limits[i - offset] + robotInfoPtr_->ultimate_bound_info.qde));
+        const Number constr_violation = fmaxf(
+            g[i] - (robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde), 
+            -(robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde) - g[i]);
 
         if (constr_violation > final_constr_violation) {
             final_constr_violation = constr_violation;
@@ -514,5 +552,4 @@ void ArmourOptimizer::summarize_constraints(
 }
 
 }; // namespace Kinova
-}; // namespace Armour
 }; // namespace RAPTOR

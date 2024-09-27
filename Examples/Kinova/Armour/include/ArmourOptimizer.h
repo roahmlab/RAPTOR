@@ -1,13 +1,12 @@
 #ifndef ARMOUR_OPTIMIZER_H
 #define ARMOUR_OPTIMIZER_H
 
-#include "KinovaConstants.h"
 #include "ReachableSets.h"
+#include "BoxCollisionAvoidance.h"
 #include "Optimizer.h"
 
 namespace RAPTOR {
 namespace Armour {
-namespace Kinova {
 
 class ArmourOptimizer : public Optimizer {
 public:
@@ -26,9 +25,9 @@ public:
     bool set_parameters(
         const VecX& q_des_input,
         Number t_plan_input,
-        const RobotInfo* robotInfoPtr_input,
-        const BezierCurveInterval* trajPtr_input,
-        const KinematicsDynamics* kdPtr_input,
+        const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
+        const std::shared_ptr<BezierCurveInterval>& trajPtr_input,
+        const std::shared_ptr<KinematicsDynamics>& kdPtr_input,
         const MatX& torque_radius_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
@@ -139,9 +138,11 @@ public:
        const ArmourOptimizer&
     );
 
-    const RobotInfo* robotInfoPtr_ = nullptr;
-    const BezierCurveInterval* trajPtr_ = nullptr;
-    const KinematicsDynamics* kdPtr_ = nullptr;
+    std::shared_ptr<RobotInfo> robotInfoPtr_;
+    std::shared_ptr<BezierCurveInterval> trajPtr_;
+    std::shared_ptr<KinematicsDynamics> kdPtr_;
+    
+    std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
 
     MatX torque_radius;
 
@@ -152,17 +153,12 @@ public:
     size_t num_time_steps = 0;
     size_t num_spheres = 0;
     size_t num_fixed_joints = 0;
-    size_t num_obstacles = 0;
     size_t constraint_number = 0;
 
     VecX q_des;
     Number t_plan = 0;
-
-    std::vector<Number> joint_sliced_center;
-    std::vector<Number> dk_joint_sliced_center;
 };
 
-}; // namespace Kinova
 }; // namespace Armour
 }; // namespace RAPTOR
 

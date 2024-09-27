@@ -9,7 +9,7 @@ namespace Armour {
 using namespace boost::multiprecision;
 
 // monomials with a coefficient smaller than this number will be reduced
-#define SIMPLIFY_THRESHOLD 5e-5
+#define SIMPLIFY_THRESHOLD 1e-4
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -96,6 +96,8 @@ public:
     Interval slice(const Eigen::VectorXf& factor) const;
 
     void slice(float gradient[], const float factor[]) const; // 1st-order gradient of slice of a 1-dim PZ
+
+    void slice(Eigen::VectorXf& gradient, const float factor[]) const; // 1st-order gradient of slice of a 1-dim PZ
 
     Interval toInterval();
 
