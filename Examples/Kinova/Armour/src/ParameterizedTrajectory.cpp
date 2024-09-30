@@ -406,16 +406,16 @@ void BezierCurveInterval::returnJointPositionExtremumGradient(float* extremumGra
         float maxPositionGradient;
 
         switch (minId) {
-            case 1: // t = 0
+            case 1: // s = 0
                 minPositionGradient = 0.0;
                 break;
-            case 2: // t = extrema2
+            case 2: // s = extrema2
                 minPositionGradient = q_des_extrema2_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 3: // t = extrema3
+            case 3: // s = extrema3
                 minPositionGradient = q_des_extrema3_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 4: // t = 1
+            case 4: // s = 1
                 minPositionGradient = 1.0;
                 break;
             default:
@@ -423,16 +423,16 @@ void BezierCurveInterval::returnJointPositionExtremumGradient(float* extremumGra
         }
 
         switch (maxId) {
-            case 1: // t = 0
+            case 1: // s = 0
                 maxPositionGradient = 0.0;
                 break;
-            case 2: // t = extrema2
+            case 2: // s = extrema2
                 maxPositionGradient = q_des_extrema2_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 3: // t = extrema3
+            case 3: // s = extrema3
                 maxPositionGradient = q_des_extrema3_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 4: // t = 1
+            case 4: // s = 1
                 maxPositionGradient = 1.0;
                 break;
             default:
@@ -549,34 +549,34 @@ void BezierCurveInterval::returnJointVelocityExtremumGradient(float* extremumGra
         float maxVelocityGradient;
 
         switch (minId) {
-            case 1: // t = 0
+            case 1: // s = 0
                 minVelocityGradient = 0.0;
                 break;
-            case 2: // t = extrema2
+            case 2: // s = extrema2
                 minVelocityGradient = qd_des_extrema2_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 3: // t = extrema3
+            case 3: // s = extrema3
                 minVelocityGradient = qd_des_extrema3_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 4: // t = 1
-                minVelocityGradient = 1.0;
+            case 4: // s = 1
+                minVelocityGradient = 0.0;
                 break;
             default:
                 break;
         }
 
         switch (maxId) {
-            case 1: // t = 0
+            case 1: // s = 0
                 maxVelocityGradient = 0.0;
                 break;
-            case 2: // t = extrema2
+            case 2: // s = extrema2
                 maxVelocityGradient = qd_des_extrema2_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 3: // t = extrema3
+            case 3: // s = extrema3
                 maxVelocityGradient = qd_des_extrema3_k_derivative(q0[i], Tqd0[i], TTqdd0[i], k_actual);
                 break;
-            case 4: // t = 1
-                maxVelocityGradient = 1.0;
+            case 4: // s = 1
+                maxVelocityGradient = 0.0;
                 break;
             default:
                 break;
@@ -584,8 +584,8 @@ void BezierCurveInterval::returnJointVelocityExtremumGradient(float* extremumGra
 
         for (int j = 0; j < NUM_FACTORS; j++) {
             if (i == j) {
-                extremumGradient[(i              ) * NUM_FACTORS + j] = minVelocityGradient * k_range(i);
-                extremumGradient[(i + NUM_FACTORS) * NUM_FACTORS + j] = maxVelocityGradient * k_range(i);
+                extremumGradient[(i              ) * NUM_FACTORS + j] = minVelocityGradient * k_range(i) / duration;
+                extremumGradient[(i + NUM_FACTORS) * NUM_FACTORS + j] = maxVelocityGradient * k_range(i) / duration;
             }
             else {
                 extremumGradient[(i              ) * NUM_FACTORS + j] = 0.0;

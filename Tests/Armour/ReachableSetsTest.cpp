@@ -11,8 +11,8 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
@@ -168,8 +168,10 @@ int main() {
     }
 
     // validate the torque PZs
-    std::shared_ptr<InverseDynamics> idPtr_ = 
-        std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
+    Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
+    jtype(jtype.size() - 1) = 0;
+    std::shared_ptr<CustomizedInverseDynamics> idPtr_ = 
+        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
     idPtr_->compute(k, false);
     
     for (int i = 0; i < idPtr_->N; i++) {
@@ -189,13 +191,13 @@ int main() {
     }
 
     // validate the contact force PZs
-    Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
-    jtype(jtype.size() - 1) = 0;
+    // Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
+    // jtype(jtype.size() - 1) = 0;
     std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
-        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
+        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
     cidPtr_->compute(k, false);
     
-    for (int i = 0; i < idPtr_->N; i++) {
+    for (int i = 0; i < cidPtr_->N; i++) {
         const Vector6d actualLambda = cidPtr_->lambda(i);
         for (int j = 0; j < 3; j++) {
             const Interval forceRange = kdPtr->contact_force_nom(j, i).slice(factor);
@@ -218,5 +220,22 @@ int main() {
             }
         }
     }
+    // // validate that torque_int overapproximate torque_nom
+    // // you need to comment out line 44 - 47 in ReachableSets.cpp
+    // for (int i = 0; i < idPtr_->N; i++) {
+    //     for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
+    //         const Interval torqueRange = kdPtr->torque_int(j, i).slice(factor);
+    //         const Interval torqueNomRange = kdPtr->torque_nom(j, i).slice(factor);
+    //         if (!((torqueRange.lower() < torqueNomRange.lower() - 1e-3) &&
+    //               (torqueRange.upper() > torqueNomRange.upper() + 1e-3)))
+    //         {
+    //             std::cerr << "Validation failed for torque_int at time step " << i
+    //                       << " for motor " << j << ": "
+    //                       << torqueNomRange << " not in"
+    //                       << torqueRange << std::endl;
+    //         }
+    //     }
+    // }
+
     return 0;
 }

@@ -17,3 +17,10 @@ target_include_directories(Conslib PUBLIC
     ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
     ${CMAKE_SOURCE_DIR}/Utils/include
 )
+
+target_link_libraries(Conslib PUBLIC
+    trajlib
+    IDlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+)

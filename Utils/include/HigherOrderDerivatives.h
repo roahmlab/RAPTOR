@@ -13,13 +13,13 @@ inline float safeasin(const float x,
         if (throw_exception) {
             throw std::runtime_error("Input value is greater than 1.0");
         }
-        return M_PI / 2.0;
+        return M_PI_2;
     } 
     else if (x < -1.0) {
         if (throw_exception) {
             throw std::runtime_error("Input value is less than -1.0");
         }
-        return -M_PI / 2.0;
+        return -M_PI_2;
     } 
     return asinf(x);
 }

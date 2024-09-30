@@ -55,7 +55,7 @@ int main() {
             z = solution;
         }
 
-        Transform stanceFootTransform(3, -M_PI / 2);
+        Transform stanceFootTransform(3, -M_PI_2);
         if (step > 0) {
             stanceFootTransform = previousStandingFootTransform;
         }

@@ -229,7 +229,53 @@ void PZsparse::slice(float gradient[], const float factor[]) const {
 
     std::memset(gradient, 0, NUM_FACTORS * sizeof(float));
 
-    Eigen::Array<float, NUM_FACTORS, 1> resTemp;
+    Eigen::VectorXf resTemp(NUM_FACTORS);
+
+    uint32_t degreeArray[NUM_VARIABLES];
+
+    for (auto it : polynomial) {
+        if (it.degree <= pow(MOVE_INC, NUM_FACTORS)) { // only dependent on k
+            for (size_t k = 0; k < NUM_FACTORS; k++) {
+                resTemp[k] = it.coeff;
+            }
+
+            convertHashToDegree(degreeArray, it.degree);
+
+            for (size_t j = 0; j < NUM_FACTORS; j++) {
+                for (size_t k = 0; k < NUM_FACTORS; k++) {
+                    if (j == k) { // differentiate this!
+                        if (degreeArray[j] == 0) { // monomial unrelated to k
+                            resTemp[k] = 0;
+                        }
+                        else {
+                            resTemp[k] *= degreeArray[j] * pow(factor[j], degreeArray[j] - 1);
+                        }
+                    }
+                    else {
+                        resTemp[k] *= pow(factor[j], degreeArray[j]);
+                    }
+                }
+            }
+
+            for (size_t k = 0; k < NUM_FACTORS; k++) {
+                gradient[k] += resTemp[k];
+            }
+        }
+    }
+}
+
+void PZsparse::slice(Eigen::VectorXf& gradient, const float factor[]) const {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+    }
+
+    if (gradient.size() != NUM_FACTORS) {
+        throw std::invalid_argument("PZsparse error: slice(): gradient size does not match NUM_FACTORS!");
+    }
+
+    gradient.setZero();
+
+    Eigen::VectorXf resTemp(NUM_FACTORS);
 
     uint32_t degreeArray[NUM_VARIABLES];
 

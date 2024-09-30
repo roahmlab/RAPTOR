@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
                               model,
                               gp,
                               'L',
-                              Transform(3, -M_PI / 2),
+                              Transform(3, -M_PI_2),
                               false,
                               q0);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<float>();
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
                                     model,
                                     gp,
                                     'L',
-                                    Transform(3, -M_PI / 2),
+                                    Transform(3, -M_PI_2),
                                     false,
                                     q0);
             Index n, m, nnz_jac_g, nnz_h_lag;

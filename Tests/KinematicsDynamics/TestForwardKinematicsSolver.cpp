@@ -16,7 +16,7 @@ int main() {
 
     // set joint angles
     std::srand(std::time(nullptr));
-    Eigen::VectorXf q = 2 * M_PI * Eigen::VectorXf::Random(model.nq).array() - M_PI;
+    Eigen::VectorXf q = M_2_PI * Eigen::VectorXf::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
     auto start_clock = std::chrono::high_resolution_clock::now();

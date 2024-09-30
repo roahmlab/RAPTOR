@@ -17,6 +17,11 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
 )
 
 target_link_libraries(Kinovalib PUBLIC
@@ -38,17 +43,29 @@ add_library(Armourlib SHARED
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
     Armour/src/ReachableSets.cpp
+    Armour/src/ArmourOptimizer.cpp
 )
 
 target_include_directories(Armourlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
 )
 
 target_link_libraries(Armourlib PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
     ${Boost_LIBRARIES} 
-    yaml-cpp
     pinocchio::pinocchio
+    yaml-cpp
 )
 
 ###
@@ -180,11 +197,12 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
+###
 add_executable(KinovaEndeffectorExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
 
 target_include_directories(KinovaEndeffectorExciting_example PUBLIC
-    ystemIdentification/DataFilter/include
+    SystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 
@@ -200,6 +218,28 @@ target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
     pinocchio::pinocchio)
 
 target_compile_options(KinovaEndeffectorExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+###
+add_executable(Armour_example 
+    Armour/ArmourExample.cpp)
+
+target_include_directories(Armour_example PUBLIC
+    Armour/include)
+
+target_link_libraries(Armour_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Armourlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(Armour_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
