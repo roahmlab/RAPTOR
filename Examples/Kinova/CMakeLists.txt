@@ -8,6 +8,10 @@ add_library(Kinovalib SHARED
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
     SystemIdentification/QRDecompositionSolver.cpp
+    SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
+    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
+    SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp
 )
 
 target_include_directories(Kinovalib PUBLIC
@@ -18,6 +22,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
 
 )
 
@@ -197,7 +202,9 @@ target_include_directories(QRDecompositionTest  PUBLIC
     SystemIdentification
     SystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
-    SystemIdentification/IterativeSystemIdentification/include)
+    SystemIdentification/IterativeSystemIdentification/include
+    SystemIdentification/IterativeSystemIdentification
+    )
 
 target_link_libraries(QRDecompositionTest  PUBLIC
     trajlib 
@@ -213,6 +220,31 @@ target_link_libraries(QRDecompositionTest  PUBLIC
 target_compile_options(QRDecompositionTest PUBLIC
     ${PINOCCHIO_FLAGS})
 
+
+add_executable(Sys_id_combine_test
+    SystemIdentification/IterativeSystemIdentification/src/Test_SysID.cpp)
+
+target_include_directories(Sys_id_combine_test  PUBLIC
+    SystemIdentification
+    SystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include
+    SystemIdentification/IterativeSystemIdentification
+    )
+
+target_link_libraries(Sys_id_combine_test  PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecompositionTest PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 
 ### Python bindings 

@@ -97,6 +97,56 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     Ycurrent = MatX::Zero(modelPtr_->nv, numInertialParams);
 }
 
+RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
+                                                    const std::string& position,
+                                                    const std::string& velocity,
+                                                    const std::string& acceleration, 
+                                                    Eigen::VectorXi jtype_input) :
+    jtype(jtype_input) {
+  
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
+    
+    // load data
+    // const VecX& z = Utils::initializeEigenMatrixFromFile(solution).col(0);
+    trajPtr_q = Utils::initializeEigenVectorArrayFromFile(position, modelPtr_->nv);
+    trajPtr_q_d = Utils::initializeEigenVectorArrayFromFile(velocity, modelPtr_->nv);
+    trajPtr_q_dd = Utils::initializeEigenVectorArrayFromFile(acceleration, modelPtr_->nv);
+
+    N =  trajPtr_q.size();
+    int varLength = trajPtr_q(0).size(); 
+
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size() = " << jtype.size() << std::endl;
+            throw std::invalid_argument("modelPtr_->nv != jtype.size()");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
+    }
+
+    numInertialParams = 10 * modelPtr_->nv;
+    numParams = 10 * modelPtr_->nv + // inertial parameters
+                3 * modelPtr_->nv;   // motor dynamics parameters
+    // numParams = 10 * modelPtr_->nv; // inertial parameters
+    phi = VecX::Zero(numParams); 
+
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
+        phi.segment<10>(10 * i) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+        phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
+                                                     modelPtr_->damping(i),
+                                                     modelPtr_->rotorInertia(i);
+    }
+
+    a_grav << modelPtr_->gravity.angular(),
+              modelPtr_->gravity.linear();
+
+    Y = MatX::Zero(N * modelPtr_->nv, numParams);
+}
+
 void RegressorInverseDynamics::compute(const VecX& z,
                                        bool compute_derivatives,
                                        bool compute_hessian) {
@@ -355,5 +405,16 @@ void RegressorInverseDynamics::compute(const VecX& z,
         }
     }
 }
+
+
+void RegressorInverseDynamics::computeWithDataImport(const std::string& solution) {
+
+    // pinocchio::Data data(model);
+    for (int i =0; i <N; ++i){
+        pinocchio::computeJointTorqueRegressor( *modelPtr_, *dataPtr_, trajPtr_q(i), trajPtr_q_d(i), trajPtr_q_dd(i));
+        Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, modelPtr_->nv*10) = dataPtr_->jointTorqueRegressor;
+    }
+}
+
 
 }; // namespace RAPTOR

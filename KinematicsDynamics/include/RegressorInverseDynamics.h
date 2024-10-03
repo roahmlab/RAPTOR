@@ -6,15 +6,17 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
+#include <pinocchio/algorithm/regressor.hpp>
+
 
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
 #include "Trajectories.h"
 
 #include <cmath>
+#include <iostream> 
 #include <memory>
 #include <cstdio>
-#include <iostream>
 #include <cstdlib>
 
 namespace RAPTOR {
@@ -43,6 +45,12 @@ public:
                              const std::shared_ptr<Trajectories>& trajPtr_input,
                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
+    RegressorInverseDynamics(const Model& model_input,
+                            const std::string& position,
+                            const std::string& velocity,
+                            const std::string& acceleration, 
+                            Eigen::VectorXi jtype_input= Eigen::VectorXi(0));
+
     // Destructor
     ~RegressorInverseDynamics() = default;
 
@@ -50,6 +58,9 @@ public:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false) override; 
+
+    virtual void computeWithDataImport(const std::string& solution);
+                                           
                          
     // class members:
     Eigen::VectorXi jtype;
@@ -77,6 +88,14 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
 
     MatX Ycurrent;
+
+    // load data
+    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_d;
+    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_dd;
+    // MatX trajPtr_q;
+    // MatX trajPtr_q_d;
+    // MatX trajPtr_q_dd;
 };
 
 }; // namespace RAPTOR
