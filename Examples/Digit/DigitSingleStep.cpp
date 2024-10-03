@@ -25,18 +25,18 @@ int main(int argc, char* argv[]) {
     model.friction.setZero();
 
     // manually import motor inertia 
-    model.rotorInertia(model.getJointId("left_hip_roll") - 1) = 0.173823936;
-    model.rotorInertia(model.getJointId("left_hip_yaw") - 1) = 0.067899975;
-    model.rotorInertia(model.getJointId("left_hip_pitch") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("left_knee") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("left_toe_A") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("left_toe_B") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("right_hip_roll") - 1) = 0.173823936;
-    model.rotorInertia(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
-    model.rotorInertia(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("right_knee") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("right_toe_A") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("left_hip_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("left_hip_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("left_hip_pitch") - 1) = 0.1204731904;
+    model.armature(model.getJointId("left_knee") - 1) = 0.1204731904;
+    model.armature(model.getJointId("left_toe_A") - 1) = 0.036089475;
+    model.armature(model.getJointId("left_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("right_hip_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
+    model.armature(model.getJointId("right_knee") - 1) = 0.1204731904;
+    model.armature(model.getJointId("right_toe_A") - 1) = 0.036089475;
+    model.armature(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
     // load settings
     YAML::Node config;
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS).array() - 0.1;
+    Eigen::VectorXd z = 0.1 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
     // Eigen::VectorXd z = Eigen::VectorXd::Zero((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
 
     SmartPtr<DigitSingleStepOptimizer> mynlp = new DigitSingleStepOptimizer();
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
         //                             model,
         //                             gp,
         //                             'L',
-        //                             Transform(3, -M_PI / 2),
+        //                             Transform(3, -M_PI_2),
         //                             false);
         //     Index n, m, nnz_jac_g, nnz_h_lag;
         //     TNLP::IndexStyleEnum index_style;

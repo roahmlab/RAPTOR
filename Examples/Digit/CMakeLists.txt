@@ -62,3 +62,26 @@ target_link_libraries(DigitMultipleStep_example PRIVATE
 target_compile_options(DigitMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
    
+
+### Python bindings 
+nanobind_add_module(DigitFillUnactuated_nanobind 
+    NB_SHARED LTO
+    DigitFillUnactuatedJointsPybind.cpp)
+target_include_directories(DigitFillUnactuated_nanobind PUBLIC
+    include)
+target_link_libraries(DigitFillUnactuated_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Digitlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(DigitFillUnactuated_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET DigitFillUnactuated_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+
+
+    

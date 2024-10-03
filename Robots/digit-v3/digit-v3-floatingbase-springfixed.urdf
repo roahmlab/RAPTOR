@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<robot name="digit-v3-modified">
+<robot name="digit-v3-floatingbase-springfixed">
   <!-- floating base -->
   <link name = "ground">
     <inertial>
@@ -195,7 +195,7 @@
   </link>
 
   <!-- left knee close loop -->
-  <!-- <link name="left_achilles_rod">
+  <link name="left_achilles_rod">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0."/>
@@ -235,7 +235,7 @@
         <sphere radius = "0.0" />
       </geometry>
     </collision>
-  </link> -->
+  </link>
 
   <link name="left_knee">
     <inertial>
@@ -327,7 +327,7 @@
   </link>
 
   <!-- left toe close loop-->
-  <!-- <link name="left_toe_A">
+  <link name="left_toe_A">
     <inertial>
       <origin rpy="0 0 0" xyz="0.005161 1e-06 -0.002248"/>
       <mass value="0.139557"/>
@@ -452,7 +452,7 @@
         <sphere radius = "0.0" />
       </geometry>
     </collision>
-  </link> -->
+  </link>
 
   <link name="left_toe_pitch">
     <inertial>
@@ -658,7 +658,7 @@
   </link>
 
   <!-- right knee close loop -->
-  <!-- <link name="right_achilles_rod">
+  <link name="right_achilles_rod">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0."/>
@@ -698,7 +698,7 @@
         <sphere radius = "0.0" />
       </geometry>
     </collision>
-  </link> -->
+  </link>
 
   <link name="right_knee">
     <inertial>
@@ -790,7 +790,7 @@
   </link>
 
   <!-- right toe close loop -->
-  <!-- <link name="right_toe_A">
+  <link name="right_toe_A">
     <inertial>
       <origin rpy="0 0 0" xyz="0.005161 -1e-06 -0.002248"/>
       <mass value="0.139557"/>
@@ -915,7 +915,7 @@
         <sphere radius = "0.0" />
       </geometry>
     </collision>
-  </link> -->
+  </link>
 
   <link name="right_toe_pitch">
     <inertial>
@@ -1123,7 +1123,7 @@
   </joint>
 
   <!-- left knee close loop -->
-  <!-- <joint name="left_achilles_rod" type="revolute">
+  <joint name="left_achilles_rod" type="revolute">
     <origin rpy="0.0087528908613780896652567520277444 0.07085157762907765000015558598534 -1.4355410054288866295024718056084" xyz="0 0 0.046"/>
     <axis xyz="0 0 1"/>
     <parent link="left_hip_pitch"/>
@@ -1138,7 +1138,7 @@
     <child link="left_ach2"/>
     <dynamics damping="0.01" friction="0.0"/>
     <limit effort="0.9" lower="-1.7453" upper="1.7453" velocity="11.5"/>
-  </joint> -->
+  </joint>
 
   <joint name="left_knee" type="revolute">
     <origin rpy="0         0   -1.5707963267948966192313216916398" xyz="0.12 0 0.0045"/>
@@ -1174,7 +1174,7 @@
   </joint>
 
   <!-- left toe close loop -->
-  <!-- <joint name="left_toe_A" type="revolute">
+  <joint name="left_toe_A" type="revolute">
     <origin rpy="3.1415926535897932384626433832795 0 -1.5526449025733231046331184188602" xyz="0.059 -0.034 -0.0276"/>
     <axis xyz="0 0 1"/>
     <parent link="left_tarsus"/>
@@ -1221,7 +1221,7 @@
     <child link="left_B2"/>
     <dynamics damping="0.01" friction="0.0"/>
     <limit effort="0.9" lower="-1.7453" upper="1.7453" velocity="11.5"/>
-  </joint> -->
+  </joint>
 
   <joint name="left_toe_pitch" type="revolute">
     <origin rpy="0         0    1.2522744638393012994725950193242" xyz="0.408 -0.04 0"/>
@@ -1241,36 +1241,32 @@
   </joint>
 
   <!-- left arm -->
-  <joint name="left_shoulder_roll" type="fixed">
-    <origin rpy="-1.5707963267948966192313216916398 -1.5467303 1.5707963267948966192313216916398" xyz="-0.001 0.12 0.4"/>
+  <joint name="left_shoulder_roll" type="continuous">
+    <origin rpy="-1.57079632679489661923 -1.3962633 1.57079632679489661923" xyz="-0.001 0.12 0.4"/>
     <axis xyz="0 0 1"/>
     <parent link="Rz"/>
     <child link="left_shoulder_roll"/>
-    <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.309" upper="1.309" velocity="12.5"/>
   </joint>
-  <joint name="left_shoulder_pitch" type="fixed">
-    <origin rpy="1.5707963267948966192313216916398 1.875658163397448285891755404009 -0.2792527" xyz="-0.00317 -0.011055 0.0555"/>
+  <joint name="left_shoulder_pitch" type="continuous">
+    <origin rpy="1.57079632679489661923 0.785398163397 -0.2792527" xyz="-0.00317 -0.011055 0.0555"/>
     <axis xyz="0 0 -1"/>
     <parent link="left_shoulder_roll"/>
     <child link="left_shoulder_pitch"/>
-    <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-2.5307" upper="2.5307" velocity="12.5"/>
   </joint>
-  <joint name="left_shoulder_yaw" type="fixed">
-    <origin rpy="1.5707963267948966192313216916398 -0.14981736 0" xyz="0 -0.165 -0.1"/>
+  <joint name="left_shoulder_yaw" type="continuous">
+    <origin rpy="1.57079632679489661923 0 0" xyz="0 -0.165 -0.1"/>
     <axis xyz="0 0 1"/>
     <parent link="left_shoulder_pitch"/>
     <child link="left_shoulder_yaw"/>
-    <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.7453" upper="1.7453" velocity="10"/>
   </joint>
-  <joint name="left_elbow" type="fixed">
-    <origin rpy="1.5707963267948966192313216916398 -0.3926991 0" xyz="0 -0.0385 0.185"/>
+  <joint name="left_elbow" type="continuous">
+    <origin rpy="1.57079632679489661923 -0.3926991 0" xyz="0 -0.0385 0.185"/>
     <axis xyz="0 0 1"/>
     <parent link="left_shoulder_yaw"/>
     <child link="left_elbow"/>
-    <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.3526" upper="1.3526" velocity="12.5"/>
   </joint>
 
@@ -1301,7 +1297,7 @@
   </joint>
 
   <!-- right knee close loop -->
-  <!-- <joint name="right_achilles_rod" type="revolute">
+  <joint name="right_achilles_rod" type="revolute">
     <origin rpy="-0.0087523017375784415566863927438135 0.070851391807226243857442682383407 1.4355417226017064269427692124736" xyz="0 0 0.046"/>
     <axis xyz="0 0 1"/>
     <parent link="right_hip_pitch"/>
@@ -1316,7 +1312,7 @@
     <child link="right_ach2"/>
     <dynamics damping="0.01" friction="0.0"/>
     <limit effort="0.9" lower="-1.7453" upper="1.7453" velocity="11.5"/>
-  </joint> -->
+  </joint>
 
   <joint name="right_knee" type="revolute">
     <origin rpy="0         0    1.5707963267948966192313216916398" xyz="0.12 0 0.0045"/>
@@ -1352,7 +1348,7 @@
   </joint> 
 
   <!-- right toe close loop -->
-  <!-- <joint name="right_toe_A" type="revolute">
+  <joint name="right_toe_A" type="revolute">
     <origin rpy="3.1415926535897932384626433832795 0 1.5526446425200970402613620535703" xyz="0.059 0.034 -0.0276"/>
     <axis xyz="0 0 1"/>
     <parent link="right_tarsus"/>
@@ -1399,7 +1395,7 @@
     <child link="right_B2"/>
     <dynamics damping="0.01" friction="0.0"/>
     <limit effort="0.9" lower="-1.7453" upper="1.7453" velocity="11.5"/>
-  </joint> -->
+  </joint>
 
   <joint name="right_toe_pitch" type="revolute">
     <origin rpy="0         0   -1.2522744638393012994725950193242" xyz="0.408 0.04 0"/>
@@ -1419,31 +1415,31 @@
   </joint>
 
   <!-- right arm -->
-  <joint name="right_shoulder_roll" type="fixed">
-    <origin rpy="1.5707963267948966192313216916398 -1.5467303 -1.5707963267948966192313216916398" xyz="-0.001 -0.12 0.4"/>
+  <joint name="right_shoulder_roll" type="continuous">
+    <origin rpy="1.5707963267948966192313216916398 -1.3962633 -1.5707963267948966192313216916398" xyz="-0.001 -0.12 0.4"/>
     <axis xyz="0 0 1"/>
     <parent link="Rz"/>
     <child link="right_shoulder_roll"/>
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.309" upper="1.309" velocity="12.5"/>
   </joint>
-  <joint name="right_shoulder_pitch" type="fixed">
-    <origin rpy="-1.5707963267948966192313216916398 1.875658163397448285891755404009 0.2792527" xyz="-0.00317 0.011055 0.0555"/>
+  <joint name="right_shoulder_pitch" type="continuous">
+    <origin rpy="-1.5707963267948966192313216916398 0.78539816339744830961566084581988 0.2792527" xyz="-0.00317 0.011055 0.0555"/>
     <axis xyz="0 0 -1"/>
     <parent link="right_shoulder_roll"/>
     <child link="right_shoulder_pitch"/>
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-2.5307" upper="2.5307" velocity="12.5"/>
   </joint>
-  <joint name="right_shoulder_yaw" type="fixed">
-    <origin rpy="-1.5707963267948966192313216916398 -0.14981736 0" xyz="0 0.165 -0.1"/>
+  <joint name="right_shoulder_yaw" type="continuous">
+    <origin rpy="-1.5707963267948966192313216916398         0         0" xyz="0 0.165 -0.1"/>
     <axis xyz="0 0 1"/>
     <parent link="right_shoulder_pitch"/>
     <child link="right_shoulder_yaw"/>
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.7453" upper="1.7453" velocity="10"/>
   </joint>
-  <joint name="right_elbow" type="fixed">
+  <joint name="right_elbow" type="continuous">
     <origin rpy="-1.5707963267948966192313216916398 -0.3926991 0" xyz="0 0.0385 0.185"/>
     <axis xyz="0 0 1"/>
     <parent link="right_shoulder_yaw"/>

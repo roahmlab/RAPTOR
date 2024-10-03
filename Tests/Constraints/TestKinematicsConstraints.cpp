@@ -19,7 +19,7 @@ int main() {
 
     // compute a valid transform using forward kinematics
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = 2 * M_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
     int start = 0;
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);
