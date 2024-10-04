@@ -1241,28 +1241,28 @@
   </joint>
 
   <!-- left arm -->
-  <joint name="left_shoulder_roll" type="continuous">
+  <joint name="left_shoulder_roll" type="revolute">
     <origin rpy="-1.57079632679489661923 -1.3962633 1.57079632679489661923" xyz="-0.001 0.12 0.4"/>
     <axis xyz="0 0 1"/>
     <parent link="Rz"/>
     <child link="left_shoulder_roll"/>
     <limit effort="1.4" lower="-1.309" upper="1.309" velocity="12.5"/>
   </joint>
-  <joint name="left_shoulder_pitch" type="continuous">
+  <joint name="left_shoulder_pitch" type="revolute">
     <origin rpy="1.57079632679489661923 0.785398163397 -0.2792527" xyz="-0.00317 -0.011055 0.0555"/>
     <axis xyz="0 0 -1"/>
     <parent link="left_shoulder_roll"/>
     <child link="left_shoulder_pitch"/>
     <limit effort="1.4" lower="-2.5307" upper="2.5307" velocity="12.5"/>
   </joint>
-  <joint name="left_shoulder_yaw" type="continuous">
+  <joint name="left_shoulder_yaw" type="revolute">
     <origin rpy="1.57079632679489661923 0 0" xyz="0 -0.165 -0.1"/>
     <axis xyz="0 0 1"/>
     <parent link="left_shoulder_pitch"/>
     <child link="left_shoulder_yaw"/>
     <limit effort="1.4" lower="-1.7453" upper="1.7453" velocity="10"/>
   </joint>
-  <joint name="left_elbow" type="continuous">
+  <joint name="left_elbow" type="revolute">
     <origin rpy="1.57079632679489661923 -0.3926991 0" xyz="0 -0.0385 0.185"/>
     <axis xyz="0 0 1"/>
     <parent link="left_shoulder_yaw"/>
@@ -1415,7 +1415,7 @@
   </joint>
 
   <!-- right arm -->
-  <joint name="right_shoulder_roll" type="continuous">
+  <joint name="right_shoulder_roll" type="revolute">
     <origin rpy="1.5707963267948966192313216916398 -1.3962633 -1.5707963267948966192313216916398" xyz="-0.001 -0.12 0.4"/>
     <axis xyz="0 0 1"/>
     <parent link="Rz"/>
@@ -1423,7 +1423,7 @@
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.309" upper="1.309" velocity="12.5"/>
   </joint>
-  <joint name="right_shoulder_pitch" type="continuous">
+  <joint name="right_shoulder_pitch" type="revolute">
     <origin rpy="-1.5707963267948966192313216916398 0.78539816339744830961566084581988 0.2792527" xyz="-0.00317 0.011055 0.0555"/>
     <axis xyz="0 0 -1"/>
     <parent link="right_shoulder_roll"/>
@@ -1431,7 +1431,7 @@
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-2.5307" upper="2.5307" velocity="12.5"/>
   </joint>
-  <joint name="right_shoulder_yaw" type="continuous">
+  <joint name="right_shoulder_yaw" type="revolute">
     <origin rpy="-1.5707963267948966192313216916398         0         0" xyz="0 0.165 -0.1"/>
     <axis xyz="0 0 1"/>
     <parent link="right_shoulder_pitch"/>
@@ -1439,7 +1439,7 @@
     <dynamics damping="2.0" friction="2.0"/>
     <limit effort="1.4" lower="-1.7453" upper="1.7453" velocity="10"/>
   </joint>
-  <joint name="right_elbow" type="continuous">
+  <joint name="right_elbow" type="revolute">
     <origin rpy="-1.5707963267948966192313216916398 -0.3926991 0" xyz="0 0.0385 0.185"/>
     <axis xyz="0 0 1"/>
     <parent link="right_shoulder_yaw"/>
