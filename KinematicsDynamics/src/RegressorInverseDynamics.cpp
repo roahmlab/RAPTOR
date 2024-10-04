@@ -37,25 +37,8 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         // plux in Roy Featherstone's code (transformation matrix from parent to child)
         Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
                                modelPtr_->jointPlacements[pinocchio_joint_id].translation());
-        
-        // function mcI in Roy Featherstone's code (parallel axis theorem)
-        const Mat3 CC = Utils::skew(modelPtr_->inertias[pinocchio_joint_id].lever());
-        const double mm = modelPtr_->inertias[pinocchio_joint_id].mass();
-        const Mat3 II = modelPtr_->inertias[pinocchio_joint_id].inertia().matrix();
 
-        // apply parallel axis theorem
-        Mat3 mC = mm * CC;
-        I(i) << mm * CC * CC.transpose() + II, mC,
-                mC.transpose(),                mm * MatX::Identity(3, 3);
-
-        phi.segment<10>(10 * i) << I(i)(0, 0),      // inertia (in parent joint frame)
-                                   I(i)(0, 1),
-                                   I(i)(0, 2),
-                                   I(i)(1, 1),
-                                   I(i)(1, 2),
-                                   I(i)(2, 2),
-                                   Utils::skew(mC), // center of mass (in parent joint frame)
-                                   mm;              // mass
+        phi.segment<10>(10 * i) << modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
 
         phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
                                                      modelPtr_->damping(i),
@@ -95,56 +78,6 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     }
 
     Ycurrent = MatX::Zero(modelPtr_->nv, numInertialParams);
-}
-
-RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
-                                                    const std::string& position,
-                                                    const std::string& velocity,
-                                                    const std::string& acceleration, 
-                                                    Eigen::VectorXi jtype_input) :
-    jtype(jtype_input) {
-  
-    modelPtr_ = std::make_shared<Model>(model_input);
-    dataPtr_ = std::make_shared<Data>(model_input);
-    
-    // load data
-    // const VecX& z = Utils::initializeEigenMatrixFromFile(solution).col(0);
-    trajPtr_q = Utils::initializeEigenVectorArrayFromFile(position, modelPtr_->nv);
-    trajPtr_q_d = Utils::initializeEigenVectorArrayFromFile(velocity, modelPtr_->nv);
-    trajPtr_q_dd = Utils::initializeEigenVectorArrayFromFile(acceleration, modelPtr_->nv);
-
-    N =  trajPtr_q.size();
-    int varLength = trajPtr_q(0).size(); 
-
-    if (jtype.size() > 0) {
-        if (modelPtr_->nv != jtype.size()) {
-            std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
-            std::cerr << "jtype.size() = " << jtype.size() << std::endl;
-            throw std::invalid_argument("modelPtr_->nv != jtype.size()");
-        }
-    }
-    else {
-        jtype = convertPinocchioJointType(*modelPtr_);
-    }
-
-    numInertialParams = 10 * modelPtr_->nv;
-    numParams = 10 * modelPtr_->nv + // inertial parameters
-                3 * modelPtr_->nv;   // motor dynamics parameters
-    // numParams = 10 * modelPtr_->nv; // inertial parameters
-    phi = VecX::Zero(numParams); 
-
-    for (int i = 0; i < modelPtr_->nv; i++) {
-        const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
-        phi.segment<10>(10 * i) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
-        phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
-                                                     modelPtr_->damping(i),
-                                                     modelPtr_->rotorInertia(i);
-    }
-
-    a_grav << modelPtr_->gravity.angular(),
-              modelPtr_->gravity.linear();
-
-    Y = MatX::Zero(N * modelPtr_->nv, numParams);
 }
 
 void RegressorInverseDynamics::compute(const VecX& z,
@@ -315,12 +248,12 @@ void RegressorInverseDynamics::compute(const VecX& z,
             const double& a6 = a(j)(5);
 
             Yfull.block(6 * j, 10 * j, 6, 10) << 
-                a1,    a2 - v1*v3,    a3 + v1*v2, -v2*v3, v2*v2 - v3*v3,  v2*v3,                  0, a6 + v1*v5 - v2*v4, v1*v6 - a5 - v3*v4,                  0,
-             v1*v3,    a1 + v2*v3, v3*v3 - v1*v1,     a2,    a3 - v1*v2, -v1*v3, v2*v4 - v1*v5 - a6,                  0, a4 + v2*v6 - v3*v5,                  0,
-            -v1*v2, v1*v1 - v2*v2,    a1 - v2*v3,  v1*v2,    a2 + v1*v3,     a3, a5 - v1*v6 + v3*v4, v3*v5 - v2*v6 - a4,                  0,                  0,
-                 0,             0,             0,      0,             0,      0,     -v2*v2 - v3*v3,         v1*v2 - a3,         a2 + v1*v3, a4 + v2*v6 - v3*v5,
-                 0,             0,             0,      0,             0,      0,         a3 + v1*v2,     -v1*v1 - v3*v3,         v2*v3 - a1, a5 - v1*v6 + v3*v4,
-                 0,             0,             0,      0,             0,      0,         v1*v3 - a2,         a1 + v2*v3,     -v1*v1 - v2*v2, a6 + v1*v5 - v2*v4;
+                                 0,                  0, a6 + v1*v5 - v2*v4, v1*v6 - a5 - v3*v4,     a1,    a2 - v1*v3, -v2*v3,    a3 + v1*v2, v2*v2 - v3*v3,  v2*v3,
+                                 0, v2*v4 - v1*v5 - a6,                  0, a4 + v2*v6 - v3*v5,  v1*v3,    a1 + v2*v3,     a2, v3*v3 - v1*v1,    a3 - v1*v2, -v1*v3,
+                                 0, a5 - v1*v6 + v3*v4, v3*v5 - v2*v6 - a4,                  0, -v1*v2, v1*v1 - v2*v2,  v1*v2,    a1 - v2*v3,    a2 + v1*v3,     a3,
+                a4 + v2*v6 - v3*v5,     -v2*v2 - v3*v3,         v1*v2 - a3,         a2 + v1*v3,      0,             0,      0,             0,             0,      0,
+                a5 - v1*v6 + v3*v4,         a3 + v1*v2,     -v1*v1 - v3*v3,         v2*v3 - a1,      0,             0,      0,             0,             0,      0, 
+                a6 + v1*v5 - v2*v4,         v1*v3 - a2,         a1 + v2*v3,     -v1*v1 - v2*v2,      0,             0,      0,             0,             0,      0;
                  
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
@@ -339,12 +272,12 @@ void RegressorInverseDynamics::compute(const VecX& z,
                     const double& pa6 = pa_pz(j)(5, k);
 
                     pYfull_pz(k).block(6 * j, 10 * j, 6, 10) <<
-                                 pa1, pa2 - v1*pv3 - pv1*v3, pa3 + v1*pv2 + pv1*v2, -pv2*v3 - v2*pv3,   2*v2*pv2 - 2*v3*pv3,  pv2*v3 + v2*pv3,                                       0, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4, v1*pv6 + pv1*v6 - pa5 - v3*pv4 - pv3*v4,                                       0,
-                     v1*pv3 + pv1*v3, pa1 + v2*pv3 + pv2*v3,   2*v3*pv3 - 2*v1*pv1,              pa2, pa3 - v1*pv2 - pv1*v2, -v1*pv3 - pv1*v3, v2*pv4 + pv2*v4 - v1*pv5 - pv1*v5 - pa6,                                       0, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,                                       0,
-                    -v1*pv2 - pv1*v2,   2*v1*pv1 - 2*v2*pv2, pa1 - v2*pv3 - pv2*v3,  v1*pv2 + pv1*v2, pa2 + v1*pv3 + pv1*v3,              pa3, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5, v3*pv5 + pv3*v5 - v2*pv6 - pv2*v6 - pa4,                                       0,                                       0,
-                                   0,                     0,                     0,                0,                     0,                0,                    -2*v2*pv2 - 2*v3*pv3,                   v1*pv2 + pv1*v2 - pa3,                   pa2 + v1*pv3 + pv1*v3, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,
-                                   0,                     0,                     0,                0,                     0,                0,                   pa3 + v1*pv2 + pv1*v2,                    -2*v1*pv1 - 2*v3*pv3,                   v2*pv3 + pv2*v3 - pa1, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5,
-                                   0,                     0,                     0,                0,                     0,                0,                   v1*pv3 + pv1*v3 - pa2,                   pa1 + v2*pv3 + pv2*v3,                    -2*v1*pv1 - 2*v2*pv2, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4;
+                                                              0,                                       0, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4, v1*pv6 + pv1*v6 - pa5 - v3*pv4 - pv3*v4,              pa1, pa2 - v1*pv3 - pv1*v3, -pv2*v3 - v2*pv3, pa3 + v1*pv2 + pv1*v2,   2*v2*pv2 - 2*v3*pv3,  pv2*v3 + v2*pv3,
+                                                              0, v2*pv4 + pv2*v4 - v1*pv5 - pv1*v5 - pa6,                                       0, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,  v1*pv3 + pv1*v3, pa1 + v2*pv3 + pv2*v3,              pa2,   2*v3*pv3 - 2*v1*pv1, pa3 - v1*pv2 - pv1*v2, -v1*pv3 - pv1*v3,
+                                                              0, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5, v3*pv5 + pv3*v5 - v2*pv6 - pv2*v6 - pa4,                                       0, -v1*pv2 - pv1*v2,   2*v1*pv1 - 2*v2*pv2,  v1*pv2 + pv1*v2, pa1 - v2*pv3 - pv2*v3, pa2 + v1*pv3 + pv1*v3,              pa3,
+                        pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,                    -2*v2*pv2 - 2*v3*pv3,                   v1*pv2 + pv1*v2 - pa3,                   pa2 + v1*pv3 + pv1*v3,                0,                     0,                0,                     0,                     0,                0, 
+                        v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5,                   pa3 + v1*pv2 + pv1*v2,                    -2*v1*pv1 - 2*v3*pv3,                   v2*pv3 + pv2*v3 - pa1,                0,                     0,                0,                     0,                     0,                0,
+                        pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4,                   v1*pv3 + pv1*v3 - pa2,                   pa1 + v2*pv3 + pv2*v3,                    -2*v1*pv1 - 2*v2*pv2,                0,                     0,                0,                     0,                     0,                0;
                 }
             }
         }
@@ -404,14 +337,5 @@ void RegressorInverseDynamics::compute(const VecX& z,
         }
     }
 }
-
-
-void RegressorInverseDynamics::computeWithDataImport(const std::string& solution) {
-    for (int i =0; i <N; ++i){
-        pinocchio::computeJointTorqueRegressor( *modelPtr_, *dataPtr_, trajPtr_q(i), trajPtr_q_d(i), trajPtr_q_dd(i));
-        Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, modelPtr_->nv*10) = dataPtr_->jointTorqueRegressor;
-    }
-}
-
 
 }; // namespace RAPTOR

@@ -38,16 +38,16 @@ int main() {
     auto start_clock = std::chrono::high_resolution_clock::now();
     regressor_id.compute(z, false);
     auto stop_clock = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
-    std::cout << "RegressorInverseDynamics: " << duration.count() << " nanoseconds" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_clock - start_clock);
+    std::cout << "RegressorInverseDynamics: " << duration.count() << " microseconds" << std::endl;
 
     // Compute inverse dynamics using pinocchio::rnea
     trajPtr->compute(z, false);
     start_clock = std::chrono::high_resolution_clock::now();
     VecX tau_pinocchio = pinocchio::rnea(model, data, trajPtr->q(0), trajPtr->q_d(0), trajPtr->q_dd(0));
     stop_clock = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
-    std::cout << "Pinocchio RNEA: " << duration.count() << " nanoseconds" << std::endl;
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_clock - start_clock);
+    std::cout << "Pinocchio RNEA: " << duration.count() << " microseconds" << std::endl;
 
     // Compare the results
     std::cout << "RegressorInverseDynamics result:" << std::endl;

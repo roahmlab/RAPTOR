@@ -45,23 +45,14 @@ public:
                              const std::shared_ptr<Trajectories>& trajPtr_input,
                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
-    RegressorInverseDynamics(const Model& model_input,
-                             const std::string& position,
-                             const std::string& velocity,
-                             const std::string& acceleration, 
-                             Eigen::VectorXi jtype_input= Eigen::VectorXi(0));
-
     // Destructor
     ~RegressorInverseDynamics() = default;
 
     // class methods:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
-                         bool compute_hessian = false) override; 
-
-    virtual void computeWithDataImport(const std::string& solution);
+                         bool compute_hessian = false) override;
                                            
-                         
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
@@ -88,10 +79,6 @@ public:
     Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
 
     MatX Ycurrent;
-
-    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q;
-    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_d;
-    Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_dd;
 };
 
 }; // namespace RAPTOR
