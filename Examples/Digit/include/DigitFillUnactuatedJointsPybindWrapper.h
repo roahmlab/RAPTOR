@@ -52,11 +52,11 @@ public:
 
         qs.resize(modelPtr_->nq, qas.shape(1));
         
-        for (int i = 0; i < qas.shape(1); ++i) {
+        for (int i = 0; i < qas.shape(1); i++) {
             VecX q(modelPtr_->nq);
             VecX qa(NUM_INDEPENDENT_JOINTS);
 
-            for (int j = 0; j < qas.shape(0); ++j) {
+            for (int j = 0; j < qas.shape(0); j++) {
                 qa(j) = qas(j, i);
             }
             dcPtr_->fill_independent_vector(q, qa, true);
@@ -89,14 +89,14 @@ public:
         qs.resize(modelPtr_->nq, qas.shape(1));
         q_ds.resize(modelPtr_->nv, qas.shape(1));
 
-        for (int i = 0; i < qas.shape(1); ++i) {
+        for (int i = 0; i < qas.shape(1); i++) {
             VecX q(modelPtr_->nq);
             VecX q_d(modelPtr_->nv);
             VecX q_dd(modelPtr_->nv);
             VecX qa(NUM_INDEPENDENT_JOINTS);
             VecX qa_d(NUM_INDEPENDENT_JOINTS);
 
-            for (int j = 0; j < qas.shape(0); ++j) {
+            for (int j = 0; j < qas.shape(0); j++) {
                 qa(j) = qas(j, i);
                 qa_d(j) = qa_ds(j, i);
             }
@@ -143,7 +143,7 @@ public:
         q_ds.resize(modelPtr_->nv, qas.shape(1));
         q_dds.resize(modelPtr_->nv, qas.shape(1));
 
-        for (int i = 0; i < qas.shape(1); ++i) {
+        for (int i = 0; i < qas.shape(1); i++) {
             VecX q(modelPtr_->nq);
             VecX q_d(modelPtr_->nv);
             VecX q_dd(modelPtr_->nv);
@@ -151,7 +151,7 @@ public:
             VecX qa_d(NUM_INDEPENDENT_JOINTS);
             VecX qa_dd(NUM_INDEPENDENT_JOINTS);
 
-            for (int j = 0; j < qas.shape(0); ++j) {
+            for (int j = 0; j < qas.shape(0); j++) {
                 qa(j) = qas(j, i);
                 qa_d(j) = qa_ds(j, i);
                 qa_dd(j) = qa_dds(j, i);

@@ -1,17 +1,9 @@
-#ifndef FRICTIONPARAMETERSIDENTIFICATION_H
-#define FRICTIONPARAMETERSIDENTIFICATION_H
-
+#ifndef FRICTION_PARAMETERS_IDENTIFICATION_H
+#define FRICTION_PARAMETERS_IDENTIFICATION_H
 
 #include "Optimizer.h"
-#include "Trajectories.h" 
 
-#include "RegressorInverseDynamics.h"
-#include "FixedFrequencyFourierCurves.h"
-
-#include "JointLimits.h"
-#include "VelocityLimits.h"
-#include "TorqueLimits.h"
-#include "KinovaCustomizedConstraints.h"
+#include "pinocchio/algorithm/rnea.hpp"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -19,7 +11,7 @@ namespace Kinova {
 class FrictionParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
-    using Vec3 = Eigen::Vector3d;
+    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -31,12 +23,12 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        VecX Xf,
-        int nLinks,
-        VecX& Fest,
-        bool include_friction_offset,
-        double N,
-        std::shared_ptr<RegressorInverseDynamics>& RegressorID  
+        const Model& model_input,
+        const std::shared_ptr<MatX>& posPtr_input,
+        const std::shared_ptr<MatX>& velPtr_input,
+        const std::shared_ptr<MatX>& accPtr_input,
+        const std::shared_ptr<MatX>& torquePtr_input,
+        const bool include_offset_input = false
     );
 
     /**@name Overloaded from TNLP */
@@ -57,7 +49,7 @@ public:
         Index m, 
         Number* g_l, 
         Number* g_u
-    )final override;
+    ) final override;
 
 
     bool get_starting_point(
@@ -70,8 +62,7 @@ public:
         Index       m, 
         bool        init_lambda,
         Number*     lambda
-    )final override;
-
+    ) final override;
 
     /** Method to return the objective value */
     bool eval_f(
@@ -87,6 +78,17 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
+    ) final override;
+
+    /** Method to return:
+    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+    *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+    */
+    bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
     ) final override;
 
     // bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g) override;
@@ -109,17 +111,24 @@ public:
        const FrictionParametersIdentification&
     );
 
+    std::shared_ptr<Model> modelPtr_; // robot model
+    std::shared_ptr<Data> dataPtr_; // robot data
 
-    int nLinks_;
-    VecX Fest_;
-    bool include_friction_offset_;
-    double N_;
-    VecX Xf_;
-    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
-   
+    // shared pointers to data
+    std::shared_ptr<MatX> posPtr_;
+    std::shared_ptr<MatX> velPtr_;
+    std::shared_ptr<MatX> accPtr_;
+    std::shared_ptr<MatX> torquePtr_;
+
+    MatX nominalTorque; // computed from the trajectory without friction
+
+    int Nact = 0; // number of motors
+    int N = 0; // number of samples
+
+    bool include_offset = false;
 };
 
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // CONDITION_NUMBER_OPTIMIZER_H
+#endif // FRICTION_PARAMETERS_IDENTIFICATION_H

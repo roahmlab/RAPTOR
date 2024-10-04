@@ -1,50 +1,76 @@
 #include "FrictionParametersIdentification.h"
-#include <iostream>
-#include <cmath>
 
 namespace RAPTOR {
 namespace Kinova {
 
-
 bool FrictionParametersIdentification::set_parameters(
-        VecX Xf,
-        int nLinks,
-        VecX& Fest,
-        bool include_friction_offset,
-        double N,
-        std::shared_ptr<RegressorInverseDynamics>& RegressorID
+    const Model& model_input,
+    const std::shared_ptr<MatX>& posPtr_input,
+    const std::shared_ptr<MatX>& velPtr_input,
+    const std::shared_ptr<MatX>& accPtr_input,
+    const std::shared_ptr<MatX>& torquePtr_input,
+    const bool include_offset_input
 ) 
-
 {
-    Xf_=Xf;
-    nLinks_= nLinks;
-    Fest_=Fest;
-    include_friction_offset_=include_friction_offset; 
-    N_=N;
-    ridPtr_= RegressorID;
+    enable_hessian = true;
 
-    enable_hessian = false;
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
+
+    Nact = modelPtr_->nv;
+
+    posPtr_ = posPtr_input;
+    velPtr_ = velPtr_input;
+    accPtr_ = accPtr_input;
+    torquePtr_ = torquePtr_input;
+
+    if (posPtr_->rows() != velPtr_->rows() || 
+        posPtr_->rows() != accPtr_->rows() || 
+        posPtr_->rows() != torquePtr_->rows() ||
+        posPtr_->rows() != modelPtr_->nv) {
+        throw std::invalid_argument("Error: input data matrices have different number of rows");
+    }
+
+    if (posPtr_->cols() != velPtr_->cols() || 
+        posPtr_->cols() != accPtr_->cols() || 
+        posPtr_->cols() != torquePtr_->cols()) {
+        throw std::invalid_argument("Error: input data matrices have different number of columns");
+    }
+
+    N = posPtr_->cols();
+
+    include_offset = include_offset_input;
+
+    // compute nominal torque from data
+    nominalTorque = MatX::Zero(Nact, N);
+    for (Index i = 0; i < N; i++) {
+        const VecX& q = posPtr_->col(i);
+        const VecX& v = velPtr_->col(i);
+        const VecX& a = accPtr_->col(i);
+
+        pinocchio::rnea(*modelPtr_, *dataPtr_, q, v, a);
+
+        nominalTorque.col(i) = dataPtr_->tau;
+    } 
+    
     return true;
 }
 
-bool FrictionParametersIdentification::get_nlp_info(Index& n, Index& m,
-                                        Index& nnz_jac_g, Index& nnz_h_lag,
-                                        IndexStyleEnum& index_style)
+bool FrictionParametersIdentification::get_nlp_info(
+    Index& n, 
+    Index& m,
+    Index& nnz_jac_g, 
+    Index& nnz_h_lag,
+    IndexStyleEnum& index_style)
 {
-    // αj and phiF parameters
-    int n_alpha = nLinks_;
-    // Fvj, Fcj, B 
-    int n_phiF = nLinks_ * (include_friction_offset_ ? 3 : 2);
-    n = n_alpha + n_phiF;
+    n = Nact * (include_offset ? 4 : 3);
     numVars= n;
 
-    // Number of constraints (none in this problem)
-    // m = nLinks_;
-    m=0;
+    m = 0;
     numCons= m;
 
     nnz_jac_g = 0;
-    nnz_h_lag = n * (n + 1) / 2;
+    nnz_h_lag = 0;
 
     // Use C-style indexing (0-based)
     index_style = TNLP::C_STYLE;
@@ -52,178 +78,160 @@ bool FrictionParametersIdentification::get_nlp_info(Index& n, Index& m,
     return true;
 }
 
-bool FrictionParametersIdentification::get_bounds_info(Index n, Number* x_l, Number* x_u,
-                                           Index m, Number* g_l, Number* g_u)
+bool FrictionParametersIdentification::get_bounds_info(
+    Index n, 
+    Number* x_l, 
+    Number* x_u,
+    Index m, 
+    Number* g_l, 
+    Number* g_u)
 {
-    // αj >= 0
-    for (Index i = 0; i < nLinks_; ++i) {
+    // static friction >= 0
+    for (Index i = 0; i < Nact; i++) {
         x_l[i] = 0.0;
-        x_u[i] = 1e19;
+        x_u[i] = 50.0;
     }
 
-    // phiF parameters bounds
-    Index idx = nLinks_;
-    for (Index j = 0; j < nLinks_; ++j) {
-        // Fcj >= 0
-        x_l[idx] = 0.0;
-        x_u[idx] = 1e19;
-        idx++;
+    // damping >= 0
+    for (Index i = 0; i < Nact; i++) {
+        x_l[Nact + i] = 0.0;
+        x_u[Nact + i] = 50.0;
+    }
 
-        // Fvj >= 0
-        x_l[idx] = 0.0;
-        x_u[idx] = 1e19;
-        idx++;
+    // armature >= 0
+    for (Index i = 0; i < Nact; i++) {
+        x_l[2 * Nact + i] = 0.0;
+        x_u[2 * Nact + i] = 50.0;
+    }
 
-        // No bounds on Bj
-        if (include_friction_offset_) {
-            // No bounds on Bj
-            x_l[idx] = -1e19;
-            x_u[idx] = 1e19;
-            idx++;
+    // static friction offset
+    if (include_offset) {
+        for (Index i = 0; i < Nact; i++) {
+            x_l[3 * Nact + i] = -50.0;
+            x_u[3 * Nact + i] = 50.0;
         }
+    }
 
-        // for (Index i = 0; i < m; ++i)
-        // {
-        //     g_l[i] = -1e19;
-        //     g_u[i] = 0;
-        // }
+    // no bounds on constraints since m = 0
+    // for (Index i = 0; i < m; i++) {
+    //     g_l[i] = -1e19;
+    //     g_u[i] = 0;
+    // }
 
+    return true;
+}
+
+bool FrictionParametersIdentification::get_starting_point(
+    Index n, 
+    bool init_x, 
+    Number* x,
+    bool init_z, 
+    Number* z_L, 
+    Number* z_U,
+    Index m, 
+    bool init_lambda,
+    Number* lambda)
+{
+    // simply use zero as starting point
+    for (Index i = 0; i < n; i++) {
+        x[i] = 0;
     }
 
     return true;
 }
 
-bool FrictionParametersIdentification::get_starting_point(Index n, bool init_x, Number* x,
-                                              bool init_z, Number* z_L, Number* z_U,
-                                              Index m, bool init_lambda,
-                                              Number* lambda)
+bool FrictionParametersIdentification::eval_f(
+    Index n, 
+    const Number* x, 
+    bool new_x, 
+    Number& obj_value)
 {
-    // Initialize x
-    init_x = true;
-    init_z = false;
-    init_lambda = false;
-
-    // Initialize αj
-    for (Index i = 0; i < nLinks_; ++i) {
-        x[i] = Xf_[i]; // Initial guess for αj
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
     }
 
-    // Initialize phiF parameters
-    Index idx = nLinks_;
-    for (Index j = 0; j < nLinks_; ++j) {
-        x[idx] = Xf_[idx]; 
-        idx++;
-        x[idx] = Xf_[idx]; 
-        idx++;
-        if (include_friction_offset_) {
-            x[idx] = Xf_[idx]; 
-            idx++;
-        }
-    }
-    return true;
-}
-
-bool FrictionParametersIdentification::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
-{
-    // Extract αj phiF
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
-    VecX alpha = z.head(nLinks_); 
-    VecX phiF = z.tail(n - nLinks_);
-
-    // Compute the objective function value
-    obj_value = 0.0;
-
-    for (Index i = 0; i < N_; ++i) {
-        const VecX& q_d = ridPtr_->trajPtr_q_d(i);
-        for (Index j = 0; j < nLinks_; ++j) {
-            double sign_qd = (q_d(j) >= 0) ? 1.0 : -1.0;
-            double abs_qd = std::abs(q_d(j));
-            double abs_qd_alpha = std::pow(abs_qd, alpha(j));
-
-            // Get phiF parameters for joint j
-            Index phiF_offset = j * (include_friction_offset_ ? 3 : 2);
-            double Fcj = phiF(phiF_offset);
-            double Fvj = phiF(phiF_offset + 1);
-            double Bj =0.0;
-            if (include_friction_offset_) {
-                Bj = phiF(phiF_offset + 2);
-            }
-
-            // Compute friction model fj
-            double fj = (Fcj + Fvj * abs_qd_alpha) * sign_qd + Bj;
-
-            // Compute obj_value
-            double diff = fj - Fest_(i*nLinks_ + j);
-            obj_value += diff * diff;
-        }
+    VecX friction = z.head(Nact);
+    VecX damping = z.segment(Nact, Nact);
+    VecX armature = z.segment(2 * Nact, Nact);
+    VecX offset = VecX::Zero(Nact);
+    if (include_offset) {
+        offset = z.tail(Nact);
     }
+    
+    obj_value = 0;
+
+    for (Index i = 0; i < N; i++) {
+        const VecX& q_d = velPtr_->col(i);
+        const VecX& q_dd = accPtr_->col(i);
+        const VecX& tau = torquePtr_->col(i);
+        const VecX& tau_nominal = nominalTorque.col(i);
+
+        VecX friction_force = 
+            friction.cwiseProduct(q_d.cwiseSign()) +
+            damping.cwiseProduct(q_d) +
+            armature.cwiseProduct(q_dd) +
+            offset;
+
+        VecX tau_estimated = tau_nominal + friction_force;
+
+        obj_value += (tau_estimated - tau).squaredNorm();
+    }
+
+    update_minimal_cost_solution(n, z, new_x, obj_value);
 
     return true;
 }
 
 // Method to compute gradient of the objective function
-bool FrictionParametersIdentification::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
+bool FrictionParametersIdentification::eval_grad_f(
+    Index n, 
+    const Number* x, 
+    bool new_x, 
+    Number* grad_f)
 {
-    // Extract αj phiF
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-    VecX alpha = z.head(nLinks_); 
-    VecX phiF = z.tail(n - nLinks_);
-
-    // Initialize gradient to zero
-    VecX grad = VecX::Zero(n);
-
-    // Compute gradient
-    for (Index i = 0; i < N_; ++i) {
-        const VecX& q_d = ridPtr_->trajPtr_q_d(i);
-        for (Index j = 0; j < nLinks_; ++j) {
-            double sign_qd = (q_d(j) >= 0) ? 1.0 : -1.0;
-            double abs_qd = std::abs(q_d(j));
-            double abs_qd_alpha = std::pow(abs_qd, alpha(j));
-            //avoid log(0)
-            double log_abs_qd = (abs_qd > 1e-6) ? std::log(abs_qd) : 0.0;
-
-            // Get phiF parameters for joint j
-            Index phiF_offset = j * (include_friction_offset_ ? 3 : 2);
-            double Fcj = phiF(phiF_offset);
-            double Fvj = phiF(phiF_offset + 1);
-            double Bj = 0.0;
-            if (include_friction_offset_) {
-                Bj = phiF(phiF_offset + 2);
-            }
-
-            // Compute friction model fj
-            double fj = (Fcj + Fvj * abs_qd_alpha) * sign_qd + Bj;
-            double diff = fj - Fest_(i*nLinks_ + j);
-
-            // dalpha 
-            double dfj_dalpha = Fvj * abs_qd_alpha * log_abs_qd * sign_qd; 
-            grad(j) += 2.0 * diff * dfj_dalpha;
-            // dFvj
-            grad(nLinks_ + phiF_offset + 1) += 2.0 * diff * abs_qd_alpha * sign_qd;
-            // dFcj
-            grad(nLinks_ + phiF_offset) += 2.0 * diff * sign_qd;
-            // Bj
-            if (include_friction_offset_) {
-                grad(nLinks_ + phiF_offset + 2) += 2.0 * diff;
-            }
-        }
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
-    // Copy gradient to output
-    Eigen::Map<VecX>(grad_f, n) = grad;
 
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    VecX friction = z.head(Nact);
+    VecX damping = z.segment(Nact, Nact);
+    VecX armature = z.segment(2 * Nact, Nact);
+    VecX offset = VecX::Zero(Nact);
+    if (include_offset) {
+        offset = z.tail(Nact);
+    }
+    
+    for (Index i = 0; i < N; i++) {
+        const VecX& q_d = velPtr_->col(i);
+        const VecX& q_dd = accPtr_->col(i);
+        const VecX& tau = torquePtr_->col(i);
+        const VecX& tau_nominal = nominalTorque.col(i);
+
+        // TODO: compute gradient of the objective function
+    }
 
     return true;
 }
 
+bool FrictionParametersIdentification::eval_hess_f(
+   Index         n,
+   const Number* x,
+   bool          new_x,
+   MatX&         hess_f
+)
+{
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
+    }
 
-// bool FrictionParametersIdentification::eval_g(Index n, const Number* x, bool new_x,
-//                                   Index m, Number* g)
-// {
+    // TODO: according to eval_grad_f, verify this
+    // theoretically, this is a quadratic problem so the hessian should be idenity matrix
+    hess_f = MatX::Identity(n, n);
 
-
-//     return true;
-// }
-
+    return true;
+}
 
 }; // namespace Kinova
 }; // namespace RAPTOR

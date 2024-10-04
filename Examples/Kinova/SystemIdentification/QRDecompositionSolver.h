@@ -1,5 +1,5 @@
-#ifndef QRDECOMPOSITIONSOLVER_H
-#define QRDECOMPOSITIONSOLVER_H
+#ifndef QR_DECOMPOSITION_SOLVER_H
+#define QR_DECOMPOSITION_SOLVER_H
 
 #include <Eigen/Dense>
 #include <vector>
@@ -22,7 +22,7 @@ public:
     // Constructors 
     QRDecompositionSolver() = default;
 
-    QRDecompositionSolver(const Model& model);
+    QRDecompositionSolver(const Model& model_input);
 
     // Destructor
     ~QRDecompositionSolver() = default;
@@ -64,4 +64,4 @@ public:
 
 }; // namespace RAPTOR
 
-#endif // QRDECOMPOSITIONSOLVER_H
+#endif // QR_DECOMPOSITION_SOLVER_H

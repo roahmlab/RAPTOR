@@ -2,9 +2,9 @@
 
 namespace RAPTOR {
 
-QRDecompositionSolver::QRDecompositionSolver(const Model& model) {
-    modelPtr_ = std::make_shared<Model>(model);
-    dataPtr_ = std::make_shared<Data>(model);
+QRDecompositionSolver::QRDecompositionSolver(const Model& model_input) {
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
 
     phi = Eigen::VectorXd::Zero(10 * modelPtr_->nv);
     for (int i = 0; i < modelPtr_->nv; i++) {
@@ -55,7 +55,7 @@ void QRDecompositionSolver::computeRegroupMatrix() {
     // perm.indices()[i] = j   old matrix ith col move to new matrix jth col
     // M[i] = j  old jth col is M ith col
     std::vector<int> M(perm.indices().size());
-    for (int i = 0; i < perm.indices().size(); ++i) {
+    for (int i = 0; i < perm.indices().size(); i++) {
         M[perm.indices()[i]] =i;
     }
 
@@ -74,13 +74,13 @@ void QRDecompositionSolver::computeRegroupMatrix() {
 
     // Initialize Aid matrix
     Aid = MatX::Zero(p, rankW);
-    for (int i = 0; i < rankW; ++i) {
+    for (int i = 0; i < rankW; i++) {
         Aid(idx[i], i) = 1.0;
     }
 
     // Initialize Ad matrix
     Ad = MatX::Zero(p, p - rankW);
-    for (int i = 0; i < static_cast<int>(idx_.size()); ++i) {
+    for (int i = 0; i < static_cast<int>(idx_.size()); i++) {
         Ad(idx_[i], i) = 1.0;
     }
 
@@ -101,8 +101,8 @@ void QRDecompositionSolver::computeRegroupMatrix() {
 
     // Zero out elements in Kd that are below the threshold for numerical stability
     double threshold = std::sqrt(eps);
-    for (int i = 0; i < Kd.rows(); ++i) {
-        for (int j = 0; j < Kd.cols(); ++j) {
+    for (int i = 0; i < Kd.rows(); i++) {
+        for (int j = 0; j < Kd.cols(); j++) {
             if (std::abs(Kd(i, j)) < threshold) {
                 Kd(i, j) = 0.0;
             }

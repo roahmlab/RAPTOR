@@ -195,7 +195,7 @@ inline Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> initializeEigenVectorArr
 
     Eigen::Array<Eigen::VectorXd, 1,Eigen::Dynamic> res;
     res.resize(1,row_num);
-    for (int i = 0; i < row_num; ++i) {
+    for (int i = 0; i < row_num; i++) {
         res(0, i) =  data[i];
     }
 
