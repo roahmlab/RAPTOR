@@ -1,9 +1,13 @@
+#define BOOST_TEST_MODULE ForwardKinematicsTest
+#include <boost/test/included/unit_test.hpp>
 #include "ForwardKinematics.h"
 #include <chrono>
 
 using namespace RAPTOR;
 
-int main() {
+BOOST_AUTO_TEST_SUITE(ForwardKinematicsSuite)
+BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
+{
     // Define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
@@ -18,26 +22,18 @@ int main() {
     Eigen::VectorXd q = 2 * M_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
-    auto start_clock = std::chrono::high_resolution_clock::now();
     pinocchio::forwardKinematics(model, data, q);
-    auto stop_clock = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
-    std::cout << "Pinocchio FK: " << duration.count() << " nanoseconds" << std::endl;
 
     // set the start and end joint
     int start = 0;
     int end = model.getJointId("left_toe_B");
-
-    // compute forward kinematics using RAPTOR
-    start_clock = std::chrono::high_resolution_clock::now();
-    fkSolver.compute(start, end, q);
-    stop_clock = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_clock - start_clock);
-    std::cout << "RAPTOR FK: " << duration.count() << " nanoseconds" << std::endl;
+    fkSolver.compute(start, end, q);;
 
     // compare the results
-    std::cout << "Pinocchio: " << data.oMi[model.getJointId("left_toe_B")].translation().transpose() << std::endl;
-    std::cout << "RAPTOR: " << fkSolver.getTranslation().transpose() << std::endl;
+    Eigen::Vector3d pinocchio_translation = data.oMi[model.getJointId("left_toe_B")].translation();
+    Eigen::Vector3d raptor_translation = fkSolver.getTranslation();
 
-    return 0;
+    // check the error
+    BOOST_CHECK_SMALL((pinocchio_translation - raptor_translation).norm(), 1e-10);
 }
+BOOST_AUTO_TEST_SUITE_END()
