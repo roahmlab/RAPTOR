@@ -21,16 +21,16 @@ endfunction()
 
 # Add individual tests
 add_raptor_test(ForwardKinematics_test 
-                KinematicsDynamics/TestForwardKinematicsSolver.cpp)
+    KinematicsDynamics/TestForwardKinematicsSolver.cpp)
 
 add_raptor_test(ForwardKinematicsGradient_test 
-        KinematicsDynamics/TestForwardKinematicsRPYDerivatives.cpp)
+    KinematicsDynamics/TestForwardKinematicsRPYDerivatives.cpp)
 
 add_raptor_test(KinematicsConstraints_test 
-        Constraints/TestKinematicsConstraints.cpp)
+    Constraints/TestKinematicsConstraints.cpp)
 
 add_raptor_test(CustomizedInverseDynamics_test 
-        KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
+    KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
         
 add_raptor_test(RegressorInverseDynamics_test 
-            KinematicsDynamics/TestRegressorInverseDynamics.cpp)
+    KinematicsDynamics/TestRegressorInverseDynamics.cpp)

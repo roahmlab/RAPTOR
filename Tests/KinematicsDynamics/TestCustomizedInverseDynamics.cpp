@@ -14,12 +14,6 @@ BOOST_AUTO_TEST_SUITE(InverseDynamicsTestSuite)
 BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
 {
     // define robot model
-    char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
-        std::cout << "Current working directory: " << cwd << std::endl;
-    } else {
-        perror("getcwd() error");
-    }
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp.urdf";
 
     pinocchio::Model model;
@@ -71,8 +65,6 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<BezierCurves>(
             Eigen::VectorXd::LinSpaced(5, 0, 1), model.nq, 5);
-
-
 
     Eigen::VectorXi jtype = convertPinocchioJointType(model);    
     jtype(jtype.size() - 1) = 0; // fix the last joint
