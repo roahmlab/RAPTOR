@@ -6,7 +6,12 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
-)
+    SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
+    SystemIdentification/QRDecompositionSolver.cpp
+    SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
+    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
+    SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
 
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,7 +21,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification)
 
 target_link_libraries(Kinovalib PUBLIC
     trajlib
@@ -27,8 +32,7 @@ target_link_libraries(Kinovalib PUBLIC
     coinhsl
     ${Boost_LIBRARIES} 
     pinocchio::pinocchio
-    ompl
-)
+    ompl)
 
 ###
 add_executable(KinovaIK_example 
@@ -161,6 +165,81 @@ target_link_libraries(KinovaExciting_example PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 target_compile_options(KinovaExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+add_executable(KinovaEndeffectorExciting_example
+    SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
+
+target_include_directories(KinovaEndeffectorExciting_example PUBLIC
+    ystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(KinovaEndeffectorExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+add_executable(QRDecompositionTest
+    SystemIdentification/QRDecompositionTest.cpp)
+
+target_include_directories(QRDecompositionTest  PUBLIC
+    SystemIdentification
+    SystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include
+    SystemIdentification/IterativeSystemIdentification
+)
+
+target_link_libraries(QRDecompositionTest  PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecompositionTest PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+add_executable(Sys_id_combine_test
+    SystemIdentification/IterativeSystemIdentification/src/Test_SysID.cpp)
+
+target_include_directories(Sys_id_combine_test  PUBLIC
+    SystemIdentification
+    SystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include
+    SystemIdentification/IterativeSystemIdentification
+    )
+
+target_link_libraries(Sys_id_combine_test  PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecompositionTest PUBLIC
     ${PINOCCHIO_FLAGS})
 
 

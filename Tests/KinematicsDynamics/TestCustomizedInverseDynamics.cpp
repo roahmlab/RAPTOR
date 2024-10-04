@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 

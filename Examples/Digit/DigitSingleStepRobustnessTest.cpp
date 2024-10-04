@@ -29,18 +29,18 @@ int main(int argc, char* argv[]) {
     model.friction.setZero();
 
     // manually import motor inertia 
-    model.rotorInertia(model.getJointId("left_hip_roll") - 1) = 0.173823936;
-    model.rotorInertia(model.getJointId("left_hip_yaw") - 1) = 0.067899975;
-    model.rotorInertia(model.getJointId("left_hip_pitch") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("left_knee") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("left_toe_A") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("left_toe_B") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("right_hip_roll") - 1) = 0.173823936;
-    model.rotorInertia(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
-    model.rotorInertia(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("right_knee") - 1) = 0.1204731904;
-    model.rotorInertia(model.getJointId("right_toe_A") - 1) = 0.036089475;
-    model.rotorInertia(model.getJointId("right_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("left_hip_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("left_hip_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("left_hip_pitch") - 1) = 0.1204731904;
+    model.armature(model.getJointId("left_knee") - 1) = 0.1204731904;
+    model.armature(model.getJointId("left_toe_A") - 1) = 0.036089475;
+    model.armature(model.getJointId("left_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("right_hip_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
+    model.armature(model.getJointId("right_knee") - 1) = 0.1204731904;
+    model.armature(model.getJointId("right_toe_A") - 1) = 0.036089475;
+    model.armature(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
     // load settings
     const double T = 0.4;

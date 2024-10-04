@@ -17,7 +17,7 @@ int main() {
     // ignore friction for now
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     
     const int numSteps = 6;
     const int degree = 5;
@@ -56,7 +56,7 @@ int main() {
         //     z = solution;
         // }
 
-        Transform stanceFootTransform(3, -M_PI / 2);
+        Transform stanceFootTransform(3, -M_PI_2);
         if (step > 0) {
             stanceFootTransform = previousStandingFootTransform;
         }

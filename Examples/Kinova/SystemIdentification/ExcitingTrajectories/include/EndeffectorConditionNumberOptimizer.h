@@ -1,51 +1,46 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef CONDITION_NUMBER_OPTIMIZER_H
+#define CONDITION_NUMBER_OPTIMIZER_H
+
+#include "KinovaConstants.h"
 
 #include "Optimizer.h"
 
-#include "BezierCurves.h"
+#include "RegressorInverseDynamics.h"
+#include "FixedFrequencyFourierCurves.h"
 
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
-#include "Utils.h"
-
-#include "ConstrainedJointLimits.h"
+#include "JointLimits.h"
+#include "VelocityLimits.h"
 #include "TorqueLimits.h"
-#include "RectangleSurfaceContactConstraints.h"
-#include "DigitCustomizedConstraints.h"
-#include "DigitSingleStepPeriodicityConstraints.h"
+#include "KinovaCustomizedConstraints.h"
 
 namespace RAPTOR {
-namespace Digit {
+namespace Kinova {
 
-using namespace Ipopt;
-
-class DigitSingleStepOptimizer : public Optimizer {
+class EndeffectorConditionNumberOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
+    using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DigitSingleStepOptimizer() = default;
+    EndeffectorConditionNumberOptimizer() = default;
 
     /** Default destructor */
-    ~DigitSingleStepOptimizer() = default;
+    ~EndeffectorConditionNumberOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
         const double T_input,
         const int N_input,
-        const TimeDiscretization time_discretization_input,
         const int degree_input,
+        const double base_frequency_input,
         const Model& model_input, 
-        const GaitParameters& gp_input,
-        const char stanceLeg = 'L', // stance foot is left foot by default
-        const Transform& stance_foot_T_des = Transform(3, -M_PI_2),
-        bool periodic = true,
-        const VecX q0_input = VecX(0),  // optional initial position
-        const VecX q_d0_input = VecX(0) // optional initial velocity
+        const VecX& joint_limits_buffer_input,
+        const VecX& velocity_limits_buffer_input,
+        const VecX& torque_limits_buffer_input,
+        Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
     /**@name Overloaded from TNLP */
@@ -86,22 +81,24 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitSingleStepOptimizer(
-       const DigitSingleStepOptimizer&
+    EndeffectorConditionNumberOptimizer(
+       const EndeffectorConditionNumberOptimizer&
     );
 
-    DigitSingleStepOptimizer& operator=(
-       const DigitSingleStepOptimizer&
+    EndeffectorConditionNumberOptimizer& operator=(
+       const EndeffectorConditionNumberOptimizer&
     );
 
-    std::shared_ptr<BezierCurves> bcPtr_;
-    std::shared_ptr<Trajectories> trajPtr_; 
+    // MatX regroupMatrix;
 
-    std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+    std::shared_ptr<Trajectories> trajPtr_;
+
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
+
+    int joint_num;
 };
 
-}; // namespace Digit
+}; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // CONDITION_NUMBER_OPTIMIZER_H

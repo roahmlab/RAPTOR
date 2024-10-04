@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     pinocchio::urdf::buildModel(urdf_filename, model);
     
     // ignore all motor dynamics
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 

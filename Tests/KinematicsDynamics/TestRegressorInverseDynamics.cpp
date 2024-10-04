@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
     // Disable rotor inertia, friction, and damping
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
 
     // Create a trajectory
     int N = 5;  // number of time steps
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));
-    VecX z = 2 * M_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
+    VecX z = M_2_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
 
     // Compute inverse dynamics using RegressorInverseDynamics
     regressor_id.compute(z, false);

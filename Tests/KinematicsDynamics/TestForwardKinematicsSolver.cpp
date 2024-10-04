@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
 
     // set joint angles
     std::srand(std::time(nullptr));
-    Eigen::VectorXd q = 2 * M_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
+    Eigen::VectorXd q = M_2_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
 
     // compute forward kinematics using pinocchio
     pinocchio::forwardKinematics(model, data, q);
