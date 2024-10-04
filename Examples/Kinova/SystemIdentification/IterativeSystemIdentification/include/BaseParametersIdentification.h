@@ -24,7 +24,6 @@ public:
     using MatX = Eigen::MatrixXd;
     using Mat3 = Eigen::Matrix3d;
 
-
     /** Default constructor */
     BaseParametersIdentification() = default;
 
@@ -57,14 +56,28 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    
-    bool get_bounds_info(Index n, Number* x_l, Number* x_u,
-                                                   Index m, Number* g_l, Number* g_u)final override;
+    /** Method to return the bounds for my problem */
+    bool get_bounds_info(
+        Index   n,
+        Number* x_l,
+        Number* x_u,
+        Index   m,
+        Number* g_l,
+        Number* g_u
+    ) final override;
 
-    bool get_starting_point(Index n, bool init_x, Number* x,
-                                              bool init_z, Number* z_L, Number* z_U,
-                                              Index m, bool init_lambda,
-                                              Number* lambda)final override;
+    /** Method to return the starting point for the algorithm */
+    bool get_starting_point(
+        Index   n,
+        bool    init_x,
+        Number* x,
+        bool    init_z,
+        Number* z_L,
+        Number* z_U,
+        Index   m,
+        bool    init_lambda,
+        Number* lambda
+    ) final override;
 
     /** Method to return the objective value */
     bool eval_f(
@@ -82,12 +95,29 @@ public:
         Number*       grad_f
     ) final override;
 
-    bool eval_g(Index n, const Number *x, bool new_x,
-                                                Index m, Number *g)final override;
+    /** Method to return the constraint residuals */
+    bool eval_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Number*       g
+    ) final override;
 
-    bool eval_jac_g(Index n, const Number *x, bool new_x,
-                    Index m, Index nele_jac, Index *iRow, Index *jCol,
-                    Number *values)final override;
+    /** Method to return:
+    *   1) The structure of the jacobian (if "values" is NULL)
+    *   2) The values of the jacobian (if "values" is not NULL)
+    */
+    bool eval_jac_g(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        Index         m,
+        Index         nele_jac,
+        Index*        iRow,
+        Index*        jCol,
+        Number*       values
+    ) final override;
 
     // bool eval_h(
     //     Index n, const Number* x, bool new_x, Number obj_factor,
@@ -96,10 +126,7 @@ public:
 
     void compute_LMI_matrix(const VecX &pi_inertia,  Index j, MatX &LMI);
     void compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full);
-
-
-
-
+    
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -118,7 +145,6 @@ public:
     BaseParametersIdentification& operator=(
        const BaseParametersIdentification&
     );
-
 
     MatX Wh_;
     VecX Th_;

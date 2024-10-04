@@ -80,8 +80,3 @@ target_link_libraries(DigitFillUnactuated_nanobind PUBLIC
 nanobind_compile_options(DigitFillUnactuated_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
 set_property(TARGET DigitFillUnactuated_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-
-
-
-    

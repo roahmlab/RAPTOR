@@ -11,8 +11,7 @@ add_library(Kinovalib SHARED
     SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
     # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
-    SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp
-)
+    SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
 
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -22,9 +21,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification)
 
 target_link_libraries(Kinovalib PUBLIC
     trajlib
@@ -35,8 +32,7 @@ target_link_libraries(Kinovalib PUBLIC
     coinhsl
     ${Boost_LIBRARIES} 
     pinocchio::pinocchio
-    ompl
-)
+    ompl)
 
 ###
 add_executable(KinovaIK_example 
@@ -204,7 +200,7 @@ target_include_directories(QRDecompositionTest  PUBLIC
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include
     SystemIdentification/IterativeSystemIdentification
-    )
+)
 
 target_link_libraries(QRDecompositionTest  PUBLIC
     trajlib 

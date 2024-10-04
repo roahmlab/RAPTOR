@@ -46,10 +46,10 @@ public:
                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     RegressorInverseDynamics(const Model& model_input,
-                            const std::string& position,
-                            const std::string& velocity,
-                            const std::string& acceleration, 
-                            Eigen::VectorXi jtype_input= Eigen::VectorXi(0));
+                             const std::string& position,
+                             const std::string& velocity,
+                             const std::string& acceleration, 
+                             Eigen::VectorXi jtype_input= Eigen::VectorXi(0));
 
     // Destructor
     ~RegressorInverseDynamics() = default;
@@ -89,13 +89,9 @@ public:
 
     MatX Ycurrent;
 
-    // load data
     Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q;
     Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_d;
     Eigen::Array<VecX, 1, Eigen::Dynamic> trajPtr_q_dd;
-    // MatX trajPtr_q;
-    // MatX trajPtr_q_d;
-    // MatX trajPtr_q_dd;
 };
 
 }; // namespace RAPTOR

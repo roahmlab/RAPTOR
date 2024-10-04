@@ -1,13 +1,11 @@
-// main.cpp
-
 #include "QRDecompositionSolver.h"
-#include <Eigen/Dense>
-#include <iostream>
-#include <memory>
 #include "SysIDAlgFull.h"
+#include "KinovaConstants.h"
+
+using namespace RAPTOR;
+using namespace Kinova;
 
 int main() {
-
     int nq_nt = 100; 
     int p = 70;   
 
@@ -15,12 +13,10 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // model.gravity.linear()(2) = GRAVITY;
+    model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
     model.damping.setZero();
     model.rotorInertia.setZero(); 
-
-
 
     // Eigen::VectorXd X0_1_ = Eigen::VectorXd::Zero(10*model.nv);
     // for (int i = 0; i < model.nv; i++) {
@@ -38,12 +34,8 @@ int main() {
     //     // }
     // }
 
-
-    RAPTOR::Kinova::QRDecompositionSolver qrSolver; 
-
-
+    QRDecompositionSolver qrSolver; 
     qrSolver.getData();
-
 
     // std::cout << "Aid matrix:\n" << qrSolver.Aid << "\n\n";
     // std::cout << "Ad matrix:\n" << qrSolver.Ad << "\n\n";
@@ -57,7 +49,6 @@ int main() {
     // Eigen::VectorXd phi1(qrSolver.Beta.size()+qrSolver.dim_d);
     // phi1 << qrSolver.Beta, qrSolver.pi_d;
 
-
     // Eigen::VectorXd phi2(qrSolver.Beta.size()+qrSolver.dim_d);
     // Eigen::VectorXd zero = Eigen::VectorXd::Zero(qrSolver.dim_d);
     // phi2 << qrSolver.Beta, zero;
@@ -69,7 +60,6 @@ int main() {
     double Weight_tor = 1e-3;
     double Alpha_tor= 1e-3;
     double O_sqrt_tol= 1e-3;
-
 
     // RAPTOR::Kinova::SysIDAlgFull sysIDSolver(
     //     qrSolver.pi_d, 
@@ -90,10 +80,6 @@ int main() {
     // );
     // sysIDSolver.runAlgorithm();
     // // sysIDSolver.runFirstOptimization();
-
-
- 
-
 
     return 0;
 }

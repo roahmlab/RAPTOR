@@ -1,18 +1,6 @@
-// QRDecompositionSolver.cpp
-
 #include "QRDecompositionSolver.h"
-#include <algorithm>
-#include <limits>
-#include <ctime>
-#include <cstdlib>
-#include <cmath>
-#include "Polynomials.h"
-
-// Ensure Pinocchio and other relevant libraries are included
-#include <pinocchio/parsers/urdf.hpp>
 
 namespace RAPTOR {
-namespace Kinova {
 
 // Default constructor
 QRDecompositionSolver::QRDecompositionSolver() : eps(1e-8), dim_id(0), dim_d(0) {}
@@ -43,7 +31,6 @@ void QRDecompositionSolver::getData() {
     }
 
     InputParams= X0_1_;
-
 
     // Create a trajectory
     int N = 1000;  // Number of time steps
@@ -162,5 +149,4 @@ void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
     RegroupMatrix = Aid + Ad * Kd.transpose();
 }
 
-} // namespace Kinova
-} // namespace RAPTOR
+}; // namespace RAPTOR

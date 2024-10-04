@@ -390,7 +390,6 @@ void RegressorInverseDynamics::compute(const VecX& z,
                     pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
                     pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
                     pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
-                
                 }
             }
         }
@@ -408,8 +407,6 @@ void RegressorInverseDynamics::compute(const VecX& z,
 
 
 void RegressorInverseDynamics::computeWithDataImport(const std::string& solution) {
-
-    // pinocchio::Data data(model);
     for (int i =0; i <N; ++i){
         pinocchio::computeJointTorqueRegressor( *modelPtr_, *dataPtr_, trajPtr_q(i), trajPtr_q_d(i), trajPtr_q_dd(i));
         Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, modelPtr_->nv*10) = dataPtr_->jointTorqueRegressor;

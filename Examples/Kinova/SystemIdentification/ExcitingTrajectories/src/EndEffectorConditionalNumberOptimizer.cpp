@@ -23,7 +23,6 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
         const int degree_input,
         const double base_frequency_input,
         const Model& model_input, 
-        // const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
@@ -108,11 +107,6 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                                                                jtype_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 
-    // // check dimensions of regroupMatrix
-    // if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
-    //     throw std::invalid_argument("EndeffectorConditionNumberOptimizer: regroupMatrix has wrong dimensions!");
-    // }
-
     return true;
 }
 
@@ -192,7 +186,7 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
 
     ridPtr_->compute(z, true);
 
-    // get the endY
+    // get the columns corresponding to the end effector in the regressor matrix
     const int startCol = (joint_num - 1) * 10; 
     const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
  

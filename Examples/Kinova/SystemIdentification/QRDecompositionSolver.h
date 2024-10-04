@@ -1,5 +1,3 @@
-// QRDecompositionSolver.h
-
 #ifndef QRDECOMPOSITIONSOLVER_H
 #define QRDECOMPOSITIONSOLVER_H
 
@@ -10,12 +8,11 @@
 #include <cmath>
 #include <memory>
 
-// Ensure these header files exist and are correctly defined
 #include "RegressorInverseDynamics.h"
 #include "Trajectories.h"
+#include "Polynomials.h"
 
 namespace RAPTOR {
-namespace Kinova {
 
 class QRDecompositionSolver {
 public:
@@ -42,7 +39,6 @@ public:
     // Dimensions of independent and dependent parameters
     int dim_id;
     int dim_d;
-    
 
     // Threshold for numerical stability
     double eps;
@@ -55,12 +51,8 @@ public:
     // Member functions
     void getData();
     void compute(const MatX& W, const VecX& InputParams);
-
-private:
-    // Private member variables and functions can be added here
 };
 
-} // namespace Kinova
-} // namespace RAPTOR
+}; // namespace RAPTOR
 
 #endif // QRDECOMPOSITIONSOLVER_H
