@@ -2,68 +2,51 @@
 
 namespace RAPTOR {
 
-// Default constructor
-QRDecompositionSolver::QRDecompositionSolver() : eps(1e-8), dim_id(0), dim_d(0) {}
+QRDecompositionSolver::QRDecompositionSolver(const Model& model) {
+    modelPtr_ = std::make_shared<Model>(model);
+    dataPtr_ = std::make_shared<Data>(model);
 
-// Parameterized constructor
-QRDecompositionSolver::QRDecompositionSolver(const MatX& ObservationMatrix, const VecX& InputParams)
-    : eps(1e-8), dim_id(0), dim_d(0) {
-    compute(ObservationMatrix, InputParams);
-}
-
-// Destructor
-QRDecompositionSolver::~QRDecompositionSolver() {}
-
-// load data (robot model and generate ObservationMatrix and InputParams)
-void QRDecompositionSolver::getData() {
-    // Load robot model
-    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::Data data(model);
-
-
-    Eigen::VectorXd X0_1_ = Eigen::VectorXd::Zero(10*model.nv);
-    for (int i = 0; i < model.nv; i++) {
+    phi = Eigen::VectorXd::Zero(10 * modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
         const int pinocchio_joint_id = i + 1;
-        // intertia 
-         X0_1_.segment<10>(10 * i) = model.inertias[pinocchio_joint_id].toDynamicParameters();
+        phi.segment<10>(10 * i) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
     }
 
-    InputParams= X0_1_;
-
-    // Create a trajectory
-    int N = 1000;  // Number of time steps
-    double T = 1000.0;  // Total time
-    int degree = 5;  // Degree of the polynomial
-
-    // Assuming Polynomials constructor 
-    trajPtr_ = std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
-
-    // Assuming RegressorInverseDynamics constructor
-    ridPtr_ = std::make_shared<RegressorInverseDynamics>(model, trajPtr_);
-
-    // Generate random joint positions, velocities, and accelerations (not accurate)
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    VecX z = M_2_PI * VecX::Random(trajPtr_->varLength).array() - M_PI;
-
-    // Assuming compute is a member function of RegressorInverseDynamics
-    ridPtr_->compute(z, false);
-
-    // Retrieve ObservationMatrix and InputParams
-    MatX ObservationMatrix = ridPtr_->Y.leftCols(model.nv *10);
-
-    // InputParams = VecX::Zero(91); 
-    // InputParams = VecX::Ones(70); 
-
-    // Perform QR Decomposition
-    compute(ObservationMatrix, InputParams);
+    ObservationMatrix = MatX::Zero(0, 0);
 }
 
-// Compute QR Decomposition-based regrouping
-void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
+void QRDecompositionSolver::generateRandomObservation(const int numInstances) {
+    if (modelPtr_ == nullptr) {
+        throw std::runtime_error("Model pointer is not initialized yet!");
+    }
+    
+    ObservationMatrix = MatX::Zero(numInstances * modelPtr_->nv, phi.size());
+
+    for (int i = 0; i < numInstances; i++) {
+        // Generate random joint configuration
+        VecX q = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
+        VecX v = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
+        VecX a = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
+
+        // Compute regressor
+        pinocchio::computeJointTorqueRegressor(
+            *modelPtr_, *dataPtr_, 
+            q, v, a);
+
+        // Fill in the observation matrix
+        ObservationMatrix.middleRows(i * modelPtr_->nv, modelPtr_->nv) = 
+            dataPtr_->jointTorqueRegressor;
+    }
+}
+
+void QRDecompositionSolver::computeRegroupMatrix() {
+    if (ObservationMatrix.rows() == 0 ||
+        ObservationMatrix.cols() == 0) {
+        throw std::runtime_error("Observation matrix is not initialized yet!");
+    }
+
     // Perform QR decomposition with column pivoting for stability
-    Eigen::ColPivHouseholderQR<MatX> qr(W);
+    Eigen::ColPivHouseholderQR<MatX> qr(ObservationMatrix);
 
     // Get permutation matrix
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = qr.colsPermutation();
@@ -87,7 +70,7 @@ void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
     std::vector<int> idx_(M.begin() + rankW, M.end());
     std::sort(idx_.begin(), idx_.end());
 
-    int p = W.cols();
+    int p = ObservationMatrix.cols();
 
     // Initialize Aid matrix
     Aid = MatX::Zero(p, rankW);
@@ -105,8 +88,8 @@ void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
     A.resize(p, p);
     A << Aid, Ad;
 
-    // Perform QR decomposition on W * A
-    Eigen::HouseholderQR<MatX> qr_A(W * A);
+    // Perform QR decomposition on ObservationMatrix * A
+    Eigen::HouseholderQR<MatX> qr_A(ObservationMatrix * A);
     MatX R_full = qr_A.matrixQR().triangularView<Eigen::Upper>();
 
     // Extract indep R1 and dep R2 
@@ -127,11 +110,11 @@ void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
     }
 
     // Get independent and dependent parameters
-    pi_id = Aid.transpose() * InputParams;
-    pi_d = Ad.transpose() * InputParams;
+    phi_id = Aid.transpose() * phi;
+    phi_d = Ad.transpose() * phi;
 
     // Compute base inertial parameters
-    Beta = pi_id + Kd * pi_d;
+    beta = phi_id + Kd * phi_d;
 
     // Compute Ginv
     MatX KG_(p, p);
@@ -142,8 +125,8 @@ void QRDecompositionSolver::compute(const MatX& W, const VecX& InputParams) {
     Ginv = A * KG_;
 
     // Set the dimensions of independent and dependent parameters
-    dim_id = pi_id.size();
-    dim_d = pi_d.size();
+    dim_id = phi_id.size();
+    dim_d = phi_d.size();
 
     // Compute RegroupMatrix
     RegroupMatrix = Aid + Ad * Kd.transpose();

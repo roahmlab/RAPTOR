@@ -8,9 +8,7 @@
 #include <cmath>
 #include <memory>
 
-#include "RegressorInverseDynamics.h"
-#include "Trajectories.h"
-#include "Polynomials.h"
+#include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
 
@@ -18,39 +16,50 @@ class QRDecompositionSolver {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
+    using Model = pinocchio::Model;
+    using Data = pinocchio::Data;
 
-    // Output matrices and vectors
+    // Constructors 
+    QRDecompositionSolver() = default;
+
+    QRDecompositionSolver(const Model& model);
+
+    // Destructor
+    ~QRDecompositionSolver() = default;
+
+    // class methods:
+        // generate random observation on a certain number of instances
+    void generateRandomObservation(const int numInstances = 1000);
+
+        // compute QR decomposition-based regrouping
+    void computeRegroupMatrix();
+
+    // class variables:
+    std::shared_ptr<Model> modelPtr_ = nullptr;
+    std::shared_ptr<Data> dataPtr_ = nullptr;
+
+    VecX phi; // original inertial parameters (ungrouped)
+    MatX ObservationMatrix; // observation matrix
+
+        // intermediate matrices and vectors
     MatX Aid;
     MatX Ad;
     MatX A;
     MatX Kd;
     MatX Ginv;
-    VecX Beta;
-    MatX RegroupMatrix;
-    VecX pi_id;
-    VecX pi_d;
-    VecX InputParams;
+    VecX phi_id; // independent parameters
+    VecX phi_d; // dependent parameters
 
-    // Smart pointers to Trajectories and RegressorInverseDynamics
-    std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
-    Eigen::VectorXi jtype;
+        // results are stored in these matrices and vectors
+    VecX beta; // regrouped inertial parameters
+    MatX RegroupMatrix;
 
     // Dimensions of independent and dependent parameters
-    int dim_id;
-    int dim_d;
+    int dim_id = 0;
+    int dim_d = 0;
 
     // Threshold for numerical stability
-    double eps;
-
-    // Constructors and Destructor
-    QRDecompositionSolver();
-    QRDecompositionSolver(const MatX& ObservationMatrix, const VecX& InputParams);
-    ~QRDecompositionSolver();
-
-    // Member functions
-    void getData();
-    void compute(const MatX& W, const VecX& InputParams);
+    double eps = 1e-8;
 };
 
 }; // namespace RAPTOR
