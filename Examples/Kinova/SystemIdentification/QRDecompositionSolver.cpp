@@ -9,7 +9,9 @@ QRDecompositionSolver::QRDecompositionSolver(const Model& model_input) {
     phi = Eigen::VectorXd::Zero(10 * modelPtr_->nv);
     for (int i = 0; i < modelPtr_->nv; i++) {
         const int pinocchio_joint_id = i + 1;
-        phi.segment<10>(10 * i) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+        phi.segment<10>(10 * i) = 
+            modelPtr_->inertias[pinocchio_joint_id]
+                .toDynamicParameters();
     }
 
     ObservationMatrix = MatX::Zero(0, 0);
@@ -22,18 +24,16 @@ void QRDecompositionSolver::generateRandomObservation(const int numInstances) {
     
     ObservationMatrix = MatX::Zero(numInstances * modelPtr_->nv, phi.size());
 
+    // Compute regressor matrix for random joint configurations
     for (int i = 0; i < numInstances; i++) {
-        // Generate random joint configuration
         VecX q = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
         VecX v = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
         VecX a = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
 
-        // Compute regressor
         pinocchio::computeJointTorqueRegressor(
             *modelPtr_, *dataPtr_, 
             q, v, a);
-
-        // Fill in the observation matrix
+            
         ObservationMatrix.middleRows(i * modelPtr_->nv, modelPtr_->nv) = 
             dataPtr_->jointTorqueRegressor;
     }

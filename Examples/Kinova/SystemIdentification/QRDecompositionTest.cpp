@@ -19,10 +19,12 @@ int main() {
     qrSolver.generateRandomObservation();
     qrSolver.computeRegroupMatrix();
 
+    std::cout << "beta:\n" << qrSolver.beta.transpose() << std::endl;
+
     Eigen::VectorXd phi1(qrSolver.phi.size());
     phi1 << qrSolver.beta, qrSolver.phi_d;
 
-    std::cout << "ground:\n" << qrSolver.phi.transpose() << std::endl;
+    std::cout << "ground truth:\n" << qrSolver.phi.transpose() << std::endl;
     std::cout << "recovered:\n" << (qrSolver.Ginv *  phi1).transpose() << std::endl;
 
     return 0;

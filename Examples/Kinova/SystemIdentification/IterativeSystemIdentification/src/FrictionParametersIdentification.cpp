@@ -42,7 +42,7 @@ bool FrictionParametersIdentification::set_parameters(
     include_offset = include_offset_input;
 
     // compute nominal torque from data
-    nominalTorque = MatX::Zero(Nact, N);
+    tau_inertials = MatX::Zero(Nact, N);
     for (Index i = 0; i < N; i++) {
         const VecX& q = posPtr_->col(i);
         const VecX& v = velPtr_->col(i);
@@ -50,7 +50,7 @@ bool FrictionParametersIdentification::set_parameters(
 
         pinocchio::rnea(*modelPtr_, *dataPtr_, q, v, a);
 
-        nominalTorque.col(i) = dataPtr_->tau;
+        tau_inertials.col(i) = dataPtr_->tau;
     } 
     
     return true;
@@ -61,7 +61,8 @@ bool FrictionParametersIdentification::get_nlp_info(
     Index& m,
     Index& nnz_jac_g, 
     Index& nnz_h_lag,
-    IndexStyleEnum& index_style)
+    IndexStyleEnum& index_style
+)
 {
     n = Nact * (include_offset ? 4 : 3);
     numVars= n;
@@ -84,7 +85,8 @@ bool FrictionParametersIdentification::get_bounds_info(
     Number* x_u,
     Index m, 
     Number* g_l, 
-    Number* g_u)
+    Number* g_u
+)
 {
     // static friction >= 0
     for (Index i = 0; i < Nact; i++) {
@@ -130,7 +132,8 @@ bool FrictionParametersIdentification::get_starting_point(
     Number* z_U,
     Index m, 
     bool init_lambda,
-    Number* lambda)
+    Number* lambda
+)
 {
     // simply use zero as starting point
     for (Index i = 0; i < n; i++) {
@@ -144,7 +147,8 @@ bool FrictionParametersIdentification::eval_f(
     Index n, 
     const Number* x, 
     bool new_x, 
-    Number& obj_value)
+    Number& obj_value
+)
 {
     if(n != numVars){
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
@@ -165,15 +169,15 @@ bool FrictionParametersIdentification::eval_f(
         const VecX& q_d = velPtr_->col(i);
         const VecX& q_dd = accPtr_->col(i);
         const VecX& tau = torquePtr_->col(i);
-        const VecX& tau_nominal = nominalTorque.col(i);
+        const VecX& tau_inertial = tau_inertials.col(i);
 
-        VecX friction_force = 
+        VecX total_friction_force = 
             friction.cwiseProduct(q_d.cwiseSign()) +
             damping.cwiseProduct(q_d) +
             armature.cwiseProduct(q_dd) +
             offset;
 
-        VecX tau_estimated = tau_nominal + friction_force;
+        VecX tau_estimated = tau_inertial + total_friction_force;
 
         obj_value += (tau_estimated - tau).squaredNorm();
     }
@@ -188,13 +192,15 @@ bool FrictionParametersIdentification::eval_grad_f(
     Index n, 
     const Number* x, 
     bool new_x, 
-    Number* grad_f)
+    Number* grad_f
+)
 {
     if(n != numVars){
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    
     VecX friction = z.head(Nact);
     VecX damping = z.segment(Nact, Nact);
     VecX armature = z.segment(2 * Nact, Nact);
@@ -207,7 +213,7 @@ bool FrictionParametersIdentification::eval_grad_f(
         const VecX& q_d = velPtr_->col(i);
         const VecX& q_dd = accPtr_->col(i);
         const VecX& tau = torquePtr_->col(i);
-        const VecX& tau_nominal = nominalTorque.col(i);
+        const VecX& tau_inertial = tau_inertials.col(i);
 
         // TODO: compute gradient of the objective function
     }

@@ -9,6 +9,7 @@ add_library(Conslib SHARED
     src/LieSpaceResidual.cpp
     src/KinematicsConstraints.cpp
     src/BoxCollisionAvoidance.cpp
+    src/LMIConstraints.cpp
 )
 
 target_include_directories(Conslib PUBLIC
@@ -16,4 +17,11 @@ target_include_directories(Conslib PUBLIC
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
     ${CMAKE_SOURCE_DIR}/Utils/include
+)
+
+target_link_libraries(Conslib PUBLIC
+    trajlib
+    IDlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
 )

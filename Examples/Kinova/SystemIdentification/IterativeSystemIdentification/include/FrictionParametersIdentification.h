@@ -120,7 +120,7 @@ public:
     std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
 
-    MatX nominalTorque; // computed from the trajectory without friction
+    MatX tau_inertials; // computed from the trajectory without friction
 
     int Nact = 0; // number of motors
     int N = 0; // number of samples

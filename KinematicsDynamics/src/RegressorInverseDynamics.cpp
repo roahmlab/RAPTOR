@@ -38,7 +38,9 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
                                modelPtr_->jointPlacements[pinocchio_joint_id].translation());
 
-        phi.segment<10>(10 * i) << modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+        phi.segment<10>(10 * i) = 
+            modelPtr_->inertias[pinocchio_joint_id]
+                .toDynamicParameters();
 
         phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
                                                      modelPtr_->damping(i),

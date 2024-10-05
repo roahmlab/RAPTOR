@@ -48,6 +48,19 @@ target_link_libraries(KinematicsConstraints_test PUBLIC
 target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(LMIConstraints_test 
+    Constraints/TestLMIConstraints.cpp)
+
+target_link_libraries(LMIConstraints_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(LMIConstraints_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(CustomizedInverseDynamics_test 
     KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
 

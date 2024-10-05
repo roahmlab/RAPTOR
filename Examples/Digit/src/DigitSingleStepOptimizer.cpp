@@ -27,7 +27,7 @@ bool DigitSingleStepOptimizer::set_parameters(
     bool periodic,
     const VecX q0_input,
     const VecX q_d0_input
- ) 
+) 
 {
     x0 = x0_input;
                                           
