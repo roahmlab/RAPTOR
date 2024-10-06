@@ -1,16 +1,15 @@
 #include "QRDecompositionSolver.h"
-#include "SysIDAlgCombineAllCases.h"
-#include "KinovaConstants.h"
+
+#include "pinocchio/parsers/urdf.hpp"
+#include "pinocchio/algorithm/joint-configuration.hpp"
 
 using namespace RAPTOR;
-using namespace Kinova;
 
 int main() {
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
     model.damping.setZero();
     model.rotorInertia.setZero(); 
@@ -18,8 +17,6 @@ int main() {
     QRDecompositionSolver qrSolver(model); 
     qrSolver.generateRandomObservation();
     qrSolver.computeRegroupMatrix();
-
-    std::cout << "beta:\n" << qrSolver.beta.transpose() << std::endl;
 
     Eigen::VectorXd phi1(qrSolver.phi.size());
     phi1 << qrSolver.beta, qrSolver.phi_d;

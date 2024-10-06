@@ -86,3 +86,15 @@ target_link_libraries(RegressorInverseDynamics_test PUBLIC
 
 target_compile_options(RegressorInverseDynamics_test PUBLIC
     ${PINOCCHIO_FLAGS})
+
+add_executable(QRDecomposition_test
+    KinematicsDynamics/TestQRDecomposition.cpp)
+
+target_link_libraries(QRDecomposition_test PUBLIC
+    trajlib 
+    IDlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecomposition_test PUBLIC
+    ${PINOCCHIO_FLAGS})

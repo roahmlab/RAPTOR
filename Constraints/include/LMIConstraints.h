@@ -1,4 +1,3 @@
-
 #ifndef LMI_CONSTRAINTS_H
 #define LMI_CONSTRAINTS_H
 
