@@ -1,436 +1,512 @@
 #include "BaseParametersIdentification.h"
 
-namespace RAPTOR
+namespace RAPTOR {
+namespace Kinova {
+
+// // constructor
+// BaseParametersIdentification::BaseParametersIdentification()
+// {
+// }
+
+// // destructors
+// BaseParametersIdentification::~BaseParametersIdentification()
+// {
+// }
+
+bool BaseParametersIdentification::set_parameters(
+    const Model& model_input,
+    const std::shared_ptr<MatX>& posPtr_input,
+    const std::shared_ptr<MatX>& velPtr_input,
+    const std::shared_ptr<MatX>& accPtr_input,
+    const std::shared_ptr<MatX>& torquePtr_input,
+    std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
+    const bool include_offset_input
+)
+{ 
+    enable_hessian = false;
+
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
+
+    Nact = modelPtr_->nv;
+
+    posPtr_ = posPtr_input;
+    velPtr_ = velPtr_input;
+    accPtr_ = accPtr_input;
+    torquePtr_ = torquePtr_input;
+
+    if (posPtr_->rows() != velPtr_->rows() || 
+        posPtr_->rows() != accPtr_->rows() || 
+        posPtr_->rows() != torquePtr_->rows() ||
+        posPtr_->rows() != modelPtr_->nv) {
+        throw std::invalid_argument("Error: input data matrices have different number of rows");
+    }
+
+    if (posPtr_->cols() != velPtr_->cols() || 
+        posPtr_->cols() != accPtr_->cols() || 
+        posPtr_->cols() != torquePtr_->cols()) {
+        throw std::invalid_argument("Error: input data matrices have different number of columns");
+    }
+
+    N = posPtr_->cols();
+
+    regroupPtr_ = regroupPtr_input;
+    include_offset = include_offset_input;
+
+    // initialize observation matrices
+    FullObservationMatrix = MatX::Zero(N * Nact, 10 * Nact);
+    for (int i = 0; i < N; i++) {
+        const VecX& q = posPtr_->col(i);
+        const VecX& v = velPtr_->col(i);
+        const VecX& a = accPtr_->col(i);
+
+        pinocchio::computeJointTorqueRegressor(
+            *modelPtr_, *dataPtr_, 
+            q, v, a);
+
+        FullObservationMatrix.middleRows(i * Nact, Nact) = 
+            dataPtr_->jointTorqueRegressor;
+    }
+
+    // Perform regrouping (assume regroupPtr_ has been initialized)
+    if (regroupPtr_->RegroupMatrix.rows() != FullObservationMatrix.cols()) {
+        throw std::invalid_argument("Error: QRDecompositionSolver not initialized properly!");
+    }
+
+    RegroupedObservationMatrix = 
+        FullObservationMatrix * regroupPtr_->RegroupMatrix;
+
+    // directly set up initial condition here
+    int n = regroupPtr_->dim_id + // base parameters 
+            regroupPtr_->dim_d + // dependent parameters
+            3 * Nact; // friction, damping, armature
+    if (include_offset) {
+        n += Nact; // offset
+    }
+
+    x0 = VecX::Zero(n);
+
+        // initial guess for independent parameters
+        // is just what is included in the original urdf
+    x0.head(regroupPtr_->dim_id) = regroupPtr_->beta;
+    x0.segment(regroupPtr_->dim_id, Nact) = regroupPtr_->phi_d;
+
+        // initial guess for motor friction parameters is just 0
+
+    // initialize LMI constraints
+    constraintsPtrVec_.push_back(std::make_unique<RegroupedLMIConstraints>(regroupPtr_input,
+                                                                           modelPtr_->nv,
+                                                                           n));       
+    constraintsNameVec_.push_back("LMI constraints"); 
+
+    return true;
+}
+
+bool BaseParametersIdentification::get_nlp_info(
+    Index &n,
+    Index &m,
+    Index &nnz_jac_g,
+    Index &nnz_h_lag,
+    IndexStyleEnum &index_style
+)
 {
-namespace Kinova
+    n = regroupPtr_->dim_id + // base parameters 
+        regroupPtr_->dim_d + // dependent parameters
+        3 * Nact; // friction, damping, armature
+    if (include_offset) {
+        n += Nact;
+    }
+    numVars= n;
+
+    m = Nact;
+    numCons = m;
+
+    nnz_jac_g = n * m;
+    nnz_h_lag = n * (n + 1) / 2;
+
+    // use the C style indexing (0-based)
+    index_style = TNLP::C_STYLE;
+
+    return true;
+}
+
+bool BaseParametersIdentification::get_bounds_info(
+    Index n, 
+    Number* x_l, 
+    Number* x_u,
+    Index m, 
+    Number* g_l, 
+    Number* g_u
+)
 {
-
-    // // constructor
-    // BaseParametersIdentification::BaseParametersIdentification()
-    // {
-    // }
-
-    // // destructorS
-    // BaseParametersIdentification::~BaseParametersIdentification()
-    // {
-    // }
-
-
-    bool BaseParametersIdentification::set_parameters(
-        MatX &Wh,
-        VecX &Th,
-        VecX &X,
-        bool include_friction_offset,
-        Model &model_input,
-        std::shared_ptr<QRDecompositionSolver> regroupPtr,
-        VecX &lb,
-        VecX &ub,
-        int b_full,
-        int fm_dim,
-        int Alg_case){ 
-
-        Wh_=Wh;
-        Th_=Th;
-        X_=X;
-        fm_dim_=fm_dim;
-        include_friction_offset_=include_friction_offset;
-        model_input_=model_input;
-        lb_=lb;
-        ub_=ub;
-        b_full_ = b_full;
-        Alg_case_ = Alg_case;
-        nLinks_ = (Alg_case ==0)? model_input_.nv : 1;
-
-        // regroup parameters 
-        regroupPtr_ = regroupPtr;
-        if(Alg_case ==0){
-            Ginv_ = regroupPtr_->Ginv;
-            pi_d_ = regroupPtr_->pi_d;
-            b_dim_ = regroupPtr_->dim_id;
-            d_dim_ = regroupPtr_->dim_d;
-        }
-
-        enable_hessian = false;
-        return true;
+    // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
+    // If desired, we could assert to make sure they are what we think they are.
+    if (n != numVars) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
+    }
+    if (m != numCons) {
+        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
     }
 
-    bool BaseParametersIdentification::get_nlp_info(
-        Index &n,
-        Index &m,
-        Index &nnz_jac_g,
-        Index &nnz_h_lag,
-        IndexStyleEnum &index_style)
-    {
-        // number of decision variables (independent and friction)
-        n = b_full_;
-        numVars= n;
-
-        if (Alg_case_ !=2){
-            m =nLinks_;
-            numCons= m;
-        }else{
-            m =0;
-            numCons= 0;
+    // Set variable bounds
+        // independent inertial parameters (after regrouping)
+    for (Index i = 0; i < regroupPtr_->dim_id; i++) {
+        if (regroupPtr_->beta(i) > 0) {
+            x_l[i] = (1 - default_maximum_uncertainty) * regroupPtr_->beta(i);
+            x_u[i] = (1 + default_maximum_uncertainty) * regroupPtr_->beta(i);
         }
-
-        nnz_jac_g = n * m;
-        nnz_h_lag = n * (n + 1) / 2;
-
-        // use the C style indexing (0-based)
-        index_style = TNLP::C_STYLE;
-
-        return true;
+        else {
+            x_l[i] = (1 + default_maximum_uncertainty) * regroupPtr_->beta(i);
+            x_u[i] = (1 - default_maximum_uncertainty) * regroupPtr_->beta(i);
+        }
     }
 
-    bool BaseParametersIdentification::get_bounds_info(Index n, Number* x_l, Number* x_u,
-                                                   Index m, Number* g_l, Number* g_u)
-    {
-        // Set variable bounds
-        for (Index i = 0; i < n; ++i)
-        {
-            x_l[i] = lb_[i];
-            x_u[i] = ub_[i];
+        // dependent inertial parameters (after regrouping)
+    for (Index i = 0; i < regroupPtr_->dim_id; i++) {
+        if (regroupPtr_->phi_d(i) > 0) {
+            x_l[i] = (1 - default_maximum_uncertainty) * regroupPtr_->phi_d(i);
+            x_u[i] = (1 + default_maximum_uncertainty) * regroupPtr_->phi_d(i);
         }
-
-        // Set constraint bounds
-        for (Index i = 0; i < m; ++i)
-        {
-            g_l[i] = -1e19;
-            g_u[i] = 0;
+        else {
+            x_l[i] = (1 + default_maximum_uncertainty) * regroupPtr_->phi_d(i);
+            x_u[i] = (1 - default_maximum_uncertainty) * regroupPtr_->phi_d(i);
         }
-
-        return true;
     }
 
-    bool BaseParametersIdentification::get_starting_point(Index n, bool init_x, Number *x,
-                                                                bool init_z, Number *z_L, Number *z_U,
-                                                                Index m, bool init_lambda,
-                                                                Number *lambda)
-    {
-        // Initialize x
-        init_x = true;
-        init_z = false;
-        init_lambda = false;
-
-        int interia_num = b_full_-fm_dim_*nLinks_;
-        // Initialize intertia parameters after regroup
-        for (Index i = 0; i < interia_num; ++i)
-        {
-            x[i] = X_[i];
-        }
-
-        // Initialize Ia
-        Index idx = interia_num;
-        for (Index i = 0; i< nLinks_; ++i){
-            x[idx] = X_[idx];
-        }
-        
-        // f_dim = fm_dim -Ia_dim
-        for (Index j = 0; j < (fm_dim_-1) *nLinks_; ++j)
-        {
-            // x[idx] = X_[idx];
-            x[idx] = 1;   /// change later 
-            idx++;
-        }
-
-        return true;
+        // static friction >= 0
+    for (Index i = 0; i < Nact; i++) {
+        x_l[regroupPtr_->dim_id + i] = 0.0;
+        x_u[regroupPtr_->dim_id + i] = 50.0;
     }
 
-
-    bool BaseParametersIdentification::eval_f(
-        Index n,
-        const Number *x,
-        bool new_x,
-        Number &obj_value)
-    {
-        // Extract base parameters and dynamic parameters from x
-        VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-        VecX pi_s;
-        if (Alg_case_ ==0){
-            VecX pi_b = z.head(b_dim_);
-            VecX pi_mf = z.tail(fm_dim_*nLinks_);
-            pi_s.resize(b_dim_ + fm_dim_*nLinks_);
-            pi_s << pi_b, pi_mf;
-        }else{
-            pi_s = z;
-        }
-
-        // Compute the objective function: ||Wh_ * [πb; πfm] - Th_||^2
-        VecX diff = Wh_ * pi_s - Th_;
-        obj_value = diff.squaredNorm();
-
-        return true;
+        // damping >= 0
+    for (Index i = 0; i < Nact; i++) {
+        x_l[regroupPtr_->dim_id + Nact + i] = 0.0;
+        x_u[regroupPtr_->dim_id + Nact + i] = 50.0;
     }
 
-    bool BaseParametersIdentification::eval_grad_f(
-        Index n,
-        const Number *x,
-        bool new_x,
-        Number *grad_f)
-    {
-        // Extract base parameters and dynamic parameters from x
-        VecX z = Utils::initializeEigenVectorFromArray(x, n);
-        VecX pi_s;
-        if (Alg_case_ ==0){
-            VecX pi_b = z.head(b_dim_);
-            VecX pi_mf = z.tail(fm_dim_*nLinks_);
-            pi_s.resize(b_dim_ + fm_dim_*nLinks_);
-            pi_s << pi_b, pi_mf;
-        }else{
-            pi_s = z;
-        }
-
-        // // Grad: 2*W_h.T *(Wh_ * [πb; πfm] - Th_)
-        VecX diff = Wh_ * pi_s - Th_;
-        VecX grad = 2 * Wh_.transpose() * diff;
-
-        // Assign gradient to grad_f
-        for (Index i = 0; i < n; ++i)
-        {
-            grad_f[i] = grad[i];
-        }
-
-        return true;
+        // armature >= 0
+    for (Index i = 0; i < Nact; i++) {
+        x_l[regroupPtr_->dim_id + 2 * Nact + i] = 0.0;
+        x_u[regroupPtr_->dim_id + 2 * Nact + i] = 50.0;
     }
 
-    bool BaseParametersIdentification::eval_g(Index n, const Number *x, bool new_x,
-                                                Index m, Number *g)
-    {
-        if(Alg_case_ ==2){
-            return true;
+        // static friction offset
+    if (include_offset) {
+        for (Index i = 0; i < Nact; i++) {
+            x_l[regroupPtr_->dim_id + 3 * Nact + i] = -50.0;
+            x_u[regroupPtr_->dim_id + 3 * Nact + i] = 50.0;
         }
-        // Compute πs based on x
-        VecX z = Utils::initializeEigenVectorFromArray(x, n);
-        VecX pi_inertia;
-        if (Alg_case_ ==0){
-            VecX pi_b = z.head(b_dim_);
-            VecX pi_mf = z.tail(fm_dim_*nLinks_);
+    }
 
-            VecX pi_bd(b_dim_ + d_dim_);
-            pi_bd << pi_b, pi_d_;
-            pi_inertia = Ginv_ * pi_bd;
+    // Set constraint bounds
+    for (Index i = 0; i < m; i++) {
+        g_l[i] = 0;
+        g_u[i] = 1e19;
+    }
+
+    return true;
+}
+
+bool BaseParametersIdentification::eval_f(
+    Index n,
+    const Number *x,
+    bool new_x,
+    Number &obj_value
+)
+{
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
+
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    const VecX& beta = z.head(regroupPtr_->dim_id);
+    // const VecX& phi_d = z.segment(regroupPtr_->dim_id, Nact);
+    const VecX& friction = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d, Nact);
+    const VecX& damping = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d + Nact, Nact);
+    const VecX& armature = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d + 2 * Nact, Nact);
+    VecX offset = VecX::Zero(Nact);
+    if (include_offset) {
+        offset = z.tail(Nact);
+    }
+
+    VecX tau_inertials = RegroupedObservationMatrix * beta;
+
+    for (Index i = 0; i < N; i++) {
+        const VecX& q_d = velPtr_->col(i);
+        const VecX& q_dd = accPtr_->col(i);
+        const VecX& tau = torquePtr_->col(i);
+        const VecX& tau_inertial = tau_inertials.segment(i * Nact, Nact);
+
+        VecX total_friction_force = 
+            friction.cwiseProduct(q_d.cwiseSign()) +
+            damping.cwiseProduct(q_d) +
+            armature.cwiseProduct(q_dd) +
+            offset;
+
+        VecX tau_estimated = tau_inertial + total_friction_force;
+
+        obj_value += (tau_estimated - tau).squaredNorm();
+    } 
+
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
+    return true;
+}
+
+bool BaseParametersIdentification::eval_grad_f(
+    Index n,
+    const Number *x,
+    bool new_x,
+    Number *grad_f)
+{
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    const VecX& beta = z.head(regroupPtr_->dim_id);
+    // const VecX& phi_d = z.segment(regroupPtr_->dim_id, Nact);
+    const VecX& friction = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d, Nact);
+    const VecX& damping = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d + Nact, Nact);
+    const VecX& armature = z.segment(regroupPtr_->dim_id + regroupPtr_->dim_d + 2 * Nact, Nact);
+    VecX offset = VecX::Zero(Nact);
+    if (include_offset) {
+        offset = z.tail(Nact);
+    }
+
+    VecX tau_inertials = RegroupedObservationMatrix * beta;
+
+    for (Index i = 0; i < N; i++) {
+        const VecX& q_d = velPtr_->col(i);
+        const VecX& q_dd = accPtr_->col(i);
+        const VecX& tau = torquePtr_->col(i);
+        const VecX& tau_inertial = tau_inertials.segment(i * Nact, Nact);
+
+        // TODO: compute gradient of the objective function
+    }
+
+    return true;
+}
+
+// bool BaseParametersIdentification::eval_g(Index n, const Number *x, bool new_x,
+//                                             Index m, Number *g)
+// {
+//     if(Alg_case_ ==2){
+//         return true;
+//     }
+//     // Compute πs based on x
+//     VecX z = Utils::initializeEigenVectorFromArray(x, n);
+//     VecX pi_inertia;
+//     if (Alg_case_ ==0){
+//         VecX pi_b = z.head(b_dim_);
+//         VecX pi_mf = z.tail(fm_dim_*nLinks_);
+
+//         VecX pi_bd(b_dim_ + d_dim_);
+//         pi_bd << pi_b, pi_d_;
+//         pi_inertia = Ginv_ * pi_bd;
+
+//     }else{
+//         pi_inertia = z;
+//     }
+
+//     for (Index j = 0; j < nLinks_; j++)
+//     {
+//         // Compute LMI matrix for link j
+//         MatX LMI(4,4);
+//         compute_LMI_matrix(pi_inertia, j, LMI);
+//         // Compute determinant
+//         double det = LMI.determinant();
+//         g[j] = -det;
+//     }
+
+//     return true;
+// }
+
+// bool BaseParametersIdentification::eval_jac_g(Index n, const Number *x, bool new_x,
+//                                                 Index m, Index nele_jac, Index *iRow, Index *jCol,
+//                                                 Number *values)
+// {   
+//     if(Alg_case_ ==2){
+//         return true;
+//     }
+//     if( values == NULL ) {
+//         // return the structure of the Jacobian
+//         // this particular Jacobian is dense
+//         for(Index i = 0; i < m; i++){
+//             for(Index j = 0; j < n; j++){
+//                 iRow[i * n + j] = i;
+//                 jCol[i * n + j] = j;
+//             }
+//         }
+//     }else {
+//         // Compute πs based on x
+//         VecX z = Utils::initializeEigenVectorFromArray(x, n);
+//         VecX pi_inertia;
+//         if (Alg_case_ ==0){
+//             VecX pi_b = z.head(b_dim_);
+//             VecX pi_mf = z.tail(fm_dim_*nLinks_);
+
+//             VecX pi_bd(b_dim_ + d_dim_);
+//             pi_bd << pi_b, pi_d_;
+//             pi_inertia = Ginv_ * pi_bd;
+
+//         }else{
+//             pi_inertia = z;
+//         }
+
+//         MatX DC;
+//         if (Alg_case_ ==0){
+//             DC.resize(nLinks_, 10*nLinks_);
+//         }else if (Alg_case_ ==1){
+//             DC.resize(nLinks_, (10+fm_dim_)*nLinks_);
+//         }
+//         DC.setZero();
+
+//         for (Index j = 0; j < nLinks_; j++)
+//         {
+//             MatX LMI(4,4);
+//             compute_LMI_matrix(pi_inertia, j, LMI);
+//             double det = LMI.determinant();
+
+//             MatX dLMIdpi_full(4,4*10);// one joint
+//             compute_LMI_gradient(pi_inertia, j, dLMIdpi_full);
+
+//                 MatX LMI_inv;
+//             if (std::abs(det) < 1e-10) {
+//                 LMI_inv = LMI.completeOrthogonalDecomposition().pseudoInverse();
+//             } else {
+//                 LMI_inv = LMI.inverse();
+//             }
+
+//             for (int k = 0; k < 10; ++k) {
+//                 double grad_det = det * (LMI_inv * dLMIdpi_full.block<4,4>(0, k*4)).trace();
+//                 DC(j, j*10 + k) = -grad_det;  //  -det <= 0
+//             }
+
+//         }
+//         // calculate dphi_dX
+//         MatX dphi_dX;
+//         MatX s1(b_dim_ + d_dim_, b_dim_+ fm_dim_*nLinks_);
+//         // MatX L1;
+//         s1.setZero();
+//         s1.topLeftCorner(b_dim_, b_dim_).setIdentity();
+//         dphi_dX = Ginv_ * s1;
     
-        }else{
-            pi_inertia = z;
-        }
+//         MatX DC_regroup;
+//         if (Alg_case_ ==0){
+//             DC_regroup = DC * dphi_dX;
+//         }else{
+//             DC_regroup = DC;
+//         }
 
-        for (Index j = 0; j < nLinks_; ++j)
-        {
-            // Compute LMI matrix for link j
-            MatX LMI(4,4);
-            compute_LMI_matrix(pi_inertia, j, LMI);
-            // Compute determinant
-            double det = LMI.determinant();
-            g[j] = -det;
-        }
+//         // vector form, in row order
+//         // VecX grad;q
+//         Index idx = 0;
+//         for (Index row = 0; row < m; ++row) {
+//             for (Index col = 0; col < n; ++col) {
+//                 values[idx] = DC_regroup(row, col);
+//                 ++idx;
+//             }
+//         }
+//     }
+//     return true;
+// }
 
-        return true;
-    }
+// void BaseParametersIdentification::compute_LMI_matrix(const VecX &pi_inertia, Index j, MatX &LMI)
+// {
+//     // Extract inertia tensor for link j
+//     Mat3 I_j;
+//     I_j << pi_inertia(10 * j), pi_inertia(10 * j + 1), pi_inertia(10 * j + 2),
+//             pi_inertia(10 * j + 1), pi_inertia(10 * j + 3), pi_inertia(10 * j + 4),
+//             pi_inertia(10 * j + 2), pi_inertia(10 * j + 4), pi_inertia(10 * j + 5);
 
-    bool BaseParametersIdentification::eval_jac_g(Index n, const Number *x, bool new_x,
-                                                    Index m, Index nele_jac, Index *iRow, Index *jCol,
-                                                    Number *values)
-    {   
-        if(Alg_case_ ==2){
-            return true;
-        }
-        if( values == NULL ) {
-            // return the structure of the Jacobian
-            // this particular Jacobian is dense
-            for(Index i = 0; i < m; i++){
-                for(Index j = 0; j < n; j++){
-                    iRow[i * n + j] = i;
-                    jCol[i * n + j] = j;
-                }
-            }
-        }else {
-            // Compute πs based on x
-            VecX z = Utils::initializeEigenVectorFromArray(x, n);
-            VecX pi_inertia;
-            if (Alg_case_ ==0){
-                VecX pi_b = z.head(b_dim_);
-                VecX pi_mf = z.tail(fm_dim_*nLinks_);
+//     // center of mass
+//     Eigen::Vector3d l_j;
+//     l_j << pi_inertia(10 * j + 6), pi_inertia(10 * j + 7), pi_inertia(10 * j + 8);
 
-                VecX pi_bd(b_dim_ + d_dim_);
-                pi_bd << pi_b, pi_d_;
-                pi_inertia = Ginv_ * pi_bd;
-    
-            }else{
-                pi_inertia = z;
-            }
+//     // mass
+//     Number M_j = pi_inertia(10 * j + 9);
 
-            MatX DC;
-            if (Alg_case_ ==0){
-                DC.resize(nLinks_, 10*nLinks_);
-            }else if (Alg_case_ ==1){
-                DC.resize(nLinks_, (10+fm_dim_)*nLinks_);
-            }
-            DC.setZero();
+//     // Compute LMI matrix components
+//     Mat3 lmi11 = (I_j.trace() / 2.0) * Mat3::Identity() - I_j;
+//     Vec3 lmi12 = l_j;
+//     Number lmi22 = M_j;
 
-            for (Index j = 0; j < nLinks_; ++j)
-            {
-                MatX LMI(4,4);
-                compute_LMI_matrix(pi_inertia, j, LMI);
-                double det = LMI.determinant();
+//     // Assemble LMI matrix
+//     LMI.setZero();
+//     LMI.block<3, 3>(0, 0) = lmi11;
+//     LMI.block<3, 1>(0, 3) = lmi12;
+//     LMI.block<1, 3>(3, 0) = lmi12.transpose();
+//     LMI(3, 3) = lmi22;
+// }
 
-                MatX dLMIdpi_full(4,4*10);// one joint
-                compute_LMI_gradient(pi_inertia, j, dLMIdpi_full);
+// void BaseParametersIdentification::compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full)
+// {
+//     // Compute gradient of determinant with respect to pi_full
+//     MatX dLMIdpi_full1,
+//         dLMIdpi_full2,
+//         dLMIdpi_full3,
+//         dLMIdpi_full4,
+//         dLMIdpi_full5,
+//         dLMIdpi_full6,
+//         dLMIdpi_full7,
+//         dLMIdpi_full8,
+//         dLMIdpi_full9,
+//         dLMIdpi_full10;
 
-                 MatX LMI_inv;
-                if (std::abs(det) < 1e-10) {
-                    LMI_inv = LMI.completeOrthogonalDecomposition().pseudoInverse();
-                } else {
-                    LMI_inv = LMI.inverse();
-                }
+//     dLMIdpi_full1.resize(4, 4);
+//     dLMIdpi_full1.setZero();
+//     dLMIdpi_full1(0, 0) = -0.5;
+//     dLMIdpi_full1(1, 1) = 0.5;
+//     dLMIdpi_full1(2, 2) = 0.5;
 
-                for (int k = 0; k < 10; ++k) {
-                    double grad_det = det * (LMI_inv * dLMIdpi_full.block<4,4>(0, k*4)).trace();
-                    DC(j, j*10 + k) = -grad_det;  //  -det <= 0
-                }
+//     dLMIdpi_full2.resize(4, 4);
+//     dLMIdpi_full2.setZero();
+//     dLMIdpi_full2(0, 1) = -1;
+//     dLMIdpi_full2(1, 0) = -1;
 
-            }
-            // calculate dphi_dX
-            MatX dphi_dX;
-            MatX s1(b_dim_ + d_dim_, b_dim_+ fm_dim_*nLinks_);
-            // MatX L1;
-            s1.setZero();
-            s1.topLeftCorner(b_dim_, b_dim_).setIdentity();
-            dphi_dX = Ginv_ * s1;
-      
-            MatX DC_regroup;
-            if (Alg_case_ ==0){
-                DC_regroup = DC * dphi_dX;
-            }else{
-                DC_regroup = DC;
-            }
-   
-            // vector form, in row order
-            // VecX grad;q
-            Index idx = 0;
-            for (Index row = 0; row < m; ++row) {
-                for (Index col = 0; col < n; ++col) {
-                    values[idx] = DC_regroup(row, col);
-                    ++idx;
-                }
-            }
-        }
-        return true;
-    }
+//     dLMIdpi_full3.resize(4, 4);
+//     dLMIdpi_full3.setZero();
+//     dLMIdpi_full3(0, 2) = -1;
+//     dLMIdpi_full3(2, 0) = -1;
 
+//     dLMIdpi_full4.resize(4, 4);
+//     dLMIdpi_full4.setZero();
+//     dLMIdpi_full4(0, 0) = 0.5;
+//     dLMIdpi_full4(1, 1) = -0.5;
+//     dLMIdpi_full4(2, 2) = 0.5;
 
-    // bool BaseParametersIdentification::eval_h(
-    //     Index n, const Number* x, bool new_x, Number obj_factor,
-    //     Index m, const Number* lambda, bool new_lambda,
-    //     Index nele_hess, Index* iRow, Index* jCol, Number* values)
-    // {
-    //     if (values == NULL) {
-    //         return true;
-    //     }
-    //     for (Index idx = 0; idx < nele_hess; idx++) {
-    //         values[idx] = 0.0;
-    //     }
+//     dLMIdpi_full5.resize(4, 4);
+//     dLMIdpi_full5.setZero();
+//     dLMIdpi_full5(1, 2) = -1;
+//     dLMIdpi_full5(2, 1) = -1;
 
-    //     return true;
-    // }
+//     dLMIdpi_full6.resize(4, 4);
+//     dLMIdpi_full6.setZero();
+//     dLMIdpi_full6(0, 0) = 0.5;
+//     dLMIdpi_full6(1, 1) = 0.5;
+//     dLMIdpi_full6(2, 2) = -0.5;
 
-    void BaseParametersIdentification::compute_LMI_matrix(const VecX &pi_inertia, Index j, MatX &LMI)
-    {
-        // Extract inertia tensor for link j
-        Mat3 I_j;
-        I_j << pi_inertia(10 * j), pi_inertia(10 * j + 1), pi_inertia(10 * j + 2),
-               pi_inertia(10 * j + 1), pi_inertia(10 * j + 3), pi_inertia(10 * j + 4),
-               pi_inertia(10 * j + 2), pi_inertia(10 * j + 4), pi_inertia(10 * j + 5);
+//     dLMIdpi_full7.resize(4, 4);
+//     dLMIdpi_full7.setZero();
+//     dLMIdpi_full7(0, 3) = 1;
+//     dLMIdpi_full7(3, 0) = 1;
 
-        // center of mass
-        Eigen::Vector3d l_j;
-        l_j << pi_inertia(10 * j + 6), pi_inertia(10 * j + 7), pi_inertia(10 * j + 8);
+//     dLMIdpi_full8.resize(4, 4);
+//     dLMIdpi_full8.setZero();
+//     dLMIdpi_full8(1, 3) = 1;
+//     dLMIdpi_full8(3, 1) = 1;
 
-        // mass
-        Number M_j = pi_inertia(10 * j + 9);
+//     dLMIdpi_full9.resize(4, 4);
+//     dLMIdpi_full9.setZero();
+//     dLMIdpi_full9(2, 3) = 1;
+//     dLMIdpi_full9(3, 2) = 1;
 
-        // Compute LMI matrix components
-        Mat3 lmi11 = (I_j.trace() / 2.0) * Mat3::Identity() - I_j;
-        Vec3 lmi12 = l_j;
-        Number lmi22 = M_j;
+//     dLMIdpi_full10.resize(4, 4);
+//     dLMIdpi_full10.setZero();
+//     dLMIdpi_full10(3, 3) = 1;
 
-        // Assemble LMI matrix
-        LMI.setZero();
-        LMI.block<3, 3>(0, 0) = lmi11;
-        LMI.block<3, 1>(0, 3) = lmi12;
-        LMI.block<1, 3>(3, 0) = lmi12.transpose();
-        LMI(3, 3) = lmi22;
-    }
+//     dLMIdpi_full << dLMIdpi_full1, dLMIdpi_full2, dLMIdpi_full3, dLMIdpi_full4, dLMIdpi_full5, dLMIdpi_full6, dLMIdpi_full7, dLMIdpi_full8, dLMIdpi_full9, dLMIdpi_full10;
+// }
 
-    void BaseParametersIdentification::compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full)
-    {
-        // Compute gradient of determinant with respect to pi_full
-        MatX dLMIdpi_full1,
-            dLMIdpi_full2,
-            dLMIdpi_full3,
-            dLMIdpi_full4,
-            dLMIdpi_full5,
-            dLMIdpi_full6,
-            dLMIdpi_full7,
-            dLMIdpi_full8,
-            dLMIdpi_full9,
-            dLMIdpi_full10;
-
-        dLMIdpi_full1.resize(4, 4);
-        dLMIdpi_full1.setZero();
-        dLMIdpi_full1(0, 0) = -0.5;
-        dLMIdpi_full1(1, 1) = 0.5;
-        dLMIdpi_full1(2, 2) = 0.5;
-
-        dLMIdpi_full2.resize(4, 4);
-        dLMIdpi_full2.setZero();
-        dLMIdpi_full2(0, 1) = -1;
-        dLMIdpi_full2(1, 0) = -1;
-
-        dLMIdpi_full3.resize(4, 4);
-        dLMIdpi_full3.setZero();
-        dLMIdpi_full3(0, 2) = -1;
-        dLMIdpi_full3(2, 0) = -1;
-
-        dLMIdpi_full4.resize(4, 4);
-        dLMIdpi_full4.setZero();
-        dLMIdpi_full4(0, 0) = 0.5;
-        dLMIdpi_full4(1, 1) = -0.5;
-        dLMIdpi_full4(2, 2) = 0.5;
-
-        dLMIdpi_full5.resize(4, 4);
-        dLMIdpi_full5.setZero();
-        dLMIdpi_full5(1, 2) = -1;
-        dLMIdpi_full5(2, 1) = -1;
-
-        dLMIdpi_full6.resize(4, 4);
-        dLMIdpi_full6.setZero();
-        dLMIdpi_full6(0, 0) = 0.5;
-        dLMIdpi_full6(1, 1) = 0.5;
-        dLMIdpi_full6(2, 2) = -0.5;
-
-        dLMIdpi_full7.resize(4, 4);
-        dLMIdpi_full7.setZero();
-        dLMIdpi_full7(0, 3) = 1;
-        dLMIdpi_full7(3, 0) = 1;
-
-        dLMIdpi_full8.resize(4, 4);
-        dLMIdpi_full8.setZero();
-        dLMIdpi_full8(1, 3) = 1;
-        dLMIdpi_full8(3, 1) = 1;
-
-        dLMIdpi_full9.resize(4, 4);
-        dLMIdpi_full9.setZero();
-        dLMIdpi_full9(2, 3) = 1;
-        dLMIdpi_full9(3, 2) = 1;
-
-        dLMIdpi_full10.resize(4, 4);
-        dLMIdpi_full10.setZero();
-        dLMIdpi_full10(3, 3) = 1;
-
-        dLMIdpi_full << dLMIdpi_full1, dLMIdpi_full2, dLMIdpi_full3, dLMIdpi_full4, dLMIdpi_full5, dLMIdpi_full6, dLMIdpi_full7, dLMIdpi_full8, dLMIdpi_full9, dLMIdpi_full10;
-    }
-
-
-} // namespace Kinova
-} // namespace RAPTOR
+}; // namespace Kinova
+}; // namespace RAPTOR

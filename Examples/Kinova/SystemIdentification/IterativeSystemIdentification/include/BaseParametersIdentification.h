@@ -1,17 +1,11 @@
-#ifndef BASEPARAMETERSIDENTIFICATION_H
-#define BASEPARAMETERSIDENTIFICATION_H
-
+#ifndef BASE_PARAMETERS_IDENTIFICATION_H
+#define BASE_PARAMETERS_IDENTIFICATION_H
 
 #include "Optimizer.h"
-
-#include "RegressorInverseDynamics.h"
-#include "FixedFrequencyFourierCurves.h"
-
-#include "JointLimits.h"
-#include "VelocityLimits.h"
-#include "TorqueLimits.h"
-#include "KinovaCustomizedConstraints.h"
 #include "QRDecompositionSolver.h"
+#include "RegroupedLMIConstraints.h"
+
+#include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -19,6 +13,7 @@ namespace Kinova {
 class BaseParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
+    using Data = pinocchio::Data;
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
@@ -31,18 +26,27 @@ public:
     ~BaseParametersIdentification() = default;
 
     // [set_parameters]
+    // bool set_parameters(
+    //     MatX &Wh,
+    //     VecX &Th,
+    //     VecX &X,
+    //     bool include_friction_offset,
+    //     Model &model_input,
+    //     std::shared_ptr<QRDecompositionSolver> regroupPtr,
+    //     VecX &lb,
+    //     VecX &ub,
+    //     int b_full,
+    //     int fm_dim,
+    //     int Alg_case
+    // );
     bool set_parameters(
-        MatX &Wh,
-        VecX &Th,
-        VecX &X,
-        bool include_friction_offset,
-        Model &model_input,
-        std::shared_ptr<QRDecompositionSolver> regroupPtr,
-        VecX &lb,
-        VecX &ub,
-        int b_full,
-        int fm_dim,
-        int Alg_case
+        const Model& model_input,
+        const std::shared_ptr<MatX>& posPtr_input,
+        const std::shared_ptr<MatX>& velPtr_input,
+        const std::shared_ptr<MatX>& accPtr_input,
+        const std::shared_ptr<MatX>& torquePtr_input,
+        std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
+        const bool include_offset_input = false
     );
 
     /**@name Overloaded from TNLP */
@@ -95,37 +99,32 @@ public:
         Number*       grad_f
     ) final override;
 
-    /** Method to return the constraint residuals */
-    bool eval_g(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Index         m,
-        Number*       g
-    ) final override;
+    // /** Method to return the constraint residuals */
+    // bool eval_g(
+    //     Index         n,
+    //     const Number* x,
+    //     bool          new_x,
+    //     Index         m,
+    //     Number*       g
+    // ) final override;
 
-    /** Method to return:
-    *   1) The structure of the jacobian (if "values" is NULL)
-    *   2) The values of the jacobian (if "values" is not NULL)
-    */
-    bool eval_jac_g(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Index         m,
-        Index         nele_jac,
-        Index*        iRow,
-        Index*        jCol,
-        Number*       values
-    ) final override;
+    // /** Method to return:
+    // *   1) The structure of the jacobian (if "values" is NULL)
+    // *   2) The values of the jacobian (if "values" is not NULL)
+    // */
+    // bool eval_jac_g(
+    //     Index         n,
+    //     const Number* x,
+    //     bool          new_x,
+    //     Index         m,
+    //     Index         nele_jac,
+    //     Index*        iRow,
+    //     Index*        jCol,
+    //     Number*       values
+    // ) final override;
 
-    // bool eval_h(
-    //     Index n, const Number* x, bool new_x, Number obj_factor,
-    //     Index m, const Number* lambda, bool new_lambda,
-    //     Index nele_hess, Index* iRow, Index* jCol, Number* values)final override;
-
-    void compute_LMI_matrix(const VecX &pi_inertia,  Index j, MatX &LMI);
-    void compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full);
+    // void compute_LMI_matrix(const VecX &pi_inertia,  Index j, MatX &LMI);
+    // void compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full);
     
     /**@name Methods to block default compiler methods.
     *
@@ -146,29 +145,31 @@ public:
        const BaseParametersIdentification&
     );
 
-    MatX Wh_;
-    VecX Th_;
-    VecX X_;
-    int fm_dim_;
-    bool include_friction_offset_;
-    Model model_input_;
-    VecX lb_;
-    VecX ub_;
-    int b_full_;
-    int Alg_case_;
-    int nLinks_;
+    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
 
-    // regroup 
-    MatX Ginv_;
-    VecX pi_d_;
-    int b_dim_;
-    int d_dim_;
-    int p_ip_;
+    std::shared_ptr<Model> modelPtr_; // robot model
+    std::shared_ptr<Data> dataPtr_; // robot data
+
+    MatX FullObservationMatrix; // full observation matrix
+    MatX RegroupedObservationMatrix; // regrouped observation matrix
+
+    // shared pointers to data
+    std::shared_ptr<MatX> posPtr_;
+    std::shared_ptr<MatX> velPtr_;
+    std::shared_ptr<MatX> accPtr_;
+    std::shared_ptr<MatX> torquePtr_;
+
+    MatX tau_inertials; // computed from the trajectory without friction
+
+    int Nact = 0; // number of motors
+    int N = 0; // number of samples
 
     std::shared_ptr<QRDecompositionSolver> regroupPtr_;
+
+    bool include_offset = false;
 };
 
-} // namespace Kinova
-} // namespace RAPTOR
+}; // namespace Kinova
+}; // namespace RAPTOR
 
-#endif // BASEPARAMETERSIDENTIFICATION_H
+#endif // BASE_PARAMETERS_IDENTIFICATION_H

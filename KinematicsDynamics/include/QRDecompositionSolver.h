@@ -29,12 +29,12 @@ public:
 
     // class methods:
         // generate random observation on a certain number of instances
-    void generateRandomObservation(const int numInstances = 1000);
+    void generateRandomObservation(const int numInstances = 10000);
 
         // compute QR decomposition-based regrouping
     void computeRegroupMatrix();
 
-    // class variables:
+    // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
     std::shared_ptr<Data> dataPtr_ = nullptr;
 

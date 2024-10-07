@@ -1,13 +1,13 @@
-#ifndef LMI_CONSTRAINTS_H
-#define LMI_CONSTRAINTS_H
+#ifndef REGROUPED_LMI_CONSTRAINTS_H
+#define REGROUPED_LMI_CONSTRAINTS_H
 
-#include "Constraints.h"
-#include "pinocchio/spatial/symmetric3.hpp"
+#include "LMIConstraints.h"
+#include "QRDecompositionSolver.h"
 
 namespace RAPTOR {
 
 // This is the base (abstract) class for all constraints
-class LMIConstraints: public Constraints {
+class RegroupedLMIConstraints: public Constraints {
 public:
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
@@ -18,13 +18,14 @@ public:
     using Symmetric3 = pinocchio::Symmetric3Tpl<double>;
 
     // Constructor
-    LMIConstraints() = default;
+    RegroupedLMIConstraints() = default;
 
-    LMIConstraints(const int num_links_input,
-                   const int varLength);
+    RegroupedLMIConstraints(const std::shared_ptr<QRDecompositionSolver>& qrSolverPtr_input,
+                            const int num_links_input,
+                            const int varLength);
 
     // Destructor
-    ~LMIConstraints() = default;
+    ~RegroupedLMIConstraints() = default;
 
     // class methods:
     virtual void compute(const VecX& z, 
@@ -37,8 +38,11 @@ public:
 
     // class members:
     int num_links = 0;
+
+    std::shared_ptr<QRDecompositionSolver> qrSolverPtr_ = nullptr;
+    std::shared_ptr<LMIConstraints> lmiConstraintsPtr_ = nullptr;
 };
 
 }; // namespace RAPTOR
 
-#endif // LMI_CONSTRAINTS_H
+#endif // REGROUPED_LMI_CONSTRAINTS_H

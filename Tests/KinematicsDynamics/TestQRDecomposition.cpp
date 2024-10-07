@@ -22,7 +22,9 @@ int main() {
     phi1 << qrSolver.beta, qrSolver.phi_d;
 
     std::cout << "ground truth:\n" << qrSolver.phi.transpose() << std::endl;
-    std::cout << "recovered:\n" << (qrSolver.Ginv *  phi1).transpose() << std::endl;
+    std::cout << "recovered:\n" << (qrSolver.Ginv * phi1).transpose() << std::endl;
+
+    std::cout << qrSolver.Ginv << std::endl;
 
     return 0;
 }
