@@ -6,7 +6,6 @@
 #include "pinocchio/algorithm/rnea.hpp"
 
 namespace RAPTOR {
-namespace Kinova {
 
 class FrictionParametersIdentification : public Optimizer {
 public:
@@ -42,6 +41,7 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
+    /** Method to return the bounds for my problem */
     bool get_bounds_info(
         Index n, 
         Number* x_l, 
@@ -50,20 +50,7 @@ public:
         Number* g_l, 
         Number* g_u
     ) final override;
-
-
-    bool get_starting_point(
-        Index       n, 
-        bool        init_x, 
-        Number*     x,
-        bool        init_z, 
-        Number*     z_L, 
-        Number*     z_U,
-        Index       m, 
-        bool        init_lambda,
-        Number*     lambda
-    ) final override;
-
+    
     /** Method to return the objective value */
     bool eval_f(
         Index         n,
@@ -128,7 +115,6 @@ public:
     bool include_offset = false;
 };
 
-}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // FRICTION_PARAMETERS_IDENTIFICATION_H

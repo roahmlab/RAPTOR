@@ -8,7 +8,6 @@
 #include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
-namespace Kinova {
 
 class BaseParametersIdentification : public Optimizer {
 public:
@@ -98,33 +97,6 @@ public:
         bool          new_x,
         Number*       grad_f
     ) final override;
-
-    // /** Method to return the constraint residuals */
-    // bool eval_g(
-    //     Index         n,
-    //     const Number* x,
-    //     bool          new_x,
-    //     Index         m,
-    //     Number*       g
-    // ) final override;
-
-    // /** Method to return:
-    // *   1) The structure of the jacobian (if "values" is NULL)
-    // *   2) The values of the jacobian (if "values" is not NULL)
-    // */
-    // bool eval_jac_g(
-    //     Index         n,
-    //     const Number* x,
-    //     bool          new_x,
-    //     Index         m,
-    //     Index         nele_jac,
-    //     Index*        iRow,
-    //     Index*        jCol,
-    //     Number*       values
-    // ) final override;
-
-    // void compute_LMI_matrix(const VecX &pi_inertia,  Index j, MatX &LMI);
-    // void compute_LMI_gradient(const VecX &pi_full, Index j, MatX &dLMIdpi_full);
     
     /**@name Methods to block default compiler methods.
     *
@@ -169,7 +141,6 @@ public:
     bool include_offset = false;
 };
 
-}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // BASE_PARAMETERS_IDENTIFICATION_H

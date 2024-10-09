@@ -189,30 +189,27 @@ target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
 target_compile_options(KinovaEndeffectorExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-# add_executable(Sys_id_combine_test
-#     SystemIdentification/IterativeSystemIdentification/Test_SysID.cpp)
+    
+add_executable(SysidFriction_test
+    SystemIdentification/IterativeSystemIdentification/TestFrictionParametersIdentification.cpp)
 
-# target_include_directories(Sys_id_combine_test PUBLIC
-#     SystemIdentification
-#     SystemIdentification/DataFilter/include
-#     SystemIdentification/ExcitingTrajectories/include
-#     SystemIdentification/IterativeSystemIdentification/include
-#     SystemIdentification/IterativeSystemIdentification
-#     )
+target_include_directories(SysidFriction_test PUBLIC
+    SystemIdentification
+    SystemIdentification/IterativeSystemIdentification/include)
 
-# target_link_libraries(Sys_id_combine_test PUBLIC
-#     trajlib 
-#     IDlib
-#     Conslib
-#     Optlib
-#     Kinovalib
-#     ipopt
-#     coinhsl
-#     ${BOOST_LIBRARIES} 
-#     pinocchio::pinocchio)
+target_link_libraries(SysidFriction_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
 
-# target_compile_options(Sys_id_combine_test PUBLIC
-#     ${PINOCCHIO_FLAGS})
+target_compile_options(SysidFriction_test PUBLIC
+    ${PINOCCHIO_FLAGS})
 
 
 ### Python bindings 

@@ -30,7 +30,7 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
 ) {
     enable_hessian = false;
     x0 = x0_input;
-    joint_num =model_input.nv;
+    joint_num = model_input.nv;
 
     // fixed frequency fourier curves with 0 initial velocity
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 

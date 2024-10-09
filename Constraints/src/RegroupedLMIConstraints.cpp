@@ -36,7 +36,7 @@ void RegroupedLMIConstraints::compute(const VecX& z,
 
     // assume the inertial parameters start from the beginning of z
     // recover the original inertial parameters
-    VecX phi = z.head(dim);
+    const VecX& phi = z.head(dim);
     VecX phi_recovered = qrSolverPtr_->Ginv * phi;
 
     // compute the LMI constraints

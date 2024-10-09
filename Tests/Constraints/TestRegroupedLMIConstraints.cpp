@@ -8,6 +8,8 @@
 using namespace RAPTOR;
 
 int main() {
+    std::srand(time(nullptr));
+    
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
@@ -16,7 +18,7 @@ int main() {
 
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero(); 
+    model.armature.setZero(); 
 
     // Define QR decomposition solver
     std::shared_ptr<QRDecompositionSolver> qrSolverPtr_ = 
