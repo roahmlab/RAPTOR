@@ -21,10 +21,10 @@ int main() {
     Eigen::VectorXd phi1(qrSolver.phi.size());
     phi1 << qrSolver.beta, qrSolver.phi_d;
 
-    std::cout << "ground truth:\n" << qrSolver.phi.transpose() << std::endl;
-    std::cout << "recovered:\n" << (qrSolver.Ginv * phi1).transpose() << std::endl;
-
-    std::cout << qrSolver.Ginv << std::endl;
+    // std::cout << "ground truth:\n" << qrSolver.phi.transpose() << std::endl;
+    // std::cout << "recovered:\n" << (qrSolver.Ginv * phi1).transpose() << std::endl;
+    std::cout << qrSolver.phi.transpose() -
+                 (qrSolver.Ginv * phi1).transpose() << std::endl;
 
     return 0;
 }

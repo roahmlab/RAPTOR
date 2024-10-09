@@ -52,14 +52,6 @@ int main() {
         regroupedLMI.compute(z_minus, false);
         const Eigen::VectorXd g_minus = regroupedLMI.g;
         J_numerical.col(i) = (g_plus - g_minus) / 2e-7;
-
-
-        std::cout << i << std::endl;
-        // for (int j = 0; j < J_analytical.rows(); j++) {
-        //     std::cout << J_analytical(j, i) << " " << J_numerical(j, i) << std::endl;
-        // }
-
-        std::cout << J_analytical.col(i).transpose() - J_numerical.col(i).transpose() << std::endl;
     }
     std::cout << "difference: " << (J_analytical - J_numerical).norm() << std::endl;
 

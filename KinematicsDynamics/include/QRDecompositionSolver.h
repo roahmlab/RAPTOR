@@ -29,10 +29,10 @@ public:
 
     // class methods:
         // generate random observation on a certain number of instances
-    void generateRandomObservation(const int numInstances = 10000);
+    void generateRandomObservation(const int numInstances = 1000);
 
         // compute QR decomposition-based regrouping
-    void computeRegroupMatrix();
+    void computeRegroupMatrix(const double eps = 1e-8);
 
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
@@ -57,9 +57,6 @@ public:
     // Dimensions of independent and dependent parameters
     int dim_id = 0;
     int dim_d = 0;
-
-    // Threshold for numerical stability
-    double eps = 1e-8;
 };
 
 }; // namespace RAPTOR

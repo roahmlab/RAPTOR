@@ -202,7 +202,6 @@ inline Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> initializeEigenVectorArr
     return res;
 }
 
-
 inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix, 
                                    const std::string filename) {
     std::ofstream file(filename);

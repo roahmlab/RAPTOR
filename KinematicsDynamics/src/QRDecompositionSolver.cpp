@@ -39,7 +39,7 @@ void QRDecompositionSolver::generateRandomObservation(const int numInstances) {
     }
 }
 
-void QRDecompositionSolver::computeRegroupMatrix() {
+void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
     if (ObservationMatrix.rows() == 0 ||
         ObservationMatrix.cols() == 0) {
         throw std::runtime_error("Observation matrix is not initialized yet!");
@@ -52,58 +52,55 @@ void QRDecompositionSolver::computeRegroupMatrix() {
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = qr.colsPermutation();
 
     // Redefine the permutation matrix meaning, same as MATLAB
-    // perm.indices()[i] = j   old matrix ith col move to new matrix jth col
-    // M[i] = j  old jth col is M ith col
+    // perm.indices()[i] = j old matrix ith col move to new matrix jth col
+    // M[i] = j old jth col is M ith col
     std::vector<int> M(perm.indices().size());
     for (int i = 0; i < perm.indices().size(); i++) {
-        M[perm.indices()[i]] =i;
+        M[perm.indices()[i]] = i;
     }
 
     // Get the rank of the matrix
-    int rankW = qr.rank();
+    const int rankW = qr.rank();
 
     // Extract and sort independent cols
-    std::vector<int> idx(M.begin(), M.begin() + rankW);
-    std::sort(idx.begin(), idx.end());
+    std::vector<int> independent_idx(M.begin(), M.begin() + rankW);
+    std::sort(independent_idx.begin(), independent_idx.end());
 
     // Extract and sort dependent cols
-    std::vector<int> idx_(M.begin() + rankW, M.end());
-    std::sort(idx_.begin(), idx_.end());
-
-    int p = ObservationMatrix.cols();
+    std::vector<int> dependent_idx(M.begin() + rankW, M.end());
+    std::sort(dependent_idx.begin(), dependent_idx.end());
 
     // Initialize Aid matrix
-    Aid = MatX::Zero(p, rankW);
+    Aid = MatX::Zero(ObservationMatrix.cols(), rankW);
     for (int i = 0; i < rankW; i++) {
-        Aid(idx[i], i) = 1.0;
+        Aid(independent_idx[i], i) = 1.0;
     }
 
     // Initialize Ad matrix
-    Ad = MatX::Zero(p, p - rankW);
-    for (int i = 0; i < static_cast<int>(idx_.size()); i++) {
-        Ad(idx_[i], i) = 1.0;
+    Ad = MatX::Zero(ObservationMatrix.cols(), ObservationMatrix.cols() - rankW);
+    for (int i = 0; i < static_cast<int>(dependent_idx.size()); i++) {
+        Ad(dependent_idx[i], i) = 1.0;
     }
 
     // Combine Aid and Ad to form the full selection matrix A
-    A.resize(p, p);
+    A.resize(ObservationMatrix.cols(), ObservationMatrix.cols());
     A << Aid, Ad;
 
     // Perform QR decomposition on ObservationMatrix * A
-    Eigen::HouseholderQR<MatX> qr_A(ObservationMatrix * A);
+    Eigen::ColPivHouseholderQR<MatX> qr_A(ObservationMatrix * A);
     MatX R_full = qr_A.matrixQR().triangularView<Eigen::Upper>();
 
     // Extract indep R1 and dep R2 
-    MatX R1 = R_full.topLeftCorner(rankW, rankW);
-    MatX R2 = R_full.topRightCorner(rankW, p - rankW);
+    const MatX& R1 = R_full.topLeftCorner(rankW, rankW);
+    const MatX& R2 = R_full.topRightCorner(rankW, ObservationMatrix.cols() - rankW);
 
     // Compute Kd = R1^{-1} * R2 using a stable solver
     Kd = R1.colPivHouseholderQr().solve(R2);
 
     // Zero out elements in Kd that are below the threshold for numerical stability
-    double threshold = std::sqrt(eps);
     for (int i = 0; i < Kd.rows(); i++) {
         for (int j = 0; j < Kd.cols(); j++) {
-            if (std::abs(Kd(i, j)) < threshold) {
+            if (std::abs(Kd(i, j)) < eps) {
                 Kd(i, j) = 0.0;
             }
         }
@@ -117,11 +114,13 @@ void QRDecompositionSolver::computeRegroupMatrix() {
     beta = phi_id + Kd * phi_d;
 
     // Compute Ginv
-    MatX KG_(p, p);
+    MatX KG_(ObservationMatrix.cols(), ObservationMatrix.cols());
     KG_.setZero();
     KG_.topLeftCorner(rankW, rankW) = MatX::Identity(rankW, rankW);
-    KG_.topRightCorner(rankW, p - rankW) = -Kd;
-    KG_.bottomRightCorner(p - rankW, p - rankW) = MatX::Identity(p - rankW, p - rankW);
+    KG_.topRightCorner(rankW, ObservationMatrix.cols() - rankW) = -Kd;
+    KG_.bottomRightCorner(ObservationMatrix.cols() - rankW, ObservationMatrix.cols() - rankW) = 
+        MatX::Identity(ObservationMatrix.cols() - rankW, ObservationMatrix.cols() - rankW);
+
     Ginv = A * KG_;
 
     // Set the dimensions of independent and dependent parameters
