@@ -69,19 +69,6 @@ public:
         Number* g_u
     ) final override;
 
-    /** Method to return the starting point for the algorithm */
-    bool get_starting_point(
-        Index   n,
-        bool    init_x,
-        Number* x,
-        bool    init_z,
-        Number* z_L,
-        Number* z_U,
-        Index   m,
-        bool    init_lambda,
-        Number* lambda
-    ) final override;
-
     /** Method to return the objective value */
     bool eval_f(
         Index         n,
