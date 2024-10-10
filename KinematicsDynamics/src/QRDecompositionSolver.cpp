@@ -94,6 +94,13 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
     const MatX& R1 = R_full.topLeftCorner(rankW, rankW);
     const MatX& R2 = R_full.topRightCorner(rankW, ObservationMatrix.cols() - rankW);
 
+    // sanity check on rank of R1
+    if (R1.colPivHouseholderQr().rank() != rankW) {
+        std::cerr << R1.colPivHouseholderQr().rank() << std::endl;
+        std::cerr << rankW << std::endl;
+        throw std::runtime_error("Rank of R1 is not full rank!");
+    }
+
     // Compute Kd = R1^{-1} * R2 using a stable solver
     Kd = R1.colPivHouseholderQr().solve(R2);
 

@@ -34,7 +34,7 @@ int main() {
     RegroupedLMIConstraints regroupedLMI(qrSolverPtr_, model.nv, 10 * model.nv);
     Eigen::VectorXd z(qrSolverPtr_->dim_id + qrSolverPtr_->dim_d);
     z << qrSolverPtr_->beta, qrSolverPtr_->phi_d;
-    regroupedLMI.compute(z, true);
+    regroupedLMI.compute(z, true, true);
 
     // test the constraints consistency
     std::cout << "difference: " << (lmi.g - regroupedLMI.g).norm() << std::endl;
@@ -55,7 +55,25 @@ int main() {
         const Eigen::VectorXd g_minus = regroupedLMI.g;
         J_numerical.col(i) = (g_plus - g_minus) / 2e-7;
     }
-    std::cout << "difference: " << (J_analytical - J_numerical).norm() << std::endl;
+    std::cout << "jacobian total difference: " << (J_analytical - J_numerical).norm() << std::endl;
+
+    // test hessian
+    Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic> H_analytical = regroupedLMI.pg_pz_pz;
+    for (int i = 0; i < z.size(); i++) {
+        Eigen::VectorXd q_plus = z;
+        q_plus(i) += 1e-7;
+        regroupedLMI.compute(q_plus, true, false);
+        const Eigen::MatrixXd J_plus = regroupedLMI.pg_pz;
+        Eigen::VectorXd q_minus = z;
+        q_minus(i) -= 1e-7;
+        regroupedLMI.compute(q_minus, true, false);
+        const Eigen::MatrixXd J_minus = regroupedLMI.pg_pz;
+        const Eigen::MatrixXd H_numerical_row = (J_plus - J_minus) / 2e-7;
+
+        for (int j = 0; j < H_analytical.size(); j++) {
+            std::cout << "hessian row difference: " << (H_analytical(j).row(i) - H_numerical_row.row(j)).norm() << std::endl;
+        }
+    }
 
     return 0;
 }

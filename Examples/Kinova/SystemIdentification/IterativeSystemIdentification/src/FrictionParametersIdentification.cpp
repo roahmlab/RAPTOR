@@ -245,11 +245,10 @@ bool FrictionParametersIdentification::eval_hess_f(
    MatX&         hess_f
 )
 {
-    if(n != numVars){
+    if (n != numVars) {
        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
     }
 
-    // this is a quadratic problem so the hessian should be idenity matrix
     hess_f = MatX::Zero(n, n);
 
     for (Index i = 0; i < N; i++) {

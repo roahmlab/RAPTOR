@@ -92,11 +92,11 @@ bool BaseParametersIdentification::set_parameters(
 
         // initial guess for motor friction parameters is just 0
 
-    // initialize LMI constraints
+    // initialize LMI constraints for all links
     constraintsPtrVec_.push_back(std::make_unique<RegroupedLMIConstraints>(regroupPtr_input,
                                                                            modelPtr_->nv,
                                                                            n));       
-    constraintsNameVec_.push_back("LMI constraints"); 
+    constraintsNameVec_.push_back("Regrouped LMI constraints"); 
 
     return true;
 }
@@ -301,7 +301,6 @@ bool BaseParametersIdentification::eval_grad_f(
         VecX tau_estimated = tau_inertial + total_friction_force;
         VecX tau_diff = tau_estimated - tau;
 
-        // obj_value += (tau_estimated - tau).squaredNorm();
         grad_f_vec.head(dim_id) += tau_diff.transpose() * (RegroupedObservationMatrix.middleRows(i * Nact, Nact));
         grad_f_vec.segment(dim_id + dim_d, Nact) += tau_diff.cwiseProduct(q_d.cwiseSign());
         grad_f_vec.segment(dim_id + dim_d + Nact, Nact) += tau_diff.cwiseProduct(q_d);
@@ -317,5 +316,70 @@ bool BaseParametersIdentification::eval_grad_f(
 
     return true;
 }
+
+// [TNLP_eval_hess_f]
+// return the hessian of the objective function hess_{x} f(x) as a dense matrix
+bool BaseParametersIdentification::eval_hess_f(
+   Index         n,
+   const Number* x,
+   bool          new_x,
+   MatX&         hess_f
+)
+{
+    if (n != numVars) {
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
+    }
+
+    const int& dim_id = regroupPtr_->dim_id;
+    const int& dim_d = regroupPtr_->dim_d;
+    const int dim = dim_id + dim_d;
+
+    hess_f = MatX::Zero(n, n);
+
+    for (Index i = 0; i < N; i++) {
+        const VecX& q_d = velPtr_->col(i);
+        const VecX& q_dd = accPtr_->col(i);
+        const MatX& romi = RegroupedObservationMatrix.middleRows(i * Nact, Nact);
+        const MatX romi_T = romi.transpose();
+        
+        hess_f.topLeftCorner(dim_id, dim_id) += 
+            romi_T * romi;
+        hess_f.block(0, dim, dim_id, Nact).array() += 
+            (romi.array().colwise() * q_d.cwiseSign().array()).transpose();
+        hess_f.block(0, dim + Nact, dim_id, Nact).array() +=
+            (romi.array().colwise() * q_d.array()).transpose();
+        hess_f.block(0, dim + 2 * Nact, dim_id, Nact).array() +=
+            (romi.array().colwise() * q_dd.array()).transpose();
+        if (include_offset) {
+            hess_f.block(0, dim + 3 * Nact, dim_id, Nact).array() +=
+                romi.array().transpose();
+        }
+
+        hess_f.diagonal().segment(dim, Nact) += q_d.cwiseSign().cwiseAbs2();
+        hess_f.block(dim, dim + Nact, Nact, Nact).diagonal().array() += q_d.cwiseSign().array() * q_d.array();
+        hess_f.block(dim, dim + 2 * Nact, Nact, Nact).diagonal().array() += q_d.cwiseSign().array() * q_dd.array();
+        if (include_offset) {
+            hess_f.block(dim, dim + 3 * Nact, Nact, Nact).diagonal() += q_d.cwiseSign();
+        }
+
+        hess_f.diagonal().segment(dim + Nact, Nact) += q_d.cwiseAbs2();
+        hess_f.block(dim + Nact, dim + 2 * Nact, Nact, Nact).diagonal().array() += q_d.array() * q_dd.array();
+        if (include_offset) {
+            hess_f.block(dim + Nact, dim + 3 * Nact, Nact, Nact).diagonal() += q_d;
+        }
+
+        hess_f.diagonal().segment(dim + 2 * Nact, Nact) += q_dd.cwiseAbs2();
+        if (include_offset) {
+            hess_f.block(dim + 2 * Nact, dim + 3 * Nact, Nact, Nact).diagonal() += q_dd;
+        }
+
+        if (include_offset) {
+            hess_f.diagonal().tail(Nact) += VecX::Ones(Nact);
+        }
+    }
+
+    return true;
+}
+// [TNLP_eval_hess_f]
 
 }; // namespace RAPTOR

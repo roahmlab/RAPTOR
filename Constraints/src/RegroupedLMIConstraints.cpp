@@ -28,9 +28,9 @@ RegroupedLMIConstraints::RegroupedLMIConstraints(const std::shared_ptr<QRDecompo
 void RegroupedLMIConstraints::compute(const VecX& z, 
                                       bool compute_derivatives,
                                       bool compute_hessian) {
-    if (compute_hessian) {
-        throw std::invalid_argument("Error: Hessian computation is not supported for LMI constraints");
-    }        
+    if (is_computed(z, compute_derivatives, compute_hessian)) {
+        return;
+    }     
 
     const int dim = qrSolverPtr_->dim_id + qrSolverPtr_->dim_d;
 
@@ -49,6 +49,15 @@ void RegroupedLMIConstraints::compute(const VecX& z,
         pg_pz.setZero();
         pg_pz.leftCols(dim) =
             lmiConstraintsPtr_->pg_pz.leftCols(dim) * qrSolverPtr_->Ginv;
+
+        if (compute_hessian) {
+            for (int j = 0; j < g.size(); j++) {
+                pg_pz_pz(j).topLeftCorner(dim, dim) =
+                    qrSolverPtr_->Ginv.transpose() *
+                    lmiConstraintsPtr_->pg_pz_pz(j).topLeftCorner(dim, dim) * 
+                    qrSolverPtr_->Ginv;
+            }
+        }
     }
 }
 

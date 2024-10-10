@@ -23,7 +23,7 @@ int main() {
     qrSolverPtr_->computeRegroupMatrix();
 
     // Initialize data
-    const int N = 100;
+    const int N = 1000;
 
     std::shared_ptr<Eigen::MatrixXd> posDataPtr_ = std::make_shared<Eigen::MatrixXd>();
     std::shared_ptr<Eigen::MatrixXd> velDataPtr_ = std::make_shared<Eigen::MatrixXd>();
@@ -67,11 +67,12 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-4);
-    app->Options()->SetNumericValue("constr_viol_tol", 1e-6);
+    app->Options()->SetNumericValue("constr_viol_tol", 1e-5);
+    mynlp->constr_viol_tol = 1e-5;
     // app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 10.0);
+	app->Options()->SetNumericValue("max_wall_time", 100.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 1000);
+    app->Options()->SetIntegerValue("max_iter", 3000);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -84,7 +85,7 @@ int main() {
 
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetStringValue("derivative_test", "second-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
