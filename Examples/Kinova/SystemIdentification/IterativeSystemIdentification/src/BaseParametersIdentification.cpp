@@ -33,6 +33,7 @@ bool BaseParametersIdentification::set_parameters(
     velPtr_ = velPtr_input;
     accPtr_ = accPtr_input;
     torquePtr_ = torquePtr_input;
+    std::cout << modelPtr_->nv << std::endl;
 
     if (posPtr_->rows() != velPtr_->rows() || 
         posPtr_->rows() != accPtr_->rows() || 

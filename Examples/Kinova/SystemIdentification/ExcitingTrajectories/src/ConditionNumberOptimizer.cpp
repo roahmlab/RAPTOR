@@ -93,19 +93,36 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
-    // // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
-    std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
-    std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
+    // Customized constraints (collision avoidance with ground)
+    std::vector<Vec3> Center = {Vec3(0.0, 0.0, 0.15),
+                                 Vec3(0.53, 0.49, 0.56),  // back wall
+                                 Vec3(-0.39, -0.84, 0.56), // bar near the control
+                                 Vec3(-0.39, -0.17, 0.56), //bar bewteen 10 and 20 change to wall
+                                 Vec3(0.0, 0.0, 1.12), //ceiling
+                                 Vec3(0.47, -0.09, 1.04) // top camera  
+                                };    
+    std::vector<Vec3> Orientation = {Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0)
+                                    };
+    std::vector<Vec3> Size = {Vec3(5.0, 5.0, 0.01),
+                              Vec3(5.0, 0.05+0.1, 1.12),
+                              Vec3( 0.05+0.1, 0.05+0.1, 1.12),
+                              Vec3( 0.05+0.1, 1.28, 1.28),
+                              Vec3( 5, 5, 0.05),
+                              Vec3( 0.15+0.1, 0.15+0.1, 0.15+0.2)
+                            };    
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               groundCenter,
-                                                                               groundOrientation,
-                                                                               groundSize,
+                                                                               Center,
+                                                                               Orientation,
+                                                                               Size,
                                                                                0.0,
-                                                                               jtype_input));   
+                                                                               jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
-
     // check dimensions of regroupMatrix
     if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
         throw std::invalid_argument("ConditionNumberOptimizer: regroupMatrix has wrong dimensions!");

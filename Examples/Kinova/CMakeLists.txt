@@ -6,15 +6,11 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
-<<<<<<< HEAD
-)
-=======
     SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
     SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp)
     # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
     # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
->>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -171,8 +167,6 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-<<<<<<< HEAD
-=======
 add_executable(KinovaEndeffectorExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
 
@@ -240,7 +234,6 @@ target_compile_options(SysidBase_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
->>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
     NB_SHARED LTO
