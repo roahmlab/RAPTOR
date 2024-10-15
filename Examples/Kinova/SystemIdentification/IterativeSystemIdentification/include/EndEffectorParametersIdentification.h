@@ -1,15 +1,15 @@
-#ifndef BASE_PARAMETERS_IDENTIFICATION_H
-#define BASE_PARAMETERS_IDENTIFICATION_H
+#ifndef ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
+#define ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
 
 #include "Optimizer.h"
-#include "QRDecompositionSolver.h"
-#include "RegroupedLMIConstraints.h"
+// #include "QRDecompositionSolver.h"
+#include "LMIConstraints.h"
 
 #include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
 
-class BaseParametersIdentification : public Optimizer {
+class EndEffectorParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
@@ -19,10 +19,10 @@ public:
     using Mat3 = Eigen::Matrix3d;
 
     /** Default constructor */
-    BaseParametersIdentification() = default;
+    EndEffectorParametersIdentification() = default;
 
     /** Default destructor */
-    ~BaseParametersIdentification() = default;
+    ~EndEffectorParametersIdentification() = default;
 
     // [set_parameters]
     // bool set_parameters(
@@ -44,7 +44,7 @@ public:
         const std::shared_ptr<MatX>& velPtr_input,
         const std::shared_ptr<MatX>& accPtr_input,
         const std::shared_ptr<MatX>& torquePtr_input,
-        std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
+        const std::shared_ptr<VecX>& phiPtr_input, 
         const bool include_offset_input = false
     );
 
@@ -104,34 +104,42 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    BaseParametersIdentification(
-       const BaseParametersIdentification&
+    EndEffectorParametersIdentification(
+       const EndEffectorParametersIdentification&
     );
 
-    BaseParametersIdentification& operator=(
-       const BaseParametersIdentification&
+    EndEffectorParametersIdentification& operator=(
+       const EndEffectorParametersIdentification&
     );
 
-    const double default_maximum_uncertainty = 1; // default maximum uncertainty
+    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
 
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
 
     MatX FullObservationMatrix; // full observation matrix
-    MatX RegroupedObservationMatrix; // regrouped observation matrix
+    MatX EndeffectorObservation; // Endeffector observation matrix
+    
+    VecX friction;
+    VecX damping;
+    VecX armature;
+    VecX offset;
 
     // shared pointers to data
     std::shared_ptr<MatX> posPtr_;
     std::shared_ptr<MatX> velPtr_;
     std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
+    std::shared_ptr<VecX> phiPtr_; 
+
+
 
     MatX tau_inertials; // computed from the trajectory without friction
 
     int Nact = 0; // number of motors
     int N = 0; // number of samples
 
-    std::shared_ptr<QRDecompositionSolver> regroupPtr_;
+    // std::shared_ptr<QRDecompositionSolver> regroupPtr_;
 
     bool include_offset = false;
 };
