@@ -107,9 +107,9 @@ void ZonotopeCollisionAvoidance::initialize() {
 		vertices.push_back(c[0]);
 		vertices.push_back(c[1]);
 		vertices.push_back(c[2]);
-		for (int i = 0; i < MAX_OBSTACLE_GENERATOR_NUM; ++i) {
+		for (int i = 0; i < MAX_OBSTACLE_GENERATOR_NUM; i++) {
 			std::vector<double> vertices_new;
-			for (int j = 0; j < vertices.size() / dim; ++j) {
+			for (int j = 0; j < vertices.size() / dim; j++) {
 				for (int k = 0; k < dim; ++k) {
 					vertices_new.push_back(vertices[j * dim + k] + G(k, i));
 				}

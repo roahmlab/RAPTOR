@@ -396,7 +396,8 @@ bool Optimizer::eval_h(
 
     if (values == NULL) {
         /* return the structure */
-        /* the hessian for this problem is actually dense */
+        /* the hessian for this problem is actually dense 
+           but we only require the upper triangle part since hessian should be symmetric*/
         Index iter = 0;
         for(Index i = 0; i < n; i++){
             for(Index j = i; j < n; j++){

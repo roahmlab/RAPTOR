@@ -6,7 +6,15 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
+<<<<<<< HEAD
 )
+=======
+    SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
+    SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp)
+    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
+    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
+>>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,7 +24,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification)
 
 target_link_libraries(Kinovalib PUBLIC
     trajlib
@@ -27,8 +35,7 @@ target_link_libraries(Kinovalib PUBLIC
     coinhsl
     ${Boost_LIBRARIES} 
     pinocchio::pinocchio
-    ompl
-)
+    ompl)
 
 ###
 add_executable(KinovaIK_example 
@@ -164,6 +171,76 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
+<<<<<<< HEAD
+=======
+add_executable(KinovaEndeffectorExciting_example
+    SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
+
+target_include_directories(KinovaEndeffectorExciting_example PUBLIC
+    ystemIdentification/DataFilter/include
+    SystemIdentification/ExcitingTrajectories/include
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(KinovaEndeffectorExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+    
+add_executable(SysidFriction_test
+    SystemIdentification/IterativeSystemIdentification/TestFrictionParametersIdentification.cpp)
+
+target_include_directories(SysidFriction_test PUBLIC
+    SystemIdentification
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(SysidFriction_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(SysidFriction_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+add_executable(SysidBase_test
+    SystemIdentification/IterativeSystemIdentification/TestBaseParametersIdentification.cpp)
+
+target_include_directories(SysidBase_test PUBLIC
+    SystemIdentification
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(SysidBase_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(SysidBase_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+>>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
     NB_SHARED LTO

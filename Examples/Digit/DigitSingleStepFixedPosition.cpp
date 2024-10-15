@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     // ignore friction for now
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
 
     // the robot start from this initial condition:
     Eigen::VectorXd q0(NUM_INDEPENDENT_JOINTS);
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
                               model,
                               gp,
                               'L',
-                              Transform(3, -M_PI / 2),
+                              Transform(3, -M_PI_2),
                               false,
                               q0);
         mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
                                     model,
                                     gp,
                                     'L',
-                                    Transform(3, -M_PI / 2),
+                                    Transform(3, -M_PI_2),
                                     false,
                                     q0);
             Index n, m, nnz_jac_g, nnz_h_lag;

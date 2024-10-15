@@ -43,7 +43,7 @@ Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/
 
 test_oracle.py
 
-docker/HSL.zip
+docker/*.zip
 docker/pardiso/
 HSL/
 
@@ -52,3 +52,4 @@ Examples/Digit-modified/singlestep_optimization_settings.yaml
 
 test_nanobind_planner.py
 
+backup/

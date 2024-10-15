@@ -1,35 +1,36 @@
-#include "ConditionNumberOptimizer.h"
+#include "EndeffectorConditionNumberOptimizer.h"
+
+
 
 namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
-// ConditionNumberOptimizer::ConditionNumberOptimizer()
+// EndeffectorConditionNumberOptimizer::EndeffectorConditionNumberOptimizer()
 // {
 // }
 
 
 // // destructor
-// ConditionNumberOptimizer::~ConditionNumberOptimizer()
+// EndeffectorConditionNumberOptimizer::~EndeffectorConditionNumberOptimizer()
 // {
 // }
 
-bool ConditionNumberOptimizer::set_parameters(
-    const VecX& x0_input,
-    const Number T_input,
-    const int N_input,
-    const int degree_input,
-    const double base_frequency_input,
-    const Model& model_input, 
-    const std::string& regroupMatrixFileName,
-    const VecX& joint_limits_buffer_input,
-    const VecX& velocity_limits_buffer_input,
-    const VecX& torque_limits_buffer_input,
-    Eigen::VectorXi jtype_input
+bool EndeffectorConditionNumberOptimizer::set_parameters(
+        const VecX& x0_input,
+        const Number T_input,
+        const int N_input,
+        const int degree_input,
+        const double base_frequency_input,
+        const Model& model_input, 
+        const VecX& joint_limits_buffer_input,
+        const VecX& velocity_limits_buffer_input,
+        const VecX& torque_limits_buffer_input,
+        Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
     x0 = x0_input;
-    regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
+    joint_num = model_input.nv;
 
     // fixed frequency fourier curves with 0 initial velocity
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
@@ -106,15 +107,10 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                                jtype_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
 
-    // check dimensions of regroupMatrix
-    if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
-        throw std::invalid_argument("ConditionNumberOptimizer: regroupMatrix has wrong dimensions!");
-    }
-
     return true;
 }
 
-bool ConditionNumberOptimizer::get_nlp_info(
+bool EndeffectorConditionNumberOptimizer::get_nlp_info(
         Index&          n,
         Index&          m,
         Index&          nnz_jac_g,
@@ -141,7 +137,7 @@ bool ConditionNumberOptimizer::get_nlp_info(
     return true;
 }
 
-bool ConditionNumberOptimizer::eval_f(
+bool EndeffectorConditionNumberOptimizer::eval_f(
     Index         n,
     const Number* x,
     bool          new_x,
@@ -155,8 +151,11 @@ bool ConditionNumberOptimizer::eval_f(
 
     ridPtr_->compute(z, false);
 
-    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
-    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+    // get the endY
+    const int startCol = (joint_num - 1) * 10; 
+    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
+  
+    Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
     const VecX& singularValues = svd.singularValues();
     const MatX& U = svd.matrixU();
@@ -173,7 +172,7 @@ bool ConditionNumberOptimizer::eval_f(
     return true;
 }
 
-bool ConditionNumberOptimizer::eval_grad_f(
+bool EndeffectorConditionNumberOptimizer::eval_grad_f(
     Index         n,
     const Number* x,
     bool          new_x,
@@ -187,9 +186,13 @@ bool ConditionNumberOptimizer::eval_grad_f(
 
     ridPtr_->compute(z, true);
 
-    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
-    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+    // get the columns corresponding to the end effector in the regressor matrix
+    const int startCol = (joint_num - 1) * 10; 
+    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
+ 
+    Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
+
     const VecX& singularValues = svd.singularValues();
     const MatX& U = svd.matrixU();
     const MatX& V = svd.matrixV();
@@ -201,10 +204,11 @@ bool ConditionNumberOptimizer::eval_grad_f(
     // refer to https://j-towns.github.io/papers/svd-derivative.pdf
     // for analytical gradient of singular values
     for (Index i = 0; i < n; i++) {
-        MatX gradRegroupedObservationMatrix = ridPtr_->pY_pz(i) * regroupMatrix;
-
-        const Number gradSigmaMax = U.col(0).transpose()       * gradRegroupedObservationMatrix * V.col(0);
-        const Number gradSigmaMin = U.col(lastRow).transpose() * gradRegroupedObservationMatrix * V.col(lastRow);
+        const int startCol = (joint_num - 1) * 10; 
+        const MatX& gradEndeffectorY = ridPtr_->pY_pz(i).middleCols(startCol, 10);
+        
+        const Number gradSigmaMax = U.col(0).transpose()       * gradEndeffectorY * V.col(0);
+        const Number gradSigmaMin = U.col(lastRow).transpose() * gradEndeffectorY * V.col(lastRow);
 
         grad_f[i] = gradSigmaMax / sigmaMax - gradSigmaMin / sigmaMin;
     }

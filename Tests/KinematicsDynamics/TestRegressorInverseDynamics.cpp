@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
     // Disable rotor inertia, friction, and damping
     model.friction.setZero();
     model.damping.setZero();
-    model.rotorInertia.setZero();
+    model.armature.setZero();
 
     // Create a trajectory
     int N = 5;  // number of time steps
@@ -35,14 +35,26 @@ BOOST_AUTO_TEST_CASE(RegressorInverseDynamicsAccuracy)
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));
-    VecX z = 2 * M_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
+    VecX z = M_2_PI * VecX::Random(trajPtr->varLength).array() - M_PI;
 
     // Compute inverse dynamics using RegressorInverseDynamics
     regressor_id.compute(z, false);
+<<<<<<< HEAD
+=======
+    auto stop_clock = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_clock - start_clock);
+    std::cout << "RegressorInverseDynamics: " << duration.count() << " microseconds" << std::endl;
+>>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 
     // Compute inverse dynamics using pinocchio::rnea
     trajPtr->compute(z, false);
     VecX tau_pinocchio = pinocchio::rnea(model, data, trajPtr->q(0), trajPtr->q_d(0), trajPtr->q_dd(0));
+<<<<<<< HEAD
+=======
+    stop_clock = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_clock - start_clock);
+    std::cout << "Pinocchio RNEA: " << duration.count() << " microseconds" << std::endl;
+>>>>>>> 08c148ee62246521b1469efeef65d0c9f39b3b7c
 
     // compare the results
     BOOST_CHECK_SMALL((regressor_id.tau(0) -tau_pinocchio).norm(), 1e-10);

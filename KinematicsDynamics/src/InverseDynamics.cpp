@@ -111,10 +111,9 @@ void InverseDynamics::compute(const VecX& z,
             pinocchio::rnea(*modelPtr_, *dataPtr_, q, v, a);
         }
         
-        // adjust with damping force and rotor inertia force
+        // adjust with damping force
         tau(i) = dataPtr_->tau + 
-                 modelPtr_->damping.cwiseProduct(v) + 
-                 modelPtr_->rotorInertia.cwiseProduct(a);
+                 modelPtr_->damping.cwiseProduct(v);
         
         // adjust with static friction
         for (int j = 0; j < tau(i).size(); j++) {
@@ -126,12 +125,7 @@ void InverseDynamics::compute(const VecX& z,
             // pinocchio only computes the upper triangle part of it.
             for (int mi = 0; mi < prnea_pa.rows(); mi++) {
                 for (int mj = 0; mj <= mi; mj++) {
-                    if (mi == mj) {
-                        prnea_pa(mi, mj) += modelPtr_->rotorInertia(mi);
-                    }
-                    else {
-                        prnea_pa(mi, mj) = prnea_pa(mj, mi);
-                    }
+                    prnea_pa(mi, mj) = prnea_pa(mj, mi);
                 }
             }
 
