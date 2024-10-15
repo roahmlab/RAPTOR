@@ -4,7 +4,7 @@ namespace RAPTOR {
 namespace Digit {
 
 DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
-                                                   char stanceLeg_input, 
+                                                   const char stanceLeg_input, 
                                                    const Transform& stance_foot_T_des_input) :
     modelPtr_(modelPtr_input),
     stanceLeg(stanceLeg_input),
