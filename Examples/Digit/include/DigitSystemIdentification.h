@@ -3,15 +3,12 @@
 
 #include "Optimizer.h"
 #include "LMIConstraints.h"
-// #include "DigitWholeBodyDynamicsConstraints.h"
-#include "DigitDynamicsConstraints.h"
-#include "DigitConstants.h"
+#include "DigitWholeBodyDynamicsConstraints.h"
 
 #include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
-// namespace DigitWholeBodySysID {
-namespace Digit {
+namespace DigitWholeBodySysID {
 
 class DigitSystemIdentification : public Optimizer {
 public:
@@ -95,7 +92,7 @@ public:
        const DigitSystemIdentification&
     );
 
-    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
+    const double default_maximum_uncertainty = 0.10; // default maximum uncertainty
 
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
@@ -105,7 +102,7 @@ public:
     std::vector<int> nontrivialLinkIds; // nontrivial link ids
 
     MatX FullObservationMatrix; // full observation matrix
-    // MatX RegroupedObservationMatrix; // regrouped observation matrix
+    VecX tau_estimated; // estimated torque
 
     // shared pointers to data
     std::shared_ptr<MatX> posPtr_;

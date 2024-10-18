@@ -1,8 +1,7 @@
 #include "DigitSystemIdentification.h"
 
 namespace RAPTOR {
-// namespace DigitWholeBodySysID {
-namespace Digit {
+namespace DigitWholeBodySysID {
 
 // // constructor
 // DigitSystemIdentification::DigitSystemIdentification()
@@ -29,12 +28,12 @@ bool DigitSystemIdentification::set_parameters(
     modelPtr_ = std::make_shared<Model>(model_input);
     dataPtr_ = std::make_shared<Data>(model_input);
 
-    // ddcPtr_ = std::make_shared<DigitWholeBodyDynamicsConstraints>(modelPtr_, 
-    //                                                               stanceLeg_input,
-    //                                                               stance_foot_T_des_input);
-    ddcPtr_ = std::make_shared<DigitDynamicsConstraints>(modelPtr_, 
-                                                         stanceLeg_input,
-                                                         stance_foot_T_des_input);
+    ddcPtr_ = std::make_shared<DigitWholeBodyDynamicsConstraints>(modelPtr_, 
+                                                                  stanceLeg_input,
+                                                                  stance_foot_T_des_input);
+    // ddcPtr_ = std::make_shared<DigitDynamicsConstraints>(modelPtr_, 
+    //                                                      stanceLeg_input,
+    //                                                      stance_foot_T_des_input);
 
     Nact = NUM_INDEPENDENT_JOINTS;
 
@@ -63,12 +62,39 @@ bool DigitSystemIdentification::set_parameters(
 
     // find links that are not trivial (non-zero mass and inertia)
     nontrivialLinkIds.clear();
-    for (int i = 0; i < modelPtr_->nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        if (modelPtr_->inertias[pinocchio_joint_id].mass() > 0.0) {
-            nontrivialLinkIds.push_back(i);
-        }
-    }
+    // for (int i = 0; i < modelPtr_->nv; i++) {
+    //     const int pinocchio_joint_id = i + 1;
+
+    //     if (modelPtr_->inertias[pinocchio_joint_id].mass() > 0.0) {
+    //         nontrivialLinkIds.push_back(i);
+    //     }
+    // }
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("Rz") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_roll") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_yaw") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_pitch") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_ach2") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_knee") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_tarsus") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_A") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_A2") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_B") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_B2") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_pitch") - 1);
+    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_roll") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("Rz") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_hip_roll") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_hip_yaw") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_hip_pitch") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_ach2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_knee") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_tarsus") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_toe_A") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_A2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_toe_B") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_B2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_toe_pitch") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_toe_roll") - 1);
 
     // directly set up initial condition here
     int n = 10 * nontrivialLinkIds.size() + 3 * Nact;
@@ -94,7 +120,7 @@ bool DigitSystemIdentification::set_parameters(
         VecX v = velPtr_->col(i);
         VecX a = accPtr_->col(i);
 
-        ddcPtr_->setupJointPositionVelocityAcceleration(q, v, a, false);
+        // ddcPtr_->setupJointPositionVelocityAcceleration(q, v, a, false);
 
         pinocchio::computeJointTorqueRegressor(
             *modelPtr_, *dataPtr_, 
@@ -218,6 +244,10 @@ bool DigitSystemIdentification::eval_f(
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     VecX phi_full = VecX::Zero(13 * modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1;
+        phi_full.segment(10 * i, 10) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+    }
     for (Index i = 0; i < nontrivialLinkIds.size(); i++) {
         phi_full.segment(10 * nontrivialLinkIds[i], 10) = z.segment(10 * i, 10);
     }
@@ -234,7 +264,7 @@ bool DigitSystemIdentification::eval_f(
                                      z.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact));
     phi_full.segment(12 * modelPtr_->nv, modelPtr_->nv) = armature_full;
 
-    const VecX tau_estimated = FullObservationMatrix * phi_full;
+    tau_estimated = FullObservationMatrix * phi_full;
 
     obj_value = 0;
 
@@ -261,6 +291,10 @@ bool DigitSystemIdentification::eval_grad_f(
     VecX grad_f_vec = VecX::Zero(n);
 
     VecX phi_full = VecX::Zero(13 * modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1;
+        phi_full.segment(10 * i, 10) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+    }
     for (Index i = 0; i < nontrivialLinkIds.size(); i++) {
         phi_full.segment(10 * nontrivialLinkIds[i], 10) = z.segment(10 * i, 10);
     }
@@ -277,7 +311,7 @@ bool DigitSystemIdentification::eval_grad_f(
                                      z.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact));
     phi_full.segment(12 * modelPtr_->nv, modelPtr_->nv) = armature_full;
 
-    const VecX tau_estimated = FullObservationMatrix * phi_full;
+    tau_estimated = FullObservationMatrix * phi_full;
 
     for (Index i = 0; i < N; i++) {
         const VecX& tau = torquePtr_->col(i);

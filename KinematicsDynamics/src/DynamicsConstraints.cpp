@@ -65,13 +65,13 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
     //     // should have been called in setupJointPosition
     // }
 
-    // fill in depuated joints velocities
+    // fill in dependent joints velocities
     fill_dependent_vector(v, P_dep * get_independent_vector(v));
 
     get_Jx_partial_dq(q, v);
     MatX Jv_partial_dq = Jx_partial_dq;
 
-    // fill in depuated joints accelerations
+    // fill in dependent joints accelerations
     fill_dependent_vector(a, -J_dep_qr.solve(J_indep * get_independent_vector(a) + 
                                              Jv_partial_dq * v));              
 
