@@ -3,15 +3,13 @@
 
 #include "Optimizer.h"
 #include "LMIConstraints.h"
-// #include "DigitWholeBodyDynamicsConstraints.h"
-#include "DigitDynamicsConstraints.h"
-#include "DigitConstants.h"
+#include "LinearConstraints.h"
+#include "DigitWholeBodyDynamicsConstraints.h"
 
 #include "pinocchio/algorithm/regressor.hpp"
 
 namespace RAPTOR {
-// namespace DigitWholeBodySysID {
-namespace Digit {
+namespace DigitWholeBodySysID {
 
 class DigitSystemIdentification : public Optimizer {
 public:
@@ -32,12 +30,7 @@ public:
     bool set_parameters(
         const Model& model_input,
         const std::shared_ptr<MatX>& posPtr_input,
-        const std::shared_ptr<MatX>& velPtr_input,
-        const std::shared_ptr<MatX>& accPtr_input,
-        const std::shared_ptr<MatX>& torquePtr_input,
-        const char stanceLeg_input = 'L', // stance foot is left foot by default
-        const Transform& stance_foot_T_des_input = Transform(3, -M_PI_2)
-    );
+        const std::shared_ptr<MatX>& torquePtr_input);
 
     /**@name Overloaded from TNLP */
     //@{
@@ -75,6 +68,14 @@ public:
         bool          new_x,
         Number*       grad_f
     ) final override;
+
+    /** Method to return the hessian of the objective */
+    bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
+    ) final override;
     
     /**@name Methods to block default compiler methods.
     *
@@ -104,21 +105,24 @@ public:
 
     std::vector<int> nontrivialLinkIds; // nontrivial link ids
 
+    MatX A;
+    VecX b;
+
+    VecX tau_fixed; // torque corresponding to link inertial parameters that are fixed for the optimization
+
     MatX FullObservationMatrix; // full observation matrix
-    // MatX RegroupedObservationMatrix; // regrouped observation matrix
+    VecX tau_estimated; // estimated torque
+
+    Eigen::Array<MatX, 1, Eigen::Dynamic> Js; // jacobian matrices
 
     // shared pointers to data
     std::shared_ptr<MatX> posPtr_;
-    std::shared_ptr<MatX> velPtr_;
-    std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
 
     MatX tau_inertials; // computed from the trajectory without friction
 
     int Nact = 0; // number of actuated joints
     int N = 0; // number of samples
-
-    // std::shared_ptr<QRDecompositionSolver> regroupPtr_;
 };
 
 }; // namespace DigitWholeBodySysID

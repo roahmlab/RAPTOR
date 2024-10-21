@@ -7,7 +7,7 @@ DynamicsConstraints::DynamicsConstraints(const int numJoints_input, int numDepen
     numDependentJoints(numDependentJoints_input) {
     numIndependentJoints = numJoints - numDependentJoints;
 
-    c = VecX::Zero(numJoints);
+    c = VecX::Zero(numDependentJoints);
     J = MatX::Zero(numDependentJoints, numJoints);
     Jx_partial_dq = MatX::Zero(numDependentJoints, numJoints);
     JTx_partial_dq = MatX::Zero(numJoints, numJoints);
@@ -65,13 +65,13 @@ void DynamicsConstraints::setupJointPositionVelocityAcceleration(VecX& q, VecX& 
     //     // should have been called in setupJointPosition
     // }
 
-    // fill in depuated joints velocities
+    // fill in dependent joints velocities
     fill_dependent_vector(v, P_dep * get_independent_vector(v));
 
     get_Jx_partial_dq(q, v);
     MatX Jv_partial_dq = Jx_partial_dq;
 
-    // fill in depuated joints accelerations
+    // fill in dependent joints accelerations
     fill_dependent_vector(a, -J_dep_qr.solve(J_indep * get_independent_vector(a) + 
                                              Jv_partial_dq * v));              
 
