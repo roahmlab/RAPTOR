@@ -10,7 +10,8 @@
 
 #include "Utils.h"
 #include "DynamicsConstraints.h"
-#include "ForwardKinematics.h"
+
+#include "pinocchio/algorithm/frames.hpp"
 
 namespace RAPTOR {
 namespace DigitWholeBodySysID {
@@ -79,17 +80,12 @@ public:
     DigitWholeBodyDynamicsConstraints() = default;
 
     // Constructor
-    DigitWholeBodyDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
-                                      const char stanceLeg, 
-                                      const Transform& stance_foot_T_des_input);
+    DigitWholeBodyDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input);
 
     // Destructor
     ~DigitWholeBodyDynamicsConstraints() = default;
 
     // class methods:
-        // swap the stance leg for reset map constraint evaluation
-    void reinitialize(const char stanceLeg_input = 0);
-
         // return the index of id th dependent joint
     virtual int return_dependent_joint_index(const int id) final override;
 
@@ -136,85 +132,65 @@ public:
         // that satisfies the constraints
         // This usually involves solving inverse kinematics. 
         // You need to implement this method in your derived class!!!
-    virtual void setupJointPosition(VecX& q, bool compute_derivatives = true) override;
+    virtual void setupJointPosition(VecX& q, bool compute_derivatives = true) override {};
 
         // constraint c(q)
-    virtual void get_c(const VecX& q) final override;
+    virtual void get_c(const VecX& q) final override {};
 
         // J = jacobian(c, q)
     virtual void get_J(const VecX& q) final override;
     
         // Jx_partial_dq = jacobian(J * x, q)
         // where x is a vector that is not dependent on q
-    virtual void get_Jx_partial_dq(const VecX& q, const VecX& x) final override;
+    virtual void get_Jx_partial_dq(const VecX& q, const VecX& x) final override {};
 
         // JTx_partial_dq = jacobian(J^T * x, q)
         // where x is a vector that is not dependent on q
-    virtual void get_JTx_partial_dq(const VecX& q, const VecX& x) final override;
+    virtual void get_JTx_partial_dq(const VecX& q, const VecX& x) final override {};
 
         // Jxy_partial_dq = jacobian(jacobian(J * x, q) * y, q)
         // where x and y are vectors that are not dependent on q
-    virtual void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) final override;
+    virtual void get_Jxy_partial_dq(const VecX& q, const VecX& x, const VecX& y) final override {};
 
     // class members:
     std::shared_ptr<Model> modelPtr_ = nullptr;
-
-    std::unique_ptr<ForwardKinematicsSolver> fkPtr_ = nullptr;
+    std::shared_ptr<Data> dataPtr_ = nullptr;
 
         // dep/indep joint indeces
     int dependentJointIds[NUM_DEPENDENT_JOINTS] = {0};
     int independentJointIds[NUM_INDEPENDENT_JOINTS] = {0};
 
         // for contact constraints (forward kinematics mainly)
-    Model::JointIndex contact_joint_id = 0;
+    pinocchio::FrameIndex left_foot_idx;
+    pinocchio::FrameIndex right_foot_idx;
 
-        // forward kinematics derivatives
-    Eigen::Array<MatX, 3, 1> H_translation;
-    Eigen::Array<MatX, 3, 1> H_rotation;
+    //     // closed loop related transforms
+    //     // you can find all these numbers in digit-v3.xml
+    // const Transform left_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
+    // const Transform left_toeA_anchor_endT = Transform(Vec3(0.0179, -0.009551, -0.054164));
 
-    Eigen::Array<MatX, 3, 1> TOx_translation;
-    Eigen::Array<MatX, 3, 1> TOx_rotation;
+    // const Transform left_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
+    // const Transform left_toeB_anchor_endT = Transform(Vec3(-0.0181, -0.009551, -0.054164));
 
-        // contact foot transforms
-    char stanceLeg = 'L';
+    // const Transform left_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
+    // const Transform left_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(4.47, 0.32, 155.8)), 
+    //                                                   Vec3(-0.01766, -0.029456, 0.00104)) * 
+    //                                         Transform(Vec3(0.113789, -0.011056, 0));
 
-    Transform stance_foot_T;
-    Transform stance_foot_endT;
+    // const Transform right_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
+    // const Transform right_toeA_anchor_endT = Transform(Vec3(0.0179, 0.009551, -0.054164));
 
-    Transform stance_foot_T_des;
-
-        // closed loop related transforms
-        // you can find all these numbers in digit-v3.xml
-    const Transform left_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
-    const Transform left_toeA_anchor_endT = Transform(Vec3(0.0179, -0.009551, -0.054164));
-
-    const Transform left_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
-    const Transform left_toeB_anchor_endT = Transform(Vec3(-0.0181, -0.009551, -0.054164));
-
-    const Transform left_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
-    const Transform left_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(4.47, 0.32, 155.8)), 
-                                                      Vec3(-0.01766, -0.029456, 0.00104)) * 
-                                            Transform(Vec3(0.113789, -0.011056, 0));
-
-    const Transform right_toeA_rod_endT = Transform(Vec3(0.17 * 2, 0, 0));
-    const Transform right_toeA_anchor_endT = Transform(Vec3(0.0179, 0.009551, -0.054164));
-
-    const Transform right_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
-    const Transform right_toeB_anchor_endT = Transform(Vec3(-0.0181, 0.009551, -0.054164));
+    // const Transform right_toeB_rod_endT = Transform(Vec3(0.144 * 2, 0, 0));
+    // const Transform right_toeB_anchor_endT = Transform(Vec3(-0.0181, 0.009551, -0.054164));
     
-    const Transform right_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
-    const Transform right_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(-4.47, 0.32, -155.8)), 
-                                                       Vec3(-0.01766, 0.029456, 0.00104)) *
-                                             Transform(Vec3(0.113789, 0.011056, 0));
+    // const Transform right_knee_rod_endT = Transform(Vec3(0.25 * 2, 0, 0));
+    // const Transform right_knee_anchor_endT = Transform(Utils::deg2rad(Vec3(-4.47, 0.32, -155.8)), 
+    //                                                    Vec3(-0.01766, 0.029456, 0.00104)) *
+    //                                          Transform(Vec3(0.113789, 0.011056, 0));
 
-    VecX qcopy;
+    MatX J_left_foot;
+    MatX J_right_foot;
 };
-
-int fillDependent_f(const gsl_vector* x, void *params, gsl_vector* f);
-
-int fillDependent_df(const gsl_vector* x, void *params, gsl_matrix* J);
-
-int fillDependent_fdf(const gsl_vector* x, void *params, gsl_vector* f, gsl_matrix* J);
 
 }; // namespace DigitWholeBodySysID
 }; // namespace RAPTOR

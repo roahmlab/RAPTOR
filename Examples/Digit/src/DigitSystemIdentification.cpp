@@ -16,11 +16,7 @@ namespace DigitWholeBodySysID {
 bool DigitSystemIdentification::set_parameters(
     const Model& model_input,
     const std::shared_ptr<MatX>& posPtr_input,
-    const std::shared_ptr<MatX>& velPtr_input,
-    const std::shared_ptr<MatX>& accPtr_input,
-    const std::shared_ptr<MatX>& torquePtr_input,
-    const char stanceLeg_input,
-    const Transform& stance_foot_T_des_input
+    const std::shared_ptr<MatX>& torquePtr_input
 )
 { 
     enable_hessian = false;
@@ -28,23 +24,14 @@ bool DigitSystemIdentification::set_parameters(
     modelPtr_ = std::make_shared<Model>(model_input);
     dataPtr_ = std::make_shared<Data>(model_input);
 
-    ddcPtr_ = std::make_shared<DigitWholeBodyDynamicsConstraints>(modelPtr_, 
-                                                                  stanceLeg_input,
-                                                                  stance_foot_T_des_input);
-    // ddcPtr_ = std::make_shared<DigitDynamicsConstraints>(modelPtr_, 
-    //                                                      stanceLeg_input,
-    //                                                      stance_foot_T_des_input);
+    ddcPtr_ = std::make_shared<DigitWholeBodyDynamicsConstraints>(modelPtr_);
 
     Nact = NUM_INDEPENDENT_JOINTS;
 
     posPtr_ = posPtr_input;
-    velPtr_ = velPtr_input;
-    accPtr_ = accPtr_input;
     torquePtr_ = torquePtr_input;
 
-    if (posPtr_->rows() != velPtr_->rows() || 
-        posPtr_->rows() != accPtr_->rows() || 
-        posPtr_->rows() != modelPtr_->nv) {
+    if (posPtr_->rows() != modelPtr_->nv) {
         throw std::invalid_argument("Error: input data matrices have different number of rows");
     }
 
@@ -52,9 +39,7 @@ bool DigitSystemIdentification::set_parameters(
         throw std::invalid_argument("Error: torque data matrix has different number of rows");
     }
 
-    if (posPtr_->cols() != velPtr_->cols() || 
-        posPtr_->cols() != accPtr_->cols() || 
-        posPtr_->cols() != torquePtr_->cols()) {
+    if (posPtr_->cols() != torquePtr_->cols()) {
         throw std::invalid_argument("Error: input data matrices have different number of columns");
     }
 
@@ -70,18 +55,18 @@ bool DigitSystemIdentification::set_parameters(
     //     }
     // }
     nontrivialLinkIds.push_back(modelPtr_->getJointId("Rz") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_roll") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_yaw") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_pitch") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_ach2") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_knee") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_tarsus") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_A") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_A2") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_B") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_B2") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_pitch") - 1);
-    nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_roll") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_roll") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_yaw") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_hip_pitch") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_ach2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_knee") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_tarsus") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_A") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_A2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_B") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_B2") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_pitch") - 1);
+    // nontrivialLinkIds.push_back(modelPtr_->getJointId("left_toe_roll") - 1);
     // nontrivialLinkIds.push_back(modelPtr_->getJointId("Rz") - 1);
     // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_hip_roll") - 1);
     // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_hip_yaw") - 1);
@@ -97,53 +82,100 @@ bool DigitSystemIdentification::set_parameters(
     // nontrivialLinkIds.push_back(modelPtr_->getJointId("right_toe_roll") - 1);
 
     // directly set up initial condition here
-    int n = 10 * nontrivialLinkIds.size() + 3 * Nact;
+    int n = 10 * nontrivialLinkIds.size() + 
+            (NUM_DEPENDENT_JOINTS + 6) * N;
 
     x0 = VecX::Zero(n);
     for (int i = 0; i < nontrivialLinkIds.size(); i++) {
         const int pinocchio_joint_id = nontrivialLinkIds[i] + 1;
         x0.segment(10 * i, 10) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
     }
-    x0.segment(10 * nontrivialLinkIds.size(), Nact) = ddcPtr_->get_independent_vector(modelPtr_->friction);
-    x0.segment(10 * nontrivialLinkIds.size() + Nact, Nact) = ddcPtr_->get_independent_vector(modelPtr_->damping);
-    x0.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact) = ddcPtr_->get_independent_vector(modelPtr_->armature);
 
-    // initial guess for motor friction parameters is just 0
+    const int CONSTRAINT_DIM = NUM_DEPENDENT_JOINTS + 6;
 
-    // initialize observation matrices
-    FullObservationMatrix = MatX::Zero(N * Nact, 13 * modelPtr_->nv);
+    A = MatX::Zero(NUM_INDEPENDENT_JOINTS * N, 10 * nontrivialLinkIds.size() + CONSTRAINT_DIM * N);
+    b = VecX::Zero(NUM_INDEPENDENT_JOINTS * N);
+
+    MatX A2 = MatX::Zero(NUM_DEPENDENT_JOINTS * N, 10 * nontrivialLinkIds.size() + CONSTRAINT_DIM * N);
+    VecX b2 = VecX::Zero(NUM_DEPENDENT_JOINTS * N);
 
     for (int i = 0; i < N; i++) {
-        MatX SubObservationMatrix = MatX::Zero(modelPtr_->nv, 13 * modelPtr_->nv);
-
-        VecX q = posPtr_->col(i);
-        VecX v = velPtr_->col(i);
-        VecX a = accPtr_->col(i);
-
-        // ddcPtr_->setupJointPositionVelocityAcceleration(q, v, a, false);
+        const VecX& q = posPtr_->col(i);
+        const VecX& tau = torquePtr_->col(i);
 
         pinocchio::computeJointTorqueRegressor(
             *modelPtr_, *dataPtr_, 
-            q, v, a);
+            q, VecX::Zero(modelPtr_->nv), VecX::Zero(modelPtr_->nv));
 
-        SubObservationMatrix.leftCols(10 * modelPtr_->nv) = dataPtr_->jointTorqueRegressor;
-        SubObservationMatrix.middleCols(10 * modelPtr_->nv, modelPtr_->nv).diagonal() = v.cwiseSign();
-        SubObservationMatrix.middleCols(11 * modelPtr_->nv, modelPtr_->nv).diagonal() = v;
-        SubObservationMatrix.middleCols(12 * modelPtr_->nv, modelPtr_->nv).diagonal() = a;
+        for (int j = 0; j < nontrivialLinkIds.size(); j++) {
+            MatX jointTorqueRegressorIndep(NUM_INDEPENDENT_JOINTS, 10);
+            MatX jointTorqueRegressorDep(NUM_DEPENDENT_JOINTS, 10);
 
-        MatX IndependentObservationMatrix(NUM_INDEPENDENT_JOINTS, 13 * modelPtr_->nv);
-        MatX DependentObservationMatrix(NUM_DEPENDENT_JOINTS, 13 * modelPtr_->nv);
-        ddcPtr_->get_independent_rows(IndependentObservationMatrix, SubObservationMatrix);
-        ddcPtr_->get_dependent_rows(DependentObservationMatrix, SubObservationMatrix);
-        
-        FullObservationMatrix.middleRows(i * Nact, Nact) = 
-            IndependentObservationMatrix +
-            ddcPtr_->P_dep.transpose() * DependentObservationMatrix;
+            ddcPtr_->get_independent_rows(
+                jointTorqueRegressorIndep, 
+                dataPtr_->jointTorqueRegressor.middleCols(10 * nontrivialLinkIds[j], 10));
+            ddcPtr_->get_dependent_rows(
+                jointTorqueRegressorDep, 
+                dataPtr_->jointTorqueRegressor.middleCols(10 * nontrivialLinkIds[j], 10));
+
+            A.block(i * NUM_INDEPENDENT_JOINTS, 
+                    j * 10, 
+                    NUM_INDEPENDENT_JOINTS, 
+                    10) = jointTorqueRegressorIndep;
+            A2.block(i * NUM_DEPENDENT_JOINTS, 
+                     j * 10,
+                     NUM_DEPENDENT_JOINTS, 
+                     10) = jointTorqueRegressorDep;
+        }
+
+        tau_fixed = VecX::Zero(modelPtr_->nv);
+        for (int j = 0; j < modelPtr_->nv; j++) {
+            if (std::find(nontrivialLinkIds.begin(), nontrivialLinkIds.end(), j) != nontrivialLinkIds.end()) {
+                continue;
+            }
+
+            const int pinocchio_joint_id = j + 1;
+            tau_fixed += dataPtr_->jointTorqueRegressor.middleCols(10 * j, 10) * 
+                modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
+        }
+
+        ddcPtr_->get_J(q);
+
+        MatX J_indep(CONSTRAINT_DIM, NUM_INDEPENDENT_JOINTS);
+        MatX J_dep(CONSTRAINT_DIM, NUM_DEPENDENT_JOINTS);
+        ddcPtr_->get_independent_columns(J_indep, ddcPtr_->J);
+        ddcPtr_->get_dependent_columns(J_dep, ddcPtr_->J);
+
+        A.block(i * NUM_INDEPENDENT_JOINTS, 
+                10 * nontrivialLinkIds.size() + i * CONSTRAINT_DIM, 
+                NUM_INDEPENDENT_JOINTS, 
+                CONSTRAINT_DIM) = -J_indep.transpose();
+        A2.block(i * NUM_DEPENDENT_JOINTS, 
+                 10 * nontrivialLinkIds.size() + i * CONSTRAINT_DIM,
+                 NUM_DEPENDENT_JOINTS, 
+                 CONSTRAINT_DIM) = -J_dep.transpose();
+
+        b.segment(i * NUM_INDEPENDENT_JOINTS, NUM_INDEPENDENT_JOINTS) = 
+            tau - ddcPtr_->get_independent_vector(tau_fixed);
+        b2.segment(i * NUM_DEPENDENT_JOINTS, NUM_DEPENDENT_JOINTS) =
+            -ddcPtr_->get_dependent_vector(tau_fixed);
+
+        // // verification
+        // pinocchio::rnea(*modelPtr_, *dataPtr_, q, VecX::Zero(modelPtr_->nv), VecX::Zero(modelPtr_->nv));
+        // VecX tau_verify(modelPtr_->nv);
+        // ddcPtr_->fill_independent_vector(tau_verify, A.block(i * NUM_INDEPENDENT_JOINTS, 0, NUM_INDEPENDENT_JOINTS, 10 * nontrivialLinkIds.size()) * x0.head(10 * nontrivialLinkIds.size()));
+        // ddcPtr_->fill_dependent_vector(tau_verify, A2.block(i * NUM_DEPENDENT_JOINTS, 0, NUM_DEPENDENT_JOINTS, 10 * nontrivialLinkIds.size()) * x0.head(10 * nontrivialLinkIds.size()));
+        // tau_verify += tau_fixed;
+        // std::cout << "Verification: " << (dataPtr_->tau - tau_verify).norm() << std::endl;
     }
 
     // initialize LMI constraints for all links
     constraintsPtrVec_.push_back(std::make_unique<LMIConstraints>(nontrivialLinkIds.size(), n));       
     constraintsNameVec_.push_back("LMI constraints"); 
+
+    // // unconstrained part of the dynamics needs to be zero
+    constraintsPtrVec_.push_back(std::make_unique<LinearConstraints>(A2, b2));
+    constraintsNameVec_.push_back("Unconstrained part of the dynamics");
 
     return true;
 }
@@ -157,7 +189,7 @@ bool DigitSystemIdentification::get_nlp_info(
 )
 {
     // number of decision variables
-    n = 10 * nontrivialLinkIds.size() + 3 * Nact;
+    n = 10 * nontrivialLinkIds.size() + (NUM_DEPENDENT_JOINTS + 6) * N;
     numVars= n;
 
     // number of inequality constraint
@@ -199,32 +231,26 @@ bool DigitSystemIdentification::get_bounds_info(
 
     // set variable bounds (overwrite previous bounds in x_l and x_u)
     for (Index i = 0; i < 10 * nontrivialLinkIds.size(); i++) {
-        if (x0(i) > 0) {
-            x_l[i] = (1 - default_maximum_uncertainty) * x0(i);
-            x_u[i] = (1 + default_maximum_uncertainty) * x0(i);
+        if (std::abs(x0(i)) > 0.1) {
+            if (x0(i) > 0) {
+                x_l[i] = (1 - default_maximum_uncertainty) * x0(i);
+                x_u[i] = (1 + default_maximum_uncertainty) * x0(i);
+            }
+            else {
+                x_l[i] = (1 + default_maximum_uncertainty) * x0(i);
+                x_u[i] = (1 - default_maximum_uncertainty) * x0(i);
+            }
         }
         else {
-            x_l[i] = (1 + default_maximum_uncertainty) * x0(i);
-            x_u[i] = (1 - default_maximum_uncertainty) * x0(i);
+            x_l[i] = x0(i) - default_maximum_uncertainty;
+            x_u[i] = x0(i) + default_maximum_uncertainty;
         }
     }
 
         // static friction >= 0
-    for (Index i = 0; i < Nact; i++) {
-        x_l[10 * nontrivialLinkIds.size() + i] = 0;
-        x_u[10 * nontrivialLinkIds.size() + i] = 50.0;
-    }
-
-        // damping >= 0
-    for (Index i = 0; i < Nact; i++) {
-        x_l[10 * nontrivialLinkIds.size() + Nact + i] = 0;
-        x_u[10 * nontrivialLinkIds.size() + Nact + i] = 50.0;
-    }
-
-        // armature >= 0
-    for (Index i = 0; i < Nact; i++) {
-        x_l[10 * nontrivialLinkIds.size() + 2 * Nact + i] = 0;
-        x_u[10 * nontrivialLinkIds.size() + 2 * Nact + i] = 50.0;
+    for (Index i = 10 * nontrivialLinkIds.size(); i < n; i++) {
+        x_l[i] = -1e19;
+        x_u[i] = 1e19;
     }
 
     return true;
@@ -243,37 +269,9 @@ bool DigitSystemIdentification::eval_f(
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-    VecX phi_full = VecX::Zero(13 * modelPtr_->nv);
-    for (int i = 0; i < modelPtr_->nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        phi_full.segment(10 * i, 10) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
-    }
-    for (Index i = 0; i < nontrivialLinkIds.size(); i++) {
-        phi_full.segment(10 * nontrivialLinkIds[i], 10) = z.segment(10 * i, 10);
-    }
-    VecX friction_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(friction_full, 
-                                     z.segment(10 * nontrivialLinkIds.size(), Nact));
-    phi_full.segment(10 * modelPtr_->nv, modelPtr_->nv) = friction_full;
-    VecX damping_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(damping_full, 
-                                     z.segment(10 * nontrivialLinkIds.size() + Nact, Nact));
-    phi_full.segment(11 * modelPtr_->nv, modelPtr_->nv) = damping_full;
-    VecX armature_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(armature_full, 
-                                     z.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact));
-    phi_full.segment(12 * modelPtr_->nv, modelPtr_->nv) = armature_full;
+    VecX diff = A * z - b;
 
-    tau_estimated = FullObservationMatrix * phi_full;
-
-    obj_value = 0;
-
-    for (Index i = 0; i < N; i++) {
-        const VecX& tau = torquePtr_->col(i);
-        obj_value += 0.5 * (tau_estimated.segment(i * Nact, Nact) - tau).squaredNorm();
-    } 
-
-    obj_value /= N;
+    obj_value = 0.5 * diff.squaredNorm();
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -290,50 +288,25 @@ bool DigitSystemIdentification::eval_grad_f(
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
     VecX grad_f_vec = VecX::Zero(n);
 
-    VecX phi_full = VecX::Zero(13 * modelPtr_->nv);
-    for (int i = 0; i < modelPtr_->nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        phi_full.segment(10 * i, 10) = modelPtr_->inertias[pinocchio_joint_id].toDynamicParameters();
-    }
-    for (Index i = 0; i < nontrivialLinkIds.size(); i++) {
-        phi_full.segment(10 * nontrivialLinkIds[i], 10) = z.segment(10 * i, 10);
-    }
-    VecX friction_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(friction_full, 
-                                     z.segment(10 * nontrivialLinkIds.size(), Nact));
-    phi_full.segment(10 * modelPtr_->nv, modelPtr_->nv) = friction_full;
-    VecX damping_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(damping_full, 
-                                     z.segment(10 * nontrivialLinkIds.size() + Nact, Nact));
-    phi_full.segment(11 * modelPtr_->nv, modelPtr_->nv) = damping_full;
-    VecX armature_full(modelPtr_->nv);
-    ddcPtr_->fill_independent_vector(armature_full, 
-                                     z.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact));
-    phi_full.segment(12 * modelPtr_->nv, modelPtr_->nv) = armature_full;
-
-    tau_estimated = FullObservationMatrix * phi_full;
-
-    for (Index i = 0; i < N; i++) {
-        const VecX& tau = torquePtr_->col(i);
-
-        const VecX grad_f_vec_full = 
-            (tau_estimated.segment(i * Nact, Nact) - tau).transpose() * 
-                      FullObservationMatrix.middleRows(i * Nact, Nact);
-        
-        for (Index j = 0; j < nontrivialLinkIds.size(); j++) {
-            grad_f_vec.segment(10 * j, 10) += grad_f_vec_full.segment(10 * nontrivialLinkIds[j], 10);
-        }
-        grad_f_vec.segment(10 * nontrivialLinkIds.size(), Nact) +=
-            ddcPtr_->get_independent_vector(grad_f_vec_full.segment(10 * modelPtr_->nv, modelPtr_->nv));
-        grad_f_vec.segment(10 * nontrivialLinkIds.size() + Nact, Nact) +=
-            ddcPtr_->get_independent_vector(grad_f_vec_full.segment(11 * modelPtr_->nv, modelPtr_->nv));
-        grad_f_vec.segment(10 * nontrivialLinkIds.size() + 2 * Nact, Nact) +=
-            ddcPtr_->get_independent_vector(grad_f_vec_full.segment(12 * modelPtr_->nv, modelPtr_->nv));
-    }
+    VecX diff = A * z - b;
+    grad_f_vec = A.transpose() * diff;
 
     for (Index i = 0; i < n; i++) {
-        grad_f[i] = grad_f_vec(i) / N;
+        grad_f[i] = grad_f_vec(i);
     }
+
+    return true;
+}
+
+bool DigitSystemIdentification::eval_hess_f(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    MatX&         hess_f
+) {
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    hess_f = A.transpose() * A;
 
     return true;
 }

@@ -4,6 +4,12 @@ using namespace RAPTOR;
 using namespace DigitWholeBodySysID;
 
 int main() {
+    // #ifdef NUM_THREADS
+    //     Eigen::setNbThreads(NUM_THREADS);
+    // #else
+    //     throw std::runtime_error("macro NUM_THREADS is not defined!");
+    // #endif
+
     // define robot model
     const char stanceLeg = 'L';
 
@@ -13,7 +19,43 @@ int main() {
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // model.gravity.linear()(2) = GRAVITY;
+    // Add left foot contact frame
+    pinocchio::SE3 left_foot_placement;
+    left_foot_placement.rotation().matrix() <<
+        0, 1, 0,
+        -0.5, 0, sin(M_PI/3),
+        sin(M_PI/3), 0, 0.5;
+    left_foot_placement.translation() <<
+        0, -0.05456, -0.0315;
+    model.addFrame(
+        pinocchio::Frame(
+            "left_foot",
+            model.getJointId("left_toe_roll"),
+            0,
+            left_foot_placement,
+            pinocchio::OP_FRAME
+        )
+    );
+
+    // Add right foot contact frame
+    pinocchio::SE3 right_foot_placement;
+    right_foot_placement.rotation().matrix() <<
+        0, -1, 0,
+        0.5, 0, -sin(M_PI/3),
+        sin(M_PI/3), 0, 0.5;
+    right_foot_placement.translation() <<
+        0, 0.05456, -0.0315;
+    model.addFrame(
+        pinocchio::Frame(
+            "right_foot",
+            model.getJointId("right_toe_roll"),
+            0,
+            right_foot_placement,
+            pinocchio::OP_FRAME
+        )
+    );
+
+    model.gravity.linear()(2) = -9.806;
     
     // ignore friction for now
     model.friction.setZero();
@@ -35,67 +77,20 @@ int main() {
     model.armature(model.getJointId("right_toe_B") - 1) = 0.036089475;
 
     // read trajectory from data
-    // const std::string trajectory_filename = "../Examples/Digit/data/trajectory-digit-Bezier.txt";
-    // const Eigen::MatrixXd trajectory = Utils::initializeEigenMatrixFromFile(trajectory_filename);
-
     std::shared_ptr<Eigen::MatrixXd> posDataPtr_ = std::make_shared<Eigen::MatrixXd>();
-    std::shared_ptr<Eigen::MatrixXd> velDataPtr_ = std::make_shared<Eigen::MatrixXd>();
-    std::shared_ptr<Eigen::MatrixXd> accDataPtr_ = std::make_shared<Eigen::MatrixXd>();
     std::shared_ptr<Eigen::MatrixXd> torqueDataPtr_ = std::make_shared<Eigen::MatrixXd>();
 
-    for (int data_id = 0; data_id < 16; data_id++) {
-        const auto posData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_position.txt");
-        const auto velData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_velocity.txt");
-        const auto accData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_acceleration.txt");
-        const auto torqueData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_torque.txt");
-
-        if (posData.cols() != velData.cols() || posData.cols() != accData.cols() || posData.cols() != torqueData.cols()) {
-            throw std::runtime_error("Data size mismatch!");
-        }
-
-        if (data_id == 0) {
-            *posDataPtr_ = posData;
-            *velDataPtr_ = velData;
-            *accDataPtr_ = accData;
-            *torqueDataPtr_ = torqueData;
-        }
-        else {
-            posDataPtr_->conservativeResize(Eigen::NoChange, posDataPtr_->cols() + posData.cols());
-            velDataPtr_->conservativeResize(Eigen::NoChange, velDataPtr_->cols() + velData.cols());
-            accDataPtr_->conservativeResize(Eigen::NoChange, accDataPtr_->cols() + accData.cols());
-            torqueDataPtr_->conservativeResize(Eigen::NoChange, torqueDataPtr_->cols() + torqueData.cols());
-
-            posDataPtr_->block(0, posDataPtr_->cols() - posData.cols(), posData.rows(), posData.cols()) = posData;
-            velDataPtr_->block(0, velDataPtr_->cols() - velData.cols(), velData.rows(), velData.cols()) = velData;
-            accDataPtr_->block(0, accDataPtr_->cols() - accData.cols(), accData.rows(), accData.cols()) = accData;
-            torqueDataPtr_->block(0, torqueDataPtr_->cols() - torqueData.cols(), torqueData.rows(), torqueData.cols()) = torqueData;
-        }
-    }
+    *posDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_realworld/Digit_data_stand_realworld_position.txt");
+    *torqueDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_realworld/Digit_data_stand_realworld_torque.txt");
 
     std::cout << "Number of samples: " << posDataPtr_->cols() << std::endl;
-
-    std::ofstream file_pos_train("../data_realworld/left_stance_segment_position_train.txt");
-    file_pos_train << *posDataPtr_ << std::endl;
-    file_pos_train.close();
-    std::ofstream file_vel_train("../data_realworld/left_stance_segment_velocity_train.txt");
-    file_vel_train << *velDataPtr_ << std::endl;
-    file_vel_train.close();
-    std::ofstream file_acc_train("../data_realworld/left_stance_segment_acceleration_train.txt");
-    file_acc_train << *accDataPtr_ << std::endl;
-    file_acc_train.close();
-    std::ofstream file_tau_train("../data_realworld/left_stance_segment_torque_train.txt");
-    file_tau_train << *torqueDataPtr_ << std::endl;
-    file_tau_train.close();
 
     // Initialize system identification optimizer
     SmartPtr<DigitSystemIdentification> mynlp = new DigitSystemIdentification();
     try {
 	    mynlp->set_parameters(model,
                               posDataPtr_,
-                              velDataPtr_,
-                              accDataPtr_,
-                              torqueDataPtr_,
-                              stanceLeg);
+                              torqueDataPtr_);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -104,14 +99,14 @@ int main() {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-4);
-    app->Options()->SetNumericValue("constr_viol_tol", 1e-5);
-    mynlp->constr_viol_tol = 1e-5;
-	app->Options()->SetNumericValue("max_wall_time", 200.0);
+    app->Options()->SetNumericValue("tol", 1e-3);
+    app->Options()->SetNumericValue("constr_viol_tol", 1e-3);
+    mynlp->constr_viol_tol = 1e-4;
+	app->Options()->SetNumericValue("max_wall_time", 1000.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 200);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
-    app->Options()->SetStringValue("linear_solver", "ma86");
+    app->Options()->SetIntegerValue("max_iter", 500);
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
+    app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
@@ -119,6 +114,8 @@ int main() {
     else {
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     }
+    
+    app->Options()->SetStringValue("jac_c_constant", "yes");
 
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
@@ -149,88 +146,73 @@ int main() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    // load test data
-    posDataPtr_->resize(0, 0);
-    velDataPtr_->resize(0, 0);
-    accDataPtr_->resize(0, 0);
-    torqueDataPtr_->resize(0, 0);
+    // Eigen::VectorXd residual = mynlp->A * mynlp->solution - mynlp->b;
+    // for (int i = 0; i < mynlp->N; i++) {
+    //     std::cout << residual.segment(i * NUM_INDEPENDENT_JOINTS, NUM_INDEPENDENT_JOINTS).transpose() << std::endl;
+    // }
 
-    for (int data_id = 16; data_id < 21; data_id++) {
-        const auto posData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_position.txt");
-        const auto velData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_velocity.txt");
-        const auto accData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_acceleration.txt");
-        const auto torqueData = Utils::initializeEigenMatrixFromFile("../data_realworld/left_stance_segment_" + std::to_string(data_id) + "_torque.txt");
-
-        if (posData.cols() != velData.cols() || posData.cols() != accData.cols() || posData.cols() != torqueData.cols()) {
-            throw std::runtime_error("Data size mismatch!");
-        }
-
-        if (data_id == 16) {
-            *posDataPtr_ = posData;
-            *velDataPtr_ = velData;
-            *accDataPtr_ = accData;
-            *torqueDataPtr_ = torqueData;
-        }
-        else {
-            posDataPtr_->conservativeResize(Eigen::NoChange, posDataPtr_->cols() + posData.cols());
-            velDataPtr_->conservativeResize(Eigen::NoChange, velDataPtr_->cols() + velData.cols());
-            accDataPtr_->conservativeResize(Eigen::NoChange, accDataPtr_->cols() + accData.cols());
-            torqueDataPtr_->conservativeResize(Eigen::NoChange, torqueDataPtr_->cols() + torqueData.cols());
-
-            posDataPtr_->block(0, posDataPtr_->cols() - posData.cols(), posData.rows(), posData.cols()) = posData;
-            velDataPtr_->block(0, velDataPtr_->cols() - velData.cols(), velData.rows(), velData.cols()) = velData;
-            accDataPtr_->block(0, accDataPtr_->cols() - accData.cols(), accData.rows(), accData.cols()) = accData;
-            torqueDataPtr_->block(0, torqueDataPtr_->cols() - torqueData.cols(), torqueData.rows(), torqueData.cols()) = torqueData;
-        }
+    const Eigen::VectorXd& lambdas = mynlp->solution.tail(mynlp->N * (NUM_DEPENDENT_JOINTS + 6));
+    for (int i = 0; i < mynlp->N; i++) {
+        const auto& lambda = lambdas.segment(i * (NUM_DEPENDENT_JOINTS + 6), NUM_DEPENDENT_JOINTS + 6);
+        std::cout << lambda.tail(12).transpose() << std::endl;
     }
 
-    SmartPtr<DigitSystemIdentification> testnlp = new DigitSystemIdentification();
-    try {
-	    testnlp->set_parameters(model,
-                                posDataPtr_,
-                                velDataPtr_,
-                                accDataPtr_,
-                                torqueDataPtr_,
-                                stanceLeg);
+    pinocchio::Model new_model = model;
+    
+    for (int i = 0; i < mynlp->nontrivialLinkIds.size(); i++) {
+        std::cout << model.names[mynlp->nontrivialLinkIds[i] + 1] << std::endl;
+        std::cout << mynlp->solution.segment(i * 10, 10).transpose() << std::endl;
+        std::cout << "New\n";
+        std::cout << pinocchio::Inertia::FromDynamicParameters(
+            mynlp->solution.segment(i * 10, 10)) << std::endl << std::endl;
+        std::cout << "Old\n";
+        std::cout << pinocchio::Inertia::FromDynamicParameters(
+            mynlp->x0.segment(i * 10, 10)) << std::endl << std::endl;
+        std::cout << std::endl;
 
-        Index n, m, nnz_jac_g, nnz_h_lag;
-        TNLP::IndexStyleEnum index_style;
-        testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
+        new_model.inertias[mynlp->nontrivialLinkIds[i] + 1] = 
+            pinocchio::Inertia::FromDynamicParameters(mynlp->solution.segment(i * 10, 10));
 
-        Number x[testnlp->numVars];
-        Number f;
+        const double mass = mynlp->solution(10 * i);
+        const Eigen::Vector3d& com = mynlp->solution.segment(10 * i + 1, 3);
+        const pinocchio::Symmetric3Tpl<double> inertia(mynlp->solution.segment(10 * i + 4, 6));
+        
+        // construct LMI matrix
+        Eigen::Matrix4d LMI = Eigen::Matrix4d::Zero();
 
-        for (int i = 0; i < testnlp->numVars; i++) {
-            x[i] = mynlp->solution(i);
-        }
+        LMI.topLeftCorner<3, 3>() = 
+            0.5 * inertia.matrix().trace() * Eigen::Matrix3d::Identity() - 
+            inertia.matrix();
 
-        testnlp->eval_f(n, x, true, f);
+        LMI.topRightCorner<3, 1>() = com;
+        LMI.bottomLeftCorner<1, 3>() = com.transpose();
+
+        LMI(3, 3) = mass;
+
+        std::cout << LMI << std::endl << std::endl;
     }
-    catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
-    }
 
-    const auto& tau_estimated = testnlp->tau_estimated;
-    Eigen::MatrixXd tau_estimated_mat = Eigen::Map<const Eigen::MatrixXd>(tau_estimated.data(), testnlp->Nact, testnlp->N);
-    std::ofstream file_tau_estimated("../data_realworld/left_stance_segment_torque_estimated.txt");
-    file_tau_estimated << tau_estimated_mat << std::endl; 
-    file_tau_estimated.close();
+    pinocchio::Data new_data(new_model);
+    const auto ddcPtr_ = mynlp->ddcPtr_;
+    std::ofstream tau_indep("tau_indep_realworld.txt");
+    std::ofstream tau_dep("tau_dep_realworld.txt");
 
-    std::ofstream file_pos_test("../data_realworld/left_stance_segment_position_test.txt");
-    file_pos_test << *posDataPtr_ << std::endl;
-    file_pos_test.close();
-    std::ofstream file_vel_test("../data_realworld/left_stance_segment_velocity_test.txt");
-    file_vel_test << *velDataPtr_ << std::endl;
-    file_vel_test.close();
-    std::ofstream file_acc_test("../data_realworld/left_stance_segment_acceleration_test.txt");
-    file_acc_test << *accDataPtr_ << std::endl;
-    file_acc_test.close();
-    std::ofstream file_tau_test("../data_realworld/left_stance_segment_torque_test.txt");
-    file_tau_test << *torqueDataPtr_ << std::endl; 
-    file_tau_test.close();
+    for (int i = 0; i < mynlp->N; i++) {
+        const auto& lambda = lambdas.segment(i * (NUM_DEPENDENT_JOINTS + 6), NUM_DEPENDENT_JOINTS + 6);
+        pinocchio::rnea(
+            new_model, new_data, 
+            posDataPtr_->col(i), 
+            Eigen::VectorXd::Zero(new_model.nv), 
+            Eigen::VectorXd::Zero(new_model.nv));
+        ddcPtr_->get_J(posDataPtr_->col(i));
+        Eigen::VectorXd tau_estimated = new_data.tau - ddcPtr_->J.transpose() * lambda;
+        
+        tau_indep << ddcPtr_->get_independent_vector(tau_estimated).transpose() << std::endl;
+        tau_dep << ddcPtr_->get_dependent_vector(tau_estimated).transpose() << std::endl;
+    }   
 
-    std::cout << mynlp->solution << std::endl;
-
+    tau_indep.close();
+    tau_dep.close();
+    
     return 0;
 }

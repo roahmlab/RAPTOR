@@ -7,7 +7,7 @@ DynamicsConstraints::DynamicsConstraints(const int numJoints_input, int numDepen
     numDependentJoints(numDependentJoints_input) {
     numIndependentJoints = numJoints - numDependentJoints;
 
-    c = VecX::Zero(numJoints);
+    c = VecX::Zero(numDependentJoints);
     J = MatX::Zero(numDependentJoints, numJoints);
     Jx_partial_dq = MatX::Zero(numDependentJoints, numJoints);
     JTx_partial_dq = MatX::Zero(numJoints, numJoints);
