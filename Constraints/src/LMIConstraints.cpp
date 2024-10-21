@@ -9,49 +9,6 @@ LMIConstraints::LMIConstraints(const int num_links_input,
     if (10 * num_links > varLength) {
         throw std::invalid_argument("Error: regroup matrix is not provided and the variable length is too short");
     }
-
-    // initialize d LMI d z
-    dLMIdz(0) = MatX::Zero(4, 4);
-    dLMIdz(0)(3, 3) = 1;
-
-    dLMIdz(1) = MatX::Zero(4, 4);
-    dLMIdz(1)(0, 3) = 1;
-    dLMIdz(1)(3, 0) = 1;
-
-    dLMIdz(2) = MatX::Zero(4, 4);
-    dLMIdz(2)(1, 3) = 1;
-    dLMIdz(2)(3, 1) = 1;
-
-    dLMIdz(3) = MatX::Zero(4, 4);
-    dLMIdz(3)(2, 3) = 1;
-    dLMIdz(3)(3, 2) = 1;
-
-    dLMIdz(4) = MatX::Zero(4, 4);
-    dLMIdz(4)(0, 0) = -0.5;
-    dLMIdz(4)(1, 1) = 0.5;
-    dLMIdz(4)(2, 2) = 0.5;
-
-    dLMIdz(5) = MatX::Zero(4, 4);
-    dLMIdz(5)(0, 1) = -1;
-    dLMIdz(5)(1, 0) = -1;
-
-    dLMIdz(6) = MatX::Zero(4, 4);
-    dLMIdz(6)(0, 0) = 0.5;
-    dLMIdz(6)(1, 1) = -0.5;
-    dLMIdz(6)(2, 2) = -0.5;
-
-    dLMIdz(7) = MatX::Zero(4, 4);
-    dLMIdz(7)(0, 2) = -1;
-    dLMIdz(7)(2, 0) = -1;
-
-    dLMIdz(8) = MatX::Zero(4, 4);   
-    dLMIdz(8)(1, 2) = -1;
-    dLMIdz(8)(2, 1) = -1;
-
-    dLMIdz(9) = MatX::Zero(4, 4);
-    dLMIdz(9)(0, 0) = 0.5;
-    dLMIdz(9)(1, 1) = 0.5;
-    dLMIdz(9)(2, 2) = -0.5;
 }
 
 void LMIConstraints::compute(const VecX& z, 
