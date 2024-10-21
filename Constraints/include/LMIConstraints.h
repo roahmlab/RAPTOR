@@ -37,8 +37,6 @@ public:
 
     // class members:
     int num_links = 0;
-
-    Eigen::Array<MatX, 1, 10> dLMIdz;
 };
 
 }; // namespace RAPTOR
