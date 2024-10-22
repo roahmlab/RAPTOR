@@ -6,7 +6,7 @@
 
 using namespace RAPTOR;
 
-int main() {
+int main(int argc, char* argv[]) {
     // Initialize model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     pinocchio::Model model;
@@ -24,19 +24,22 @@ int main() {
     qrSolverPtr_->computeRegroupMatrix();
 
 
+
     // Initialize data
     bool include_offset_input = true ;
-    const int N = 1358;
-    const std::string posFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/q_downsampled.csv";
-    const std::string velFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/q_d_downsampled.csv";
-    const std::string accFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/q_dd_downsampled.csv";
-    const std::string torqueFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/tau_downsampled.csv";
+    const std::string posFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_downsampled_5.csv";
+    const std::string velFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_d_downsampled_5.csv";
+    const std::string accFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_dd_downsampled_5.csv";
+    const std::string torqueFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/tau_downsampled_5.csv";
 
 
     Eigen::MatrixXd posData = Utils::initializeEigenMatrixFromFile(posFile);
     Eigen::MatrixXd velData = Utils::initializeEigenMatrixFromFile(velFile);
     Eigen::MatrixXd accData = Utils::initializeEigenMatrixFromFile(accFile);
     Eigen::MatrixXd torqueData = Utils::initializeEigenMatrixFromFile(torqueFile);
+    torqueData = -torqueData;    
+
+    int N = posData.rows();
 
     std::shared_ptr<Eigen::MatrixXd> posDataPtr_ = std::make_shared<Eigen::MatrixXd>(posData.transpose());
     std::shared_ptr<Eigen::MatrixXd> velDataPtr_ = std::make_shared<Eigen::MatrixXd>(velData.transpose());
@@ -88,7 +91,7 @@ int main() {
     app->Options()->SetNumericValue("constr_viol_tol", 1e-5);
     mynlp->constr_viol_tol = 1e-5;
     // app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 200.0);
+	app->Options()->SetNumericValue("max_wall_time", 120.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 3000);
     app->Options()->SetStringValue("mu_strategy", "monotone");
@@ -128,10 +131,8 @@ int main() {
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
        
         Eigen::VectorXd beta = mynlp->solution.head(qrSolverPtr_->dim_id);
-        std::cout << "paramer solution: " << (mynlp->solution.head(70)).transpose() << std::endl;
-
         mynlp->solution.segment(0, 10 * model.nv) = qrSolverPtr_->Ginv * mynlp->solution.segment(0, 10 * model.nv);
-
+        std::cout << "paramer solution: " << (mynlp->solution.head(70)).transpose() << std::endl;
         std::cout <<"from urdf paramer" << qrSolverPtr_->phi.transpose() << std::endl;
         // std::cout <<"different" << qrSolverPtr_->phi.transpose() -mynlp->solution.transpose().segment(0,70) << std::endl;
 
@@ -145,8 +146,8 @@ int main() {
             }
         }
 
-        const std::string outputfolder = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/";
-        std::ofstream solution(outputfolder + "full_parameters_solution.csv");
+        const std::string outputfolder = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";
+        std::ofstream solution(outputfolder + "full_parameters_solution_" + std::string(argv[1]) + ".csv");
 
         solution << std::setprecision(16);
         for (int i = 0; i < mynlp->solution.size(); i++) {
@@ -182,8 +183,9 @@ int main() {
             Eigen::VectorXd offset = mynlp->solution.tail(model.nv);
         }
 
-        const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/experiment_filter_data/";
-        std::ofstream estimate_tau(outputfolder1 + "full_parameters_estimate_tau.csv");
+
+        const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";
+        std::ofstream estimate_tau(outputfolder1 + "full_parameters_estimate_tau_" + std::string(argv[1]) + ".csv");
 
 
         for (Index i =0 ; i < N; i++) {
@@ -212,21 +214,21 @@ int main() {
            
         } 
 
-        // Extract the segment from the solution vector (no transpose involved)
-        Eigen::VectorXd phi_solution_segment = mynlp->solution.segment(0, 70);
+        // // Extract the segment from the solution vector (no transpose involved)
+        // Eigen::VectorXd phi_solution_segment = mynlp->solution.segment(0, 70);
 
-        // Perform element-wise division safely
-        Eigen::VectorXd phi_ratio = qrSolverPtr_->phi.array() / phi_solution_segment.array();
+        // // Perform element-wise division safely
+        // Eigen::VectorXd phi_ratio = qrSolverPtr_->phi.array() / phi_solution_segment.array();
 
-        // Output the result with 10 elements per line
-        std::cout << "from URDF parameter / solution (element-wise):" << std::endl;
-        for (int i = 0; i < phi_ratio.size(); ++i) {
-            std::cout << phi_ratio(i) << " ";
+        // // Output the result with 10 elements per line
+        // std::cout << "from URDF parameter / solution (element-wise):" << std::endl;
+        // for (int i = 0; i < phi_ratio.size(); ++i) {
+        //     std::cout << phi_ratio(i) << " ";
             
-            if ((i + 1) % 10 == 0) {
-                std::cout << std::endl;
-            }
-        }
+        //     if ((i + 1) % 10 == 0) {
+        //         std::cout << std::endl;
+        //     }
+        // }
 
 
 

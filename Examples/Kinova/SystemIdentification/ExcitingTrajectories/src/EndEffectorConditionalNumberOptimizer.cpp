@@ -110,11 +110,11 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                      Vec3(0.0, 0.0, 0.0)
                                     };
     std::vector<Vec3> Size = {Vec3(5.0, 5.0, 0.01),
-                              Vec3(5.0, 0.05+0.1, 1.12),
-                              Vec3( 0.05+0.1, 0.05+0.1, 1.12),
-                              Vec3( 0.05+0.1, 1.28, 1.28),
+                              Vec3(5.0, 0.05, 1.12),
+                              Vec3( 0.05, 0.05, 1.12),
+                              Vec3( 0.05, 1.28, 1.28),
                               Vec3( 5, 5, 0.05),
-                              Vec3( 0.15+0.1, 0.15+0.1, 0.15+0.2)
+                              Vec3( 0.15, 0.15, 0.15)
                             };    
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,

@@ -9,6 +9,7 @@ bool FrictionParametersIdentification::set_parameters(
     const std::shared_ptr<MatX>& velPtr_input,
     const std::shared_ptr<MatX>& accPtr_input,
     const std::shared_ptr<MatX>& torquePtr_input,
+    // std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
     const bool include_offset_input
 ) 
 {
@@ -39,6 +40,7 @@ bool FrictionParametersIdentification::set_parameters(
 
     N = posPtr_->cols();
 
+    // regroupPtr_ = regroupPtr_input;
     include_offset = include_offset_input;
 
     // compute nominal torque from data
@@ -52,6 +54,31 @@ bool FrictionParametersIdentification::set_parameters(
 
         tau_inertials.col(i) = dataPtr_->tau;
     } 
+
+    // MatX FullObservationMatrix = MatX::Zero(N * Nact, 10 * Nact);
+    // for (int i = 0; i < N; i++) {
+    //     const VecX& q = posPtr_->col(i);
+    //     const VecX& v = velPtr_->col(i);
+    //     const VecX& a = accPtr_->col(i);
+
+    //     pinocchio::computeJointTorqueRegressor(
+    //         *modelPtr_, *dataPtr_, 
+    //         q, v, a);
+
+    //     FullObservationMatrix.middleRows(i * Nact, Nact) = 
+    //         dataPtr_->jointTorqueRegressor;
+    // }
+
+    //  // Perform regrouping (assume regroupPtr_ has been initialized)
+    // if (regroupPtr_->RegroupMatrix.rows() != FullObservationMatrix.cols()) {
+    //     throw std::invalid_argument("Error: QRDecompositionSolver not initialized properly!");
+    // }
+
+    // RegroupedObservationMatrix = 
+    //     FullObservationMatrix * regroupPtr_->RegroupMatrix;
+    
+    // tau_inertials = RegroupedObservationMatrix * regroupPtr_->beta;
+   
     
     // simply use zero as starting point
     x0 = VecX::Zero(Nact * (include_offset ? 4 : 3));
@@ -164,6 +191,7 @@ bool FrictionParametersIdentification::eval_f(
         const VecX& q_dd = accPtr_->col(i);
         const VecX& tau = torquePtr_->col(i);
         const VecX& tau_inertial = tau_inertials.col(i);
+        // const Eigen::VectorXd& tau_inertial = tau_inertials.segment(i * Nact, Nact);
 
         VecX total_friction_force = 
             friction.cwiseProduct(q_d.cwiseSign()) +
@@ -171,7 +199,7 @@ bool FrictionParametersIdentification::eval_f(
             armature.cwiseProduct(q_dd) +
             offset;
 
-        VecX tau_estimated = tau_inertial + total_friction_force;
+        VecX tau_estimated = tau_inertial +total_friction_force;
 
         obj_value += 0.5 * (tau_estimated - tau).squaredNorm();
     }
@@ -211,6 +239,7 @@ bool FrictionParametersIdentification::eval_grad_f(
         const VecX& q_dd = accPtr_->col(i);
         const VecX& tau = torquePtr_->col(i);
         const VecX& tau_inertial = tau_inertials.col(i);
+        // const Eigen::VectorXd& tau_inertial = tau_inertials.segment(i * Nact, Nact);
 
         VecX total_friction_force = 
             friction.cwiseProduct(q_d.cwiseSign()) +
@@ -227,7 +256,7 @@ bool FrictionParametersIdentification::eval_grad_f(
         if (include_offset) {
             grad_f_vec.tail(Nact) += tau_diff;
         }
-    }
+    }           
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);

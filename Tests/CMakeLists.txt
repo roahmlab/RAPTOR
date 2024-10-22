@@ -111,3 +111,15 @@ target_link_libraries(QRDecomposition_test PUBLIC
 
 target_compile_options(QRDecomposition_test PUBLIC
     ${PINOCCHIO_FLAGS})
+
+# add_executable(Test_torque
+#     KinematicsDynamics/Test_torque.cpp)
+
+# target_link_libraries(Test_torque PUBLIC
+#     trajlib 
+#     IDlib
+#     ${BOOST_LIBRARIES} 
+#     pinocchio::pinocchio)
+
+# target_compile_options(Test_torque PUBLIC
+#     ${PINOCCHIO_FLAGS})

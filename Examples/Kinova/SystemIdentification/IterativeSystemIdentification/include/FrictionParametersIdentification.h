@@ -2,8 +2,12 @@
 #define FRICTION_PARAMETERS_IDENTIFICATION_H
 
 #include "Optimizer.h"
+#include "QRDecompositionSolver.h"
 
 #include "pinocchio/algorithm/rnea.hpp"
+#include "pinocchio/algorithm/regressor.hpp"
+
+
 
 namespace RAPTOR {
 
@@ -27,6 +31,7 @@ public:
         const std::shared_ptr<MatX>& velPtr_input,
         const std::shared_ptr<MatX>& accPtr_input,
         const std::shared_ptr<MatX>& torquePtr_input,
+        // std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
         const bool include_offset_input = false
     );
 
@@ -100,6 +105,7 @@ public:
 
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
+    // std::shared_ptr<QRDecompositionSolver> regroupPtr_;
 
     // shared pointers to data
     std::shared_ptr<MatX> posPtr_;
@@ -107,7 +113,10 @@ public:
     std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
 
+    // MatX RegroupedObservationMatrix; 
+
     MatX tau_inertials; // computed from the trajectory without friction
+    // VecX tau_inertials;
 
     int Nact = 0; // number of motors
     int N = 0; // number of samples

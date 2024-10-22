@@ -25,19 +25,6 @@ public:
     ~BaseParametersIdentification() = default;
 
     // [set_parameters]
-    // bool set_parameters(
-    //     MatX &Wh,
-    //     VecX &Th,
-    //     VecX &X,
-    //     bool include_friction_offset,
-    //     Model &model_input,
-    //     std::shared_ptr<QRDecompositionSolver> regroupPtr,
-    //     VecX &lb,
-    //     VecX &ub,
-    //     int b_full,
-    //     int fm_dim,
-    //     int Alg_case
-    // );
     bool set_parameters(
         const Model& model_input,
         const std::shared_ptr<MatX>& posPtr_input,
