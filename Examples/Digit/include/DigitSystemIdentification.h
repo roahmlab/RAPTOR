@@ -7,6 +7,7 @@
 #include "DigitWholeBodyDynamicsConstraints.h"
 
 #include "pinocchio/algorithm/regressor.hpp"
+#include "pinocchio/algorithm/center-of-mass.hpp"
 
 namespace RAPTOR {
 namespace DigitWholeBodySysID {
@@ -96,7 +97,7 @@ public:
        const DigitSystemIdentification&
     );
 
-    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
+    const double default_maximum_uncertainty = 0.5; // default maximum uncertainty
 
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
@@ -123,6 +124,45 @@ public:
 
     int Nact = 0; // number of actuated joints
     int N = 0; // number of samples
+};
+
+class CustomizedConstraints : public Constraints {
+public: 
+    using VecX = Eigen::VectorXd;
+    using MatX = Eigen::MatrixXd;
+
+    // Constructor
+    CustomizedConstraints() = default;
+
+    // Constructor
+    CustomizedConstraints(const double totalMass_input,
+                          const int N_input,
+                          const int lambdaOffset_input,
+                          const int varLength) :
+        totalMass(totalMass_input),
+        N(N_input),
+        lambdaOffset(lambdaOffset_input),
+        Constraints(N_input * 3, varLength) {};
+
+    // Destructor
+    ~CustomizedConstraints() = default;
+
+    // class methods:
+        // compute constraints
+    virtual void compute(const VecX& z, 
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
+
+        // compute constraints lower bounds and upper bounds
+    virtual void compute_bounds() override;
+
+        // print violation information
+    virtual void print_violation_info() override;
+
+    // class members:
+    double totalMass = 0;
+    int N = 0;
+    int lambdaOffset = 0;
 };
 
 }; // namespace DigitWholeBodySysID
