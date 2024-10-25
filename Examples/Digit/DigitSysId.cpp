@@ -4,11 +4,11 @@ using namespace RAPTOR;
 using namespace DigitWholeBodySysID;
 
 int main() {
-    // #ifdef NUM_THREADS
-    //     Eigen::setNbThreads(NUM_THREADS);
-    // #else
-    //     throw std::runtime_error("macro NUM_THREADS is not defined!");
-    // #endif
+    #ifdef NUM_THREADS
+        Eigen::setNbThreads(NUM_THREADS);
+    #else
+        throw std::runtime_error("macro NUM_THREADS is not defined!");
+    #endif
 
     // define robot model
     const char stanceLeg = 'L';
@@ -80,8 +80,8 @@ int main() {
     std::shared_ptr<Eigen::MatrixXd> posDataPtr_ = std::make_shared<Eigen::MatrixXd>();
     std::shared_ptr<Eigen::MatrixXd> torqueDataPtr_ = std::make_shared<Eigen::MatrixXd>();
 
-    *posDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_realworld/Digit_data_stand_realworld_position.txt");
-    *torqueDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_realworld/Digit_data_stand_realworld_torque.txt");
+    *posDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_simulator_2/Digit_data_stand_simulator_position.txt");
+    *torqueDataPtr_ = Utils::initializeEigenMatrixFromFile("../data_stand_simulator_2/Digit_data_stand_simulator_torque.txt");
 
     std::cout << "Number of samples: " << posDataPtr_->cols() << std::endl;
 
@@ -104,7 +104,7 @@ int main() {
     mynlp->constr_viol_tol = 1e-4;
 	app->Options()->SetNumericValue("max_wall_time", 1000.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 500);
+    app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -114,7 +114,7 @@ int main() {
     else {
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     }
-    
+
     app->Options()->SetStringValue("jac_c_constant", "yes");
 
     // // For gradient checking
@@ -151,31 +151,26 @@ int main() {
     //     std::cout << residual.segment(i * NUM_INDEPENDENT_JOINTS, NUM_INDEPENDENT_JOINTS).transpose() << std::endl;
     // }
 
-    const Eigen::VectorXd& lambdas = mynlp->solution.tail(mynlp->N * (NUM_DEPENDENT_JOINTS + 6));
-    for (int i = 0; i < mynlp->N; i++) {
-        const auto& lambda = lambdas.segment(i * (NUM_DEPENDENT_JOINTS + 6), NUM_DEPENDENT_JOINTS + 6);
-        std::cout << lambda.tail(12).transpose() << std::endl;
-    }
-
     pinocchio::Model new_model = model;
     
     for (int i = 0; i < mynlp->nontrivialLinkIds.size(); i++) {
         std::cout << model.names[mynlp->nontrivialLinkIds[i] + 1] << std::endl;
-        std::cout << mynlp->solution.segment(i * 10, 10).transpose() << std::endl;
-        std::cout << "New\n";
-        std::cout << pinocchio::Inertia::FromDynamicParameters(
-            mynlp->solution.segment(i * 10, 10)) << std::endl << std::endl;
-        std::cout << "Old\n";
-        std::cout << pinocchio::Inertia::FromDynamicParameters(
-            mynlp->x0.segment(i * 10, 10)) << std::endl << std::endl;
-        std::cout << std::endl;
+
+        Eigen::VectorXd old_inertia = model.inertias[mynlp->nontrivialLinkIds[i] + 1].toDynamicParameters().tail(6);
+        Eigen::VectorXd sol(10);
+        sol << mynlp->solution.segment(i * 4, 4), old_inertia;
 
         new_model.inertias[mynlp->nontrivialLinkIds[i] + 1] = 
-            pinocchio::Inertia::FromDynamicParameters(mynlp->solution.segment(i * 10, 10));
+            pinocchio::Inertia::FromDynamicParameters(sol);
 
-        const double mass = mynlp->solution(10 * i);
-        const Eigen::Vector3d& com = mynlp->solution.segment(10 * i + 1, 3);
-        const pinocchio::Symmetric3Tpl<double> inertia(mynlp->solution.segment(10 * i + 4, 6));
+        std::cout << "New:\n";
+        std::cout << new_model.inertias[mynlp->nontrivialLinkIds[i] + 1] << std::endl;
+        std::cout << "Old:\n";
+        std::cout << model.inertias[mynlp->nontrivialLinkIds[i] + 1] << std::endl;
+
+        const double mass = mynlp->solution(4 * i);
+        const Eigen::Vector3d& com = mynlp->solution.segment(4 * i + 1, 3);
+        const pinocchio::Symmetric3Tpl<double> inertia(old_inertia);
         
         // construct LMI matrix
         Eigen::Matrix4d LMI = Eigen::Matrix4d::Zero();
@@ -192,10 +187,19 @@ int main() {
         std::cout << LMI << std::endl << std::endl;
     }
 
+    const Eigen::VectorXd& lambdas = mynlp->solution.tail(mynlp->N * (NUM_DEPENDENT_JOINTS + 6));
+    const double totalMass = pinocchio::computeTotalMass(model);
+    for (int i = 0; i < mynlp->N; i++) {
+        const auto& lambda = lambdas.segment(i * (NUM_DEPENDENT_JOINTS + 6), NUM_DEPENDENT_JOINTS + 6);
+        const auto& lambda_contact = lambda.tail(12);
+        const Eigen::VectorXd net_force = lambda_contact.head(3) + lambda_contact.segment(6, 3) + totalMass * new_model.gravity.linear();
+        std::cout << net_force.transpose() << std::endl;
+    }
+
     pinocchio::Data new_data(new_model);
     const auto ddcPtr_ = mynlp->ddcPtr_;
-    std::ofstream tau_indep("tau_indep_realworld.txt");
-    std::ofstream tau_dep("tau_dep_realworld.txt");
+    std::ofstream tau_indep("tau_indep_simulator.txt");
+    std::ofstream tau_dep("tau_dep_simulator.txt");
 
     for (int i = 0; i < mynlp->N; i++) {
         const auto& lambda = lambdas.segment(i * (NUM_DEPENDENT_JOINTS + 6), NUM_DEPENDENT_JOINTS + 6);
