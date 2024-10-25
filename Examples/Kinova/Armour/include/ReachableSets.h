@@ -4,6 +4,7 @@
 #include "PZDynamics.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 // Part I: Create JRS (joint trajectory reachable sets) online
@@ -21,6 +22,7 @@ Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
                                          std::shared_ptr<KinematicsDynamics>& kdPtr_);
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // REACHABLE_SETS_H

@@ -222,13 +222,13 @@ nb::tuple KinovaPybindWrapper::optimize() {
     return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
-nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_solution() {
+nb::tuple KinovaPybindWrapper::analyze_solution() {
     if (!has_optimized) {
         throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
     }
 
     // re-evaluate the solution on a finer time discretization
-    const int N_simulate = 60;
+    const int N_simulate = 24 * T; // 24Hz
     SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
     try {
         testnlp->display_info = false;
@@ -263,7 +263,7 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         throw std::runtime_error("Error evaluating the solution on a finer time discretization! Check previous error message!");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo(N_simulate, 4 * NUM_JOINTS + 1);
+    trajInfo.resize(N_simulate, 4 * NUM_JOINTS + 1);
     for (int i = 0; i < N_simulate; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             trajInfo(i, j) = testnlp->trajPtr_->q(i)(j);
@@ -275,6 +275,28 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         trajInfo(i, 4 * NUM_JOINTS) = testnlp->trajPtr_->tspan(i);
     }
 
+    const KinovaCustomizedConstraints* customizedConstraintsPtr = nullptr;
+    for (int i = 0; i < testnlp->constraintsNameVec_.size(); i++) {
+        if (testnlp->constraintsNameVec_[i] == "obstacle avoidance constraints") {
+            customizedConstraintsPtr = dynamic_cast<KinovaCustomizedConstraints*>(testnlp->constraintsPtrVec_[i].get());
+        }
+    }
+    if (customizedConstraintsPtr == nullptr) {
+        throw std::runtime_error("Error retrieving customized constraints!");
+    }
+
+    spheres_x.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    spheres_y.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    spheres_z.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    for (int i = 0; i < N_simulate; i++) {
+        for (int j = 0; j < customizedConstraintsPtr->num_spheres; j++) {
+            const Vec3& sphere_center = customizedConstraintsPtr->sphere_centers_copy(j, i);
+            spheres_x(j, i) = sphere_center(0);
+            spheres_y(j, i) = sphere_center(1);
+            spheres_z(j, i) = sphere_center(2);
+        }
+    }
+
     const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
     auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
         trajInfo.data(),
@@ -283,7 +305,27 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         nb::handle()
     );
 
-    return traj;
+    const size_t shape_ptr2[] = {customizedConstraintsPtr->num_spheres, N_simulate};
+    auto sphere_xs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_x.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+    auto sphere_ys = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_y.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+    auto sphere_zs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_z.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+
+    return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs);
 }
 
 }; // namespace Kinova

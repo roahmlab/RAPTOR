@@ -4,6 +4,7 @@
 #include "ParameterizedTrajectory.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 class KinematicsDynamics {
@@ -82,6 +83,7 @@ void crossOnlyOneDimension(const std::string& jointName,
 						   PZsparse& out3);
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif

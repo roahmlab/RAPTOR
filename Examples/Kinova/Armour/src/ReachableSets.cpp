@@ -1,6 +1,7 @@
 #include "ReachableSets.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 void GenerateJRS(const std::shared_ptr<RobotInfo>& robotInfoPtr_,
@@ -134,4 +135,5 @@ Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
 }
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR

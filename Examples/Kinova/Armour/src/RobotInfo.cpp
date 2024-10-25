@@ -1,6 +1,7 @@
 #include "RobotInfo.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 Eigen::VectorXd map_to_vector(const YAML::Node& node, int size) {
@@ -155,4 +156,5 @@ void RobotInfo::print() const {
 }
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR

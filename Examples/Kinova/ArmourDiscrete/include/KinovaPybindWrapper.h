@@ -61,7 +61,7 @@ public:
 
     nb::tuple optimize();
 
-    nb::ndarray<nb::numpy, double, nb::shape<2, -1>> analyze_solution();
+    nb::tuple analyze_solution();
 
     // Class members
     // robot model
@@ -90,6 +90,11 @@ public:
     
     SmartPtr<KinovaOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo; // trajectory information
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_x;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_y;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_z;
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;

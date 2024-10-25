@@ -6,6 +6,7 @@
 #include "Optimizer.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 class ArmourOptimizer : public Optimizer {
@@ -160,6 +161,7 @@ public:
 };
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // ARMOUR_OPTIMIZER_H

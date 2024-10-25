@@ -18,26 +18,39 @@ computes the distance between the robot and the customized obstacles,
 and make sure the distance are larger than 0 to achieve collision avoidance.
 */
 
-#define NUM_SPHERES 14
+#define NUM_SPHERES 17
 
 // based on which joint we compute the positions of the spheres
 const int SPHERE_JOINT_ID[NUM_SPHERES] = {2, 2, 2, 2, 2, 2, 2, // spheres on link 2
                                           4, 4, 4, 4, 4,       // spheres on link 4
-                                          6, 6};               // spheres on link 6
-
-// the translation axis of the spheres to cover the links (they are all extended along the y axis)
-const int SPHERE_OFFSET_AXIS[NUM_SPHERES] = {5, 5, 5, 5, 5, 5, 5, // spheres on link 2
-                                             5, 5, 5, 5, 5,       // spheres on link 4
-                                             5, 5};               // spheres on link 6
+                                          6, 6,                // spheres on link 6
+                                          6, 6, 6};            // spheres on camera
 
 // the translation offset of the spheres to cover the links                                            
-const double SPHERE_OFFSET[NUM_SPHERES] = {-0.05, -0.11, -0.17, -0.24, -0.30, -0.36, -0.43, // spheres on link 2
-                                           -0.07, -0.14, -0.21, -0.28, -0.32,               // spheres on link 4
-                                           -0.07, -0.14};                                   // spheres on link 6                                        
+const double SPHERE_OFFSET[NUM_SPHERES][3] = {
+    {0.0, -0.05, -0.01},
+    {0.0, -0.11, -0.01},
+    {0.0, -0.17, -0.01},
+    {0.0, -0.24, -0.01},
+    {0.0, -0.30, -0.01},
+    {0.0, -0.36, -0.01},
+    {0.0, -0.43, -0.01}, // sphere on link 2
+    {0.0, -0.07, 0.0},
+    {0.0, -0.14, 0.0},
+    {0.0, -0.21, 0.0},
+    {0.0, -0.28, 0.0},
+    {0.0, -0.32, 0.0},   // sphere on link 4
+    {0.0, -0.07, 0.0},
+    {0.0, -0.14, 0.0},   // spheres on link 6         
+    {-0.03, -0.16, 0.058},
+    {0.0, -0.16, 0.058},
+    {0.03, -0.16, 0.058}   // spheres on camera
+};                                                            
 
-const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.08, // spheres on link 2
-                                           0.07, 0.06, 0.06, 0.06, 0.07,             // spheres on link 4
-                                           0.05, 0.05};                              // spheres on link 6
+const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.07, // spheres on link 2
+                                           0.07, 0.06, 0.06, 0.06, 0.06,             // spheres on link 4
+                                           0.05, 0.05,                               // spheres on link 6
+                                           0.02, 0.02, 0.02};                        // spheres on camera    
 
 class KinovaCustomizedConstraints : public Constraints {
 public:
@@ -64,8 +77,7 @@ public:
     // class methods:
         // add one more sphere to the collision avoidance
     void add_collision_sphere(int joint_id,
-                              int offset_axis,
-                              double offset,
+                              const Vec3& offset,
                               double radius);
 
         // compute constraints
@@ -93,9 +105,10 @@ public:
         // sphere info
     int num_spheres = 0;
     std::vector<int> sphere_joint_id;
-    std::vector<int> sphere_offset_axis;
-    std::vector<double> sphere_offset;
+    std::vector<Vec3> sphere_offset;
     std::vector<double> sphere_radius;
+
+    Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> sphere_centers_copy;
 
         // the transform matrix at the beginning and at the end
     Transform startT;

@@ -1,6 +1,7 @@
 #include "PZDynamics.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
@@ -716,4 +717,5 @@ void crossOnlyOneDimension(const std::string& jointName,
 }
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR

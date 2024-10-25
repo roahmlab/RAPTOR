@@ -21,13 +21,13 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
     // initialize sphere info
     num_spheres = NUM_SPHERES;
     sphere_joint_id.resize(NUM_SPHERES);
-    sphere_offset_axis.resize(NUM_SPHERES);
     sphere_offset.resize(NUM_SPHERES);
     sphere_radius.resize(NUM_SPHERES);
     for (int i = 0; i < NUM_SPHERES; i++) {
         sphere_joint_id[i] = SPHERE_JOINT_ID[i];
-        sphere_offset_axis[i] = SPHERE_OFFSET_AXIS[i];
-        sphere_offset[i] = SPHERE_OFFSET[i];
+        sphere_offset[i] = Vec3(SPHERE_OFFSET[i][0], 
+                                SPHERE_OFFSET[i][1], 
+                                SPHERE_OFFSET[i][2]);
         sphere_radius[i] = SPHERE_RADIUS[i];
     }
 
@@ -37,17 +37,16 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
     m = trajPtr_->N * num_spheres;
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);
+    sphere_centers_copy.resize(num_spheres, trajPtr_->N);
 
     initialize_memory(m, trajPtr_->varLength);
 }
 
 void KinovaCustomizedConstraints::add_collision_sphere(int joint_id,
-                                                       int offset_axis,
-                                                       double offset,
+                                                       const Vec3& offset,
                                                        double radius) {
     num_spheres++;
     sphere_joint_id.push_back(joint_id);
-    sphere_offset_axis.push_back(offset_axis);
     sphere_offset.push_back(offset);
     sphere_radius.push_back(radius);
 
@@ -77,7 +76,7 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
 
         for (int j = 0; j < num_spheres; j++) {
             // define the transform matrix of the sphere center with respect to the joint
-            endT = Transform(sphere_offset_axis[j], sphere_offset[j]);
+            endT = Transform(sphere_offset[j]);
 
             if (compute_hessian) {
                 fkPtr_->compute(0, sphere_joint_id[j], q, &startT, &endT, 2);
@@ -90,6 +89,8 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
             }
 
             sphereCenter = fkPtr_->getTranslation();
+
+            sphere_centers_copy(j, i) = sphereCenter;
 
             if (compute_derivatives) {
                 psphereCenter_pz = fkPtr_->getTranslationJacobian() * pq_pz;

@@ -10,6 +10,7 @@
 #include <yaml-cpp/yaml.h>
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
     
 struct ultimate_bound {
@@ -64,6 +65,7 @@ public:
 };
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // ROBOTINFO_H

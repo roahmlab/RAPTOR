@@ -1,6 +1,7 @@
 #include "ParameterizedTrajectory.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 BezierCurveInterval::BezierCurveInterval() {
@@ -880,4 +881,5 @@ double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double 
 }
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR

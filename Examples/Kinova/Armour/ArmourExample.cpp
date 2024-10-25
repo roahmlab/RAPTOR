@@ -1,6 +1,7 @@
 #include "ArmourOptimizer.h"
 
 using namespace RAPTOR;
+using namespace Kinova;
 using namespace Armour;
 
 int main() {

@@ -4,6 +4,7 @@
 #include "RobotInfo.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 constexpr size_t NUM_TIME_STEPS = 128; // Number of time intervals partitioning the trajectory
@@ -156,6 +157,7 @@ double qd_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double s
 double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double kc, double s, double duration);
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
 
 #endif // PARAMETERIZED_TRAJECTORY_H

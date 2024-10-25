@@ -1,6 +1,7 @@
 #include "PZsparse.h"
 
 namespace RAPTOR {
+namespace Kinova {
 namespace Armour {
 
 using namespace boost::multiprecision;
@@ -847,4 +848,5 @@ PZsparse PZsparse::operator/(const double a) const {
 }
 
 }; // namespace Armour
+}; // namespace Kinova
 }; // namespace RAPTOR
