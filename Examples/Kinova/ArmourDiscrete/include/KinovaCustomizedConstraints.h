@@ -24,7 +24,7 @@ and make sure the distance are larger than 0 to achieve collision avoidance.
 const int SPHERE_JOINT_ID[NUM_SPHERES] = {2, 2, 2, 2, 2, 2, 2, // spheres on link 2
                                           4, 4, 4, 4, 4,       // spheres on link 4
                                           6, 6,                // spheres on link 6
-                                          6, 6, 6};            // spheres on camera
+                                          7, 7, 7};            // spheres on camera
 
 // the translation offset of the spheres to cover the links                                            
 const double SPHERE_OFFSET[NUM_SPHERES][3] = {
@@ -42,9 +42,9 @@ const double SPHERE_OFFSET[NUM_SPHERES][3] = {
     {0.0, -0.32, 0.0},   // sphere on link 4
     {0.0, -0.07, 0.0},
     {0.0, -0.14, 0.0},   // spheres on link 6         
-    {-0.03, -0.16, 0.058},
-    {0.0, -0.16, 0.058},
-    {0.03, -0.16, 0.058}   // spheres on camera
+    {-0.03, -0.06, -0.055},
+    {0.0, -0.06, -0.055},
+    {0.03, -0.06, -0.055}   // spheres on camera
 };                                                            
 
 const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.07, // spheres on link 2
