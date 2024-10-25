@@ -25,26 +25,13 @@ public:
     ~EndEffectorParametersIdentification() = default;
 
     // [set_parameters]
-    // bool set_parameters(
-    //     MatX &Wh,
-    //     VecX &Th,
-    //     VecX &X,
-    //     bool include_friction_offset,
-    //     Model &model_input,
-    //     std::shared_ptr<QRDecompositionSolver> regroupPtr,
-    //     VecX &lb,
-    //     VecX &ub,
-    //     int b_full,
-    //     int fm_dim,
-    //     int Alg_case
-    // );
     bool set_parameters(
         const Model& model_input,
         const std::shared_ptr<MatX>& posPtr_input,
         const std::shared_ptr<MatX>& velPtr_input,
         const std::shared_ptr<MatX>& accPtr_input,
         const std::shared_ptr<MatX>& torquePtr_input,
-        const std::shared_ptr<VecX>& phiPtr_input, 
+        const std::shared_ptr<VecX>& full_parametersPtr_input, 
         const bool include_offset_input = false
     );
 
@@ -130,16 +117,11 @@ public:
     std::shared_ptr<MatX> velPtr_;
     std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
-    std::shared_ptr<VecX> phiPtr_; 
-
-
+    std::shared_ptr<VecX> fullparametersPtr_; 
 
     MatX tau_inertials; // computed from the trajectory without friction
-
     int Nact = 0; // number of motors
     int N = 0; // number of samples
-
-    // std::shared_ptr<QRDecompositionSolver> regroupPtr_;
 
     bool include_offset = false;
 };

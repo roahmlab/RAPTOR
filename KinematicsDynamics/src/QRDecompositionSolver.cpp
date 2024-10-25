@@ -34,16 +34,16 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
         ObservationMatrix.cols() == 0) {
         throw std::runtime_error("Observation matrix is not initialized yet!");
     }
-    // Perform QR decomposition with column pivoting for stability
+    // step 1: Perform QR decomposition with column pivoting for stability
     Eigen::ColPivHouseholderQR<MatX> qr(ObservationMatrix);
-    // Get permutation matrix
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = qr.colsPermutation();
     const int rankW = qr.rank();
     A.resize(ObservationMatrix.cols(), ObservationMatrix.cols());
     A = perm;
     Aid = A.leftCols(rankW);
     Ad = A.rightCols(ObservationMatrix.cols()-rankW);
-    // Extract indep R1 and dep R2
+
+    // step 2: Extract indep R1 and dep R2
     MatX R_full = qr.matrixQR().triangularView<Eigen::Upper>();
     const MatX& R1 = R_full.topLeftCorner(rankW, rankW);
     const MatX& R2 = R_full.topRightCorner(rankW, ObservationMatrix.cols() - rankW);
@@ -53,8 +53,9 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
         std::cerr << rankW << std::endl;
         throw std::runtime_error("Rank of R1 is not full rank!");
     }
+
+    // step 3: calculate the necessary varialbes 
     // Compute Kd = R1^{-1} * R2 using a stable solver
-    // Kd = R1.colPivHouseholderQr().solve(R2);
     Kd = R1.completeOrthogonalDecomposition().pseudoInverse() * R2;
     // Zero out elements in Kd that are below the threshold for numerical stability
     for (int i = 0; i < Kd.rows(); i++) {
@@ -64,11 +65,14 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
             }
         }
     }
-    // Get independent and dependent parameters
+
+    // Get independent and dependent and base inertial parameters
     phi_id = Aid.transpose() * phi;
     phi_d = Ad.transpose() * phi;
-    // Compute base inertial parameters
+    dim_id = phi_id.size();
+    dim_d = phi_d.size();
     beta = phi_id + Kd * phi_d;
+
     // Compute Ginv
     MatX KG_(ObservationMatrix.cols(), ObservationMatrix.cols());
     KG_.setZero();
@@ -77,9 +81,7 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
     KG_.bottomRightCorner(ObservationMatrix.cols() - rankW, ObservationMatrix.cols() - rankW) =
         MatX::Identity(ObservationMatrix.cols() - rankW, ObservationMatrix.cols() - rankW);
     Ginv = A * KG_;
-    // Set the dimensions of independent and dependent parameters
-    dim_id = phi_id.size();
-    dim_d = phi_d.size();
+
     // Compute RegroupMatrix
     RegroupMatrix = Aid + Ad * Kd.transpose();
 }

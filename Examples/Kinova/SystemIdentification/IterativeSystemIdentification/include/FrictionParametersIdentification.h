@@ -113,10 +113,7 @@ public:
     std::shared_ptr<MatX> accPtr_;
     std::shared_ptr<MatX> torquePtr_;
 
-    // MatX RegroupedObservationMatrix; 
-
     MatX tau_inertials; // computed from the trajectory without friction
-    // VecX tau_inertials;
 
     int Nact = 0; // number of motors
     int N = 0; // number of samples

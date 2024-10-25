@@ -30,10 +30,6 @@ def create_obstacles(centers, sizes):
     return obstacle_visuals
 
 def main():
-
-
-
-
     physicsClient = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.setGravity(0, 0, -9.81)
@@ -45,11 +41,8 @@ def main():
     numJoints = 7  # Kinova Gen3 typically has 7 joints
 
     # Load the trajectory data from the CSV
-    # with open("/home/zichang/RAPTOR/Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-position-18.csv", "r") as file:
-    with open("/home/zichang/RAPTOR/Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_downsampled_5.csv", "r") as file:
-
+    with open("/home/zichang/RAPTOR/Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-position-18.csv", "r") as file:
         lines = file.readlines()
-
     trajectory = [
         [float(x) for x in line.split()]
         for line in lines if len(line.split()) == 7
@@ -73,38 +66,24 @@ def main():
     ]
 
     # Create obstacles in the scene
-    # create_obstacles(centers, sizes)
-
+    create_obstacles(centers, sizes)
 
     # Visualize trajectory execution
     sphereRadius = 0.01
     sphereColor = [1, 0, 0, 1]  
     visualShapeId = p.createVisualShape(p.GEOM_SPHERE, radius=sphereRadius, rgbaColor=sphereColor)
 
-    # q_step = trajectory[0]
+    for q_step in trajectory:
+        for j in range(numJoints):
+            p.resetJointState(robotId, j, q_step[j])
+        p.stepSimulation()
+        eeState = p.getLinkState(robotId, numJoints - 1)  # Last link state (end effector)
+        current_position = eeState[0]
 
-    q_step = [139.139, 75.747, 192.08, 318.838, 2.543, 24.144, 91.86]
-    q_step = [math.radians(angle) for angle in q_step] 
-    for j in range(numJoints):
-        p.resetJointState(robotId, j, q_step[j])
-    p.stepSimulation()
-    eeState = p.getLinkState(robotId, numJoints - 1)  # Last link state (end effector)
-    current_position = eeState[0]
-    print("End effector position:", current_position)
+        p.createMultiBody(baseMass=0, baseVisualShapeIndex=visualShapeId, basePosition=current_position)
 
-
-    # for q_step in trajectory:
-    #     for j in range(numJoints):
-    #         p.resetJointState(robotId, j, q_step[j])
-    #     p.stepSimulation()
-    #     eeState = p.getLinkState(robotId, numJoints - 1)  # Last link state (end effector)
-    #     current_position = eeState[0]
-
-    #     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visualShapeId, basePosition=current_position)
-
-    #     print("End effector position:", current_position)
+        print("End effector position:", current_position)
   
-
     print("Simulation finished, press Enter to exit...")
     input()
     p.disconnect()

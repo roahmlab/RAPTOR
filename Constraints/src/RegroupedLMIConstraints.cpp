@@ -38,6 +38,8 @@ void RegroupedLMIConstraints::compute(const VecX& z,
     // recover the original inertial parameters
     VecX phi_recovered = qrSolverPtr_->Ginv * z.head(dim);
 
+    // std::cout << phi_recovered.transpose() << std::endl;
+
     // compute the LMI constraints
     lmiConstraintsPtr_->compute(phi_recovered, 
                                 compute_derivatives, 
@@ -62,7 +64,7 @@ void RegroupedLMIConstraints::compute(const VecX& z,
 }
 
 void RegroupedLMIConstraints::compute_bounds() {
-    g_lb = VecX::Zero(m);
+    g_lb = VecX::Constant(m, 1e-3);
     g_ub = VecX::Constant(m, 1e19);
 }
 

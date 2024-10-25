@@ -18,7 +18,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     const std::shared_ptr<MatX>& velPtr_input,
     const std::shared_ptr<MatX>& accPtr_input,
     const std::shared_ptr<MatX>& torquePtr_input,
-    const std::shared_ptr<VecX>& phiPtr_input,
+    const std::shared_ptr<VecX>& full_parametersPtr_input,
     const bool include_offset_input
 )
 { 
@@ -30,20 +30,19 @@ bool EndEffectorParametersIdentification::set_parameters(
     // only choose optimize the end-effector
     Nact = modelPtr_->nv;
 
-    phiPtr_ = phiPtr_input;
+    fullparametersPtr_ = full_parametersPtr_input;
 
-    if (phiPtr_->size() < 12 * Nact) {
-        throw std::invalid_argument("Error: phiPtr_ size is too small.");
+    if (fullparametersPtr_->size() < 13 * Nact) {
+        throw std::invalid_argument("Error: fullparametersPtr_ size is too small.");
     }
 
-    friction = phiPtr_->segment(10 * Nact , Nact);
-    damping = phiPtr_->segment(11 * Nact, Nact);
-    armature = phiPtr_->segment(12 * Nact, Nact);
+    friction = fullparametersPtr_->segment(10 * Nact , Nact);
+    damping = fullparametersPtr_->segment(11 * Nact, Nact);
+    armature = fullparametersPtr_->segment(12 * Nact, Nact);
     offset = VecX::Zero(Nact);
     if (include_offset) {
-        offset = phiPtr_->tail(Nact);
+        offset = fullparametersPtr_->tail(Nact);
     }
-
 
     posPtr_ = posPtr_input;
     velPtr_ = velPtr_input;
@@ -89,7 +88,7 @@ bool EndEffectorParametersIdentification::set_parameters(
 
     // initial guess for independent parameters
     // is just what is included in the optimised in the full parameters optimise
-    x0 = phiPtr_->segment(10 * (Nact-1), 10);
+    x0 = fullparametersPtr_->segment(10 * (Nact-1), 10);
     std::cout << "end_effector parameters"<< x0.transpose() <<std::endl;
 
     // initial guess for motor friction parameters is just 0
@@ -116,7 +115,7 @@ bool EndEffectorParametersIdentification::get_nlp_info(
 
     // number of inequality constraint
     numCons = 0;
-    for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
+    for (Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;
     }
     m = numCons;
@@ -179,12 +178,10 @@ bool EndEffectorParametersIdentification::eval_f(
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    fullparametersPtr_->segment((Nact -1) * 10, 10)= z;
 
-    phiPtr_->segment((Nact -1)* 10, 10)= z;
-
-    // the tau_inertials of end+effector
-    VecX tau_inertials = FullObservationMatrix * phiPtr_->head(10 * Nact);
-
+    // the tau_inertials of end_effector
+    VecX tau_inertials = FullObservationMatrix * fullparametersPtr_->head(10 * Nact);
 
     obj_value = 0;
 
@@ -220,9 +217,9 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
     VecX grad_f_vec = VecX::Zero(n);
 
-    phiPtr_->segment(10 * (Nact-1), 10)= z;
+    fullparametersPtr_->segment(10 * (Nact-1), 10)= z;
 
-    VecX tau_inertials =FullObservationMatrix * phiPtr_->head(10 * Nact);
+    VecX tau_inertials =FullObservationMatrix * fullparametersPtr_->head(10 * Nact);
 
     for (Index i = 0; i < N; i++) {
         const VecX& q_d = velPtr_->col(i);
@@ -239,10 +236,10 @@ bool EndEffectorParametersIdentification::eval_grad_f(
         VecX tau_estimated = tau_inertial + total_friction_force;
         VecX tau_diff = tau_estimated - tau;
 
-        grad_f_vec.head(10) += tau_diff.transpose() * (FullObservationMatrix.block(i * Nact, 
-                                                                                   10* (Nact -1),
-                                                                                   Nact,
-                                                                                   10));
+        grad_f_vec.head(10) += tau_diff.transpose() * (FullObservationMatrix.block( i * Nact, 
+                                                                                    10 * (Nact -1),
+                                                                                    Nact,
+                                                                                    10));
 
     }
 
@@ -287,9 +284,9 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     // }
 
     const MatX& romi = FullObservationMatrix.block( 0, 
-                                                        10* (Nact -1),
-                                                        FullObservationMatrix.rows(),
-                                                        10);
+                                                    10* (Nact -1),
+                                                    FullObservationMatrix.rows(),
+                                                    10);
     const MatX romi_T = romi.transpose();
     
     hess_f = 

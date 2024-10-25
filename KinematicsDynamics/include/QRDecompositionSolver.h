@@ -28,10 +28,10 @@ public:
     ~QRDecompositionSolver() = default;
 
     // class methods:
-        // generate random observation on a certain number of instances
+    // generate random observation on a certain number of instances
     void generateRandomObservation(const int numInstances = 1000);
 
-        // compute QR decomposition-based regrouping
+    // compute QR decomposition-based regrouping
     void computeRegroupMatrix(const double eps = 1e-8);
 
     // class members:
@@ -41,7 +41,7 @@ public:
     VecX phi; // original inertial parameters (ungrouped)
     MatX ObservationMatrix; // observation matrix
 
-        // intermediate matrices and vectors
+    // intermediate matrices and vectors
     MatX Aid;
     MatX Ad;
     MatX A;
@@ -50,7 +50,7 @@ public:
     VecX phi_id; // independent parameters
     VecX phi_d; // dependent parameters
 
-        // results are stored in these matrices and vectors
+    // results are stored in these matrices and vectors
     VecX beta; // regrouped inertial parameters
     MatX RegroupMatrix;
 

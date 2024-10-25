@@ -8,7 +8,8 @@ add_library(Kinovalib SHARED
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
     SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp)
+    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
     # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
     # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
 
@@ -231,6 +232,38 @@ target_link_libraries(SysidBase_test PUBLIC
     pinocchio::pinocchio)
 
 target_compile_options(SysidBase_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(SysidEnd_test
+    SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentification.cpp)
+
+target_include_directories(SysidEnd_test PUBLIC
+    SystemIdentification
+    SystemIdentification/IterativeSystemIdentification/include)
+
+target_link_libraries(SysidEnd_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(SysidEnd_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(Combine_files
+    SystemIdentification/IterativeSystemIdentification/Combine_files.cpp)
+
+target_include_directories(Combine_files PUBLIC
+    SystemIdentification
+    SystemIdentification/IterativeSystemIdentification/include
+    ${CMAKE_SOURCE_DIR}/Utils/include)
+
+target_compile_options(Combine_files PUBLIC
     ${PINOCCHIO_FLAGS})
 
 

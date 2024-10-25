@@ -20,7 +20,6 @@ acceleration_data = [
     for line in lines if len(line.split()) == 7
 ]
 
-
 num_joints = len(acceleration_data[0])
 time_steps = range(len(acceleration_data))
 

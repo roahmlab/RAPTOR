@@ -83,14 +83,15 @@ bool BaseParametersIdentification::set_parameters(
         n += Nact; // offset
     }
 
+    // initial guess
     x0 = VecX::Zero(n);
-
-        // initial guess for independent parameters
-        // is just what is included in the original urdf
+    // initial guess for independent parameters
+    // is just what is included in the original urdf
     x0.head(regroupPtr_->dim_id) = regroupPtr_->beta;
     x0.segment(regroupPtr_->dim_id, regroupPtr_->dim_d) = regroupPtr_->phi_d;
 
-        // initial guess for motor friction parameters is just 0
+
+    // initial guess for motor friction parameters is just 0
 
     // initialize LMI constraints for all links
     constraintsPtrVec_.push_back(std::make_unique<RegroupedLMIConstraints>(regroupPtr_input,
@@ -156,7 +157,7 @@ bool BaseParametersIdentification::get_bounds_info(
     Optimizer::get_bounds_info(n, x_l, x_u, m, g_l, g_u);
 
     // set variable bounds (overwrite previous bounds in x_l and x_u)
-        // independent inertial parameters (after regrouping)
+    // independent inertial parameters (after regrouping)
     for (Index i = 0; i < regroupPtr_->dim_id; i++) {
         if (regroupPtr_->beta(i) > 0) {
             x_l[i] = (1 - default_maximum_uncertainty) * regroupPtr_->beta(i);
@@ -168,7 +169,7 @@ bool BaseParametersIdentification::get_bounds_info(
         }
     }
 
-        // dependent inertial parameters (after regrouping)
+    // dependent inertial parameters (after regrouping)
     for (Index i = 0; i < regroupPtr_->dim_d; i++) {
         if (regroupPtr_->phi_d(i) > 0) {
             x_l[i] = (1 - default_maximum_uncertainty) * regroupPtr_->phi_d(i);
@@ -180,25 +181,25 @@ bool BaseParametersIdentification::get_bounds_info(
         }
     }
 
-        // static friction >= 0
+    // static friction >= 0
     for (Index i = 0; i < Nact; i++) {
         x_l[regroupPtr_->dim_id + i] = 0.0;
-        x_u[regroupPtr_->dim_id + i] = 50.0;
+        x_u[regroupPtr_->dim_id + i] = 5.0;
     }
 
-        // damping >= 0
+    // damping >= 0
     for (Index i = 0; i < Nact; i++) {
         x_l[regroupPtr_->dim_id + Nact + i] = 0.0;
         x_u[regroupPtr_->dim_id + Nact + i] = 50.0;
     }
 
-        // armature >= 0
+    // armature >= 0
     for (Index i = 0; i < Nact; i++) {
         x_l[regroupPtr_->dim_id + 2 * Nact + i] = 0.0;
         x_u[regroupPtr_->dim_id + 2 * Nact + i] = 50.0;
     }
 
-        // static friction offset
+    // static friction offset
     if (include_offset) {
         for (Index i = 0; i < Nact; i++) {
             x_l[regroupPtr_->dim_id + 3 * Nact + i] = -50.0;
@@ -226,7 +227,6 @@ bool BaseParametersIdentification::eval_f(
     const int& dim_d = regroupPtr_->dim_d;
 
     const VecX& beta = z.head(dim_id);
-    // const VecX& phi_d = z.segment(dim_id, Nact);
     const VecX& friction = z.segment(dim_id + dim_d, Nact);
     const VecX& damping = z.segment(dim_id + dim_d + Nact, Nact);
     const VecX& armature = z.segment(dim_id + dim_d + 2 * Nact, Nact);
@@ -275,7 +275,6 @@ bool BaseParametersIdentification::eval_grad_f(
     const int& dim_d = regroupPtr_->dim_d;
 
     const VecX& beta = z.head(dim_id);
-    // const VecX& phi_d = z.segment(dim_id, Nact);
     const VecX& friction = z.segment(dim_id + dim_d, Nact);
     const VecX& damping = z.segment(dim_id + dim_d + Nact, Nact);
     const VecX& armature = z.segment(dim_id + dim_d + 2 * Nact, Nact);
