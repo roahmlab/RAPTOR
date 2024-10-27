@@ -89,8 +89,6 @@ bool BaseParametersIdentification::set_parameters(
     // is just what is included in the original urdf
     x0.head(regroupPtr_->dim_id) = regroupPtr_->beta;
     x0.segment(regroupPtr_->dim_id, regroupPtr_->dim_d) = regroupPtr_->phi_d;
-
-
     // initial guess for motor friction parameters is just 0
 
     // initialize LMI constraints for all links

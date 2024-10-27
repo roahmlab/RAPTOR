@@ -6,7 +6,7 @@ using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
     // Define robot model
-    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -22,13 +22,19 @@ int main(int argc, char* argv[]) {
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
+    Eigen::VectorXd q0_input(model.nv);
+    q0_input << 1.001089876408351, 0.09140272042061115,  -1.648806446891836,   2.381092213417765,
+                     1.822374826812066,  0.1466609489107418,  0.9315315991321746;
+    Eigen::VectorXd q_d0_input = Eigen::VectorXd::Zero(model.nv);
+
     // Define initial guess
+    int num_joints = 7;
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array() - 0.1;
-    z.segment((2 * degree + 1) * model.nv, model.nv) = 
-        2 * 1.0 * Eigen::VectorXd::Random(model.nv).array() - 1.0;
-    z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
-        2 * 0.5 * Eigen::VectorXd::Random(model.nv).array() - 0.5;
+    Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * num_joints).array() - 0.1;
+    z.segment((2 * degree + 1) * num_joints, num_joints) = 
+        2 * 1.0 * Eigen::VectorXd::Random(num_joints).array() - 1.0;
+    z.segment((2 * degree + 1) * num_joints + num_joints, num_joints) = 
+        2 * 0.5 * Eigen::VectorXd::Random(num_joints).array() - 0.5;
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
@@ -61,7 +67,7 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-	app->Options()->SetNumericValue("max_wall_time", 60.0);
+	app->Options()->SetNumericValue("max_wall_time", 120.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -98,9 +104,9 @@ int main(int argc, char* argv[]) {
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
 
-        const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv);
-        mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv) =
-            Utils::wrapToPi(initial_position_part);
+        // const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints);
+        // mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints) =
+        //     Utils::wrapToPi(initial_position_part);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -111,10 +117,12 @@ int main(int argc, char* argv[]) {
     if (mynlp->ifFeasible) {
         std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(T, 
                                                                                            2000, 
-                                                                                           model.nv, 
+                                                                                           num_joints, 
                                                                                            TimeDiscretization::Uniform, 
                                                                                            degree,
-                                                                                           base_frequency);
+                                                                                           base_frequency,
+                                                                                           q0_input,
+                                                                                           q_d0_input);
         traj->compute(mynlp->solution, false);
 
         if (argc > 1) {
@@ -138,6 +146,12 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
             }
+            for (int i = 0; i < 7; ++i){
+                solution << q0_input(i) << std::endl;
+            }
+            for (int i = 0; i < 7; ++i){
+                solution << q_d0_input(i) << std::endl;
+            }
             solution << base_frequency << std::endl;
         }
         else {
@@ -157,8 +171,5 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
-  
-
     return 0;
 }
