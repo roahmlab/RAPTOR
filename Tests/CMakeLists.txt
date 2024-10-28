@@ -49,6 +49,32 @@ target_link_libraries(KinematicsConstraints_test PUBLIC
 target_compile_options(KinematicsConstraints_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(LMIConstraints_test 
+    Constraints/TestLMIConstraints.cpp)
+
+target_link_libraries(LMIConstraints_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(LMIConstraints_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(RegroupedLMIConstraints_test 
+    Constraints/TestRegroupedLMIConstraints.cpp)
+
+target_link_libraries(RegroupedLMIConstraints_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(RegroupedLMIConstraints_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(CustomizedInverseDynamics_test 
     KinematicsDynamics/TestCustomizedInverseDynamics.cpp)
 
@@ -100,3 +126,26 @@ target_link_libraries(ReachableSets_test PUBLIC
     ${BOOST_LIBRARIES}
     yaml-cpp
     pinocchio::pinocchio)
+add_executable(QRDecomposition_test
+    KinematicsDynamics/TestQRDecomposition.cpp)
+
+target_link_libraries(QRDecomposition_test PUBLIC
+    trajlib 
+    IDlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(QRDecomposition_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+# add_executable(Test_torque
+#     KinematicsDynamics/Test_torque.cpp)
+
+# target_link_libraries(Test_torque PUBLIC
+#     trajlib 
+#     IDlib
+#     ${BOOST_LIBRARIES} 
+#     pinocchio::pinocchio)
+
+# target_compile_options(Test_torque PUBLIC
+#     ${PINOCCHIO_FLAGS})

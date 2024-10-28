@@ -1,5 +1,5 @@
-#ifndef VELOCITYLIMITS_H
-#define VELOCITYLIMITS_H
+#ifndef VELOCITY_LIMITS_H
+#define VELOCITY_LIMITS_H
 
 #include <memory>
 
@@ -46,4 +46,4 @@ public:
 
 }; // namespace RAPTOR
 
-#endif // VELOCITYLIMITS_H
+#endif // VELOCITY_LIMITS_H

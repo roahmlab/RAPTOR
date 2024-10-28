@@ -70,7 +70,7 @@ public:
 
     // Constructor
     DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input,
-                             char stanceLeg, 
+                             const char stanceLeg, 
                              const Transform& stance_foot_T_des_input);
 
     // Destructor

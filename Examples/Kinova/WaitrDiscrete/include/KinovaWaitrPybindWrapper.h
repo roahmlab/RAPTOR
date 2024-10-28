@@ -78,8 +78,6 @@ public:
     // robot model
     Model model;
 
-    int actual_model_nq = 0;
-
     // obstacle information
     int num_obstacles = 0;
     std::vector<Vec3> boxCenters;
@@ -105,6 +103,11 @@ public:
     
     SmartPtr<KinovaWaitrOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
+
+    // results
+    VecX solution;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> contactInfo;
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;

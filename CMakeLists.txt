@@ -9,6 +9,15 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+include(CTest)
+set(CTEST_OUTPUT_ON_FAILURE TRUE)
+set(CTEST_CUSTOM_TESTS_IGNORE "")
+
+set(CTEST_JUNIT_OUTPUT_PATH "${CMAKE_BINARY_DIR}/TestResults")
+set(CTEST_CUSTOM_TESTS_IGNORE "")
+
+enable_testing()
+
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -fopenmp")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp")

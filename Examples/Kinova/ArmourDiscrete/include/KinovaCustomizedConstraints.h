@@ -18,7 +18,7 @@ computes the distance between the robot and the customized obstacles,
 and make sure the distance are larger than 0 to achieve collision avoidance.
 */
 
-#define NUM_SPHERES 17
+constexpr int NUM_SPHERES = 17;
 
 // based on which joint we compute the positions of the spheres
 const int SPHERE_JOINT_ID[NUM_SPHERES] = {2, 2, 2, 2, 2, 2, 2, // spheres on link 2
@@ -47,6 +47,7 @@ const double SPHERE_OFFSET[NUM_SPHERES][3] = {
     {0.03, -0.06, -0.055}   // spheres on camera
 };                                                            
 
+// the radius of the spheres
 const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.07, // spheres on link 2
                                            0.07, 0.06, 0.06, 0.06, 0.06,             // spheres on link 4
                                            0.05, 0.05,                               // spheres on link 6

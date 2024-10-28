@@ -1,11 +1,17 @@
+#define BOOST_TEST_MODULE KinematicsConstraintsTest
+#include <boost/test/included/unit_test.hpp>
+
 #include "KinematicsConstraints.h"
-// #include "Plain.h"
 #include "Polynomials.h"
 #include <chrono>
 
 using namespace RAPTOR;
 
-int main() {
+BOOST_AUTO_TEST_SUITE(KinematicsConstraintsTest)
+
+// test gradient
+BOOST_AUTO_TEST_CASE(owngradientTest)
+{
     // Define robot model
     // const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
@@ -13,6 +19,44 @@ int main() {
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
     pinocchio::ModelTpl<double> model = model_double.cast<double>();
+
+    std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
+    ForwardKinematicsSolver fkSolver(&model);
+
+    // compute a valid transform using forward kinematics
+    std::srand(std::time(nullptr));
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
+    int start = 0;
+    int end = model.getJointId("joint_7");
+    fkSolver.compute(start, end, z);
+
+    KinematicsConstraints kc(trajPtr_, &model, end, 6, fkSolver.getTransform());
+
+    kc.compute(z, true, false);
+
+    const Eigen::MatrixXd J_analytical = kc.pg_pz;
+    Eigen::MatrixXd J_numerical = Eigen::MatrixXd::Zero(J_analytical.rows(), J_analytical.cols());
+    for (int i = 0; i < z.size(); i++) {
+        Eigen::VectorXd q_plus = z;
+        q_plus(i) += 1e-7;
+        kc.compute(q_plus, false);
+        const Eigen::VectorXd g_plus = kc.g;
+        Eigen::VectorXd q_minus = z;
+        q_minus(i) -= 1e-7;
+        kc.compute(q_minus, false);
+        const Eigen::VectorXd g_minus = kc.g;
+        J_numerical.col(i) = (g_plus - g_minus) / 2e-7;
+    }
+
+    BOOST_CHECK_SMALL((J_analytical - J_numerical).norm(), 1e-6);
+}
+
+// test hessian
+BOOST_AUTO_TEST_CASE(ownHessianTest){
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
+    
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
 
     // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Plain>(model.nv);
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
@@ -27,57 +71,36 @@ int main() {
 
     KinematicsConstraints kc(trajPtr_, &model, end, 6, fkSolver.getTransform());
 
-    // simple test when difference is small
-    Eigen::VectorXd z_test = z.array() + 1e-6;
-    kc.compute(z_test, false);
-    std::cout << kc.g << std::endl << std::endl;
+    kc.compute(z, true, true);
 
-    // simple test when difference is large
-    z_test = z.array() + 1.0;
-    auto start_clock = std::chrono::high_resolution_clock::now();
-    kc.compute(z_test, true, true);
-    auto end_clock = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_clock - start_clock);
-    std::cout << "Time taken (including gradient and hessian): " << duration.count() << " microseconds" << std::endl;
-
-    std::cout << kc.g << std::endl << std::endl;
-
-    // test gradient
-    const Eigen::MatrixXd J_analytical = kc.pg_pz;
-    Eigen::MatrixXd J_numerical = Eigen::MatrixXd::Zero(J_analytical.rows(), J_analytical.cols());
-    for (int i = 0; i < z_test.size(); i++) {
-        Eigen::VectorXd q_plus = z_test;
-        q_plus(i) += 1e-7;
-        kc.compute(q_plus, false);
-        const Eigen::VectorXd g_plus = kc.g;
-        Eigen::VectorXd q_minus = z_test;
-        q_minus(i) -= 1e-7;
-        kc.compute(q_minus, false);
-        const Eigen::VectorXd g_minus = kc.g;
-        J_numerical.col(i) = (g_plus - g_minus) / 2e-7;
-    }
-
-    // std::cout << "Analytical gradient: " << std::endl << J_analytical << std::endl << std::endl;
-    // std::cout << "Numerical gradient: " << std::endl << J_numerical << std::endl << std::endl;
-    std::cout << J_analytical - J_numerical << std::endl << std::endl;
-
-    // test hessian
     Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic> H_analytical = kc.pg_pz_pz;
-    for (int i = 0; i < z_test.size(); i++) {
-        Eigen::VectorXd q_plus = z_test;
+
+    // params for error checking 
+    bool hasError = false;
+    double max_diff = 0.0;
+    std::stringstream error_message;
+    
+    for (int i = 0; i < z.size(); i++) {
+        Eigen::VectorXd q_plus = z;
         q_plus(i) += 1e-7;
         kc.compute(q_plus, true, false);
         const Eigen::MatrixXd J_plus = kc.pg_pz;
-        Eigen::VectorXd q_minus = z_test;
+        Eigen::VectorXd q_minus = z;
         q_minus(i) -= 1e-7;
         kc.compute(q_minus, true, false);
         const Eigen::MatrixXd J_minus = kc.pg_pz;
         const Eigen::MatrixXd H_numerical_row = (J_plus - J_minus) / 2e-7;
 
         for (int j = 0; j < 3; j++) {
-            std::cout << H_analytical(j).row(i) - H_numerical_row.row(j) << std::endl;
+            double diff = (H_analytical(j).row(i) - H_numerical_row.row(j) ).norm();
+            if (diff > 1e-6){
+                hasError = true;
+                if (diff >max_diff) max_diff = diff;
+                error_message << "error found at i=" << i << ", j=" << j 
+                              << " with difference: " << diff << "\n";
+            }
         }
     }
-
-    return 0;
+    BOOST_CHECK_MESSAGE(!hasError, "Hessian discrepancies found:\n" + error_message.str());
 }
+BOOST_AUTO_TEST_SUITE_END()

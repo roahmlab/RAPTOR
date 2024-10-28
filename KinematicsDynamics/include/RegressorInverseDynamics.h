@@ -6,15 +6,17 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
+#include <pinocchio/algorithm/regressor.hpp>
+
 
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
 #include "Trajectories.h"
 
 #include <cmath>
+#include <iostream> 
 #include <memory>
 #include <cstdio>
-#include <iostream>
 #include <cstdlib>
 
 namespace RAPTOR {
@@ -49,8 +51,8 @@ public:
     // class methods:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
-                         bool compute_hessian = false) override; 
-                         
+                         bool compute_hessian = false) override;
+                                           
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;

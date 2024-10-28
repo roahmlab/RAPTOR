@@ -23,27 +23,48 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
         const int degree_input,
         const double base_frequency_input,
         const Model& model_input, 
-        // const std::string& regroupMatrixFileName,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
         Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
-    x0 = x0_input;
-    joint_num =model_input.nv;
+    x0 = x0_input.segment(0,(2*degree_input+1)*model_input.nv);
+    // x0 = x0_input;
+    joint_num = model_input.nv;
 
     // fixed frequency fourier curves with 0 initial velocity
+    // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
+    //                                                          N_input, 
+    //                                                          model_input.nv, 
+    //                                                          TimeDiscretization::Uniform, 
+    //                                                          degree_input,
+    //                                                          base_frequency_input);
+
+    // ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
+    //                                                      trajPtr_,
+    //                                                      jtype_input);
+
+    // fixed frequency fourier curves with 0 initial velocity
+    VecX q0_input(model_input.nv);
+    q0_input << 1.001089876408351, 0.09140272042061115,  -1.648806446891836,   2.381092213417765,
+                     1.822374826812066,  0.1466609489107418,  0.9315315991321746;
+    VecX q_d0_input = VecX::Zero(model_input.nv);
+
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
                                                              N_input, 
                                                              model_input.nv, 
                                                              TimeDiscretization::Uniform, 
                                                              degree_input,
-                                                             base_frequency_input);
+                                                             base_frequency_input,
+                                                             q0_input,
+                                                             q_d0_input
+                                                             );
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
                                                          trajPtr_,
                                                          jtype_input);
+
 
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = 
@@ -95,24 +116,36 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
-    // // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> groundCenter = {Vec3(0.0, 0.0, 0.04)};
-    std::vector<Vec3> groundOrientation = {Vec3(0.0, 0.0, 0.0)};
-    std::vector<Vec3> groundSize = {Vec3(5.0, 5.0, 0.01)};
+    // Customized constraints (collision avoidance with ground)
+    std::vector<Vec3> Center = {Vec3(0.0, 0.0, 0.15),
+                                 Vec3(0.53, 0.49, 0.56),  // back wall
+                                 Vec3(-0.39, -0.84, 0.56), // bar near the control
+                                 Vec3(-0.39, -0.17, 0.56), //bar bewteen 10 and 20 change to wall
+                                 Vec3(0.0, 0.0, 1.12), //ceiling
+                                 Vec3(0.47, -0.09, 1.04) // top camera  
+                                };    
+    std::vector<Vec3> Orientation = {Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0),
+                                     Vec3(0.0, 0.0, 0.0)
+                                    };
+    std::vector<Vec3> Size = {Vec3(5.0, 5.0, 0.01),
+                              Vec3(5.0, 0.05, 1.12),
+                              Vec3( 0.05, 0.05, 1.12),
+                              Vec3( 0.05, 1.28, 1.28),
+                              Vec3( 5, 5, 0.05),
+                              Vec3( 0.15, 0.15, 0.15)
+                            };    
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               groundCenter,
-                                                                               groundOrientation,
-                                                                               groundSize,
+                                                                               Center,
+                                                                               Orientation,
+                                                                               Size,
                                                                                0.0,
-                                                                               jtype_input));   
+                                                                               jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
-
-    // // check dimensions of regroupMatrix
-    // if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
-    //     throw std::invalid_argument("EndeffectorConditionNumberOptimizer: regroupMatrix has wrong dimensions!");
-    // }
-
     return true;
 }
 
@@ -192,7 +225,7 @@ bool EndeffectorConditionNumberOptimizer::eval_grad_f(
 
     ridPtr_->compute(z, true);
 
-    // get the endY
+    // get the columns corresponding to the end effector in the regressor matrix
     const int startCol = (joint_num - 1) * 10; 
     const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
  

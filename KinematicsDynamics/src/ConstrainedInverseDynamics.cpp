@@ -127,7 +127,7 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
                                               prnea_pq, prnea_pv, prnea_pa);
         }
 
-        // adjust with damping force and rotor inertia force
+        // adjust with damping force
         tau(i) = dataPtr_->tau + 
                  modelPtr_->damping.cwiseProduct(v(i));
                 

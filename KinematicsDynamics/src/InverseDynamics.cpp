@@ -111,7 +111,7 @@ void InverseDynamics::compute(const VecX& z,
             pinocchio::rnea(*modelPtr_, *dataPtr_, q, v, a);
         }
         
-        // adjust with damping force and rotor inertia force
+        // adjust with damping force
         tau(i) = dataPtr_->tau + 
                  modelPtr_->damping.cwiseProduct(v);
         
