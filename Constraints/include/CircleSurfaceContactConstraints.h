@@ -20,7 +20,7 @@ typedef struct circleContactSurfaceParams_  {
 
 class CircleSurfaceContactConstraints : public Constraints {
 public:
-    using Force = pinocchio::Data::Force;
+    using Force = pinocchio::DataTpl<double>::Force;
     using Vec3 = Eigen::Vector3d;
     using Vec6 = Vector6d;
     using VecX = Eigen::VectorXd;

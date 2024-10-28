@@ -22,7 +22,7 @@ using namespace Ipopt;
 
 class TalosSingleStepOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 

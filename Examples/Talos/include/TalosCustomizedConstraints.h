@@ -21,7 +21,7 @@ typedef struct GaitParameters_ {
 
 class TalosCustomizedConstraints : public Constraints {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 

@@ -21,7 +21,12 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification)
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
+)
 
 target_link_libraries(Kinovalib PUBLIC
     trajlib
@@ -32,7 +37,40 @@ target_link_libraries(Kinovalib PUBLIC
     coinhsl
     ${Boost_LIBRARIES} 
     pinocchio::pinocchio
-    ompl)
+    ompl
+)
+
+# Armour
+add_library(Armourlib SHARED
+    Armour/src/PZsparse.cpp
+    Armour/src/RobotInfo.cpp
+    Armour/src/ParameterizedTrajectory.cpp
+    Armour/src/PZDynamics.cpp
+    Armour/src/ReachableSets.cpp
+    Armour/src/ArmourOptimizer.cpp
+)
+
+target_include_directories(Armourlib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
+    ${CMAKE_SOURCE_DIR}/Trajectories/include
+    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Optimization/include
+    ${CMAKE_SOURCE_DIR}/Utils/include
+)
+
+target_link_libraries(Armourlib PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    ipopt
+    coinhsl
+    ${Boost_LIBRARIES} 
+    pinocchio::pinocchio
+    yaml-cpp
+)
 
 ###
 add_executable(KinovaIK_example 
@@ -168,11 +206,12 @@ target_compile_options(KinovaExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
+###
 add_executable(KinovaEndeffectorExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
 
 target_include_directories(KinovaEndeffectorExciting_example PUBLIC
-    ystemIdentification/DataFilter/include
+    SystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 

@@ -16,15 +16,16 @@ BOOST_AUTO_TEST_CASE(owngradientTest)
     // const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
     ForwardKinematicsSolver fkSolver(&model);
 
     // compute a valid transform using forward kinematics
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = 2 * M_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
     int start = 0;
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);

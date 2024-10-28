@@ -2,7 +2,7 @@
 
 namespace RAPTOR {
 
-Eigen::VectorXi convertPinocchioJointType(const pinocchio::Model& model) {
+Eigen::VectorXi convertPinocchioJointType(const pinocchio::ModelTpl<double>& model) {
     Eigen::VectorXi jtype(model.nq);
 
     for (int i = 0; i < model.nq; i++) {

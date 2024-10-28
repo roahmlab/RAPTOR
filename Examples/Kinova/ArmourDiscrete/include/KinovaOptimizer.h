@@ -18,7 +18,7 @@ namespace Kinova {
 
 class KinovaOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<double>;
     using VecX = Eigen::VectorXd;
     using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;

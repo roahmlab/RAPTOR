@@ -20,8 +20,8 @@ void TensorProduct(const Eigen::Matrix3d& R,
 };
 
 double distancePointAndLineSegment(const Eigen::Vector3d& point, 
-                                   const Eigen::Vector3d& p1, 
-                                   const Eigen::Vector3d& p2);
+                                  const Eigen::Vector3d& p1, 
+                                  const Eigen::Vector3d& p2);
 
 class BoxCollisionAvoidance : public CollisionAvoidance {
 public:

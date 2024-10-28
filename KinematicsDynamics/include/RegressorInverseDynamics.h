@@ -28,8 +28,8 @@ namespace RAPTOR {
 // The gradient of Y will also be computed.
 class RegressorInverseDynamics : public InverseDynamics {
 public:
-    using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
+    using Model = pinocchio::ModelTpl<double>;
+    using Data = pinocchio::DataTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using Vec3 = Eigen::Vector3d;

@@ -12,8 +12,10 @@ We strongly recommend using Docker. We have provided a Dockerfile that will auto
 ### HSL
 You should complete HSL steps BEFORE you build the docker image otherwise you will have error.
 
-We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem. Please follow the instructions below to complete the installation:
-Besides official HSL code, we used [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is specifically tailored for COIN-OR projects, particularly Ipopt, offering easier integration and installation.
+We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem. 
+Please follow the instructions below to complete the installation.
+Note that this is ONLY for SINGLE PRECISION version!!!
+<!-- Besides official HSL code, we used [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is specifically tailored for COIN-OR projects, particularly Ipopt, offering easier integration and installation.
     ```
     git clone https://github.com/coin-or-tools/ThirdParty-HSL.git. 
     ```
@@ -21,13 +23,18 @@ Besides official HSL code, we used [ThirdParty-HSL](https://github.com/coin-or-t
 2. Download code from [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL).
 3. Unpack the Coin-HSL source code and rename the folder as `coinhsl`.
 4. Place the `coinhsl` folder inside [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL) folder, which serves as a wrapper to simplify the compilation and integration of HSL.
-5. Rename the [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL) folder as `HSL`,then compress it into a `HSL.zip` file. Note: This zip file will later be 'unziped' and built inside the docker container.
+5. Rename the [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL) folder as `HSL`,then compress it into a `HSL.zip` file. Note: This zip file will later be 'unziped' and built inside the docker container. -->
+
+1. Go to [HSL MA57](https://www.hsl.rl.ac.uk/catalogue/hsl_ma57.html) official website. Click `Code Download` and follow its instructions. After submitting the request, wait a few minute for email reply.
+2. Download the code in the link that HSL provides you. The name of the zip file and the folder inside it is going to be `hsl_ma57` + its version number. 
+3. Extract the code and rename the folder as `hsl_ma57`. Compress the folder again and rename the zip file as `hsl_ma57.zip` (just make sure both of them are named as `hsl_ma57` by removing the version number).
+4. Note: This zip file will later be 'unziped' and built inside the docker container.
 
 ### Docker
 The provided Dockerfile is at [docker/Dockerfile](../docker/Dockerfile). 
 Follow the following intructions to build and enter the docker image.
 
-1. Move the `HSL.zip` file in `docker/` so that dockerfile can find it.
+1. Move the `hsl_ma57.zip` file in `docker/` so that dockerfile can find it.
 2. In Visual Studio Code, simply click `ctrl+shift+P` and search "Dev Containers: Rebuild and Reopen Container", it will build the environment automatically for you from [docker/Dockerfile](../docker/Dockerfile) so that you don't need to follow the steps below.
 
 ## Install Required Packages Independently

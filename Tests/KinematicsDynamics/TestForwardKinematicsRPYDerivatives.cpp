@@ -9,7 +9,7 @@ using namespace Ipopt;
 
 class FKGradientChecker : public Optimizer {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<double>;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
@@ -197,8 +197,9 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     Eigen::VectorXd z0 = Eigen::VectorXd::Random(model.nq);
 
@@ -216,12 +217,13 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
 
 	app->Options()->SetNumericValue("max_wall_time", 1e-5);
 	app->Options()->SetIntegerValue("print_level", 5);
+    app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("hessian_approximation", "exact");
 
     // For gradient checking
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("derivative_test", "second-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
     app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
     // Initialize the IpoptApplication and process the options

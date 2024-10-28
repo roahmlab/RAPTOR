@@ -17,13 +17,13 @@ namespace nb = nanobind;
 
 class KinovaPybindWrapper {
 public:
-    using Model = pinocchio::Model;
+    using Model = pinocchio::ModelTpl<double>;
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     KinovaPybindWrapper() = default;
@@ -35,7 +35,7 @@ public:
     ~KinovaPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_double obstacles_inp,
+    void set_obstacles(const nb_2d_float obstacles_inp,
                        const double collision_buffer_inp);
 
     void set_ipopt_parameters(const double tol,
@@ -47,21 +47,21 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const nb_1d_double q0_inp,
-                                   const nb_1d_double qd0_inp,
-                                   const nb_1d_double qdd0_inp,
+    void set_trajectory_parameters(const nb_1d_float q0_inp,
+                                   const nb_1d_float qd0_inp,
+                                   const nb_1d_float qdd0_inp,
                                    const double duration_inp);
 
-    void set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                    const nb_1d_double velocity_limits_buffer_inp,
-                    const nb_1d_double torque_limits_buffer_inp);
+    void set_buffer(const nb_1d_float joint_limits_buffer_inp,
+                    const nb_1d_float velocity_limits_buffer_inp,
+                    const nb_1d_float torque_limits_buffer_inp);
 
-    void set_target(const nb_1d_double q_des_inp,
+    void set_target(const nb_1d_float q_des_inp,
                     const double tplan_inp);
 
     nb::tuple optimize();
 
-    nb::ndarray<nb::numpy, double, nb::shape<2, -1>> analyze_solution();
+    nb::tuple analyze_solution();
 
     // Class members
     // robot model
@@ -91,9 +91,10 @@ public:
     SmartPtr<KinovaOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
-    // results
-    VecX solution;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo; // trajectory information
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_x;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_y;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_z;
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;

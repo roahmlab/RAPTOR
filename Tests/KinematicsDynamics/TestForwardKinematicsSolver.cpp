@@ -11,9 +11,10 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     // Define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::Data data(model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::DataTpl<double> data(model);
 
     ForwardKinematicsSolver fkSolver(&model);
 

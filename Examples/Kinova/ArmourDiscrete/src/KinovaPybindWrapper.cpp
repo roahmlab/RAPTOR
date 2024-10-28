@@ -6,7 +6,9 @@ namespace Kinova {
 KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
                                          const bool display_info) {
     // Define robot model
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    model = model_double.cast<double>();
     
     model.gravity.linear()(2) = GRAVITY;
 
@@ -23,7 +25,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     torque_limits_buffer = VecX::Zero(model.nv);
 }
 
-void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
+void KinovaPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp,
                                         const double collision_buffer_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
@@ -75,9 +77,9 @@ void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
-                                                    const nb_1d_double qd0_inp,
-                                                    const nb_1d_double qdd0_inp,
+void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
+                                                    const nb_1d_float qd0_inp,
+                                                    const nb_1d_float qdd0_inp,
                                                     const double duration_inp) {
     if (q0_inp.shape(0) != model.nv || 
         qd0_inp.shape(0) != model.nv || 
@@ -105,9 +107,9 @@ void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
     has_optimized = false;                     
 }
 
-void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                                     const nb_1d_double velocity_limits_buffer_inp,
-                                     const nb_1d_double torque_limits_buffer_inp) {
+void KinovaPybindWrapper::set_buffer(const nb_1d_float joint_limits_buffer_inp,
+                                     const nb_1d_float velocity_limits_buffer_inp,
+                                     const nb_1d_float torque_limits_buffer_inp) {
     if (joint_limits_buffer_inp.shape(0) != model.nv || 
         velocity_limits_buffer_inp.shape(0) != model.nv || 
         torque_limits_buffer_inp.shape(0) != model.nv) {
@@ -124,7 +126,7 @@ void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
     has_optimized = false;                                                
 }
 
-void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
+void KinovaPybindWrapper::set_target(const nb_1d_float q_des_inp,
                                      const double tplan_inp) {
     tplan = tplan_inp;
 
@@ -141,7 +143,7 @@ void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
     }
 
     tplan_n = int(tplan / T * N);
-    tplan_n = std::min(std::max(0, tplan_n), N - 1);
+    tplan_n = fmin(fmax(0, tplan_n), N - 1);
 
     set_target_check = true;
     has_optimized = false;
@@ -211,23 +213,22 @@ nb::tuple KinovaPybindWrapper::optimize() {
     set_trajectory_parameters_check = false;
     set_target_check = false;
     has_optimized = mynlp->ifFeasible;
-    solution = mynlp->solution;
 
-    const size_t shape_ptr[] = {model.nv};
-    auto result = nb::ndarray<nb::numpy, const double>(solution.data(),
+    const size_t shape_ptr[] = {mynlp->solution.size()};
+    auto result = nb::ndarray<nb::numpy, const double>(mynlp->solution.data(),
                                                        1,
                                                        shape_ptr,
                                                        nb::handle());
     return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
-nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_solution() {
+nb::tuple KinovaPybindWrapper::analyze_solution() {
     if (!has_optimized) {
         throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
     }
 
     // re-evaluate the solution on a finer time discretization
-    const int N_simulate = 60;
+    const int N_simulate = 24 * T; // 24Hz
     SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
     try {
         testnlp->display_info = false;
@@ -274,6 +275,28 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         trajInfo(i, 4 * NUM_JOINTS) = testnlp->trajPtr_->tspan(i);
     }
 
+    const KinovaCustomizedConstraints* customizedConstraintsPtr = nullptr;
+    for (int i = 0; i < testnlp->constraintsNameVec_.size(); i++) {
+        if (testnlp->constraintsNameVec_[i] == "obstacle avoidance constraints") {
+            customizedConstraintsPtr = dynamic_cast<KinovaCustomizedConstraints*>(testnlp->constraintsPtrVec_[i].get());
+        }
+    }
+    if (customizedConstraintsPtr == nullptr) {
+        throw std::runtime_error("Error retrieving customized constraints!");
+    }
+
+    spheres_x.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    spheres_y.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    spheres_z.resize(customizedConstraintsPtr->num_spheres, N_simulate);
+    for (int i = 0; i < N_simulate; i++) {
+        for (int j = 0; j < customizedConstraintsPtr->num_spheres; j++) {
+            const Vec3& sphere_center = customizedConstraintsPtr->sphere_centers_copy(j, i);
+            spheres_x(j, i) = sphere_center(0);
+            spheres_y(j, i) = sphere_center(1);
+            spheres_z(j, i) = sphere_center(2);
+        }
+    }
+
     const size_t shape_ptr1[] = {N_simulate, 4 * NUM_JOINTS + 1};
     auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
         trajInfo.data(),
@@ -282,7 +305,27 @@ nb::ndarray<nb::numpy, double, nb::shape<2, -1>> KinovaPybindWrapper::analyze_so
         nb::handle()
     );
 
-    return traj;
+    const size_t shape_ptr2[] = {customizedConstraintsPtr->num_spheres, N_simulate};
+    auto sphere_xs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_x.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+    auto sphere_ys = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_y.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+    auto sphere_zs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        spheres_z.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
+
+    return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs);
 }
 
 }; // namespace Kinova

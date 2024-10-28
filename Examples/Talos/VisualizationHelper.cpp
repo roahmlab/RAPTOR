@@ -9,8 +9,9 @@ const std::string filepath = "../Examples/Talos/data/";
 int main() {
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
 
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
     
     // ignore friction for now
     model.friction.setZero();

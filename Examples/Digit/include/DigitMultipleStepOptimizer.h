@@ -11,8 +11,8 @@ using namespace Ipopt;
 
 class DigitMultipleStepOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
+    using Model = pinocchio::ModelTpl<double>;
+    using Data = pinocchio::DataTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 

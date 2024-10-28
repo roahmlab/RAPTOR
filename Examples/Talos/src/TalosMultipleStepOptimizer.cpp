@@ -437,7 +437,7 @@ void TalosMultipleStepOptimizer::summarize_constraints(
         stepOptVec_[i]->summarize_constraints(m_local[i], g + m_position[i], verbose);
 
         ifFeasible = ifFeasible & stepOptVec_[i]->ifFeasible;
-        final_constr_violation = std::max(final_constr_violation, stepOptVec_[i]->final_constr_violation);
+        final_constr_violation = fmax(final_constr_violation, stepOptVec_[i]->final_constr_violation);
     }
 
     for ( Index i = 0; i < stepOptVec_.size() - 1; i++ ) {
@@ -448,7 +448,7 @@ void TalosMultipleStepOptimizer::summarize_constraints(
         Index max_constr_violation_id = 0;
         const Index start_pos = m_position[stepOptVec_.size() + i];
         for ( Index j = 0; j < periodConsVec_[i]->m; j++ ) {
-            Number constr_violation = std::max(periodConsVec_[i]->g_lb(j) - periodConsVec_[i]->g(j), 
+            Number constr_violation = fmax(periodConsVec_[i]->g_lb(j) - periodConsVec_[i]->g(j), 
                                                periodConsVec_[i]->g(j) - periodConsVec_[i]->g_ub(j));
 
             if (constr_violation > max_constr_violation) {

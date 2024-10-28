@@ -25,8 +25,9 @@ int main() {
     // Initialize the robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     // Initialize obstacles
     const int num_obstacles = 12;

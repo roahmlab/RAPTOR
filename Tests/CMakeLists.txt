@@ -3,6 +3,7 @@ set(COMMON_LIBRARIES
     IDlib
     Conslib
     Optlib
+    Armourlib
     ${Boost_LIBRARIES}
     pinocchio::pinocchio
     ipopt
@@ -100,6 +101,31 @@ target_link_libraries(RegressorInverseDynamics_test PUBLIC
 target_compile_options(RegressorInverseDynamics_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(PZsparse_test 
+    Armour/PZsparseTest.cpp)
+
+target_link_libraries(PZsparse_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    Armourlib
+    ${BOOST_LIBRARIES}
+    yaml-cpp
+    pinocchio::pinocchio)
+
+add_executable(ReachableSets_test 
+    Armour/ReachableSetsTest.cpp)
+
+target_link_libraries(ReachableSets_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    Optlib
+    Armourlib
+    ${BOOST_LIBRARIES}
+    yaml-cpp
+    pinocchio::pinocchio)
 add_executable(QRDecomposition_test
     KinematicsDynamics/TestQRDecomposition.cpp)
 

@@ -16,14 +16,15 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     // define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp.urdf";
 
-    pinocchio::Model model;
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    pinocchio::ModelTpl<double> model = model_double.cast<double>();
 
     model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 
-    pinocchio::Data data(model);
+    pinocchio::DataTpl<double> data(model);
 
     // set joint configurations
     std::shared_ptr<Trajectories> trajPtr = 
@@ -69,10 +70,10 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
     Eigen::VectorXi jtype = convertPinocchioJointType(model);    
     jtype(jtype.size() - 1) = 0; // fix the last joint
 
-    pinocchio::Model model_reduced;
+    pinocchio::ModelTpl<double> model_reduced;
     std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
     pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
-    pinocchio::Data data_reduced(model_reduced);
+    pinocchio::DataTpl<double> data_reduced(model_reduced);
 
     Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
 
