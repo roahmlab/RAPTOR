@@ -17,16 +17,18 @@ namespace Kinova {
 // }
 
 bool EndeffectorConditionNumberOptimizer::set_parameters(
-        const VecX& x0_input,
-        const Number T_input,
-        const int N_input,
-        const int degree_input,
-        const double base_frequency_input,
-        const Model& model_input, 
-        const VecX& joint_limits_buffer_input,
-        const VecX& velocity_limits_buffer_input,
-        const VecX& torque_limits_buffer_input,
-        Eigen::VectorXi jtype_input
+    const VecX& x0_input,
+    const Number T_input,
+    const int N_input,
+    const int degree_input,
+    const double base_frequency_input,
+    const Model& model_input, 
+    const VecX& joint_limits_buffer_input,
+    const VecX& velocity_limits_buffer_input,
+    const VecX& torque_limits_buffer_input,
+    const bool include_gripper_or_not,
+    const double colliison_buffer_input,
+    Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
     x0 = x0_input.segment(0,(2*degree_input+1)*model_input.nv);
@@ -143,7 +145,8 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                                                                Center,
                                                                                Orientation,
                                                                                Size,
-                                                                               0.0,
+                                                                               include_gripper_or_not,
+                                                                               colliison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
     return true;

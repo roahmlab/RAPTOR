@@ -126,7 +126,8 @@ public:
         set_start_goal_check = true;
     };
 
-    nb::ndarray<nb::numpy, const double> plan(const double timeout) {
+    nb::ndarray<nb::numpy, const double> plan(const double timeout,
+                                              const bool include_gripper_or_not = false) {
         if (!set_obstacles_check ||
             !set_start_goal_check) {
             throw std::runtime_error("Obstacles and start/goal must be set before planning");
@@ -140,7 +141,8 @@ public:
                 model,
                 boxCenters,
                 boxOrientation,
-                boxSize
+                boxSize,
+                include_gripper_or_not
             );
 
         const double buffer_local = buffer;

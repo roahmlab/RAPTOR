@@ -180,6 +180,7 @@ nb::tuple KinovaPybindWrapper::optimize() {
                               joint_limits_buffer,
                               velocity_limits_buffer,
                               torque_limits_buffer,
+                              true,
                               collision_buffer);
     }
     catch (std::exception& e) {
@@ -245,7 +246,8 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
                                 tplan_n,
                                 joint_limits_buffer,
                                 velocity_limits_buffer,
-                                torque_limits_buffer);
+                                torque_limits_buffer,
+                                true);
         Index n, m, nnz_jac_g, nnz_h_lag;
         TNLP::IndexStyleEnum index_style;
         testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);

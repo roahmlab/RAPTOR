@@ -69,6 +69,7 @@ public:
                                 const std::vector<Vec3>& boxCenters_input,
                                 const std::vector<Vec3>& boxOrientation_input,
                                 const std::vector<Vec3>& boxSize_input,
+                                const bool include_gripper_or_not = false,
                                 const double collision_buffer_input = 0,
                                 Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 

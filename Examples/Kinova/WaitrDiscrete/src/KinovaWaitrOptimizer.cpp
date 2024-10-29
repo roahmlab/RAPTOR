@@ -120,6 +120,7 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
                                                                                boxSize_input,
+                                                                               true,
                                                                                0.0,
                                                                                jtype_reduced));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
