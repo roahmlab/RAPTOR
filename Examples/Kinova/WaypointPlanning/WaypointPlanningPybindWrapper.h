@@ -53,13 +53,13 @@ public:
         for (int i = 0; i < NUM_JOINTS; i++) {
             const double lower_bound = 
                 (JOINT_LIMITS_LOWER[i] == -1e19) ? 
-                    -M_PI : 
-                    JOINT_LIMITS_LOWER[i];
+                    -2 * M_PI : 
+                    JOINT_LIMITS_LOWER[i] * 0.9;
 
             const double upper_bound = 
                 (JOINT_LIMITS_UPPER[i] == 1e19) ? 
-                    M_PI : 
-                    JOINT_LIMITS_UPPER[i];
+                    2 * M_PI : 
+                    JOINT_LIMITS_UPPER[i] * 0.9;
 
             bounds.setLow(i, lower_bound);
             bounds.setHigh(i, upper_bound);
@@ -70,7 +70,7 @@ public:
         ss = std::make_shared<og::SimpleSetup>(space);
 
         auto planner = std::make_shared<og::RRTConnect>(ss->getSpaceInformation());
-        planner->setRange(0.05);
+        planner->setRange(0.025);
 
         ss->setPlanner(planner);
     };

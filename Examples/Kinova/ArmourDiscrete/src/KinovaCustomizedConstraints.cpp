@@ -32,22 +32,11 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
         sphere_radius[i] = SPHERE_RADIUS[i];
     }
 
-    // 2 spheres for gripper
+    // 3 spheres for gripper
     if (include_gripper_or_not) {
-        num_spheres++;
-        sphere_joint_id.push_back(7); // gripper joint id
-        sphere_offset.push_back(Vec3(0.0, 0.0, -0.10)); // gripper offset
-        sphere_radius.push_back(0.05); // gripper radius
-
-        num_spheres++;
-        sphere_joint_id.push_back(7); // gripper joint id
-        sphere_offset.push_back(Vec3(0.0, 0.0, -0.15)); // gripper offset
-        sphere_radius.push_back(0.05); // gripper radius
-
-        num_spheres++;
-        sphere_joint_id.push_back(7); // gripper joint id
-        sphere_offset.push_back(Vec3(0.0, 0.0, -0.20)); // gripper offset
-        sphere_radius.push_back(0.05); // gripper radius
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.10), 0.05);
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.15), 0.05);
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.20), 0.05);
     }
 
     // m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;

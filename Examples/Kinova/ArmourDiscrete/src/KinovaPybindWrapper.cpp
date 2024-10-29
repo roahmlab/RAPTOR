@@ -18,7 +18,12 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     mynlp->display_info = display_info;
 
     app = IpoptApplicationFactory();
-    app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    if (mynlp->enable_hessian) {
+        app->Options()->SetStringValue("hessian_approximation", "exact");
+    }
+    else {
+        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    }
 
     joint_limits_buffer = VecX::Zero(model.nv);
     velocity_limits_buffer = VecX::Zero(model.nv);
@@ -159,9 +164,10 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    // VecX z0 = 0.5 * (atp.q0 + qdes);
-    // VecX z0 = atp.q0;
-    VecX z0 = qdes;
+    // VecX z0 = 0.5 * (qdes - atp.q0);
+    VecX z0 = VecX::Zero(qdes.size());
+    // VecX z0 = qdes - atp.q0;
+    // VecX z0 = 2*(qdes - ((atp.q_dd0*T*T)/64 + (5*atp.q_d0*T)/32 + atp.q0/2)) - atp.q0;
 
     // Initialize Kinova optimizer
     try {
@@ -229,7 +235,10 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
     }
 
     // re-evaluate the solution on a finer time discretization
-    const int N_simulate = 24 * T; // 24Hz
+    const int N_simulate = T * 24; // 24Hz
+    tplan_n = int(tplan / T * N_simulate);
+    tplan_n = fmin(fmax(0, tplan_n), N_simulate - 1);
+    
     SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
     try {
         testnlp->display_info = false;
@@ -247,7 +256,8 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
                                 joint_limits_buffer,
                                 velocity_limits_buffer,
                                 torque_limits_buffer,
-                                true);
+                                true,
+                                collision_buffer);
         Index n, m, nnz_jac_g, nnz_h_lag;
         TNLP::IndexStyleEnum index_style;
         testnlp->get_nlp_info(n, m, nnz_jac_g, nnz_h_lag, index_style);
