@@ -1,6 +1,7 @@
 set(COMMON_LIBRARIES
     trajlib
     IDlib
+    Costslib
     Conslib
     Optlib
     Armourlib
@@ -34,6 +35,19 @@ target_link_libraries(ForwardKinematicsGradient_test PUBLIC
     pinocchio::pinocchio)
 
 target_compile_options(ForwardKinematicsGradient_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(MinimizeTorque_test 
+    Costs/TestMinimizeTorqueCosts.cpp)
+
+target_link_libraries(MinimizeTorque_test PUBLIC
+    trajlib
+    IDlib
+    Costslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(MinimizeTorque_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(KinematicsConstraints_test 
@@ -126,6 +140,7 @@ target_link_libraries(ReachableSets_test PUBLIC
     ${BOOST_LIBRARIES}
     yaml-cpp
     pinocchio::pinocchio)
+
 add_executable(QRDecomposition_test
     KinematicsDynamics/TestQRDecomposition.cpp)
 

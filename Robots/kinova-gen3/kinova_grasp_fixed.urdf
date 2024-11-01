@@ -600,9 +600,4 @@
     <child link="gripper_left_pad"/>
     <axis xyz="0 0 0"/>
   </joint>
-
-
-
-
-
 </robot>

@@ -10,22 +10,21 @@ using namespace RAPTOR;
 BOOST_AUTO_TEST_SUITE(KinematicsConstraintsTest)
 
 // test gradient
-BOOST_AUTO_TEST_CASE(owngradientTest)
+BOOST_AUTO_TEST_CASE(ownGradientTest)
 {
     // Define robot model
     // const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
 
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
     ForwardKinematicsSolver fkSolver(&model);
 
     // compute a valid transform using forward kinematics
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
     int start = 0;
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);
@@ -58,13 +57,12 @@ BOOST_AUTO_TEST_CASE(ownHessianTest){
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
-    // std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Plain>(model.nv);
     std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomials>(2.0, 10, model.nv, TimeDiscretization::Chebyshev, 3);
     ForwardKinematicsSolver fkSolver(&model);
 
     // compute a valid transform using forward kinematics
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength).array() - M_PI;
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
     int start = 0;
     int end = model.getJointId("joint_7");
     fkSolver.compute(start, end, z);
@@ -73,7 +71,7 @@ BOOST_AUTO_TEST_CASE(ownHessianTest){
 
     kc.compute(z, true, true);
 
-    Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic> H_analytical = kc.pg_pz_pz;
+    const Eigen::Array<Eigen::MatrixXd, 1, Eigen::Dynamic>& H_analytical = kc.pg_pz_pz;
 
     // params for error checking 
     bool hasError = false;

@@ -16,9 +16,8 @@ int main(int argc, char* argv[]) {
     // define robot model
     const std::string urdf_filename = "../Robots/talos/talos_reduced_armfixed_floatingbase.urdf";
     
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
     
     // ignore all motor dynamics
     model.armature.setZero();

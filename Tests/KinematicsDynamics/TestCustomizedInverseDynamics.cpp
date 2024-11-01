@@ -16,9 +16,8 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     // define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp.urdf";
 
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.armature.setZero();
     model.damping.setZero();

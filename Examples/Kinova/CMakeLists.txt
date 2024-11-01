@@ -305,6 +305,27 @@ target_include_directories(Combine_files PUBLIC
 target_compile_options(Combine_files PUBLIC
     ${PINOCCHIO_FLAGS})
 
+###
+add_executable(Armour_example 
+    Armour/ArmourExample.cpp)
+
+target_include_directories(Armour_example PUBLIC
+    Armour/include)
+
+target_link_libraries(Armour_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Armourlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(Armour_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
