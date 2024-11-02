@@ -39,7 +39,7 @@ public:
     int num_motors = 0;
     int num_joints = 0;
 
-    pinocchio::ModelTpl<double> model;
+    pinocchio::Model model;
 
     VecX mass_uncertainty;
     VecX inertia_uncertainty;

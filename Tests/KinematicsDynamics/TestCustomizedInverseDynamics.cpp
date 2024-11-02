@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
     Eigen::VectorXi jtype = convertPinocchioJointType(model);    
     jtype(jtype.size() - 1) = 0; // fix the last joint
 
-    pinocchio::ModelTpl<double> model_reduced;
+    pinocchio::Model model_reduced;
     std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
     pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
     pinocchio::DataTpl<double> data_reduced(model_reduced);

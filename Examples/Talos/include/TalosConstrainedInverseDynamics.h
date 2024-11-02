@@ -10,7 +10,7 @@ namespace Talos {
 
 class TalosConstrainedInverseDynamics : public ConstrainedInverseDynamics {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
 
     // Constructor
     TalosConstrainedInverseDynamics() = default;

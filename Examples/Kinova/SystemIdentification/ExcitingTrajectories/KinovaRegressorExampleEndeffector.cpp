@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     }
 
-    // For gradient checking
+    // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
