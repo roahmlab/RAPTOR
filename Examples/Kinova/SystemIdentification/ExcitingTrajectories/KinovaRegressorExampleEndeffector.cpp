@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 
     // Define trajectory parameters
     const double T = 10.0;
-    const int N = 100;
+    const int N = 64;
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 

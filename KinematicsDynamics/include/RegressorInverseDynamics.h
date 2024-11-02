@@ -59,14 +59,6 @@ public:
     Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
     Vec6 a_grav;
     
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
-    
     VecX phi;
 
     int numInertialParams = 0;
@@ -75,10 +67,7 @@ public:
     MatX Y;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
 
-    MatX Yfull;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
-
-    MatX Ycurrent;
+    int NB = 0;
 };
 
 }; // namespace RAPTOR
