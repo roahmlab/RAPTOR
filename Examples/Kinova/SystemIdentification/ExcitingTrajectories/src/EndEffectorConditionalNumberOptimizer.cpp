@@ -27,13 +27,10 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
     const bool include_gripper_or_not,
-    const double colliison_buffer_input,
+    const double collison_buffer_input,
     Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
-    x0 = x0_input.segment(0,(2*degree_input+1)*model_input.nv);
-    // x0 = x0_input;
-    joint_num = model_input.nv;
 
     // fixed frequency fourier curves with 0 initial velocity
     // trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
@@ -42,10 +39,6 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
     //                                                          TimeDiscretization::Uniform, 
     //                                                          degree_input,
     //                                                          base_frequency_input);
-
-    // ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
-    //                                                      trajPtr_,
-    //                                                      jtype_input);
 
     // fixed frequency fourier curves with 0 initial velocity
     VecX q0_input(model_input.nv);
@@ -60,13 +53,17 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                                              degree_input,
                                                              base_frequency_input,
                                                              q0_input,
-                                                             q_d0_input
-                                                             );
+                                                             q_d0_input);
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
                                                          trajPtr_,
                                                          jtype_input);
 
+    // add end effector regressor condition number into cost
+    costsPtrVec_.push_back(std::make_unique<EndEffectorRegressorConditionNumber>(trajPtr_, 
+                                                                                 ridPtr_));
+    costsWeightVec_.push_back(1.0);                                                                             
+    costsNameVec_.push_back("end effector regressor condition number");
 
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = 
@@ -146,9 +143,12 @@ bool EndeffectorConditionNumberOptimizer::set_parameters(
                                                                                Orientation,
                                                                                Size,
                                                                                include_gripper_or_not,
-                                                                               colliison_buffer_input,
+                                                                               collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+
+    x0 = x0_input.head(trajPtr_->varLength);
+
     return true;
 }
 
@@ -175,85 +175,6 @@ bool EndeffectorConditionNumberOptimizer::get_nlp_info(
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
-
-    return true;
-}
-
-bool EndeffectorConditionNumberOptimizer::eval_f(
-    Index         n,
-    const Number* x,
-    bool          new_x,
-    Number&       obj_value
-) {
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    ridPtr_->compute(z, false);
-
-    // get the endY
-    const int startCol = (joint_num - 1) * 10; 
-    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
-  
-    Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
-                               Eigen::ComputeThinU | Eigen::ComputeThinV);
-    const VecX& singularValues = svd.singularValues();
-    const MatX& U = svd.matrixU();
-    const MatX& V = svd.matrixV();
-
-    const Number sigmaMax = singularValues(0);
-    const Number sigmaMin = singularValues(singularValues.size() - 1);
-
-    // log of 2-norm condition number (sigmaMax / sigmaMin)
-    obj_value = std::log(sigmaMax) - std::log(sigmaMin);
-
-    update_minimal_cost_solution(n, z, new_x, obj_value);
-
-    return true;
-}
-
-bool EndeffectorConditionNumberOptimizer::eval_grad_f(
-    Index         n,
-    const Number* x,
-    bool          new_x,
-    Number*       grad_f
-) {
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    ridPtr_->compute(z, true);
-
-    // get the columns corresponding to the end effector in the regressor matrix
-    const int startCol = (joint_num - 1) * 10; 
-    const MatX& EndeffectorY = ridPtr_->Y.middleCols(startCol, 10);
- 
-    Eigen::JacobiSVD<MatX> svd(EndeffectorY, 
-                               Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-    const VecX& singularValues = svd.singularValues();
-    const MatX& U = svd.matrixU();
-    const MatX& V = svd.matrixV();
-
-    const Index lastRow = singularValues.size() - 1;
-    const Number sigmaMax = singularValues(0);
-    const Number sigmaMin = singularValues(lastRow);
-
-    // refer to https://j-towns.github.io/papers/svd-derivative.pdf
-    // for analytical gradient of singular values
-    for (Index i = 0; i < n; i++) {
-        const int startCol = (joint_num - 1) * 10; 
-        const MatX& gradEndeffectorY = ridPtr_->pY_pz(i).middleCols(startCol, 10);
-        
-        const Number gradSigmaMax = U.col(0).transpose()       * gradEndeffectorY * V.col(0);
-        const Number gradSigmaMin = U.col(lastRow).transpose() * gradEndeffectorY * V.col(lastRow);
-
-        grad_f[i] = gradSigmaMax / sigmaMax - gradSigmaMin / sigmaMin;
-    }
 
     return true;
 }

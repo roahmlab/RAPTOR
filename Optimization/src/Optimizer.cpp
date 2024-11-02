@@ -50,6 +50,11 @@ bool Optimizer::get_bounds_info(
         x_u[i] = 1e19;
     }
 
+    if (costsPtrVec_.size() != costsWeightVec_.size() ||
+        costsPtrVec_.size() != costsNameVec_.size()) {
+        THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_, costsWeightVec_, and costsNameVec_ have different sizes!");
+    }
+
     if (constraintsPtrVec_.size() != constraintsNameVec_.size()) {
         THROW_EXCEPTION(IpoptException, "*** Error constraintsPtrVec_ and constraintsNameVec_ have different sizes!");
     }
@@ -180,6 +185,119 @@ bool Optimizer::update_minimal_cost_solution(
 }
 // [TNLP_update_minimal_cost_solution]
 
+// [eval_f]
+// returns the objective value
+bool Optimizer::eval_f(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    Number&       obj_value
+)
+{
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
+
+    if (costsPtrVec_.size() == 0) {
+        std::cerr << "You should add at least one cost function or implement your own eval_f!" << std::endl;
+        THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_ is empty!");
+    }
+
+    // fill in a Eigen Vector instance of decision variables
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    obj_value = 0;
+    for (Index f = 0; f < costsPtrVec_.size(); f++) {
+        // compute cost functions
+        if (output_computation_time) {
+            start_time = std::chrono::high_resolution_clock::now();
+        }
+        
+        try {
+            costsPtrVec_[f]->compute(z, false);
+        }
+        catch (std::exception& e) {
+            std::cerr << "Error in " << costsNameVec_[f] << ": " << std::endl;
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in eval_f: " + costsNameVec_[f] + "! Check previous error message.");
+        }
+
+        if (output_computation_time) {
+            end_time = std::chrono::high_resolution_clock::now();
+            if (display_info) {
+                std::cout << "eval_f compute time for " << costsNameVec_[f] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
+            }
+        }
+
+        obj_value += costsWeightVec_[f] * costsPtrVec_[f]->f;
+    }
+
+    update_minimal_cost_solution(n, z, new_x, obj_value);
+
+    return true;
+}
+// [eval_f]
+
+// [eval_grad_f]
+// returns the gradient of the objective
+bool Optimizer::eval_grad_f(
+    Index         n,
+    const Number* x,
+    bool          new_x,
+    Number*       grad_f
+)
+{
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
+
+    if (costsPtrVec_.size() == 0) {
+        std::cerr << "You should add at least one cost function or implement your own eval_f!" << std::endl;
+        THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_ is empty!");
+    }
+
+    // fill in a Eigen Vector instance of decision variables
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    for (Index i = 0; i < n; i++) {
+        grad_f[i] = 0;
+    }
+
+    for (Index f = 0; f < costsPtrVec_.size(); f++) {
+        // compute cost functions
+        if (output_computation_time) {
+            start_time = std::chrono::high_resolution_clock::now();
+        }
+        
+        try {
+            costsPtrVec_[f]->compute(z, true);
+        }
+        catch (std::exception& e) {
+            std::cerr << "Error in " << costsNameVec_[f] << ": " << std::endl;
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in eval_grad_f: " + costsNameVec_[f] + "! Check previous error message.");
+        }
+
+        if (output_computation_time) {
+            end_time = std::chrono::high_resolution_clock::now();
+            if (display_info) {
+                std::cout << "eval_grad_f compute time for " << costsNameVec_[f] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
+            }
+        }
+
+        for (Index i = 0; i < n; i++) {
+            grad_f[i] += costsWeightVec_[f] * costsPtrVec_[f]->grad_f(i);
+        }
+    }
+
+    return true;
+}
+// [eval_grad_f]
+
 // [eval_hess_f]
 // returns the hessian of the objective
 bool Optimizer::eval_hess_f(
@@ -189,8 +307,48 @@ bool Optimizer::eval_hess_f(
     MatX&         hess_f
 ) 
 {
-    throw std::invalid_argument("Objective function hessian is not implemented! Disable hessian please.");
-    return false;
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+    }
+
+    if (costsPtrVec_.size() == 0) {
+        std::cerr << "You should add at least one cost function or implement your own eval_f!" << std::endl;
+        THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_ is empty!");
+    }
+
+    hess_f = MatX::Zero(n, n);
+
+    // fill in a Eigen Vector instance of decision variables
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+
+    for (Index f = 0; f < costsPtrVec_.size(); f++) {
+        // compute cost functions
+        if (output_computation_time) {
+            start_time = std::chrono::high_resolution_clock::now();
+        }
+        
+        try {
+            costsPtrVec_[f]->compute(z, true, true);
+        }
+        catch (std::exception& e) {
+            std::cerr << "Error in " << costsNameVec_[f] << ": " << std::endl;
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f: " + costsNameVec_[f] + "! Check previous error message.");
+        }
+
+        if (output_computation_time) {
+            end_time = std::chrono::high_resolution_clock::now();
+            if (display_info) {
+                std::cout << "eval_hess_f compute time for " << costsNameVec_[f] 
+                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
+                          << " microseconds.\n";
+            }
+        }
+
+        hess_f += costsWeightVec_[f] * costsPtrVec_[f]->hess_f;
+    }
+
+    return true;
 }
 // [eval_hess_f]
 

@@ -13,8 +13,8 @@ int main(int argc, char* argv[]) {
 
     model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
-    // model.damping.setZero();
-    // model.armature.setZero();
+    model.damping.setZero();
+    model.armature.setZero();
 
     // Define trajectory parameters
     const double T = 10.0;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd q_d0_input = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess
-    int num_joints = 7;
+    int num_joints = model.nv;
     std::srand(static_cast<unsigned int>(time(0)));
     Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * num_joints).array() - 0.1;
     z.segment((2 * degree + 1) * num_joints, num_joints) = 
@@ -103,10 +103,6 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-
-        // const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints);
-        // mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints) =
-        //     Utils::wrapToPi(initial_position_part);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -171,5 +167,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
     return 0;
 }

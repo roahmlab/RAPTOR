@@ -11,6 +11,7 @@
 #include <omp.h>
 
 #include "Utils.h"
+#include "Costs.h"
 #include "Constraints.h"
 
 namespace RAPTOR {
@@ -102,7 +103,7 @@ public:
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) = 0;
+    );
 
     /** Method to return the gradient of the objective */
     virtual bool eval_grad_f(
@@ -110,7 +111,7 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) = 0;
+    );
 
     /** Method to return the hessian of the objective */
     virtual bool eval_hess_f(
@@ -216,6 +217,10 @@ public:
     Index numCons = 0; // number of constraints
 
     VecX x0; // stores the initial guess here
+
+    std::vector<std::unique_ptr<Costs>> costsPtrVec_;
+    std::vector<double> costsWeightVec_;
+    std::vector<std::string> costsNameVec_;
 
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;

@@ -26,7 +26,7 @@ bool ConditionNumberOptimizer::set_parameters(
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
     const bool include_gripper_or_not,
-    const double colliison_buffer_input,
+    const double collison_buffer_input,
     Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
@@ -128,7 +128,7 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                                Orientation,
                                                                                Size,
                                                                                include_gripper_or_not,
-                                                                               colliison_buffer_input,
+                                                                               collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
     // check dimensions of regroupMatrix

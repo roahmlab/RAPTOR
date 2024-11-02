@@ -23,6 +23,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/Costs/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
     ${CMAKE_SOURCE_DIR}/Optimization/include
     ${CMAKE_SOURCE_DIR}/Utils/include
@@ -31,6 +32,7 @@ target_include_directories(Kinovalib PUBLIC
 target_link_libraries(Kinovalib PUBLIC
     trajlib
     IDlib
+    Costslib
     Conslib
     Optlib
     ipopt

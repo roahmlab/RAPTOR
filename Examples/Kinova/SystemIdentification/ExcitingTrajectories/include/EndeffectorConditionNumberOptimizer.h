@@ -8,6 +8,8 @@
 #include "RegressorInverseDynamics.h"
 #include "FixedFrequencyFourierCurves.h"
 
+#include "EndEffectorRegressorConditionNumber.h"
+
 #include "JointLimits.h"
 #include "VelocityLimits.h"
 #include "TorqueLimits.h"
@@ -41,7 +43,7 @@ public:
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
         const bool include_gripper_or_not = false,
-        const double colliison_buffer_input = 0.0,
+        const double collison_buffer_input = 0.0,
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
@@ -54,22 +56,6 @@ public:
         Index&          nnz_jac_g,
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
-    ) final override;
-
-    /** Method to return the objective value */
-    bool eval_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number&       obj_value
-    ) final override;
-
-    /** Method to return the gradient of the objective */
-    bool eval_grad_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number*       grad_f
     ) final override;
 
     /**@name Methods to block default compiler methods.
@@ -91,13 +77,9 @@ public:
        const EndeffectorConditionNumberOptimizer&
     );
 
-    // MatX regroupMatrix;
-
     std::shared_ptr<Trajectories> trajPtr_;
 
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
-
-    int joint_num;
 };
 
 }; // namespace Kinova
