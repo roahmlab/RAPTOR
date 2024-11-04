@@ -115,6 +115,19 @@ target_link_libraries(RegressorInverseDynamics_test PUBLIC
 target_compile_options(RegressorInverseDynamics_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(InverseDynamics_test 
+    KinematicsDynamics/TestInverseDynamics.cpp)
+
+target_link_libraries(InverseDynamics_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(InverseDynamics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(PZsparse_test 
     Armour/PZsparseTest.cpp)
 

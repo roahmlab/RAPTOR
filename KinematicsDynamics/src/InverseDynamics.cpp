@@ -147,14 +147,14 @@ void InverseDynamics::compute(const VecX& z,
 
                     // p( ptau / pq * pq / pz ) / pz
                     MatX term1 = (ptau2_pq_local * pq_pz + 
-                                  ptau2_pqpv_local.transpose() * pv_pz +
+                                  ptau2_pqpv_local * pv_pz +
                                   ptau2_papq_local.transpose() * pa_pz).transpose() * pq_pz;
                     for (int k = 0; k < modelPtr_->nv; k++) {
                         term1 += prnea_pq(j, k) * pq_pz_pz(k);
                     }
 
                     // p( ptau / pv ) / pz * pv / pz
-                    MatX term2 = (ptau2_pqpv_local * pq_pz + 
+                    MatX term2 = (ptau2_pqpv_local.transpose() * pq_pz + 
                                   ptau2_pv_local * pv_pz).transpose() * pv_pz;
                     for (int k = 0; k < modelPtr_->nv; k++) {
                         term2 += prnea_pv(j, k) * pv_pz_pz(k);
