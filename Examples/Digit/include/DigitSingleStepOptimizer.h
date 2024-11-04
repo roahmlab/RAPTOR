@@ -22,7 +22,7 @@ using namespace Ipopt;
 
 class DigitSingleStepOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 

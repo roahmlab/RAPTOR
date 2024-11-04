@@ -11,7 +11,7 @@ namespace Armour {
 
 class ArmourOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using Vec3 = Eigen::Vector3d;
     using MatX = Eigen::MatrixXd;

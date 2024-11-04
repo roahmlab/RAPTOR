@@ -25,7 +25,7 @@ namespace RAPTOR {
 // so that we can get the force and the gradient of the force on the fixed joint
 class CustomizedInverseDynamics : public InverseDynamics {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using Data = pinocchio::DataTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;

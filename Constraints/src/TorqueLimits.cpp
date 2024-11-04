@@ -7,10 +7,9 @@ TorqueLimits::TorqueLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                            const VecX& lowerLimits_input, 
                            const VecX& upperLimits_input) :
     trajPtr_(trajPtr_input),
-    idPtr_(idPtr_input) {
-    lowerLimits = lowerLimits_input;
-    upperLimits = upperLimits_input;
-    
+    idPtr_(idPtr_input),
+    lowerLimits(lowerLimits_input),
+    upperLimits(upperLimits_input) {
     initialize_memory(trajPtr_->N * trajPtr_->Nact, 
                       trajPtr_->varLength,
                       true);
@@ -23,7 +22,8 @@ void TorqueLimits::compute(const VecX& z,
         return;
     }
 
-    trajPtr_->compute(z, compute_derivatives, compute_hessian);
+    // this will be called in idPtr_->compute
+    // trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     idPtr_->compute(z, compute_derivatives, compute_hessian);
 

@@ -11,16 +11,15 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     // Define robot model
     const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
     
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::DataTpl<double> data(model);
 
     ForwardKinematicsSolver fkSolver(&model);
 
     // set joint angles
     std::srand(std::time(nullptr));
-    Eigen::VectorXd q = M_2_PI * Eigen::VectorXd::Random(model.nq).array() - M_PI;
+    Eigen::VectorXd q = M_2_PI * Eigen::VectorXd::Random(model.nq);
 
     // compute forward kinematics using pinocchio
     pinocchio::forwardKinematics(model, data, q);

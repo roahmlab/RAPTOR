@@ -18,7 +18,7 @@ namespace Kinova {
 
 class ConditionNumberOptimizer : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
@@ -42,7 +42,7 @@ public:
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
         const bool include_gripper_or_not = false,
-        const double colliison_buffer_input = 0.0,
+        const double collison_buffer_input = 0.0,
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 

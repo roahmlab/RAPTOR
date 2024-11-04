@@ -8,18 +8,17 @@ int main(int argc, char* argv[]) {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
     
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
-    // model.damping.setZero();
-    // model.armature.setZero();
+    model.damping.setZero();
+    model.armature.setZero();
 
     // Define trajectory parameters
     const double T = 10.0;
-    const int N = 100;
+    const int N = 64;
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
@@ -29,7 +28,7 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd q_d0_input = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess
-    int num_joints = 7;
+    int num_joints = model.nv;
     std::srand(static_cast<unsigned int>(time(0)));
     Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * num_joints).array() - 0.1;
     z.segment((2 * degree + 1) * num_joints, num_joints) = 
@@ -80,7 +79,7 @@ int main(int argc, char* argv[]) {
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     }
 
-    // For gradient checking
+    // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
@@ -104,10 +103,6 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-
-        // const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints);
-        // mynlp->solution.segment((2 * degree + 1) * num_joints, num_joints) =
-        //     Utils::wrapToPi(initial_position_part);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -172,5 +167,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
     return 0;
 }

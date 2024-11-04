@@ -58,7 +58,7 @@ Run the following command to compile all the code.
 mkdir build
 cd build
 cmake ..
-make -j
+make -j4
 ```
 
 You will be able to find README in each of the examples presented in `Example/` folder.

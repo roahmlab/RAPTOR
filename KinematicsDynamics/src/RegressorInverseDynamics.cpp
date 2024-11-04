@@ -22,6 +22,8 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         jtype = convertPinocchioJointType(*modelPtr_);
     }
 
+    NB = modelPtr_->nv;
+
     Xtree.resize(1, modelPtr_->nv);
     I.resize(1, modelPtr_->nv);
 
@@ -50,14 +52,6 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     a_grav << modelPtr_->gravity.angular(),
               modelPtr_->gravity.linear();
 
-    Xup.resize(1, modelPtr_->nv);
-    dXupdq.resize(1, modelPtr_->nv);
-    S.resize(1, modelPtr_->nv);
-    v.resize(1, modelPtr_->nv);
-    pv_pz.resize(1, modelPtr_->nv);
-    a.resize(1, modelPtr_->nv);
-    pa_pz.resize(1, modelPtr_->nv);
-
     tau.resize(1, N);
     ptau_pz.resize(1, N);
 
@@ -71,15 +65,6 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     for (int i = 0; i < trajPtr_->varLength; i++) {
         pY_pz(i) = MatX::Zero(trajPtr_->N * modelPtr_->nv, numParams);
     }
-
-    // The following has nothing to do with motor dynamics parameters
-    Yfull = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
-    pYfull_pz.resize(trajPtr_->varLength);
-    for (int i = 0; i < trajPtr_->varLength; i++) {
-        pYfull_pz(i) = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
-    }
-
-    Ycurrent = MatX::Zero(modelPtr_->nv, numInertialParams);
 }
 
 void RegressorInverseDynamics::compute(const VecX& z,
@@ -99,7 +84,9 @@ void RegressorInverseDynamics::compute(const VecX& z,
         throw std::invalid_argument("CustomizedInverseDynamics: Hessian not implemented yet");
     }
 
-    for (int i = 0; i < N; i++) {
+    int i = 0;
+    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, I, a_grav, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
+    for (i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
         const VecX& q_d = trajPtr_->q_d(i);
         const VecX& q_dd = trajPtr_->q_dd(i);
@@ -118,8 +105,33 @@ void RegressorInverseDynamics::compute(const VecX& z,
         // forward pass
         Vec6 vJ;
         Mat6 XJ, dXJdq;
-        Yfull.setZero();
-        Ycurrent.setZero();
+        // Yfull.setZero();
+        // Ycurrent.setZero();
+
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
+        Xup.resize(1, modelPtr_->nv);
+        dXupdq.resize(1, modelPtr_->nv);
+        S.resize(1, modelPtr_->nv);
+        v.resize(1, modelPtr_->nv);
+        pv_pz.resize(1, modelPtr_->nv);
+        a.resize(1, modelPtr_->nv);
+        pa_pz.resize(1, modelPtr_->nv);
+
+        // The following has nothing to do with motor dynamics parameters
+        MatX Yfull = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
+        pYfull_pz.resize(trajPtr_->varLength);
+        for (int i = 0; i < trajPtr_->varLength; i++) {
+            pYfull_pz(i) = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
+        }
+
+        MatX Ycurrent = MatX::Zero(modelPtr_->nv, numInertialParams);
 
         if (compute_derivatives) {
             for (int k = 0; k < trajPtr_->varLength; k++) {

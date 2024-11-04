@@ -2,8 +2,8 @@
 
 This class implements different types of constraints that will be later put into the optimization.
 Specifically, we would like to provide the formulation `g_lb <= g(z) <= g_ub`.
-The core function is called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`. 
-The constraint class usually requires a shared pointer of a trajectory class in the constructor, and a shared pointer of a forward kinematics and inverse dynamics class. 
+The core function is called `compute(const Eigen::VectorXd& z, bool compute_derivatives, bool compute_hessian)`. 
+The constraint class usually requires a shared pointer of a trajectory class in the constructor, or a shared pointer of a forward kinematics and inverse dynamics class, depending on the purpose of the constraints.
 The results are stored in `g`, which is a class member, for the optimizer class to access.
 The gradient is stored in `pg_pz` and the hessian is stored in `pg_pz_pz`
 

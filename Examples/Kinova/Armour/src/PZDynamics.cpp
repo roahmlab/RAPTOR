@@ -8,7 +8,7 @@ KinematicsDynamics::KinematicsDynamics(const std::shared_ptr<RobotInfo>& robotIn
                                        const std::shared_ptr<BezierCurveInterval>& trajPtr_input) :
     robotInfoPtr_(robotInfoPtr_input),
     trajPtr_(trajPtr_input) {
-    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
+    const pinocchio::Model& model = robotInfoPtr_->model;
 
     // pre-allocate memory
     com_arr = PZsparseArray(model.nv, 3);
@@ -70,7 +70,7 @@ void KinematicsDynamics::reset_trajectory(const std::shared_ptr<BezierCurveInter
 }
 
 void KinematicsDynamics::fk(const size_t s_ind) {
-    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
+    const pinocchio::Model& model = robotInfoPtr_->model;
     const auto& collision_spheres = robotInfoPtr_->collision_spheres;
     
     // The rotational part of the transformation matrix
@@ -248,7 +248,7 @@ void KinematicsDynamics::rnea(const size_t s_ind,
                               PZsparseArray& u,
                               PZsparseArray& contact_force,
 			                  PZsparseArray& contact_moment) {
-    const pinocchio::ModelTpl<double>& model = robotInfoPtr_->model;
+    const pinocchio::Model& model = robotInfoPtr_->model;
 
     // the following terms are automatically initialized to zero
     PZsparse w1;

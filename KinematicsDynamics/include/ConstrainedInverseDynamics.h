@@ -8,7 +8,7 @@ namespace RAPTOR {
 // Class declaration
 class ConstrainedInverseDynamics : public InverseDynamics {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using Data = pinocchio::DataTpl<double>;
     using VecX = Eigen::VectorXd;
     using MatX = MatX;

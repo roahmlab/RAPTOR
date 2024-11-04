@@ -9,7 +9,7 @@ using namespace Ipopt;
 
 class FKGradientChecker : public Optimizer {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
@@ -197,9 +197,8 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
-    pinocchio::Model model_double;
-    pinocchio::urdf::buildModel(urdf_filename, model_double);
-    pinocchio::ModelTpl<double> model = model_double.cast<double>();
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
 
     Eigen::VectorXd z0 = Eigen::VectorXd::Random(model.nq);
 

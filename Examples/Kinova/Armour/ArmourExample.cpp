@@ -28,7 +28,7 @@ int main() {
 
         // trajectory parameters and their ranges
     const Eigen::VectorXd k_center = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXd k_range = M_PI / 48 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
     const double duration = 3.0;

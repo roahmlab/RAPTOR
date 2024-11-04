@@ -21,7 +21,7 @@ typedef struct GaitParameters_ {
 
 class DigitCustomizedConstraints : public Constraints {
 public:
-    using Model = pinocchio::ModelTpl<double>;
+    using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
