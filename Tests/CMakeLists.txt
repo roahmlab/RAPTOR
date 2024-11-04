@@ -50,6 +50,19 @@ target_link_libraries(MinimizeTorque_test PUBLIC
 target_compile_options(MinimizeTorque_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(BoxCollisionAvoidance_test 
+    Constraints/TestBoxCollisionAvoidance.cpp)
+
+target_link_libraries(BoxCollisionAvoidance_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(BoxCollisionAvoidance_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(KinematicsConstraints_test 
     Constraints/TestKinematicsConstraints.cpp)
 

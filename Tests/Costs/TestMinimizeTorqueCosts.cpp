@@ -10,7 +10,7 @@ using namespace RAPTOR;
 BOOST_AUTO_TEST_SUITE(MinimizeTorqueTest)
 
 // test gradient
-BOOST_AUTO_TEST_CASE(ownGradientTest) {
+BOOST_AUTO_TEST_CASE(GradientTest) {
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(ownGradientTest) {
 }
 
 // test hessian
-BOOST_AUTO_TEST_CASE(ownHessianTest) {
+BOOST_AUTO_TEST_CASE(HessianTest) {
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
     
     pinocchio::Model model;
