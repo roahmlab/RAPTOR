@@ -63,9 +63,9 @@ void ZonotopeCollisionAvoidance::initialize() {
                                          G(2, a_id) * G(0, b_id) - G(0, a_id) * G(2, b_id),
                                          G(0, a_id) * G(1, b_id) - G(1, a_id) * G(0, b_id)};
 
-			double norm_cross = sqrt(pow(generator_cross[0], 2) + 
-									 pow(generator_cross[1], 2) + 
-									 pow(generator_cross[2], 2));
+			double norm_cross = std::sqrt(std::pow(generator_cross[0], 2) + 
+										  std::pow(generator_cross[1], 2) + 
+										  std::pow(generator_cross[2], 2));
 
 			double C[3] = {0.0};
 
@@ -253,9 +253,9 @@ void ZonotopeCollisionAvoidance::computeDistance(const Vec3& point) {
 				const double v_y = v[(selected_v_start_idx + i) * 3 + 1];
 				const double v_z = v[(selected_v_start_idx + i) * 3 + 2];
 
-				const double distance = sqrt(pow(point(0) - v_x, 2) + 
-											 pow(point(1) - v_y, 2) + 
-											 pow(point(2) - v_z, 2));
+				const double distance = std::sqrt(std::pow(point(0) - v_x, 2) + 
+											      std::pow(point(1) - v_y, 2) + 
+											      std::pow(point(2) - v_z, 2));
 
 				if (distance < min_distance) {
 					min_distance = distance;

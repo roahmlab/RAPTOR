@@ -19,6 +19,7 @@ BezierCurveInterval::BezierCurveInterval() {
     }
 
     // pre-allocate memory
+    q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     cos_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     sin_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     qd_des = PZsparseArray(NUM_FACTORS, num_time_steps);
@@ -29,12 +30,12 @@ BezierCurveInterval::BezierCurveInterval() {
 }
 
 BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp, 
-                         const VecX& qd0_inp, 
-                         const VecX& qdd0_inp,
-                         const VecX& k_center_inp,
-                         const VecX& k_range_inp,
-                         const double duration_inp,
-                         const ultimate_bound& ultimate_bound_info_inp) : 
+                                         const VecX& qd0_inp, 
+                                         const VecX& qdd0_inp,
+                                         const VecX& k_center_inp,
+                                         const VecX& k_range_inp,
+                                         const double duration_inp,
+                                         const ultimate_bound& ultimate_bound_info_inp) : 
     q0(q0_inp),
     qd0(qd0_inp),
     qdd0(qdd0_inp),
@@ -53,6 +54,7 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
     }
 
     // pre-allocate memory
+    q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     cos_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     sin_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     qd_des = PZsparseArray(NUM_FACTORS, num_time_steps);
@@ -61,24 +63,24 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
 
     // initialize the extrema of the k independent part of q_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        q_des_k_indep_extrema_1[i] = (2*Tqd0[i] + TTqdd0[i] + sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        q_des_k_indep_extrema_2[i] = (2*Tqd0[i] + TTqdd0[i] - sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        q_des_k_indep_extrema_1[i] = (2*Tqd0[i] + TTqdd0[i] + std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        q_des_k_indep_extrema_2[i] = (2*Tqd0[i] + TTqdd0[i] - std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         q_des_k_indep_extremum_1[i] = q_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], q_des_k_indep_extrema_1[i], duration);
         q_des_k_indep_extremum_2[i] = q_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], q_des_k_indep_extrema_2[i], duration);
     }
 
     // initialize the extrema of the k independent part of qd_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        qd_des_k_indep_extrema_1[i] = (18*Tqd0[i] + 4*TTqdd0[i] + sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        qd_des_k_indep_extrema_2[i] = (18*Tqd0[i] + 4*TTqdd0[i] - sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qd_des_k_indep_extrema_1[i] = (18*Tqd0[i] + 4*TTqdd0[i] + std::sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qd_des_k_indep_extrema_2[i] = (18*Tqd0[i] + 4*TTqdd0[i] - std::sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         qd_des_k_indep_extremum_1[i] = qd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qd_des_k_indep_extrema_1[i], duration);
         qd_des_k_indep_extremum_2[i] = qd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qd_des_k_indep_extrema_2[i], duration);
     }
 
     // initialize the extrema of the k independent part of qdd_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        qdd_des_k_indep_extrema_1[i] = (32*Tqd0[i] + 6*TTqdd0[i] + sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        qdd_des_k_indep_extrema_2[i] = (32*Tqd0[i] + 6*TTqdd0[i] - sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qdd_des_k_indep_extrema_1[i] = (32*Tqd0[i] + 6*TTqdd0[i] + std::sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qdd_des_k_indep_extrema_2[i] = (32*Tqd0[i] + 6*TTqdd0[i] - std::sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         qdd_des_k_indep_extremum_1[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_1[i], duration);
         qdd_des_k_indep_extremum_2[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_2[i], duration);
     }
@@ -104,24 +106,24 @@ void BezierCurveInterval::setTrajectoryParameters(const VecX& q0_inp,
 
     // initialize the extrema of the k independent part of q_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        q_des_k_indep_extrema_1[i] = (2*Tqd0[i] + TTqdd0[i] + sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        q_des_k_indep_extrema_2[i] = (2*Tqd0[i] + TTqdd0[i] - sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        q_des_k_indep_extrema_1[i] = (2*Tqd0[i] + TTqdd0[i] + std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        q_des_k_indep_extrema_2[i] = (2*Tqd0[i] + TTqdd0[i] - std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 120*k_center[i]*Tqd0[i]))/(5*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         q_des_k_indep_extremum_1[i] = q_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], q_des_k_indep_extrema_1[i], duration);
         q_des_k_indep_extremum_2[i] = q_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], q_des_k_indep_extrema_2[i], duration);
     }
 
     // initialize the extrema of the k independent part of qd_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        qd_des_k_indep_extrema_1[i] = (18*Tqd0[i] + 4*TTqdd0[i] + sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        qd_des_k_indep_extrema_2[i] = (18*Tqd0[i] + 4*TTqdd0[i] - sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qd_des_k_indep_extrema_1[i] = (18*Tqd0[i] + 4*TTqdd0[i] + std::sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qd_des_k_indep_extrema_2[i] = (18*Tqd0[i] + 4*TTqdd0[i] - std::sqrt(6*(54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2) - 20*TTqdd0[i]*k_center[i] - 180*Tqd0[i]*k_center[i] + 150*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         qd_des_k_indep_extremum_1[i] = qd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qd_des_k_indep_extrema_1[i], duration);
         qd_des_k_indep_extremum_2[i] = qd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qd_des_k_indep_extrema_2[i], duration);
     }
 
     // initialize the extrema of the k independent part of qdd_des
     for (int i = 0; i < NUM_FACTORS; i++) {
-        qdd_des_k_indep_extrema_1[i] = (32*Tqd0[i] + 6*TTqdd0[i] + sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
-        qdd_des_k_indep_extrema_2[i] = (32*Tqd0[i] + 6*TTqdd0[i] - sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qdd_des_k_indep_extrema_1[i] = (32*Tqd0[i] + 6*TTqdd0[i] + std::sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
+        qdd_des_k_indep_extrema_2[i] = (32*Tqd0[i] + 6*TTqdd0[i] - std::sqrt(2*(152*pow(Tqd0[i],2) + 42*Tqd0[i]*TTqdd0[i] + 3*pow(TTqdd0[i],2) - 80*TTqdd0[i]*k_center[i] - 600*Tqd0[i]*k_center[i] + 600*pow(k_center[i],2))))/(10*(6*Tqd0[i] + TTqdd0[i] - 12*k_center[i]));
         qdd_des_k_indep_extremum_1[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_1[i], duration);
         qdd_des_k_indep_extremum_2[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_2[i], duration);
     }                                          
@@ -170,6 +172,7 @@ void BezierCurveInterval::makePolyZono(const int s_ind) {
         q_des_degree[1][i + NUM_FACTORS * 1] = 1; // qe
         q_des_coeff[1] = k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qe; // qe
         PZsparse q_des_range(0, q_des_coeff, q_des_degree, 2);
+        q_des(i, s_ind) = PZsparse(q_des_center, q_des_coeff, q_des_degree, 2);
 
         // third order Taylor expansion
         // Part 1.a: cos(q_des) 
@@ -317,8 +320,8 @@ void BezierCurveInterval::returnJointPositionExtremum(double* extremum, const do
 
         // list all possible extremas
         double extrema1 = 0;
-        double extrema2 = (2*Tqd0[i] + TTqdd0[i] + sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
-        double extrema3 = (2*Tqd0[i] + TTqdd0[i] - sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema2 = (2*Tqd0[i] + TTqdd0[i] + std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema3 = (2*Tqd0[i] + TTqdd0[i] - std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
         double extrema4 = 1;
 
         // get extremums of all extremas
@@ -351,8 +354,8 @@ void BezierCurveInterval::returnJointPositionExtremumGradient(double* extremumGr
 
         // list all possible extremas
         double extrema1 = 0;
-        double extrema2 = (2*Tqd0[i] + TTqdd0[i] + sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
-        double extrema3 = (2*Tqd0[i] + TTqdd0[i] - sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema2 = (2*Tqd0[i] + TTqdd0[i] + std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema3 = (2*Tqd0[i] + TTqdd0[i] - std::sqrt(64*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] - 120*k_actual*Tqd0[i] + pow(TTqdd0[i],2))) / (5*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
         double extrema4 = 1;
 
         // get extremums of all extremas
@@ -460,8 +463,8 @@ void BezierCurveInterval::returnJointVelocityExtremum(double* extremum, const do
 
         // list all possible extremas
         double extrema1 = 0;
-        double extrema2 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] + sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
-        double extrema3 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] - sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema2 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] + std::sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema3 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] - std::sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
         double extrema4 = 1;
 
         // get extremums of all extremas
@@ -494,8 +497,8 @@ void BezierCurveInterval::returnJointVelocityExtremumGradient(double* extremumGr
 
         // list all possible extremas
         double extrema1 = 0;
-        double extrema2 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] + sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
-        double extrema3 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] - sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema2 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] + std::sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
+        double extrema3 = (18*Tqd0[i] - 30*k_actual + 4*TTqdd0[i] - std::sqrt(6*(150*pow(k_actual,2) - 180*k_actual*Tqd0[i] - 20*k_actual*TTqdd0[i] + 54*pow(Tqd0[i],2) + 14*Tqd0[i]*TTqdd0[i] + pow(TTqdd0[i],2))))/(10*(6*Tqd0[i] - 12*k_actual + TTqdd0[i]));
         double extrema4 = 1;
 
         // get extremums of all extremas
@@ -677,7 +680,7 @@ double q_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double
     double t17 = TTqdd0+t4+t9;
     double t24 = t6+t8+t14+t15;
     double t19 = 1.0/t17;
-    double t25 = sqrt(t24);
+    double t25 = std::sqrt(t24);
     double t20 = t19*t19;
     double t21 = t19*t19*t19;
     double t23 = t19*t19*t19*t19*t19;
@@ -720,7 +723,7 @@ double q_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, double
     double t17 = TTqdd0+t4+t9;
     double t24 = t6+t8+t14+t15;
     double t19 = 1.0/t17;
-    double t25 = sqrt(t24);
+    double t25 = std::sqrt(t24);
     double t20 = t19*t19;
     double t21 = t19*t19*t19;
     double t23 = t19*t19*t19*t19*t19;
@@ -755,7 +758,7 @@ double qd_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, doubl
     double t10 = Tqd0*1.8E+1;
     double t11 = TTqdd0*2.0E+1;
     double t13 = Tqd0*TTqdd0*1.4E+1;
-    double t14 = sqrt(6.0);
+    double t14 = std::sqrt(6.0);
     double t17 = k*3.0E+2;
     double t18 = Tqd0*1.8E+2;
     double t21 = k*TTqdd0*-2.0E+1;
@@ -771,7 +774,7 @@ double qd_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, doubl
     double t31 = t11+t18+t22;
     double t32 = t7+t13+t19+t21+t23+t24;
     double t26 = 1.0/t25;
-    double t33 = sqrt(t32);
+    double t33 = std::sqrt(t32);
     double t27 = t26*t26;
     double t28 = t26*t26*t26;
     double t30 = t26*t26*t26*t26*t26;
@@ -817,7 +820,7 @@ double qd_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, doubl
     double t10 = Tqd0*1.8E+1;
     double t12 = TTqdd0*2.0E+1;
     double t14 = Tqd0*TTqdd0*1.4E+1;
-    double t15 = sqrt(6.0);
+    double t15 = std::sqrt(6.0);
     double t17 = k*3.0E+2;
     double t19 = Tqd0*1.8E+2;
     double t22 = k*TTqdd0*-2.0E+1;
@@ -834,7 +837,7 @@ double qd_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, doubl
     double t32 = t12+t19+t23;
     double t33 = t7+t14+t20+t22+t24+t25;
     double t27 = 1.0/t26;
-    double t34 = sqrt(t33);
+    double t34 = std::sqrt(t33);
     double t28 = t27*t27;
     double t29 = t27*t27*t27;
     double t31 = t27*t27*t27*t27*t27;

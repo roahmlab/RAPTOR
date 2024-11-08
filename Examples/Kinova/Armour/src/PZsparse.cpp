@@ -459,6 +459,82 @@ PZsparse PZsparse::operator-() const {
     return res;
 }
 
+PZsparse PZsparse::operator-=(const PZsparse& a) {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: operator-=(): independent generator matrix has negative entry!");
+    }
+    
+    center -= a.center;
+
+    polynomial.reserve(polynomial.size() + a.polynomial.size());
+
+    // for (auto it : a.polynomial) {
+    //     polynomial.push_back(it);
+    // }
+
+    std::vector<Monomial> polynomial_new;
+    polynomial_new.reserve(polynomial.size() + a.polynomial.size());
+
+    double reduce_amount = 0;
+    size_t i = 0, j = 0;
+ 
+    while (i < polynomial.size() && j < a.polynomial.size())
+    {
+        Monomial temp;
+        if (polynomial[i].degree < a.polynomial[j].degree) {
+            temp = polynomial[i];
+            i++;
+        }
+        else if (polynomial[i].degree > a.polynomial[j].degree) {
+            temp = a.polynomial[j];
+            temp.coeff = -temp.coeff;
+            j++;
+        }
+        else {
+            temp = Monomial(polynomial[i].coeff - a.polynomial[j].coeff, polynomial[i].degree);
+            i++;
+            j++;
+        }
+
+        if (fabs(temp.coeff) > SIMPLIFY_THRESHOLD) {
+            polynomial_new.push_back(temp);
+        }
+        else {
+            reduce_amount += fabs(temp.coeff);
+        }
+    }
+ 
+    while (i < polynomial.size()) {
+        if (fabs(polynomial[i].coeff) > SIMPLIFY_THRESHOLD) {
+            polynomial_new.push_back(polynomial[i]);
+        }
+        else {
+            reduce_amount += fabs(polynomial[i].coeff);
+        }
+        i++;
+    }
+ 
+    while (j < a.polynomial.size()) {
+        if (fabs(a.polynomial[j].coeff) > SIMPLIFY_THRESHOLD) {
+            Monomial temp = a.polynomial[j];
+            temp.coeff = -temp.coeff;
+            polynomial_new.push_back(temp);
+        }
+        else {
+            reduce_amount += fabs(a.polynomial[j].coeff);
+        }
+        j++;
+    }
+
+    polynomial = polynomial_new;
+
+    independent += a.independent + reduce_amount;
+
+    // simplify();
+    
+    return *this;
+}
+
 PZsparse PZsparse::operator+(const PZsparse& a) const {
     if (independent < 0) {
         throw std::runtime_error("PZsparse error: operator+(): independent generator matrix has negative entry!");
@@ -617,6 +693,17 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
 
     // simplify();
     
+    return *this;
+}
+
+PZsparse PZsparse::operator+=(const Interval& a) {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: operator+=(): independent generator matrix has negative entry!");
+    }
+
+    center += getCenter(a);
+    independent += getRadius(a);
+
     return *this;
 }
 
@@ -787,6 +874,12 @@ PZsparse PZsparse::operator*(const PZsparse& a) const {
     return res;
 }
 
+PZsparse PZsparse::operator*=(const PZsparse& a) {
+    PZsparse res = *this * a;
+    *this = res;
+    return *this;
+}
+
 PZsparse PZsparse::operator*(const double a) const {
     if (independent < 0) {
         throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
@@ -843,6 +936,209 @@ PZsparse PZsparse::operator/(const double a) const {
     }
 
     res.independent = independent / fabs(a);
+
+    return res;
+}
+
+PZsparse PZsparse::operator/(const PZsparse& a) const {
+    // a is just a scalar
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return *this / a.center;
+    }
+
+    std::cerr << a << std::endl;
+    throw std::runtime_error("PZsparse error: operator/(): not supported!");
+    return PZsparse(0);
+}
+
+bool PZsparse::operator<(const PZsparse& a) const {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: operator<(): independent generator matrix has negative entry!");
+    }
+    if (a.independent < 0) {
+        throw std::runtime_error("PZsparse error: operator<(): independent generator matrix has negative entry!");
+    }
+
+    return center < a.center;
+}
+
+bool PZsparse::operator<(const double a) const {
+    return center < a;
+}
+
+bool PZsparse::operator>(const PZsparse& a) const {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: operator>(): independent generator matrix has negative entry!");
+    }
+    if (a.independent < 0) {
+        throw std::runtime_error("PZsparse error: operator>(): independent generator matrix has negative entry!");
+    }
+
+    return center > a.center;
+}
+
+bool PZsparse::operator>(const double a) const {
+    return center > a;
+} 
+
+bool PZsparse::operator==(const PZsparse& a) const {
+    if (independent < 0) {
+        throw std::runtime_error("PZsparse error: operator==(): independent generator matrix has negative entry!");
+    }
+    if (a.independent < 0) {
+        throw std::runtime_error("PZsparse error: operator==(): independent generator matrix has negative entry!");
+    }
+    
+    if (center != a.center) {
+        return false;
+    }
+
+    if (independent != a.independent) {
+        return false;
+    }
+
+    if (polynomial.size() != a.polynomial.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < polynomial.size(); i++) {
+        if (polynomial[i].coeff != a.polynomial[i].coeff) {
+            return false;
+        }
+        if (polynomial[i].degree != a.polynomial[i].degree) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+PZsparse abs(const PZsparse& a) {
+    if (a.independent < 0) {
+        throw std::runtime_error("PZsparse error: abs(): independent generator matrix has negative entry!");
+    }
+
+    PZsparse res;
+    res.center = fabs(a.center);
+
+    res.polynomial.reserve(a.polynomial.size());
+
+    for (auto it : a.polynomial) {
+        res.polynomial.emplace_back(fabs(it.coeff), it.degree);
+    }
+
+    res.independent = a.independent;
+
+    return res;
+}
+
+PZsparse sqrt(const PZsparse& a) {
+    // a is just a scalar
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return PZsparse(std::sqrt(a.center));
+    }
+
+    std::cerr << a << std::endl;
+    throw std::runtime_error("PZsparse error: sqrt(): not supported!");
+    return PZsparse(0);
+}
+
+bool isfinite(const PZsparse& a) {
+    if (a.independent < 0) {
+        throw std::runtime_error("PZsparse error: isfinite(): independent generator matrix has negative entry!");
+    }
+
+    if (!std::isfinite(a.center)) {
+        return false;
+    }
+
+    for (auto it : a.polynomial) {
+        if (!std::isfinite(it.coeff)) {
+            return false;
+        }
+    }
+
+    if (!std::isfinite(a.independent)) {
+        return false;
+    }
+
+    return true;
+}
+
+PZsparse sin(const PZsparse& a) {
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return PZsparse(std::sin(a.center));
+    }
+    
+    PZsparse res(std::sin(a.center));
+
+    // Taylor expansion
+    const PZsparse multiplier = a - a.center;
+    PZsparse power(1.0);
+    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+        double coeff = 0;
+        switch (i % 4) {
+            case 0:
+                coeff = std::cos(a.center); // 1st order derivative of sin
+                break;
+            case 1:
+                coeff = -std::sin(a.center); // 2nd order derivative of sin
+                break;
+            case 2:
+                coeff = -std::cos(a.center); // 3rd order derivative of sin
+                break;
+            case 3:
+                coeff = std::sin(a.center); // 4th order derivative of sin
+                break;
+        }
+        power *= multiplier / (double)(i + 1);
+
+        if (i < SIN_TAYLOR_ORDER) {
+            res += power * coeff;
+        }
+        else { // Lagrange remainder
+            res += power.toInterval() * coeff;
+        }
+    }
+
+    return res;
+}
+
+PZsparse cos(const PZsparse& a) {
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return PZsparse(std::cos(a.center));
+    }
+    
+    PZsparse res(std::cos(a.center));
+
+    // Taylor expansion
+    const PZsparse multiplier = a - a.center;
+    PZsparse power(1.0);
+    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+        double coeff = 0;
+        switch (i % 4) {
+            case 0:
+                coeff = -std::sin(a.center); // 1st order derivative of cos
+                break;
+            case 1:
+                coeff = -std::cos(a.center); // 2nd order derivative of cos
+                break;
+            case 2:
+                coeff = std::sin(a.center); // 3rd order derivative of cos
+                break;
+            case 3:
+                coeff = std::cos(a.center); // 4th order derivative of cos
+                break;
+        }
+        power *= multiplier / (double)(i + 1);
+
+        if (i < SIN_TAYLOR_ORDER) {
+            res += power * coeff;
+        }
+        else { // Lagrange remainder
+            res += power.toInterval() * coeff;
+        }
+    }
 
     return res;
 }

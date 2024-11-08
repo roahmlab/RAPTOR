@@ -95,7 +95,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         ultimate_bound_info.M_min = ultimate_bound_node["M_min"].as<double>();
         ultimate_bound_info.Kr = ultimate_bound_node["Kr"].as<double>();
 
-        ultimate_bound_info.eps = sqrt(2 * ultimate_bound_info.V_m / ultimate_bound_info.M_min);
+        ultimate_bound_info.eps = std::sqrt(2 * ultimate_bound_info.V_m / ultimate_bound_info.M_min);
         ultimate_bound_info.qe = ultimate_bound_info.eps / ultimate_bound_info.Kr;
         ultimate_bound_info.qde = 2 * ultimate_bound_info.eps;
         ultimate_bound_info.qdae = ultimate_bound_info.eps;

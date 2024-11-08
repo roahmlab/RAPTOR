@@ -160,17 +160,17 @@ bool DigitSingleStepOptimizer::eval_f(
 
     // minimize control torque
     for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
+        obj_value += std::sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
     }
     obj_value /= cidPtr_->N;
 
     // minimize initial velocity
     const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    obj_value += 100 * sqrt(initial_velocity.dot(initial_velocity));
+    obj_value += 100 * std::sqrt(initial_velocity.dot(initial_velocity));
 
     // minimize initial acceleration
     const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
+    obj_value += 20 * std::sqrt(initial_acceleration.dot(initial_acceleration));
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 

@@ -29,6 +29,9 @@ using namespace boost::multiprecision;
 // 7 * 7 = 49 variables in total
 #define NUM_VARIABLES (NUM_FACTORS * 7)
 
+#define SIN_TAYLOR_ORDER 2
+#define COS_TAYLOR_ORDER 2
+
 const cpp_int MOVE_INC = 7;
 
 // const cpp_int max_hash_dependent_k_only = ((cpp_int)1 << (cpp_int)(2 * NUM_FACTORS));
@@ -113,11 +116,15 @@ public:
 
     PZsparse operator-() const;
 
+    PZsparse operator-=(const PZsparse& a);
+
     PZsparse operator+(const PZsparse& a) const;
 
     PZsparse operator+(const double a) const;
 
     PZsparse operator+=(const PZsparse& a);
+
+    PZsparse operator+=(const Interval& a);
 
     PZsparse operator-(const PZsparse& a) const;
 
@@ -125,9 +132,23 @@ public:
 
     PZsparse operator*(const PZsparse& a) const;
 
+    PZsparse operator*=(const PZsparse& a);
+
     PZsparse operator*(const double a) const;
 
     PZsparse operator/(const double a) const;
+    
+    PZsparse operator/(const PZsparse& a) const;
+
+    bool operator<(const PZsparse& a) const;
+
+    bool operator<(const double a) const;
+
+    bool operator>(const PZsparse& a) const;
+
+    bool operator>(const double a) const;
+
+    bool operator==(const PZsparse& a) const;
 };
 
 typedef Eigen::Array<PZsparse, Eigen::Dynamic, Eigen::Dynamic> PZsparseArray;
@@ -150,8 +171,41 @@ PZsparse operator-(const double a, const PZsparse& b);
 
 PZsparse operator*(const double a, const PZsparse& b);
 
+PZsparse abs(const PZsparse& a);
+
+PZsparse sqrt(const PZsparse& a);
+
+bool isfinite(const PZsparse& a);
+
+PZsparse sin(const PZsparse& a);
+
+PZsparse cos(const PZsparse& a);
+
 }; // namespace Armour
 }; // namespace Kinova
 }; // namespace RAPTOR
+
+// define numeric_limits for PZsparse
+namespace std {
+    template<>
+    class numeric_limits<RAPTOR::Kinova::Armour::PZsparse> {
+    public:
+        static constexpr bool is_specialized = true;
+        static constexpr bool is_signed = true;
+        static constexpr bool is_integer = false;
+        static RAPTOR::Kinova::Armour::PZsparse min() noexcept {
+            return RAPTOR::Kinova::Armour::PZsparse(numeric_limits<double>::min());
+        }
+        static RAPTOR::Kinova::Armour::PZsparse max() noexcept {
+            return RAPTOR::Kinova::Armour::PZsparse(numeric_limits<double>::max());
+        }
+        static RAPTOR::Kinova::Armour::PZsparse lowest() noexcept {
+            return RAPTOR::Kinova::Armour::PZsparse(numeric_limits<double>::lowest());
+        }
+        static RAPTOR::Kinova::Armour::PZsparse epsilon() noexcept {
+            return RAPTOR::Kinova::Armour::PZsparse(numeric_limits<double>::epsilon());
+        }
+    };
+}; // namespace std
 
 #endif

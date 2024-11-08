@@ -89,7 +89,7 @@ Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
                 Interval temp = kdPtr_->torque_int(i, t_ind).toInterval(); // should be a 1-dim Interval
                 rho_max_temp += temp * temp;
 
-                torque_radius(i, t_ind) = robust_input_bound + 0.5 * std::max(abs(temp.lower()), abs(temp.upper()));
+                torque_radius(i, t_ind) = robust_input_bound + 0.5 * std::max(std::abs(temp.lower()), std::abs(temp.upper()));
             }
             rho_max_temp = sqrt(rho_max_temp);
             

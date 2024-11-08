@@ -15,6 +15,7 @@
 #include <vector>
 #include <cstdint>
 #include <stdexcept>
+#include <limits>
 
 #include <Eigen/Dense>
 
