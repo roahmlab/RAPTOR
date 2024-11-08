@@ -1,6 +1,7 @@
 #include "ReachableSets.h"
 #include "ArmourBezierCurves.h"
 #include "InverseDynamics.h"
+#include "CustomizedInverseDynamics.h"
 
 using namespace RAPTOR;
 using namespace Kinova;
@@ -11,8 +12,10 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
@@ -108,8 +111,8 @@ int main() {
             const double actual_cos_q = cos(trajDiscretePtr_->q(i)(j));
 
             // check if actual_cos_q is inside the range
-            if (actual_cos_q < cos_q_range.lower() - 1e-5 || 
-                actual_cos_q > cos_q_range.upper() + 1e-5) {
+            if (actual_cos_q < cos_q_range.lower() || 
+                actual_cos_q > cos_q_range.upper()) {
                 std::cerr << "Validation failed for cos(q) at time step " << i 
                           << " for motor " << j << ": "
                           << actual_cos_q << " not in [ " 
@@ -124,8 +127,8 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval sin_q_range = trajPtr_->sin_q_des(j, i).slice(factor);
             const double actual_sin_q = sin(trajDiscretePtr_->q(i)(j));
-            if (actual_sin_q < sin_q_range.lower() - 1e-5 || 
-                actual_sin_q > sin_q_range.upper() + 1e-5) {
+            if (actual_sin_q < sin_q_range.lower() || 
+                actual_sin_q > sin_q_range.upper()) {
                 std::cerr << "Validation failed for sin(q) at time step " << i 
                           << " for motor " << j << ": "
                           << actual_sin_q << " not in [ " 
@@ -140,8 +143,8 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval q_d_range = trajPtr_->qd_des(j, i).slice(factor);
             const double actual_q_d = trajDiscretePtr_->q_d(i)(j);
-            if (actual_q_d < q_d_range.lower() - 1e-4 || 
-                actual_q_d > q_d_range.upper() + 1e-4) {
+            if (actual_q_d < q_d_range.lower() || 
+                actual_q_d > q_d_range.upper()) {
                 std::cerr << "Validation failed for q_d at time step " << i 
                           << " for motor " << j << ": "
                           << actual_q_d << " not in [ " 
@@ -156,8 +159,8 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             Interval q_dd_range = trajPtr_->qdda_des(j, i).slice(factor);
             const double actual_q_dd = trajDiscretePtr_->q_dd(i)(j);
-            if (actual_q_dd < q_dd_range.lower() - 1e-3 || 
-                actual_q_dd > q_dd_range.upper() + 1e-3) {
+            if (actual_q_dd < q_dd_range.lower() || 
+                actual_q_dd > q_dd_range.upper()) {
                 std::cerr << "Validation failed for q_dd at time step " << i 
                           << " for motor " << j << ": "
                           << actual_q_dd << " not in [ " 
@@ -168,17 +171,19 @@ int main() {
     }
 
     // validate the torque PZs
-    std::shared_ptr<InverseDynamics> idPtr_ = 
-        std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
-    idPtr_->compute(k, false);
+    Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
+    jtype(jtype.size() - 1) = 0;
+    std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
+        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
+    cidPtr_->compute(k, false);
     
-    for (int i = 0; i < idPtr_->N; i++) {
+    for (int i = 0; i < cidPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
-            const double actualTorque = idPtr_->tau(i)(j);
+            const double actualTorque = cidPtr_->tau(i)(j);
 
-            if (actualTorque < torqueRange.lower() - 1e-3 || 
-                actualTorque > torqueRange.upper() + 1e-3) {
+            if (actualTorque < torqueRange.lower() || 
+                actualTorque > torqueRange.upper()) {
                 std::cerr << "Validation failed for tau at time step " << i 
                           << " for motor " << j << ": "
                           << actualTorque << " not in [ " 
@@ -188,9 +193,34 @@ int main() {
         }
     }
 
+    // validate the contact force PZs
+    for (int i = 0; i < cidPtr_->N; i++) {
+        const Vector6d& actualLambda = cidPtr_->lambda(i);
+        for (int j = 0; j < 3; j++) {
+            const Interval forceRange = kdPtr->contact_force_nom(j, i).slice(factor);
+            const Interval momentRange = kdPtr->contact_moment_nom(j, i).slice(factor);            
+            if (actualLambda(j+3) < forceRange.lower() || 
+                    actualLambda(j+3) > forceRange.upper()) {
+                    std::cerr << "Validation failed for contact force at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j+3) << " not in [ " 
+                          << forceRange.lower() << ", " 
+                          << forceRange.upper() << " ]" << std::endl;
+            }
+            if (actualLambda(j) < momentRange.lower() || 
+                    actualLambda(j) > momentRange.upper()) {
+                    std::cerr << "Validation failed for contact moment at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j) << " not in [ " 
+                          << momentRange.lower() << ", " 
+                          << momentRange.upper() << " ]" << std::endl;
+            }
+        }
+    }
+
     // // validate that torque_int overapproximate torque_nom
     // // you need to comment out line 44 - 47 in ReachableSets.cpp
-    // for (int i = 0; i < idPtr_->N; i++) {
+    // for (int i = 0; i < cidPtr_->N; i++) {
     //     for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
     //         const Interval torqueRange = kdPtr->torque_int(j, i).slice(factor);
     //         const Interval torqueNomRange = kdPtr->torque_nom(j, i).slice(factor);

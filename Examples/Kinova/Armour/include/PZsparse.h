@@ -9,8 +9,8 @@ namespace Armour {
 
 using namespace boost::multiprecision;
 
-// monomials with a coefficient smaller than this number will be reduced
-#define SIMPLIFY_THRESHOLD 1e-4
+// make sure the number of monomials in a PZsparse is always smaller than this number
+#define PZ_ORDER 40
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -33,15 +33,6 @@ using namespace boost::multiprecision;
 #define COS_TAYLOR_ORDER 2
 
 const cpp_int MOVE_INC = 7;
-
-// const cpp_int max_hash_dependent_k_only = ((cpp_int)1 << (cpp_int)(2 * NUM_FACTORS));
-
-// const cpp_int max_hash_dependent_k_links_only = ((cpp_int)1 << (cpp_int)(5 * NUM_FACTORS));
-// const cpp_int dependent_k_mask = max_hash_dependent_k_only - 1;
-
-double getCenter(const Interval& a);
-
-double getRadius(const Interval& a);
 
 double getCenter(const Interval& a);
 
@@ -177,9 +168,9 @@ PZsparse sqrt(const PZsparse& a);
 
 bool isfinite(const PZsparse& a);
 
-PZsparse sin(const PZsparse& a);
+// PZsparse sin(const PZsparse& a);
 
-PZsparse cos(const PZsparse& a);
+// PZsparse cos(const PZsparse& a);
 
 }; // namespace Armour
 }; // namespace Kinova

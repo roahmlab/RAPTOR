@@ -22,6 +22,10 @@ bool Monomial_sorter_degree(Monomial const& lhs, Monomial const& rhs) {
     return lhs.degree < rhs.degree;
 }
 
+bool Monomial_sorter_coeff(Monomial const& lhs, Monomial const& rhs) {
+    return fabs(lhs.coeff) > fabs(rhs.coeff);
+}
+
 /*
 Initialization
 */
@@ -90,12 +94,11 @@ void PZsparse::simplify() {
         throw std::runtime_error("PZsparse error: simplify(): independent generator matrix has negative entry!");
     }
 
-    sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
-
-    double reduce_amount = 0;
-
     std::vector<Monomial> polynomial_new;
     polynomial_new.reserve(polynomial.size());
+
+    // sort by degree to combine monomials with the same degree
+    std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
 
     size_t i = 0;
     while (i < polynomial.size()) {
@@ -110,18 +113,14 @@ void PZsparse::simplify() {
             polynomial[i].coeff += polynomial[j].coeff;
         }
 
-        double temp = fabs(polynomial[i].coeff);
-        if (temp <= SIMPLIFY_THRESHOLD) {
-            reduce_amount += temp;
-        }
-        else {
-            polynomial_new.emplace_back(polynomial[i]);
-        }
+        polynomial_new.emplace_back(polynomial[i]);
 
         i = j;
     }
 
+    // assign the new polynomial
     if (!polynomial_new.empty()) {
+        // if the first monomial is a constant, add it to the center
         if (polynomial_new[0].degree == 0) {
             center += polynomial_new[0].coeff;
             polynomial.clear();
@@ -131,12 +130,26 @@ void PZsparse::simplify() {
             polynomial = polynomial_new;
         }
     }
-    else {
+    else { // all monomials are eliminated
         polynomial.clear();
     }
 
-    if (reduce_amount != 0) {
-        independent = independent + reduce_amount;
+    // reduce the number of monomials within PZ_ORDER
+    if (polynomial.size() > PZ_ORDER) {
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_coeff);
+
+        double reduce_amount = 0;
+        for (size_t i = PZ_ORDER; i < polynomial.size(); i++) {
+            reduce_amount += fabs(polynomial[i].coeff);
+        }
+
+        polynomial.erase(polynomial.begin() + PZ_ORDER, polynomial.end());
+
+        if (reduce_amount != 0) {
+            independent += reduce_amount;
+        }
+
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
     }
 }
 
@@ -468,16 +481,10 @@ PZsparse PZsparse::operator-=(const PZsparse& a) {
 
     polynomial.reserve(polynomial.size() + a.polynomial.size());
 
-    // for (auto it : a.polynomial) {
-    //     polynomial.push_back(it);
-    // }
-
     std::vector<Monomial> polynomial_new;
     polynomial_new.reserve(polynomial.size() + a.polynomial.size());
 
-    double reduce_amount = 0;
     size_t i = 0, j = 0;
- 
     while (i < polynomial.size() && j < a.polynomial.size())
     {
         Monomial temp;
@@ -496,41 +503,40 @@ PZsparse PZsparse::operator-=(const PZsparse& a) {
             j++;
         }
 
-        if (fabs(temp.coeff) > SIMPLIFY_THRESHOLD) {
-            polynomial_new.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(temp.coeff);
-        }
+        polynomial_new.push_back(temp);
     }
  
     while (i < polynomial.size()) {
-        if (fabs(polynomial[i].coeff) > SIMPLIFY_THRESHOLD) {
-            polynomial_new.push_back(polynomial[i]);
-        }
-        else {
-            reduce_amount += fabs(polynomial[i].coeff);
-        }
+        polynomial_new.push_back(polynomial[i]);
         i++;
     }
  
     while (j < a.polynomial.size()) {
-        if (fabs(a.polynomial[j].coeff) > SIMPLIFY_THRESHOLD) {
-            Monomial temp = a.polynomial[j];
-            temp.coeff = -temp.coeff;
-            polynomial_new.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(a.polynomial[j].coeff);
-        }
+        Monomial temp = a.polynomial[j];
+        temp.coeff = -temp.coeff;
+        polynomial_new.push_back(temp);
         j++;
     }
 
     polynomial = polynomial_new;
 
-    independent += a.independent + reduce_amount;
+    // reduce the number of monomials within PZ_ORDER
+    if (polynomial.size() > PZ_ORDER) {
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_coeff);
 
-    // simplify();
+        double reduce_amount = 0;
+        for (size_t i = PZ_ORDER; i < polynomial.size(); i++) {
+            reduce_amount += fabs(polynomial[i].coeff);
+        }
+
+        polynomial.erase(polynomial.begin() + PZ_ORDER, polynomial.end());
+
+        if (reduce_amount != 0) {
+            independent += reduce_amount;
+        }
+
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
+    }
     
     return *this;
 }
@@ -546,9 +552,7 @@ PZsparse PZsparse::operator+(const PZsparse& a) const {
 
     res.polynomial.reserve(polynomial.size() + a.polynomial.size());
 
-    double reduce_amount = 0;
     size_t i = 0, j = 0;
- 
     while (i < polynomial.size() && j < a.polynomial.size())
     {
         Monomial temp;
@@ -566,35 +570,40 @@ PZsparse PZsparse::operator+(const PZsparse& a) const {
             j++;
         }
 
-        if (fabs(temp.coeff) > SIMPLIFY_THRESHOLD) {
+        if (temp.coeff != 0) {
             res.polynomial.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(temp.coeff);
         }
     }
  
     while (i < polynomial.size()) {
-        if (fabs(polynomial[i].coeff) > SIMPLIFY_THRESHOLD) {
-            res.polynomial.push_back(polynomial[i]);
-        }
-        else {
-            reduce_amount += fabs(polynomial[i].coeff);
-        }
+        res.polynomial.push_back(polynomial[i]);
         i++;
     }
  
     while (j < a.polynomial.size()) {
-        if (fabs(a.polynomial[j].coeff) > SIMPLIFY_THRESHOLD) {
-            res.polynomial.push_back(a.polynomial[j]);
-        }
-        else {
-            reduce_amount += fabs(a.polynomial[j].coeff);
-        }
+        res.polynomial.push_back(a.polynomial[j]);
         j++;
     }
 
-    res.independent = independent + a.independent + reduce_amount;
+    res.independent = independent + a.independent;
+
+    // reduce the number of monomials within PZ_ORDER
+    if (res.polynomial.size() > PZ_ORDER) {
+        std::sort(res.polynomial.begin(), res.polynomial.end(), Monomial_sorter_coeff);
+
+        double reduce_amount = 0;
+        for (size_t i = PZ_ORDER; i < res.polynomial.size(); i++) {
+            reduce_amount += fabs(res.polynomial[i].coeff);
+        }
+
+        res.polynomial.erase(res.polynomial.begin() + PZ_ORDER, res.polynomial.end());
+
+        if (reduce_amount != 0) {
+            res.independent += reduce_amount;
+        }
+
+        std::sort(res.polynomial.begin(), res.polynomial.end(), Monomial_sorter_degree);
+    }
     
     return res;
 }
@@ -632,16 +641,10 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
 
     polynomial.reserve(polynomial.size() + a.polynomial.size());
 
-    // for (auto it : a.polynomial) {
-    //     polynomial.push_back(it);
-    // }
-
     std::vector<Monomial> polynomial_new;
     polynomial_new.reserve(polynomial.size() + a.polynomial.size());
 
-    double reduce_amount = 0;
     size_t i = 0, j = 0;
- 
     while (i < polynomial.size() && j < a.polynomial.size())
     {
         Monomial temp;
@@ -659,39 +662,41 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
             j++;
         }
 
-        if (fabs(temp.coeff) > SIMPLIFY_THRESHOLD) {
+        if (temp.coeff != 0) {
             polynomial_new.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(temp.coeff);
         }
     }
  
     while (i < polynomial.size()) {
-        if (fabs(polynomial[i].coeff) > SIMPLIFY_THRESHOLD) {
-            polynomial_new.push_back(polynomial[i]);
-        }
-        else {
-            reduce_amount += fabs(polynomial[i].coeff);
-        }
+        polynomial_new.push_back(polynomial[i]);
         i++;
     }
  
     while (j < a.polynomial.size()) {
-        if (fabs(a.polynomial[j].coeff) > SIMPLIFY_THRESHOLD) {
-            polynomial_new.push_back(a.polynomial[j]);
-        }
-        else {
-            reduce_amount += fabs(a.polynomial[j].coeff);
-        }
+        polynomial_new.push_back(a.polynomial[j]);
         j++;
     }
 
     polynomial = polynomial_new;
+    independent += a.independent;
+    
+    // reduce the number of monomials within PZ_ORDER
+    if (polynomial.size() > PZ_ORDER) {
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_coeff);
 
-    independent += a.independent + reduce_amount;
+        double reduce_amount = 0;
+        for (size_t i = PZ_ORDER; i < polynomial.size(); i++) {
+            reduce_amount += fabs(polynomial[i].coeff);
+        }
 
-    // simplify();
+        polynomial.erase(polynomial.begin() + PZ_ORDER, polynomial.end());
+
+        if (reduce_amount != 0) {
+            independent += reduce_amount;
+        }
+
+        std::sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
+    }
     
     return *this;
 }
@@ -718,9 +723,7 @@ PZsparse PZsparse::operator-(const PZsparse& a) const{
 
     res.polynomial.reserve(polynomial.size() + a.polynomial.size());
 
-    double reduce_amount = 0;
     size_t i = 0, j = 0;
- 
     while (i < polynomial.size() && j < a.polynomial.size())
     {
         Monomial temp;
@@ -739,37 +742,42 @@ PZsparse PZsparse::operator-(const PZsparse& a) const{
             j++;
         }
 
-        if (fabs(temp.coeff) > SIMPLIFY_THRESHOLD) {
+        if (temp.coeff != 0) {
             res.polynomial.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(temp.coeff);
         }
     }
  
     while (i < polynomial.size()) {
-        if (fabs(polynomial[i].coeff) > SIMPLIFY_THRESHOLD) {
-            res.polynomial.push_back(polynomial[i]);
-        }
-        else {
-            reduce_amount += fabs(polynomial[i].coeff);
-        }
+        res.polynomial.push_back(polynomial[i]);
         i++;
     }
  
     while (j < a.polynomial.size()) {
-        if (fabs(a.polynomial[j].coeff) > SIMPLIFY_THRESHOLD) {
-            Monomial temp = a.polynomial[j];
-            temp.coeff = -temp.coeff;
-            res.polynomial.push_back(temp);
-        }
-        else {
-            reduce_amount += fabs(a.polynomial[j].coeff);
-        }
+        Monomial temp = a.polynomial[j];
+        temp.coeff = -temp.coeff;
+        res.polynomial.push_back(temp);
         j++;
     }
 
-    res.independent = independent + a.independent + reduce_amount;
+    res.independent = independent + a.independent;
+
+    // reduce the number of monomials within PZ_ORDER
+    if (res.polynomial.size() > PZ_ORDER) {
+        std::sort(res.polynomial.begin(), res.polynomial.end(), Monomial_sorter_coeff);
+
+        double reduce_amount = 0;
+        for (size_t i = PZ_ORDER; i < res.polynomial.size(); i++) {
+            reduce_amount += fabs(res.polynomial[i].coeff);
+        }
+
+        res.polynomial.erase(res.polynomial.begin() + PZ_ORDER, res.polynomial.end());
+
+        if (reduce_amount != 0) {
+            res.independent += reduce_amount;
+        }
+
+        std::sort(res.polynomial.begin(), res.polynomial.end(), Monomial_sorter_degree);
+    }
     
     return res;
 }
@@ -1065,83 +1073,83 @@ bool isfinite(const PZsparse& a) {
     return true;
 }
 
-PZsparse sin(const PZsparse& a) {
-    if (a.polynomial.size() == 0 && a.independent == 0) {
-        return PZsparse(std::sin(a.center));
-    }
+// PZsparse sin(const PZsparse& a) {
+//     if (a.polynomial.size() == 0 && a.independent == 0) {
+//         return PZsparse(std::sin(a.center));
+//     }
     
-    PZsparse res(std::sin(a.center));
+//     PZsparse res(std::sin(a.center));
 
-    // Taylor expansion
-    const PZsparse multiplier = a - a.center;
-    PZsparse power(1.0);
-    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
-        double coeff = 0;
-        switch (i % 4) {
-            case 0:
-                coeff = std::cos(a.center); // 1st order derivative of sin
-                break;
-            case 1:
-                coeff = -std::sin(a.center); // 2nd order derivative of sin
-                break;
-            case 2:
-                coeff = -std::cos(a.center); // 3rd order derivative of sin
-                break;
-            case 3:
-                coeff = std::sin(a.center); // 4th order derivative of sin
-                break;
-        }
-        power *= multiplier / (double)(i + 1);
+//     // Taylor expansion
+//     const PZsparse multiplier = a - a.center;
+//     PZsparse power(1.0);
+//     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+//         double coeff = 0;
+//         switch (i % 4) {
+//             case 0:
+//                 coeff = std::cos(a.center); // 1st order derivative of sin
+//                 break;
+//             case 1:
+//                 coeff = -std::sin(a.center); // 2nd order derivative of sin
+//                 break;
+//             case 2:
+//                 coeff = -std::cos(a.center); // 3rd order derivative of sin
+//                 break;
+//             case 3:
+//                 coeff = std::sin(a.center); // 4th order derivative of sin
+//                 break;
+//         }
+//         power *= multiplier / (double)(i + 1);
 
-        if (i < SIN_TAYLOR_ORDER) {
-            res += power * coeff;
-        }
-        else { // Lagrange remainder
-            res += power.toInterval() * coeff;
-        }
-    }
+//         if (i < SIN_TAYLOR_ORDER) {
+//             res += power * coeff;
+//         }
+//         else { // Lagrange remainder
+//             res += power.toInterval() * coeff;
+//         }
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
-PZsparse cos(const PZsparse& a) {
-    if (a.polynomial.size() == 0 && a.independent == 0) {
-        return PZsparse(std::cos(a.center));
-    }
+// PZsparse cos(const PZsparse& a) {
+//     if (a.polynomial.size() == 0 && a.independent == 0) {
+//         return PZsparse(std::cos(a.center));
+//     }
     
-    PZsparse res(std::cos(a.center));
+//     PZsparse res(std::cos(a.center));
 
-    // Taylor expansion
-    const PZsparse multiplier = a - a.center;
-    PZsparse power(1.0);
-    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
-        double coeff = 0;
-        switch (i % 4) {
-            case 0:
-                coeff = -std::sin(a.center); // 1st order derivative of cos
-                break;
-            case 1:
-                coeff = -std::cos(a.center); // 2nd order derivative of cos
-                break;
-            case 2:
-                coeff = std::sin(a.center); // 3rd order derivative of cos
-                break;
-            case 3:
-                coeff = std::cos(a.center); // 4th order derivative of cos
-                break;
-        }
-        power *= multiplier / (double)(i + 1);
+//     // Taylor expansion
+//     const PZsparse multiplier = a - a.center;
+//     PZsparse power(1.0);
+//     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+//         double coeff = 0;
+//         switch (i % 4) {
+//             case 0:
+//                 coeff = -std::sin(a.center); // 1st order derivative of cos
+//                 break;
+//             case 1:
+//                 coeff = -std::cos(a.center); // 2nd order derivative of cos
+//                 break;
+//             case 2:
+//                 coeff = std::sin(a.center); // 3rd order derivative of cos
+//                 break;
+//             case 3:
+//                 coeff = std::cos(a.center); // 4th order derivative of cos
+//                 break;
+//         }
+//         power *= multiplier / (double)(i + 1);
 
-        if (i < SIN_TAYLOR_ORDER) {
-            res += power * coeff;
-        }
-        else { // Lagrange remainder
-            res += power.toInterval() * coeff;
-        }
-    }
+//         if (i < SIN_TAYLOR_ORDER) {
+//             res += power * coeff;
+//         }
+//         else { // Lagrange remainder
+//             res += power.toInterval() * coeff;
+//         }
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 }; // namespace Armour
 }; // namespace Kinova

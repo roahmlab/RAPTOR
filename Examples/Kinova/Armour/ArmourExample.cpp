@@ -41,7 +41,7 @@ int main() {
             robotInfoPtr_->ultimate_bound_info);
     
     // create a KinematicsDynamics instance to compute link PZs and torque PZs
-    std::shared_ptr<KinematicsDynamics> kdPtr = 
+    std::shared_ptr<KinematicsDynamics> kdPtr_ = 
         std::make_shared<KinematicsDynamics>(robotInfoPtr_, trajPtr_);
 
     // define obstacles
@@ -77,10 +77,10 @@ int main() {
     std::cout << "Time taken to generate JRS: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() 
               << " ms" << std::endl;
-    
+
     // generate Link and Torque PZs
     auto start2 = std::chrono::high_resolution_clock::now();
-    GenerateLinkAndTorquePZs(robotInfoPtr_, trajPtr_, kdPtr);
+    GenerateLinkAndTorquePZs(robotInfoPtr_, trajPtr_, kdPtr_);
     auto end2 = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to generate Link and Torque PZs: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2).count() 
@@ -88,7 +88,7 @@ int main() {
 
     // compute Robust Input Bounds
     auto start3 = std::chrono::high_resolution_clock::now();
-    Eigen::MatrixXd torque_radius = ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr);
+    Eigen::MatrixXd torque_radius = ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr_);
     auto end3 = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to compute Robust Input Bounds: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
@@ -101,7 +101,7 @@ int main() {
                               t_plan, 
                               robotInfoPtr_, 
                               trajPtr_, 
-                              kdPtr, 
+                              kdPtr_, 
                               torque_radius,
                               boxCenters,
                               boxOrientation,

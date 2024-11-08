@@ -114,8 +114,8 @@ Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
                 const double y_uncertainty = kdPtr_->sphere_centers(3 * i + 1, t_ind).independent;
                 const double z_uncertainty = kdPtr_->sphere_centers(3 * i + 2, t_ind).independent;
                 const double total_uncertainty = sqrtf(x_uncertainty * x_uncertainty + 
-                                                      y_uncertainty * y_uncertainty + 
-                                                      z_uncertainty * z_uncertainty);
+                                                       y_uncertainty * y_uncertainty + 
+                                                       z_uncertainty * z_uncertainty);
 
                 sphere_center_uncertainty[i] = std::max(sphere_center_uncertainty[i], total_uncertainty);
             }

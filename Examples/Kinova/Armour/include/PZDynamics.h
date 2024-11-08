@@ -15,7 +15,6 @@ public:
 	using MatX = Eigen::MatrixXd;
 
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
-
 	std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
 
 	PZsparseArray com_arr;

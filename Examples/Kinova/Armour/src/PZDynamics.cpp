@@ -359,17 +359,17 @@ void KinematicsDynamics::rnea(const size_t s_ind,
 
     // RNEA forward recursion
     for (int i = 0; i < model.nv; i++) {
-        const PZsparse& cq = trajPtr_->cos_q_des(i, s_ind);
-        const PZsparse& sq = trajPtr_->sin_q_des(i, s_ind);
-        const PZsparse& qd = trajPtr_->qd_des(i, s_ind);
-        const PZsparse& qda = trajPtr_->qda_des(i, s_ind);
-        const PZsparse& qdda = trajPtr_->qdda_des(i, s_ind);
         const Vec3 jointTranslation = model.jointPlacements[i + 1].translation();
 
         // NOTE:
         // This is just a simplified implementation!!!
         // We assume all fixed joints are at the end and the revolute joints are consecutive
         if (i < robotInfoPtr_->num_motors) { // revolute joints
+            const PZsparse& cq = trajPtr_->cos_q_des(i, s_ind);
+            const PZsparse& sq = trajPtr_->sin_q_des(i, s_ind);
+            const PZsparse& qd = trajPtr_->qd_des(i, s_ind);
+            const PZsparse& qda = trajPtr_->qda_des(i, s_ind);
+            const PZsparse& qdda = trajPtr_->qdda_des(i, s_ind);
             // line 16
             // linear_acc = trajPtr_->R_t(i, s_ind) * (linear_acc 
             //                                      + cross(wdot, trans_matrix(i, 0)) 
@@ -526,12 +526,7 @@ void KinematicsDynamics::rnea(const size_t s_ind,
     }
 
     // RNEA reverse recursion
-    for (int i = model.nv - 1; i >= 0; i--) {
-        const PZsparse& cq = trajPtr_->cos_q_des(i, s_ind);
-        const PZsparse& sq = trajPtr_->sin_q_des(i, s_ind);
-        const PZsparse& qd = trajPtr_->qd_des(i, s_ind);
-        const PZsparse& qda = trajPtr_->qda_des(i, s_ind);
-        const PZsparse& qdda = trajPtr_->qdda_des(i, s_ind);
+    for (int i = model.nv - 1; i >= 0; i--) { 
         const std::string jointName = model.joints[i + 1].shortname();
 
         if (i == model.nv - 1) {
@@ -583,6 +578,9 @@ void KinematicsDynamics::rnea(const size_t s_ind,
         }
 
         if (i < robotInfoPtr_->num_motors) {
+            const PZsparse& qd = trajPtr_->qd_des(i, s_ind);
+            const PZsparse& qda = trajPtr_->qda_des(i, s_ind);
+            const PZsparse& qdda = trajPtr_->qdda_des(i, s_ind);
             if (jointName.find('R') != std::string::npos) { // revolute joint
                 if (jointName.find('X') != std::string::npos) {
                     u(i, s_ind) = N(i, 0);

@@ -19,7 +19,7 @@ BezierCurveInterval::BezierCurveInterval() {
     }
 
     // pre-allocate memory
-    q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
+    // q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     cos_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     sin_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     qd_des = PZsparseArray(NUM_FACTORS, num_time_steps);
@@ -54,7 +54,7 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
     }
 
     // pre-allocate memory
-    q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
+    // q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     cos_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     sin_q_des = PZsparseArray(NUM_FACTORS, num_time_steps);
     qd_des = PZsparseArray(NUM_FACTORS, num_time_steps);
@@ -172,7 +172,7 @@ void BezierCurveInterval::makePolyZono(const int s_ind) {
         q_des_degree[1][i + NUM_FACTORS * 1] = 1; // qe
         q_des_coeff[1] = k_dep_coeff_radius + k_indep_radius + ultimate_bound_info.qe; // qe
         PZsparse q_des_range(0, q_des_coeff, q_des_degree, 2);
-        q_des(i, s_ind) = PZsparse(q_des_center, q_des_coeff, q_des_degree, 2);
+        // q_des(i, s_ind) = PZsparse(q_des_center, q_des_coeff, q_des_degree, 2);
 
         // third order Taylor expansion
         // Part 1.a: cos(q_des) 
