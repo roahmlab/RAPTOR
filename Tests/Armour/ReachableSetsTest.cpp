@@ -31,8 +31,6 @@ int main() {
 
     // turn off friction for validation
     robotInfoPtr_->model.friction.setZero();
-    // robotInfoPtr_->model.damping.setZero();
-    // robotInfoPtr_->model.armature.setZero();
     
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
@@ -42,7 +40,7 @@ int main() {
 
         // trajectory parameters and their ranges
     const Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
-    const Eigen::VectorXd k_range = M_PI / 48 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
     const double duration = 2.0;
@@ -75,13 +73,69 @@ int main() {
     //           << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2).count() 
     //           << " ms" << std::endl;
 
-    // // compute Robust Input Bounds
-    // auto start3 = std::chrono::high_resolution_clock::now();
-    // ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr_);
-    // auto end3 = std::chrono::high_resolution_clock::now();
-    // std::cout << "Time taken to compute Robust Input Bounds: " 
-    //           << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
-    //           << " ms" << std::endl;
+    std::vector<pinocchio::ModelTpl<PZsparse>> model_sparses(trajPtr_->num_time_steps);
+    std::vector<pinocchio::DataTpl<PZsparse>> data_sparses(trajPtr_->num_time_steps);
+
+    for (int i = 0; i < trajPtr_->num_time_steps; i++) {
+        model_sparses[i] = robotInfoPtr_->model.cast<PZsparse>();
+        data_sparses[i] = pinocchio::DataTpl<PZsparse>(model_sparses[i]);
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    size_t t_ind = 0;
+    #pragma omp parallel for shared(model_sparses, data_sparses, trajPtr_, kdPtr_) private(t_ind) schedule(dynamic)
+    for(t_ind = 0; t_ind < trajPtr_->num_time_steps; t_ind++) {
+        Eigen::Vector<PZsparse, Eigen::Dynamic> q(robotInfoPtr_->num_joints);
+        Eigen::Vector<PZsparse, Eigen::Dynamic> qd(robotInfoPtr_->num_joints);
+        Eigen::Vector<PZsparse, Eigen::Dynamic> qdd(robotInfoPtr_->num_joints);
+        for (int i = 0; i < robotInfoPtr_->num_joints; i++) {
+            if (i < robotInfoPtr_->num_motors) {
+                q(i) = trajPtr_->q_des(i, t_ind);   
+                qd(i) = trajPtr_->qda_des(i, t_ind);
+                qdd(i) = trajPtr_->qdda_des(i, t_ind);
+            }
+            else {
+                q(i) = PZsparse(0);
+                qd(i) = PZsparse(0);
+                qdd(i) = PZsparse(0);
+            }
+        }
+
+        pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
+
+        for (int i = 0; i < robotInfoPtr_->num_motors; i++) {
+            kdPtr_->torque_nom(i, t_ind) = data_sparses[t_ind].tau(i) + model_sparses[t_ind].damping(i) * qd(i);
+            kdPtr_->torque_nom(i, t_ind).reduce();
+        }
+
+        kdPtr_->contact_force_nom(0, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(0);
+        kdPtr_->contact_force_nom(1, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(1);
+        kdPtr_->contact_force_nom(2, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(2);
+        kdPtr_->contact_force_nom(0, t_ind).reduce();
+        kdPtr_->contact_force_nom(1, t_ind).reduce();
+        kdPtr_->contact_force_nom(2, t_ind).reduce();
+
+        kdPtr_->contact_moment_nom(0, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(0);
+        kdPtr_->contact_moment_nom(1, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(1);
+        kdPtr_->contact_moment_nom(2, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(2);
+        kdPtr_->contact_moment_nom(0, t_ind).reduce();
+        kdPtr_->contact_moment_nom(1, t_ind).reduce();
+        kdPtr_->contact_moment_nom(2, t_ind).reduce();
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to compute torque PZs using pinocchio rnea: " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() 
+              << " ms" << std::endl;
+
+    // compute Robust Input Bounds
+    auto start3 = std::chrono::high_resolution_clock::now();
+    ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr_);
+    auto end3 = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to compute Robust Input Bounds: " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
+              << " ms" << std::endl;
 
 // VALIDATION
     // randomly choose a trajectory parameter inside the range
@@ -186,64 +240,6 @@ int main() {
     std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
         std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
     cidPtr_->compute(k, false);
-
-    if (true) {
-        std::vector<pinocchio::ModelTpl<PZsparse>> model_sparses(trajPtr_->num_time_steps);
-        std::vector<pinocchio::DataTpl<PZsparse>> data_sparses(trajPtr_->num_time_steps);
-
-        for (int i = 0; i < trajPtr_->num_time_steps; i++) {
-            model_sparses[i] = robotInfoPtr_->model.cast<PZsparse>();
-            data_sparses[i] = pinocchio::DataTpl<PZsparse>(model_sparses[i]);
-        }
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        size_t t_ind = 0;
-        #pragma omp parallel for shared(model_sparses, data_sparses, trajPtr_, kdPtr_) private(t_ind) schedule(dynamic)
-        for(t_ind = 0; t_ind < trajPtr_->num_time_steps; t_ind++) {
-            Eigen::Vector<PZsparse, Eigen::Dynamic> q(robotInfoPtr_->num_joints);
-            Eigen::Vector<PZsparse, Eigen::Dynamic> qd(robotInfoPtr_->num_joints);
-            Eigen::Vector<PZsparse, Eigen::Dynamic> qdd(robotInfoPtr_->num_joints);
-            for (int i = 0; i < robotInfoPtr_->num_joints; i++) {
-                if (i < robotInfoPtr_->num_motors) {
-                    q(i) = trajPtr_->q_des(i, t_ind);   
-                    qd(i) = trajPtr_->qd_des(i, t_ind);
-                    qdd(i) = trajPtr_->qdda_des(i, t_ind);
-                }
-                else {
-                    q(i) = PZsparse(0);
-                    qd(i) = PZsparse(0);
-                    qdd(i) = PZsparse(0);
-                }
-            }
-
-            pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
-
-            for (int i = 0; i < robotInfoPtr_->num_motors; i++) {
-                kdPtr_->torque_nom(i, t_ind) = data_sparses[t_ind].tau(i) + model_sparses[t_ind].damping(i) * qd(i);
-                kdPtr_->torque_nom(i, t_ind).reduce();
-            }
-
-            kdPtr_->contact_force_nom(0, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(0);
-            kdPtr_->contact_force_nom(1, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(1);
-            kdPtr_->contact_force_nom(2, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(2);
-            kdPtr_->contact_force_nom(0, t_ind).reduce();
-            kdPtr_->contact_force_nom(1, t_ind).reduce();
-            kdPtr_->contact_force_nom(2, t_ind).reduce();
-
-            kdPtr_->contact_moment_nom(0, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(0);
-            kdPtr_->contact_moment_nom(1, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(1);
-            kdPtr_->contact_moment_nom(2, t_ind) = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(2);
-            kdPtr_->contact_moment_nom(0, t_ind).reduce();
-            kdPtr_->contact_moment_nom(1, t_ind).reduce();
-            kdPtr_->contact_moment_nom(2, t_ind).reduce();
-        }
-
-        auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Time taken to compute torque PZs using pinocchio rnea: " 
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() 
-                  << " ms" << std::endl;
-    }
     
     for (int i = 0; i < cidPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
@@ -270,18 +266,18 @@ int main() {
             if (actualLambda(j + 3) < forceRange.lower() || 
                 actualLambda(j + 3) > forceRange.upper()) {
                 std::cerr << "Validation failed for contact force at time step " << i 
-                        << " for direction " << j << ": "
-                        << actualLambda(j+3) << " not in [ " 
-                        << forceRange.lower() << ", " 
-                        << forceRange.upper() << " ]" << std::endl;
+                          << " for direction " << j << ": "
+                          << actualLambda(j+3) << " not in [ " 
+                          << forceRange.lower() << ", " 
+                          << forceRange.upper() << " ]" << std::endl;
             }
             if (actualLambda(j) < momentRange.lower() || 
                 actualLambda(j) > momentRange.upper()) {
                 std::cerr << "Validation failed for contact moment at time step " << i 
-                        << " for direction " << j << ": "
-                        << actualLambda(j) << " not in [ " 
-                        << momentRange.lower() << ", " 
-                        << momentRange.upper() << " ]" << std::endl;
+                          << " for direction " << j << ": "
+                          << actualLambda(j) << " not in [ " 
+                          << momentRange.lower() << ", " 
+                          << momentRange.upper() << " ]" << std::endl;
             }
         }
     }
