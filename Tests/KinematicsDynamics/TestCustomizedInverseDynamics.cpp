@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     // set joint configurations
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<BezierCurves>(
-            Eigen::VectorXd::LinSpaced(5, 0, 1), model.nq, 5);
+            2.0, 1, model.nq, TimeDiscretization::Uniform, 5);
 
     std::srand(std::time(nullptr));
     Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
@@ -45,8 +45,13 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
             model, trajPtr);
     cidPtr->compute(z, false);
 
-    //check the error
+    // check the difference
     BOOST_CHECK_SMALL((data.tau - cidPtr->tau(0)).norm(), 1e-10);
+
+    for (int i = 0; i < model.nv; i++) {
+        BOOST_CHECK_SMALL((data.f[i + 1].angular() - cidPtr->f(i).head(3)).norm(), 1e-10);
+        BOOST_CHECK_SMALL((data.f[i + 1].linear() - cidPtr->f(i).tail(3)).norm(), 1e-10);
+    }
 }
 
 // Test with fixed joints

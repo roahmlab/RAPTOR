@@ -129,7 +129,7 @@ bool ArmourOptimizer::get_bounds_info(
     // suction grasp constraints
     for( Index i = offset; i < offset + 3 * num_fixed_joints * num_time_steps; i++ ) {
         g_l[i] = -1e19;
-        g_u[i] = 0;
+        g_u[i] = 0.0;
     }
     offset += 3 * num_fixed_joints * num_time_steps;
 

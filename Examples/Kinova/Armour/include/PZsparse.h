@@ -10,7 +10,7 @@ namespace Armour {
 using namespace boost::multiprecision;
 
 // make sure the number of monomials in a PZsparse is always smaller than this number
-#define PZ_ORDER 40
+#define PZ_ORDER 30
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -29,10 +29,11 @@ using namespace boost::multiprecision;
 // 7 * 7 = 49 variables in total
 #define NUM_VARIABLES (NUM_FACTORS * 7)
 
-#define SIN_TAYLOR_ORDER 2
-#define COS_TAYLOR_ORDER 2
+// The order of the Taylor expansion for sin and cos
+constexpr size_t SIN_TAYLOR_ORDER = 3;
+constexpr size_t COS_TAYLOR_ORDER = 3;
 
-const cpp_int MOVE_INC = 7;
+const cpp_int MOVE_INC = 3 * std::max(SIN_TAYLOR_ORDER, COS_TAYLOR_ORDER) + 1;
 
 double getCenter(const Interval& a);
 
@@ -168,9 +169,9 @@ PZsparse sqrt(const PZsparse& a);
 
 bool isfinite(const PZsparse& a);
 
-// PZsparse sin(const PZsparse& a);
+PZsparse sin(const PZsparse& a);
 
-// PZsparse cos(const PZsparse& a);
+PZsparse cos(const PZsparse& a);
 
 }; // namespace Armour
 }; // namespace Kinova

@@ -104,9 +104,9 @@ Eigen::MatrixXd ComputeRobustInputBounds(const std::shared_ptr<RobotInfo>& robot
 
             // (3) add the radius back to the nominal input PZ (after reducing)
             for (int i = 0; i < num_motors; i++) {
-                kdPtr_->torque_nom(i, t_ind).independent += torque_radius(i);
+                kdPtr_->torque_nom(i, t_ind).independent += torque_radius(i, t_ind);
             }
-            // so that kdPtr_->torque_nom would now store the torque PZs with robust input bounds`
+            // so that kdPtr_->torque_nom would now store the torque PZs with robust input bounds
         
             // compute the maximum of uncertainty in the sphere centers over all time intervals
             for (int i = 0; i < robotInfoPtr_->num_spheres; i++) {

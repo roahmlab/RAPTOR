@@ -1073,83 +1073,83 @@ bool isfinite(const PZsparse& a) {
     return true;
 }
 
-// PZsparse sin(const PZsparse& a) {
-//     if (a.polynomial.size() == 0 && a.independent == 0) {
-//         return PZsparse(std::sin(a.center));
-//     }
+PZsparse sin(const PZsparse& a) {
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return PZsparse(std::sin(a.center));
+    }
     
-//     PZsparse res(std::sin(a.center));
+    PZsparse res(std::sin(a.center));
 
-//     // Taylor expansion
-//     const PZsparse multiplier = a - a.center;
-//     PZsparse power(1.0);
-//     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
-//         double coeff = 0;
-//         switch (i % 4) {
-//             case 0:
-//                 coeff = std::cos(a.center); // 1st order derivative of sin
-//                 break;
-//             case 1:
-//                 coeff = -std::sin(a.center); // 2nd order derivative of sin
-//                 break;
-//             case 2:
-//                 coeff = -std::cos(a.center); // 3rd order derivative of sin
-//                 break;
-//             case 3:
-//                 coeff = std::sin(a.center); // 4th order derivative of sin
-//                 break;
-//         }
-//         power *= multiplier / (double)(i + 1);
+    // Taylor expansion
+    const PZsparse multiplier = a - a.center;
+    PZsparse power(1.0);
+    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+        double coeff = 0;
+        switch (i % 4) {
+            case 0:
+                coeff = std::cos(a.center); // 1st order derivative of sin
+                break;
+            case 1:
+                coeff = -std::sin(a.center); // 2nd order derivative of sin
+                break;
+            case 2:
+                coeff = -std::cos(a.center); // 3rd order derivative of sin
+                break;
+            case 3:
+                coeff = std::sin(a.center); // 4th order derivative of sin
+                break;
+        }
+        power *= multiplier / (double)(i + 1);
 
-//         if (i < SIN_TAYLOR_ORDER) {
-//             res += power * coeff;
-//         }
-//         else { // Lagrange remainder
-//             res += power.toInterval() * coeff;
-//         }
-//     }
+        if (i < SIN_TAYLOR_ORDER) {
+            res += power * coeff;
+        }
+        else { // Lagrange remainder
+            res += power.toInterval() * coeff;
+        }
+    }
 
-//     return res;
-// }
+    return res;
+}
 
-// PZsparse cos(const PZsparse& a) {
-//     if (a.polynomial.size() == 0 && a.independent == 0) {
-//         return PZsparse(std::cos(a.center));
-//     }
+PZsparse cos(const PZsparse& a) {
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        return PZsparse(std::cos(a.center));
+    }
     
-//     PZsparse res(std::cos(a.center));
+    PZsparse res(std::cos(a.center));
 
-//     // Taylor expansion
-//     const PZsparse multiplier = a - a.center;
-//     PZsparse power(1.0);
-//     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
-//         double coeff = 0;
-//         switch (i % 4) {
-//             case 0:
-//                 coeff = -std::sin(a.center); // 1st order derivative of cos
-//                 break;
-//             case 1:
-//                 coeff = -std::cos(a.center); // 2nd order derivative of cos
-//                 break;
-//             case 2:
-//                 coeff = std::sin(a.center); // 3rd order derivative of cos
-//                 break;
-//             case 3:
-//                 coeff = std::cos(a.center); // 4th order derivative of cos
-//                 break;
-//         }
-//         power *= multiplier / (double)(i + 1);
+    // Taylor expansion
+    const PZsparse multiplier = a - a.center;
+    PZsparse power(1.0);
+    for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
+        double coeff = 0;
+        switch (i % 4) {
+            case 0:
+                coeff = -std::sin(a.center); // 1st order derivative of cos
+                break;
+            case 1:
+                coeff = -std::cos(a.center); // 2nd order derivative of cos
+                break;
+            case 2:
+                coeff = std::sin(a.center); // 3rd order derivative of cos
+                break;
+            case 3:
+                coeff = std::cos(a.center); // 4th order derivative of cos
+                break;
+        }
+        power *= multiplier / (double)(i + 1);
 
-//         if (i < SIN_TAYLOR_ORDER) {
-//             res += power * coeff;
-//         }
-//         else { // Lagrange remainder
-//             res += power.toInterval() * coeff;
-//         }
-//     }
+        if (i < SIN_TAYLOR_ORDER) {
+            res += power * coeff;
+        }
+        else { // Lagrange remainder
+            res += power.toInterval() * coeff;
+        }
+    }
 
-//     return res;
-// }
+    return res;
+}
 
 }; // namespace Armour
 }; // namespace Kinova

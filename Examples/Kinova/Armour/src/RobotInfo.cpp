@@ -77,9 +77,12 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     Vec3 gravity = map_to_vector(RobotConfig["gravity"], 3);
     model.gravity.linear() = gravity;
 
-    model.friction = map_to_vector(RobotConfig["friction"], num_motors);
-    model.damping = map_to_vector(RobotConfig["damping"], num_motors);
-    model.armature = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
+    model.friction.setZero();
+    model.friction.head(num_motors) = map_to_vector(RobotConfig["friction"], num_motors);
+    model.damping.setZero();
+    model.damping.head(num_motors) = map_to_vector(RobotConfig["damping"], num_motors);
+    model.armature.setZero();
+    model.armature.head(num_motors) = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
     position_limits_lb = map_to_vector(RobotConfig["position_limits_lb"], num_motors);
     position_limits_ub = map_to_vector(RobotConfig["position_limits_ub"], num_motors);
     velocity_limits = map_to_vector(RobotConfig["velocity_limits"], num_motors);
