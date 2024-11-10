@@ -28,10 +28,10 @@ namespace RAPTOR {
 class InverseDynamics {
 public:
     using Model = pinocchio::Model;
-    using Data = pinocchio::DataTpl<double>;
+    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using Ten3 = pinocchio::DataTpl<double>::Tensor3x;
+    using Ten3 = pinocchio::Data::Tensor3x;
 
     // Constructor
     InverseDynamics() = default;
