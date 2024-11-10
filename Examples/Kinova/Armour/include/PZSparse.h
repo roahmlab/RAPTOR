@@ -21,13 +21,11 @@ using namespace boost::multiprecision;
 // so that more variables can be tracked
 // k
 // qe
-// cosqe
-// sinqe
 // qde
 // qdae
 // qddae
-// 7 * 7 = 49 variables in total
-#define NUM_VARIABLES (NUM_FACTORS * 7)
+// 5 * 7 = 35 variables in total
+#define NUM_VARIABLES (NUM_FACTORS * 5)
 
 // The order of the Taylor expansion for sin and cos
 constexpr size_t SIN_TAYLOR_ORDER = 3;

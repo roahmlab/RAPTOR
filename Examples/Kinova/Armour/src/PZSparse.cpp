@@ -385,33 +385,21 @@ std::ostream& operator<<(std::ostream& os, const PZSparse& a) {
         }
         os << ") ";
 
-        os << " * cosqe^(";
+        os << " * qde^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 2];
         }
         os << ") ";
 
-        os << " * sinqe^(";
+        os << " * qdae^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
             os << degreeArray[j + NUM_FACTORS * 3];
         }
         os << ") ";
 
-        os << " * qde^(";
-        for (size_t j = 0; j < NUM_FACTORS; j++) {
-            os << degreeArray[j + NUM_FACTORS * 4];
-        }
-        os << ") ";
-
-        os << " * qdae^(";
-        for (size_t j = 0; j < NUM_FACTORS; j++) {
-            os << degreeArray[j + NUM_FACTORS * 5];
-        }
-        os << ") ";
-
         os << " * qddae^(";
         for (size_t j = 0; j < NUM_FACTORS; j++) {
-            os << degreeArray[j + NUM_FACTORS * 6];
+            os << degreeArray[j + NUM_FACTORS * 4];
         }
         os << ") ";
 

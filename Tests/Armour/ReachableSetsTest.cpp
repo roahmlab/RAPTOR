@@ -90,8 +90,6 @@ int main() {
         // cos of q (joint trajectory)
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            // slice the JRS PZ at k (the actual trajectory parameter)
-            // const Interval cos_q_range = trajPtr_->cos_q_des(j, i).slice(factor);
             const PZSparse test_pz = cos(trajPtr_->q_des(j, i));
             const Interval cos_q_range = test_pz.slice(factor);
             const double actual_cos_q = std::cos(trajDiscretePtr_->q(i)(j));
@@ -111,7 +109,6 @@ int main() {
         // sin of q (joint trajectory)
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            // const Interval sin_q_range = trajPtr_->sin_q_des(j, i).slice(factor);
             const PZSparse test_pz = sin(trajPtr_->q_des(j, i));
             const Interval sin_q_range = test_pz.slice(factor);
             const double actual_sin_q = std::sin(trajDiscretePtr_->q(i)(j));

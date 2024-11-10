@@ -39,10 +39,21 @@ void PZDynamics::reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& tr
 }
 
 void PZDynamics::sample_eigenvalues(size_t num_samples) {
-    VecX q = VecX::Zero(robotInfoPtr_->num_joints);
-    VecX qd = VecX::Zero(robotInfoPtr_->num_joints);
-    VecX qdd = VecX::Zero(robotInfoPtr_->num_joints);
-    pinocchio::Data data(robotInfoPtr_->model);
+    pinocchio::Model model = robotInfoPtr_->model;
+
+    if (robotInfoPtr_->num_joints > robotInfoPtr_->num_motors) {
+        pinocchio::Model model_reduced;
+        std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
+        pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
+        model_reduced.armature = model.armature.head(robotInfoPtr_->num_motors);
+        model = model_reduced;
+    }
+    pinocchio::Data data(model);
+
+    VecX q = VecX::Zero(robotInfoPtr_->num_motors);
+    VecX qd = VecX::Zero(robotInfoPtr_->num_motors);
+    VecX qdd = VecX::Zero(robotInfoPtr_->num_motors);
+    
     double M_max = 0.0;
     double M_min = std::numeric_limits<double>::max();
 
@@ -52,10 +63,10 @@ void PZDynamics::sample_eigenvalues(size_t num_samples) {
         double t = std::rand() / (double)RAND_MAX * trajPtr_->duration;
         VecX k = VecX::Random(robotInfoPtr_->num_motors);
         trajPtr_->computeTrajectories(k, t, q, qd, qdd);
-        q += Eigen::VectorXd::Random(robotInfoPtr_->num_joints) * 0.05;
+        q += Eigen::VectorXd::Random(robotInfoPtr_->num_motors) * 0.05;
 
         // compute the inertia mass matrix
-        MatX M = pinocchio::crba(robotInfoPtr_->model, data, q);
+        MatX M = pinocchio::crba(model, data, q);
         for (int i = 0; i < M.rows(); i++) {
             for (int j = i + 1; j < M.cols(); j++) {
                 M(j, i) = M(i, j);

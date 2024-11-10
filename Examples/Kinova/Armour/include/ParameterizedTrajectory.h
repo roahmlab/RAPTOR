@@ -76,10 +76,6 @@ public:
 
     // rotation matrix (and its transpose) of each joint
     PZSparseMatrix q_des;
-    PZSparseMatrix cos_q_des;
-    PZSparseMatrix sin_q_des;
-    PZSparseMatrix R;
-    PZSparseMatrix R_t;
 
     // joint velocity
     PZSparseMatrix qd_des;
