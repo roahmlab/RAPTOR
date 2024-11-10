@@ -1,4 +1,4 @@
-#include "PZsparse.h"
+#include "PZSparse.h"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -30,34 +30,34 @@ bool Monomial_sorter_coeff(Monomial const& lhs, Monomial const& rhs) {
 Initialization
 */
 
-PZsparse::PZsparse() {
+PZSparse::PZSparse() {
     center = 0;
     independent = 0;
 }
 
-PZsparse::PZsparse(const PZsparse& pz_inp) {
+PZSparse::PZSparse(const PZSparse& pz_inp) {
     center = pz_inp.center;
     polynomial = pz_inp.polynomial;
     independent = pz_inp.independent;
 }
 
-PZsparse::PZsparse(double center_inp) {
+PZSparse::PZSparse(double center_inp) {
     center = center_inp;
     independent = 0;
 }
 
-PZsparse::PZsparse(double center_inp, double uncertainty_percent) {
+PZSparse::PZSparse(double center_inp, double uncertainty_percent) {
     center = center_inp;
     independent = fabs(uncertainty_percent * center_inp);
 }
 
 
-PZsparse::PZsparse(double center_inp, Interval independent_inp) {
+PZSparse::PZSparse(double center_inp, Interval independent_inp) {
     center = center_inp + getCenter(independent_inp);
     independent = getRadius(independent_inp);
 }
 
-PZsparse::PZsparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials) {
+PZSparse::PZSparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials) {
     center = center_inp;
 
     polynomial.reserve(num_monomials);
@@ -71,7 +71,7 @@ PZsparse::PZsparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][N
     simplify();
 }
 
-PZsparse::PZsparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials, Interval independent_inp) {
+PZSparse::PZSparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][NUM_VARIABLES], size_t num_monomials, Interval independent_inp) {
     center = center_inp + getCenter(independent_inp);
 
     polynomial.reserve(num_monomials);
@@ -89,9 +89,9 @@ PZsparse::PZsparse(double center_inp, double* coeff_inp, uint32_t degree_inp[][N
 /*
 Internal functions
 */
-void PZsparse::simplify() {
+void PZSparse::simplify() {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: simplify(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: simplify(): independent generator matrix has negative entry!");
     }
 
     std::vector<Monomial> polynomial_new;
@@ -153,9 +153,9 @@ void PZsparse::simplify() {
     }
 }
 
-void PZsparse::reduce() {
+void PZSparse::reduce() {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: reduce(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: reduce(): independent generator matrix has negative entry!");
     }
 
     std::vector<Monomial> polynomial_new;
@@ -173,9 +173,9 @@ void PZsparse::reduce() {
     polynomial = polynomial_new;
 }
 
-Interval PZsparse::slice(const double factor[]) const {
+Interval PZSparse::slice(const double factor[]) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: slice(): independent generator matrix has negative entry!");
     }
     double res_center = center;
     double res_radius = independent;
@@ -202,13 +202,13 @@ Interval PZsparse::slice(const double factor[]) const {
     return Interval(res_center - res_radius, res_center + res_radius);
 }
 
-Interval PZsparse::slice(const Eigen::VectorXd& factor) const {
+Interval PZSparse::slice(const Eigen::VectorXd& factor) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: slice(): independent generator matrix has negative entry!");
     }
 
     if (factor.size() != NUM_FACTORS) {
-        throw std::runtime_error("PZsparse error: slice(): factor size does not match NUM_FACTORS!");
+        throw std::runtime_error("PZSparse error: slice(): factor size does not match NUM_FACTORS!");
     }
 
     double res_center = center;
@@ -236,9 +236,9 @@ Interval PZsparse::slice(const Eigen::VectorXd& factor) const {
     return Interval(res_center - res_radius, res_center + res_radius);
 }
 
-void PZsparse::slice(double gradient[], const double factor[]) const {
+void PZSparse::slice(double gradient[], const double factor[]) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: slice(): independent generator matrix has negative entry!");
     }
 
     std::memset(gradient, 0, NUM_FACTORS * sizeof(double));
@@ -278,13 +278,13 @@ void PZsparse::slice(double gradient[], const double factor[]) const {
     }
 }
 
-void PZsparse::slice(Eigen::VectorXd& gradient, const double factor[]) const {
+void PZSparse::slice(Eigen::VectorXd& gradient, const double factor[]) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: slice(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: slice(): independent generator matrix has negative entry!");
     }
 
     if (gradient.size() != NUM_FACTORS) {
-        throw std::invalid_argument("PZsparse error: slice(): gradient size does not match NUM_FACTORS!");
+        throw std::invalid_argument("PZSparse error: slice(): gradient size does not match NUM_FACTORS!");
     }
 
     gradient.setZero();
@@ -324,9 +324,9 @@ void PZsparse::slice(Eigen::VectorXd& gradient, const double factor[]) const {
     }
 }
 
-Interval PZsparse::toInterval() {
+Interval PZSparse::toInterval() const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: toInterval(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: toInterval(): independent generator matrix has negative entry!");
     }
 
     double res_radius = independent;
@@ -363,7 +363,7 @@ cpp_int convertDegreeToHash(const uint32_t degreeArray[]) {
     return degree;
 }
 
-std::ostream& operator<<(std::ostream& os, const PZsparse& a) {
+std::ostream& operator<<(std::ostream& os, const PZSparse& a) {
     os << a.center << " +...\n";
 
     uint32_t degreeArray[NUM_VARIABLES];
@@ -432,32 +432,32 @@ std::ostream& operator<<(std::ostream& os, const Interval& a) {
 Arithmetic
 */
 
-PZsparse PZsparse::operator=(const double a) {
+PZSparse PZSparse::operator=(const double a) {
     center = a;
     polynomial.clear();
     independent = 0;
     return *this;
 }
 
-PZsparse PZsparse::operator=(const Interval& a) {
+PZSparse PZSparse::operator=(const Interval& a) {
     center = getCenter(a);
     independent = getRadius(a);
     return *this;
 }
 
-PZsparse PZsparse::operator=(const PZsparse& a) {
+PZSparse PZSparse::operator=(const PZSparse& a) {
     center = a.center;
     polynomial = a.polynomial;
     independent = a.independent;
     return *this;
 }
 
-PZsparse PZsparse::operator-() const {
+PZSparse PZSparse::operator-() const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator-(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator-(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
     
     res.center = -center;
 
@@ -472,9 +472,9 @@ PZsparse PZsparse::operator-() const {
     return res;
 }
 
-PZsparse PZsparse::operator-=(const PZsparse& a) {
+PZSparse PZSparse::operator-=(const PZSparse& a) {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator-=(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator-=(): independent generator matrix has negative entry!");
     }
     
     center -= a.center;
@@ -541,12 +541,12 @@ PZsparse PZsparse::operator-=(const PZsparse& a) {
     return *this;
 }
 
-PZsparse PZsparse::operator+(const PZsparse& a) const {
+PZSparse PZSparse::operator+(const PZSparse& a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator+(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator+(): independent generator matrix has negative entry!");
     }
     
-    PZsparse res;
+    PZSparse res;
 
     res.center = center + a.center;
 
@@ -608,33 +608,33 @@ PZsparse PZsparse::operator+(const PZsparse& a) const {
     return res;
 }
 
-PZsparse PZsparse::operator+(const double a) const {
+PZSparse PZSparse::operator+(const double a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator+(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator+(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res = *this;
+    PZSparse res = *this;
 
     res.center += a;
 
     return res;
 }
 
-PZsparse operator+(const double a, const PZsparse& b) {
+PZSparse operator+(const double a, const PZSparse& b) {
     if (b.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator+(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator+(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res = b;
+    PZSparse res = b;
 
     res.center += a;
 
     return res;
 }
 
-PZsparse PZsparse::operator+=(const PZsparse& a) {
+PZSparse PZSparse::operator+=(const PZSparse& a) {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator+=(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator+=(): independent generator matrix has negative entry!");
     }
     
     center += a.center;
@@ -701,9 +701,9 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
     return *this;
 }
 
-PZsparse PZsparse::operator+=(const Interval& a) {
+PZSparse PZSparse::operator+=(const Interval& a) {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator+=(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator+=(): independent generator matrix has negative entry!");
     }
 
     center += getCenter(a);
@@ -712,12 +712,12 @@ PZsparse PZsparse::operator+=(const Interval& a) {
     return *this;
 }
 
-PZsparse PZsparse::operator-(const PZsparse& a) const{
+PZSparse PZSparse::operator-(const PZSparse& a) const{
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator-(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator-(): independent generator matrix has negative entry!");
     }    
     
-    PZsparse res;
+    PZSparse res;
 
     res.center = center - a.center;
 
@@ -782,24 +782,24 @@ PZsparse PZsparse::operator-(const PZsparse& a) const{
     return res;
 }
 
-PZsparse PZsparse::operator-(const double a) const {
+PZSparse PZSparse::operator-(const double a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator-(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator-(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res = *this;
+    PZSparse res = *this;
 
     res.center -= a;
 
     return res;
 }
 
-PZsparse operator-(const double a, const PZsparse& b) {
+PZSparse operator-(const double a, const PZSparse& b) {
     if (b.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator-(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator-(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
 
     res.center = a - b.center;
 
@@ -814,15 +814,15 @@ PZsparse operator-(const double a, const PZsparse& b) {
     return res;
 }
 
-PZsparse PZsparse::operator*(const PZsparse& a) const {
+PZSparse PZSparse::operator*(const PZSparse& a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator*(): independent generator matrix has negative entry!");
     }
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator*(): independent generator matrix has negative entry!");
     }
     
-    PZsparse res;
+    PZSparse res;
 
     // center * center
     res.center = center * a.center;
@@ -882,18 +882,18 @@ PZsparse PZsparse::operator*(const PZsparse& a) const {
     return res;
 }
 
-PZsparse PZsparse::operator*=(const PZsparse& a) {
-    PZsparse res = *this * a;
+PZSparse PZSparse::operator*=(const PZSparse& a) {
+    PZSparse res = *this * a;
     *this = res;
     return *this;
 }
 
-PZsparse PZsparse::operator*(const double a) const {
+PZSparse PZSparse::operator*(const double a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator*(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
 
     res.center = center * a;
 
@@ -908,12 +908,12 @@ PZsparse PZsparse::operator*(const double a) const {
     return res;
 }
 
-PZsparse operator*(const double a, const PZsparse& b) {
+PZSparse operator*(const double a, const PZSparse& b) {
     if (b.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator*(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
 
     res.center = b.center * a;
 
@@ -928,12 +928,12 @@ PZsparse operator*(const double a, const PZsparse& b) {
     return res;
 }
 
-PZsparse PZsparse::operator/(const double a) const {
+PZSparse PZSparse::operator/(const double a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator*(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator*(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
 
     res.center = center / a;
 
@@ -948,53 +948,53 @@ PZsparse PZsparse::operator/(const double a) const {
     return res;
 }
 
-PZsparse PZsparse::operator/(const PZsparse& a) const {
+PZSparse PZSparse::operator/(const PZSparse& a) const {
     // a is just a scalar
     if (a.polynomial.size() == 0 && a.independent == 0) {
         return *this / a.center;
     }
 
     std::cerr << a << std::endl;
-    throw std::runtime_error("PZsparse error: operator/(): not supported!");
-    return PZsparse(0);
+    throw std::runtime_error("PZSparse error: operator/(): not supported!");
+    return PZSparse(0);
 }
 
-bool PZsparse::operator<(const PZsparse& a) const {
+bool PZSparse::operator<(const PZSparse& a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator<(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator<(): independent generator matrix has negative entry!");
     }
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator<(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator<(): independent generator matrix has negative entry!");
     }
 
     return center < a.center;
 }
 
-bool PZsparse::operator<(const double a) const {
+bool PZSparse::operator<(const double a) const {
     return center < a;
 }
 
-bool PZsparse::operator>(const PZsparse& a) const {
+bool PZSparse::operator>(const PZSparse& a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator>(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator>(): independent generator matrix has negative entry!");
     }
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator>(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator>(): independent generator matrix has negative entry!");
     }
 
     return center > a.center;
 }
 
-bool PZsparse::operator>(const double a) const {
+bool PZSparse::operator>(const double a) const {
     return center > a;
 } 
 
-bool PZsparse::operator==(const PZsparse& a) const {
+bool PZSparse::operator==(const PZSparse& a) const {
     if (independent < 0) {
-        throw std::runtime_error("PZsparse error: operator==(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator==(): independent generator matrix has negative entry!");
     }
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: operator==(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: operator==(): independent generator matrix has negative entry!");
     }
     
     if (center != a.center) {
@@ -1021,12 +1021,12 @@ bool PZsparse::operator==(const PZsparse& a) const {
     return true;
 }
 
-PZsparse abs(const PZsparse& a) {
+PZSparse abs(const PZSparse& a) {
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: abs(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: abs(): independent generator matrix has negative entry!");
     }
 
-    PZsparse res;
+    PZSparse res;
     res.center = fabs(a.center);
 
     res.polynomial.reserve(a.polynomial.size());
@@ -1040,20 +1040,20 @@ PZsparse abs(const PZsparse& a) {
     return res;
 }
 
-PZsparse sqrt(const PZsparse& a) {
+PZSparse sqrt(const PZSparse& a) {
     // a is just a scalar
     if (a.polynomial.size() == 0 && a.independent == 0) {
-        return PZsparse(std::sqrt(a.center));
+        return PZSparse(std::sqrt(a.center));
     }
 
     std::cerr << a << std::endl;
-    throw std::runtime_error("PZsparse error: sqrt(): not supported!");
-    return PZsparse(0);
+    throw std::runtime_error("PZSparse error: sqrt(): not supported!");
+    return PZSparse(0);
 }
 
-bool isfinite(const PZsparse& a) {
+bool isfinite(const PZSparse& a) {
     if (a.independent < 0) {
-        throw std::runtime_error("PZsparse error: isfinite(): independent generator matrix has negative entry!");
+        throw std::runtime_error("PZSparse error: isfinite(): independent generator matrix has negative entry!");
     }
 
     if (!std::isfinite(a.center)) {
@@ -1073,16 +1073,16 @@ bool isfinite(const PZsparse& a) {
     return true;
 }
 
-PZsparse sin(const PZsparse& a) {
+PZSparse sin(const PZSparse& a) {
     if (a.polynomial.size() == 0 && a.independent == 0) {
-        return PZsparse(std::sin(a.center));
+        return PZSparse(std::sin(a.center));
     }
     
-    PZsparse res(std::sin(a.center));
+    PZSparse res(std::sin(a.center));
 
     // Taylor expansion
-    const PZsparse multiplier = a - a.center;
-    PZsparse power(1.0);
+    const PZSparse multiplier = a - a.center;
+    PZSparse power(1.0);
     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
         double coeff = 0;
         switch (i % 4) {
@@ -1112,16 +1112,16 @@ PZsparse sin(const PZsparse& a) {
     return res;
 }
 
-PZsparse cos(const PZsparse& a) {
+PZSparse cos(const PZSparse& a) {
     if (a.polynomial.size() == 0 && a.independent == 0) {
-        return PZsparse(std::cos(a.center));
+        return PZSparse(std::cos(a.center));
     }
     
-    PZsparse res(std::cos(a.center));
+    PZSparse res(std::cos(a.center));
 
     // Taylor expansion
-    const PZsparse multiplier = a - a.center;
-    PZsparse power(1.0);
+    const PZSparse multiplier = a - a.center;
+    PZSparse power(1.0);
     for (size_t i = 0; i <= SIN_TAYLOR_ORDER; i++) {
         double coeff = 0;
         switch (i % 4) {

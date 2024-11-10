@@ -18,7 +18,7 @@ KinovaWithoutGripper:
     M_min: 8.29938
     Kr: 5.0
   collision_spheres:
-    link2:
+    joint_2:
     - "offset": [0.0, -0.05, -0.01]
       "radius": 0.06
     - "offset": [0.0, -0.11, -0.01]
@@ -33,9 +33,9 @@ KinovaWithoutGripper:
       "radius": 0.06
     - "offset": [0.0, -0.43, -0.01]
       "radius": 0.07
-    link4:
+    joint_4:
     - "offset": [0.0, -0.07, 0.0]
-      "radius": 0.06
+      "radius": 0.07
     - "offset": [0.0, -0.14, 0.0]
       "radius": 0.06
     - "offset": [0.0, -0.21, 0.0]
@@ -44,9 +44,16 @@ KinovaWithoutGripper:
       "radius": 0.06
     - "offset": [0.0, -0.32, 0.0]
       "radius": 0.06
-    link6:
+    joint_6:
     - "offset": [0.0, -0.07, 0.0]
       "radius": 0.05
     - "offset": [0.0, -0.14, 0.0]
       "radius": 0.05
+    joint_7:
+    - "offset": [-0.03, -0.06, -0.055]
+      "radius": 0.02
+    - "offset": [0.0, -0.06, -0.055]
+      "radius": 0.02
+    - "offset": [0.03, -0.06, -0.055]
+      "radius": 0.02
     

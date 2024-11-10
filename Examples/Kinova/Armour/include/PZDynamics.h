@@ -1,85 +1,50 @@
 #ifndef PZ_DYNAMICS_H
 #define PZ_DYNAMICS_H
 
+#include "pinocchio/algorithm/model.hpp"
+#include "pinocchio/algorithm/rnea.hpp"
+#include "pinocchio/algorithm/kinematics.hpp"
+#include "pinocchio/algorithm/frames.hpp"
+
 #include "ParameterizedTrajectory.h"
 
 namespace RAPTOR {
 namespace Kinova {
 namespace Armour {
 
-class KinematicsDynamics {
+class PZDynamics {
 public:
 	using Vec3 = Eigen::Vector3d;
 	using VecX = Eigen::VectorXd;
 	using Mat3 = Eigen::Matrix3d;
 	using MatX = Eigen::MatrixXd;
 
+	PZDynamics() = default;
+
+	PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
+			   const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
+
+	~PZDynamics() = default;
+
+	void reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
+
+	void compute();
+
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 	std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
 
-	PZsparseArray com_arr;
-    PZsparseArray mass_nominal_arr;
-	PZsparseArray mass_uncertain_arr;
-    PZsparseArray I_nominal_arr;
-    PZsparseArray I_uncertain_arr;
+	std::vector<pinocchio::ModelTpl<PZSparse>> model_sparses;
+	std::vector<pinocchio::DataTpl<PZSparse>> data_sparses;
 
-	// sphere center PZs
-	PZsparseArray sphere_centers;
-	std::vector<double> sphere_radii;
+	std::vector<pinocchio::ModelTpl<PZSparse>> model_sparses_interval;
+	std::vector<pinocchio::DataTpl<PZSparse>> data_sparses_interval;
 
-	// dynamics-related PZs
-    PZsparseArray torque_nom;
-    PZsparseArray torque_int;
+	// the radius of the torque PZs
+	Eigen::MatrixXd torque_radii;
 
-	PZsparseArray contact_force_nom;
-	PZsparseArray contact_force_int;
-
-	PZsparseArray contact_moment_nom;
-	PZsparseArray contact_moment_int;
-
-	KinematicsDynamics(const std::shared_ptr<RobotInfo>& robot_info_input,
-					   const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
-
-	void reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
-
-	// generate link PZs through forward kinematics
-	void fk(const size_t s_ind);
-
-	// generate nominal torque PZs through rnea
-	void rnea(const size_t s_ind,
-	          const PZsparseArray& mass_arr,
-			  const PZsparseArray& I_arr,
-			  PZsparseArray& u,
-			  PZsparseArray& contact_force,
-			  PZsparseArray& contact_moment);
-
-	void rnea_nominal(const size_t s_ind) {
-		rnea(s_ind, 
-			 mass_nominal_arr, I_nominal_arr, 
-			 torque_nom, contact_force_nom, contact_moment_nom);
-	}
-
-	void rnea_interval(const size_t s_ind) {
-		rnea(s_ind, 
-			 mass_uncertain_arr, I_uncertain_arr, 
-			 torque_int, contact_force_int, contact_moment_int);
-	}
+	// the radius of the sphere reachable sets
+	Eigen::MatrixXd sphere_radii;
 };
-
-void applyOnlyOneDimension(const std::string& jointName,
-						   const PZsparse& in,
-						   PZsparse& out1,
-						   PZsparse& out2,
-						   PZsparse& out3);
-
-void crossOnlyOneDimension(const std::string& jointName,
-						   const PZsparse& v,
-						   const PZsparse& in1,
-						   const PZsparse& in2,
-						   const PZsparse& in3,
-						   PZsparse& out1,
-						   PZsparse& out2,
-						   PZsparse& out3);
 
 }; // namespace Armour
 }; // namespace Kinova

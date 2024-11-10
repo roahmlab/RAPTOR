@@ -4,7 +4,7 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
-#include "PZsparse.h"
+#include "PZSparse.h"
 
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
@@ -51,8 +51,9 @@ public:
 
     ultimate_bound ultimate_bound_info;
 
+    // collision spheres info
     int num_spheres = 0;
-    std::unordered_map<std::string, std::vector<std::pair<Vec3, double>>> collision_spheres;
+    std::vector<double> sphere_radii;
 
     RobotInfo() = default;
 

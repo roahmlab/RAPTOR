@@ -1,7 +1,7 @@
 #ifndef ARMOUR_OPTIMIZER_H
 #define ARMOUR_OPTIMIZER_H
 
-#include "ReachableSets.h"
+#include "PZDynamics.h"
 #include "BoxCollisionAvoidance.h"
 #include "Optimizer.h"
 
@@ -28,8 +28,7 @@ public:
         Number t_plan_input,
         const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
         const std::shared_ptr<BezierCurveInterval>& trajPtr_input,
-        const std::shared_ptr<KinematicsDynamics>& kdPtr_input,
-        const MatX& torque_radius_input,
+        const std::shared_ptr<PZDynamics>& dynPtr_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input,
@@ -141,11 +140,9 @@ public:
 
     std::shared_ptr<RobotInfo> robotInfoPtr_;
     std::shared_ptr<BezierCurveInterval> trajPtr_;
-    std::shared_ptr<KinematicsDynamics> kdPtr_;
+    std::shared_ptr<PZDynamics> dynPtr_;
     
     std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
-
-    MatX torque_radius;
 
     Number suction_force = 0.0; // suction force
     Number mu = 0.5; // friction coefficient
@@ -154,7 +151,6 @@ public:
     size_t num_time_steps = 0;
     size_t num_spheres = 0;
     size_t num_fixed_joints = 0;
-    size_t constraint_number = 0;
 
     VecX q_des;
     Number t_plan = 0;

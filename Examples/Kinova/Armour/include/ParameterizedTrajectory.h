@@ -75,20 +75,20 @@ public:
     double ds = 0;
 
     // rotation matrix (and its transpose) of each joint
-    PZsparseArray q_des;
-    PZsparseArray cos_q_des;
-    PZsparseArray sin_q_des;
-    PZsparseArray R;
-    PZsparseArray R_t;
+    PZSparseArray q_des;
+    PZSparseArray cos_q_des;
+    PZSparseArray sin_q_des;
+    PZSparseArray R;
+    PZSparseArray R_t;
 
     // joint velocity
-    PZsparseArray qd_des;
+    PZSparseArray qd_des;
 
     // auxiliary joint velocity
-    PZsparseArray qda_des;
+    PZSparseArray qda_des;
 
     // joint acceleration
-    PZsparseArray qdda_des;
+    PZSparseArray qdda_des;
 
     BezierCurveInterval();
 
