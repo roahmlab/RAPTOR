@@ -19,12 +19,12 @@ BezierCurveInterval::BezierCurveInterval() {
     }
 
     // pre-allocate memory
-    q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    cos_q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    sin_q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qd_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qda_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qdda_des = PZSparseArray(NUM_FACTORS, num_time_steps);
+    q_des.resize(NUM_FACTORS, num_time_steps);
+    cos_q_des.resize(NUM_FACTORS, num_time_steps);
+    sin_q_des.resize(NUM_FACTORS, num_time_steps);
+    qd_des.resize(NUM_FACTORS, num_time_steps);
+    qda_des.resize(NUM_FACTORS, num_time_steps);
+    qdda_des.resize(NUM_FACTORS, num_time_steps);
 
     ds = 1.0 / num_time_steps;
 }
@@ -54,12 +54,12 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
     }
 
     // pre-allocate memory
-    q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    cos_q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    sin_q_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qd_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qda_des = PZSparseArray(NUM_FACTORS, num_time_steps);
-    qdda_des = PZSparseArray(NUM_FACTORS, num_time_steps);
+    q_des.resize(NUM_FACTORS, num_time_steps);
+    cos_q_des.resize(NUM_FACTORS, num_time_steps);
+    sin_q_des.resize(NUM_FACTORS, num_time_steps);
+    qd_des.resize(NUM_FACTORS, num_time_steps);
+    qda_des.resize(NUM_FACTORS, num_time_steps);
+    qdda_des.resize(NUM_FACTORS, num_time_steps);
 
     // initialize the extrema of the k independent part of q_des
     for (int i = 0; i < NUM_FACTORS; i++) {
@@ -127,6 +127,26 @@ void BezierCurveInterval::setTrajectoryParameters(const VecX& q0_inp,
         qdd_des_k_indep_extremum_1[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_1[i], duration);
         qdd_des_k_indep_extremum_2[i] = qdd_des_k_indep(q0[i], Tqd0[i], TTqdd0[i], k_center[i], qdd_des_k_indep_extrema_2[i], duration);
     }                                          
+}
+
+void BezierCurveInterval::computeTrajectories(
+    const VecX& k,
+    const double t,
+    VecX& q,
+    VecX& qd,
+    VecX& qdd) const {
+    assert(t >= 0 && t <= duration);
+    assert(k.size() == NUM_FACTORS);
+    assert(q.size() >= NUM_FACTORS);
+    assert(qd.size() >= NUM_FACTORS);
+    assert(qdd.size() >= NUM_FACTORS);
+    const double s = t / duration;
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        const double k_actual = k_center[i] + k_range[i] * k[i];
+        q[i] = q_des_func(q0[i], Tqd0[i], TTqdd0[i], k_actual, s);
+        qd[i] = qd_des_func(q0[i], Tqd0[i], TTqdd0[i], k_actual, s, duration);
+        qdd[i] = qdd_des_func(q0[i], Tqd0[i], TTqdd0[i], k_actual, s, duration);
+    }
 }
 
 void BezierCurveInterval::makePolyZono(const int s_ind) {

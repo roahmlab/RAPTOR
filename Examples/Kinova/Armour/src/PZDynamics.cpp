@@ -25,6 +25,8 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
 
     torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
     sphere_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+
+    sample_eigenvalues();
 }
 
 void PZDynamics::reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& trajPtr_input) {
@@ -33,6 +35,64 @@ void PZDynamics::reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& tr
     }
 
     trajPtr_ = trajPtr_input;
+    sample_eigenvalues();
+}
+
+void PZDynamics::sample_eigenvalues(size_t num_samples) {
+    VecX q = VecX::Zero(robotInfoPtr_->num_joints);
+    VecX qd = VecX::Zero(robotInfoPtr_->num_joints);
+    VecX qdd = VecX::Zero(robotInfoPtr_->num_joints);
+    pinocchio::Data data(robotInfoPtr_->model);
+    double M_max = 0.0;
+    double M_min = std::numeric_limits<double>::max();
+
+    std::cout << "Sampling " << num_samples << " configurations..." << std::endl;
+    for (int h = 0; h < num_samples; h++) {
+        // generate random configurations along the trajectory
+        double t = std::rand() / (double)RAND_MAX * trajPtr_->duration;
+        VecX k = VecX::Random(robotInfoPtr_->num_motors);
+        trajPtr_->computeTrajectories(k, t, q, qd, qdd);
+        q += Eigen::VectorXd::Random(robotInfoPtr_->num_joints) * 0.05;
+
+        // compute the inertia mass matrix
+        MatX M = pinocchio::crba(robotInfoPtr_->model, data, q);
+        for (int i = 0; i < M.rows(); i++) {
+            for (int j = i + 1; j < M.cols(); j++) {
+                M(j, i) = M(i, j);
+            }
+        }
+
+        // compute the eigenvalues
+        Eigen::EigenSolver<MatX> es(M);
+        Eigen::VectorXd eigenvalues = es.eigenvalues().real();
+
+        // update the maximum and minimum eigenvalues
+        for (int i = 0; i < eigenvalues.size(); i++) {
+            M_max = std::max(M_max, eigenvalues(i));
+            M_min = std::min(M_min, eigenvalues(i));
+        }
+    }
+
+    std::cout << "M_max: " << M_max << std::endl;
+    std::cout << "M_min: " << M_min << std::endl;
+
+    auto& ultimate_bound_info = robotInfoPtr_->ultimate_bound_info;
+    ultimate_bound_info.M_max = M_max;
+    ultimate_bound_info.M_min = M_min;
+
+    // recompute the ultimate bound
+    robotInfoPtr_->ultimate_bound_info.eps = std::sqrt(2 * ultimate_bound_info.V_m / ultimate_bound_info.M_min);
+    ultimate_bound_info.qe = ultimate_bound_info.eps / ultimate_bound_info.Kr;
+    ultimate_bound_info.qde = 2 * ultimate_bound_info.eps;
+    ultimate_bound_info.qdae = ultimate_bound_info.eps;
+    ultimate_bound_info.qddae = 2 * ultimate_bound_info.Kr * ultimate_bound_info.eps;
+
+    std::cout << "Ultimate bound information updated:" << std::endl;
+    std::cout << "eps: " << ultimate_bound_info.eps << std::endl;
+    std::cout << "qe: " << ultimate_bound_info.qe << std::endl;
+    std::cout << "qde: " << ultimate_bound_info.qde << std::endl;
+    std::cout << "qdae: " << ultimate_bound_info.qdae << std::endl;
+    std::cout << "qddae: " << ultimate_bound_info.qddae << std::endl;
 }
 
 void PZDynamics::compute() {

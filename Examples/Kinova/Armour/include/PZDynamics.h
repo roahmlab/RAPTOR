@@ -3,6 +3,7 @@
 
 #include "pinocchio/algorithm/model.hpp"
 #include "pinocchio/algorithm/rnea.hpp"
+#include "pinocchio/algorithm/crba.hpp"
 #include "pinocchio/algorithm/kinematics.hpp"
 #include "pinocchio/algorithm/frames.hpp"
 
@@ -27,6 +28,8 @@ public:
 	~PZDynamics() = default;
 
 	void reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
+
+	void sample_eigenvalues(size_t num_samples = 1000);
 
 	void compute();
 

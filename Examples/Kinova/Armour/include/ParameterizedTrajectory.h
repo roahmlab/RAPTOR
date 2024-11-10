@@ -75,20 +75,20 @@ public:
     double ds = 0;
 
     // rotation matrix (and its transpose) of each joint
-    PZSparseArray q_des;
-    PZSparseArray cos_q_des;
-    PZSparseArray sin_q_des;
-    PZSparseArray R;
-    PZSparseArray R_t;
+    PZSparseMatrix q_des;
+    PZSparseMatrix cos_q_des;
+    PZSparseMatrix sin_q_des;
+    PZSparseMatrix R;
+    PZSparseMatrix R_t;
 
     // joint velocity
-    PZSparseArray qd_des;
+    PZSparseMatrix qd_des;
 
     // auxiliary joint velocity
-    PZSparseArray qda_des;
+    PZSparseMatrix qda_des;
 
     // joint acceleration
-    PZSparseArray qdda_des;
+    PZSparseMatrix qdda_des;
 
     BezierCurveInterval();
 
@@ -111,6 +111,13 @@ public:
         const VecX& k_center_inp,
         const VecX& k_range_inp,
         const double duration_inp);
+
+    void computeTrajectories(
+        const VecX& k,
+        const double t,
+        VecX& q,
+        VecX& qd,
+        VecX& qdd) const;
 
     // convert to polynomial zonotope using 1st/2nd order Taylor expansion
     void makePolyZono(const int s_ind);

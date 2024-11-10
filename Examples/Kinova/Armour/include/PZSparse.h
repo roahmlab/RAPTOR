@@ -10,7 +10,7 @@ namespace Armour {
 using namespace boost::multiprecision;
 
 // make sure the number of monomials in a PZSparse is always smaller than this number
-#define PZ_ORDER 30
+#define PZ_ORDER 40
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -143,7 +143,7 @@ public:
     bool operator==(const PZSparse& a) const;
 };
 
-typedef Eigen::Array<PZSparse, Eigen::Dynamic, Eigen::Dynamic> PZSparseArray;
+typedef Eigen::Matrix<PZSparse, Eigen::Dynamic, Eigen::Dynamic> PZSparseMatrix;
 
 void convertHashToDegree(uint32_t degreeArray[], const cpp_int degree);
 

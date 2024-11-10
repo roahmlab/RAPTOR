@@ -531,7 +531,7 @@ void ArmourOptimizer::summarize_constraints(
                 ifFeasible = false;
                 
                 if (verbose) {
-                    std::cout << "ArmourOptimizer.cpp: Control torque of joint " << j << 
+                    std::cout << "ArmourOptimizer.cpp: Control torque of motor " << j + 1 << 
                                 " at time interval " << i << " exceeds limit!\n";
                     std::cout << "    value: " << g[i * NUM_FACTORS + j] << "\n";
                     std::cout << "    range: [ " << -robotInfoPtr_->torque_limits[j] + dynPtr_->torque_radii(j, i) << ", "
@@ -585,7 +585,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i - offset << " exceeds position limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << robotInfoPtr_->position_limits_lb[i - offset] + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
@@ -610,7 +610,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i - offset << " exceeds velocity limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << -robotInfoPtr_->velocity_limits[i - offset] + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "
