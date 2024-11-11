@@ -49,6 +49,11 @@ public:
 
     ultimate_bound ultimate_bound_info;
 
+    // contact surface infomation
+    double suction_force = 0; // additional force applied to the end effector when using suction cup
+    double mu = 0; // friction coefficient of the contact surface
+    double contact_surface_radius = 0; // radius of the contact surface (radius of the suction cup)
+
     // collision spheres info
     int num_spheres = 0;
     std::vector<double> sphere_radii;

@@ -43,13 +43,16 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
         data_sparses_interval[i] = data_sparses_interval[0];
     }
 
+    friction_PZs.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    zmp_PZs.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+
     torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
     sphere_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
 
     sample_eigenvalues();
 }
 
-void PZDynamics::reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& trajPtr_input) {
+void PZDynamics::reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input) {
     if (trajPtr_input->num_time_steps != trajPtr_->num_time_steps) {
         throw std::invalid_argument("The number of time steps in the trajectory is different from the previous one.");
     }
@@ -191,9 +194,25 @@ void PZDynamics::compute() {
                 data_sparses_interval[t_ind].tau(i).reduce();
             }
 
-            for (int i = 0; i < 3; i++) {
-                data_sparses[t_ind].f[model_sparses[t_ind].nv].linear()(i).reduce();
-                data_sparses[t_ind].f[model_sparses[t_ind].nv].angular()(i).reduce();
+            for (int i = 0; i < FRICTION_CONE_LINEARIZED_SIZE; i++) {
+                // TODO: compute friction PZs
+                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
+                //       using robotInfoPtr_->mu, which is a scalar, representing the friction coefficient of the contact surface
+                // friction_PZs(i, t_ind) = ?;
+
+                // call reduce() everytime you finish something
+                // friction_PZs(i, t_ind).reduce();
+            }
+
+            for (int i = 0; i < ZMP_LINEARIZED_SIZE; i++) {
+                // TODO: compute ZMP PZs
+                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
+                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].angular(), which is a 3 dim vector
+                //       using robotInfoPtr_->contact_surface_radius, which is a scalar, representing the radius of the contact surface
+                // zmp_PZs(i, t_ind) = ?;
+
+                // call reduce() everytime you finish something
+                // zmp_PZs(i, t_ind).reduce();
             }
         }
     }

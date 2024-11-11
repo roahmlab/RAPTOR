@@ -105,6 +105,17 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         throw std::runtime_error("Failed to load the ultimate bound information.");
     }
 
+    if (num_joints > num_motors) { // solving waitr problem, need information of the contact surface
+        try {
+            suction_force = RobotConfig["suction_force"].as<double>();
+            mu = RobotConfig["mu"].as<double>();
+            contact_surface_radius = RobotConfig["contact_surface_radius"].as<double>();
+        }
+        catch (const std::exception& e) {
+            throw std::runtime_error("Failed to load the contact surface information.");
+        }
+    }
+
     num_spheres = 0;
     sphere_radii.clear();
     for (const auto& entry : RobotConfig["collision_spheres"]) {

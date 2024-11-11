@@ -12,7 +12,7 @@ BezierCurveInterval::BezierCurveInterval() {
     TTqdd0 = VecX::Zero(NUM_FACTORS);
 
     // compute a uniform time partition
-    num_time_steps = NUM_TIME_STEPS;
+    num_time_steps = DEFAULT_NUM_TIME_STEPS;
     s_intervals.reserve(num_time_steps + 1);
     for (int i = 0; i <= num_time_steps; i++) {
         s_intervals.push_back(i / (double)num_time_steps);
@@ -33,19 +33,20 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
                                          const VecX& k_center_inp,
                                          const VecX& k_range_inp,
                                          const double duration_inp,
-                                         const ultimate_bound& ultimate_bound_info_inp) : 
+                                         const ultimate_bound& ultimate_bound_info_inp,
+                                         const size_t num_time_steps_inp) : 
     q0(q0_inp),
     qd0(qd0_inp),
     qdd0(qdd0_inp),
     k_center(k_center_inp),
     k_range(k_range_inp),
     duration(duration_inp),
-    ultimate_bound_info(ultimate_bound_info_inp) {
+    ultimate_bound_info(ultimate_bound_info_inp),
+    num_time_steps(num_time_steps_inp) {
     Tqd0 = qd0 * duration; 
     TTqdd0 = qdd0 * duration * duration; 
 
     // compute a uniform time partition
-    num_time_steps = NUM_TIME_STEPS;
     s_intervals.reserve(num_time_steps + 1);
     for (int i = 0; i <= num_time_steps; i++) {
         s_intervals.push_back(i / (double)num_time_steps);

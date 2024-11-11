@@ -13,6 +13,10 @@ namespace RAPTOR {
 namespace Kinova {
 namespace Armour {
 
+constexpr size_t FRICTION_CONE_LINEARIZED_SIZE = 8;
+constexpr size_t ZMP_LINEARIZED_SIZE = 8;
+const size_t NUM_CONTACT_CONSTRAINTS = 1 + FRICTION_CONE_LINEARIZED_SIZE + ZMP_LINEARIZED_SIZE;
+
 class PZDynamics {
 public:
 	using Vec3 = Eigen::Vector3d;
@@ -27,7 +31,7 @@ public:
 
 	~PZDynamics() = default;
 
-	void reset_trajecotry(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
+	void reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
 
 	void sample_eigenvalues(size_t num_samples = 1000);
 
@@ -41,6 +45,9 @@ public:
 
 	std::vector<pinocchio::ModelTpl<PZSparse>> model_sparses_interval;
 	std::vector<pinocchio::DataTpl<PZSparse>> data_sparses_interval;
+
+	Eigen::Matrix<PZSparse, Eigen::Dynamic, Eigen::Dynamic> friction_PZs;
+	Eigen::Matrix<PZSparse, Eigen::Dynamic, Eigen::Dynamic> zmp_PZs;
 
 	// the radius of the torque PZs
 	Eigen::MatrixXd torque_radii;

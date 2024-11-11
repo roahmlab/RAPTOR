@@ -65,7 +65,7 @@ bool ArmourOptimizer::get_nlp_info(
 
     // number of inequality constraint
     numCons = NUM_FACTORS * num_time_steps + // torque limits
-              3 * num_fixed_joints * num_time_steps + // contact constraints
+              NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
               num_time_steps * num_spheres + // obstacle avoidance constraints
               NUM_FACTORS * 4; // joint position, velocity limits
     m = numCons;
@@ -121,10 +121,10 @@ bool ArmourOptimizer::get_bounds_info(
     }    
     offset += NUM_FACTORS * num_time_steps;
 
-    // TODO: bounds for suction grasp constraints
-    for( Index i = offset; i < offset + 3 * num_fixed_joints * num_time_steps; i++ ) {
-        g_l[i] = -1e19;
-        g_u[i] = 0.0;
+    // TODO: bounds for contact constraints
+    for( Index i = offset; i < offset + NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps; i++ ) {
+        g_l[i] = 0.0;
+        g_u[i] = 1e19;
     }
     offset += 3 * num_fixed_joints * num_time_steps;
 
@@ -316,22 +316,36 @@ bool ArmourOptimizer::eval_g(
             try {
                 #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
                 for (i = 0; i < num_time_steps; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        const Interval forceRange = 
-                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j)
-                                .slice(x);
-                        const Interval momentRange = 
-                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j)
-                                .slice(x);
-                    }            
                     // TODO: fill in the contact constraints
+
+                    // (1) support force larger than 0
+                    const Interval supportForceRange = 
+                        dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
+                            .slice(x);
+                    g[i * NUM_CONTACT_CONSTRAINTS + offset] = supportForceRange.lower();
+
+                    // (2) friction cone constraints
+                    for (int j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
+                        const Interval frictionConstraintRange = dynPtr_->friction_PZs(j, i).slice(x);
+
+                        // need to make sure the lower bound is larger than 0
+                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + j + offset] = frictionConstraintRange.lower();
+                    }      
+
+                    // (3) ZMP constraints
+                    for (int j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
+                        const Interval zmpConstraintRange = dynPtr_->zmp_PZs(j, i).slice(x);
+
+                        // need to make sure the lower bound is larger than 0
+                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + FRICTION_CONE_LINEARIZED_SIZE + j + offset] = zmpConstraintRange.lower();
+                    }
                 }
             }
             catch (const std::exception& e) {
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "Error in eval_g!");
             }
-            offset += 3 * num_fixed_joints * num_time_steps;
+            offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
         }
 
         // obstacle avoidance constraints
@@ -434,15 +448,7 @@ bool ArmourOptimizer::eval_jac_g(
             try {
                 #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
                 for (i = 0; i < num_time_steps; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        const Interval forceRange = 
-                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j)
-                                .slice(x);
-                        const Interval momentRange = 
-                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j)
-                                .slice(x);
-                    }            
-                    // TODO: fill in the contact constraints gradient
+                    // TODO: fill in the contact constraints gradients
                 }
             }
             catch (const std::exception& e) {
@@ -542,10 +548,10 @@ void ArmourOptimizer::summarize_constraints(
     }    
     offset += NUM_FACTORS * num_time_steps;
 
-    // TODO: fill in contact constraints
+    // TODO: fill in contact constraints validation
     if (num_fixed_joints > 0) {
 
-        offset += 3 * num_fixed_joints * num_time_steps;
+        offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
     }
 
     // obstacle avoidance constraints
