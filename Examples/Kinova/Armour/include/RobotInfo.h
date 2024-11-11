@@ -4,6 +4,8 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
+#include "KinovaConstants.h"
+
 #include "PZSparse.h"
 
 #include <unordered_map>
@@ -42,12 +44,8 @@ public:
     pinocchio::Model model;
 
     VecX mass_uncertainty;
+    VecX com_uncertainty;
     VecX inertia_uncertainty;
-
-    VecX position_limits_lb;
-    VecX position_limits_ub;
-    VecX velocity_limits;
-    VecX torque_limits;
 
     ultimate_bound ultimate_bound_info;
 

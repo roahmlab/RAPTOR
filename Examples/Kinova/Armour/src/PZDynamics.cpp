@@ -15,12 +15,32 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
     model_sparses_interval.resize(trajPtr_->num_time_steps);
     data_sparses_interval.resize(trajPtr_->num_time_steps);
 
-    for (size_t i = 0; i < trajPtr_->num_time_steps; ++i) {
-        model_sparses[i] = robotInfoPtr_->model.cast<PZSparse>();
-        data_sparses[i] = pinocchio::DataTpl<PZSparse>(model_sparses[i]);
+    model_sparses[0] = robotInfoPtr_->model.cast<PZSparse>();
+    data_sparses[0] = pinocchio::DataTpl<PZSparse>(model_sparses[0]);
 
-        model_sparses_interval[i] = robotInfoPtr_->model.cast<PZSparse>();
-        data_sparses_interval[i] = pinocchio::DataTpl<PZSparse>(model_sparses_interval[i]);
+    // add model uncertainty here
+    model_sparses_interval[0] = model_sparses[0];
+    for (size_t i = 0; i < model_sparses_interval[0].nv; i++) {
+        model_sparses_interval[0].inertias[i].mass() += 
+            robotInfoPtr_->mass_uncertainty(i) * Interval(-1.0, 1.0) * robotInfoPtr_->model.inertias[i].mass();
+        for (size_t j = 0; j < 3; j++) {
+            model_sparses_interval[0].inertias[i].lever()(j) += 
+                robotInfoPtr_->com_uncertainty(i) * Interval(-1.0, 1.0) * robotInfoPtr_->model.inertias[i].lever()(j);   
+        }
+        for (size_t j = 0; j < 6; j++) {
+            model_sparses_interval[0].inertias[i].inertia().data()(j) += 
+                robotInfoPtr_->inertia_uncertainty(i) * Interval(-1.0, 1.0) * robotInfoPtr_->model.inertias[i].inertia().data()(j);
+        }
+        
+    }
+    data_sparses_interval[0] = pinocchio::DataTpl<PZSparse>(model_sparses_interval[0]);
+
+    for (size_t i = 1; i < trajPtr_->num_time_steps; ++i) {
+        model_sparses[i] = model_sparses[0];
+        data_sparses[i] = data_sparses[0];
+
+        model_sparses_interval[i] = model_sparses_interval[0];
+        data_sparses_interval[i] = data_sparses_interval[0];
     }
 
     torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
@@ -126,7 +146,7 @@ void PZDynamics::compute() {
 
     // generate link and torque PZs
     try {
-       #pragma omp parallel for shared(model_sparses, data_sparses, model_sparses_interval, data_sparses_interval, trajPtr_) private(t_ind) schedule(dynamic)
+        #pragma omp parallel for shared(model_sparses, data_sparses, model_sparses_interval, data_sparses_interval, trajPtr_) private(t_ind) schedule(dynamic)
         for(t_ind = 0; t_ind < num_time_steps; t_ind++) {
             Eigen::Vector<PZSparse, Eigen::Dynamic> q(num_joints);
             Eigen::Vector<PZSparse, Eigen::Dynamic> qd(num_joints);
@@ -149,10 +169,25 @@ void PZDynamics::compute() {
             pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
             pinocchio::rnea(model_sparses_interval[t_ind], data_sparses_interval[t_ind], q, qd, qdd);
 
+            for (int i = 0; i < robotInfoPtr_->num_spheres; i++) {
+                const std::string sphere_name = "collision-" + std::to_string(i);
+                const pinocchio::FrameIndex frame_id = 
+                    robotInfoPtr_->model.getFrameId(sphere_name);
+                auto& sphere_center = data_sparses[t_ind].oMf[frame_id].translation();
+                sphere_center(0).reduce();
+                sphere_center(1).reduce();
+                sphere_center(2).reduce();
+            }
+
             for (int i = 0; i < num_motors; i++) {
+                // now data_sparses_interval stores the disturbance PZs from model uncertainty
+                data_sparses_interval[t_ind].tau(i) -= data_sparses[t_ind].tau(i);
+
+                // add motor damping force to the torque PZ
+                // since there's no model uncertainty in damping, this does not affect the previous step
                 data_sparses[t_ind].tau(i) += model_sparses[t_ind].damping(i) * qd(i);
+
                 data_sparses[t_ind].tau(i).reduce();
-                data_sparses_interval[t_ind].tau(i) += model_sparses_interval[t_ind].damping(i) * qd(i);
                 data_sparses_interval[t_ind].tau(i).reduce();
             }
 
@@ -179,9 +214,7 @@ void PZDynamics::compute() {
             Interval rho_max_temp = Interval(0.0);
             for (int i = 0; i < num_motors; i++) {
                 // compute norm of disturbance
-                const PZSparse model_uncertainty_disturbance = 
-                    data_sparses_interval[t_ind].tau(i) - data_sparses[t_ind].tau(i);
-                const Interval temp = model_uncertainty_disturbance.toInterval();
+                const Interval temp = data_sparses_interval[t_ind].tau(i).toInterval();
                 rho_max_temp += temp * temp;
 
                 torque_radii(i, t_ind) = 
@@ -199,9 +232,9 @@ void PZDynamics::compute() {
                 torque_radii(i, t_ind) += robotInfoPtr_->model.friction(i);
             }
 
-            // (3) add the radius back to the nominal input PZ (after reducing)
+            // (3) add the radius of the nominal input PZ (after reducing)
             for (int i = 0; i < num_motors; i++) {
-                data_sparses[t_ind].tau(i).independent += torque_radii(i, t_ind);
+                torque_radii(i, t_ind) += data_sparses[t_ind].tau(i).independent;
             }
             // so that dynPtr_->torque_nom would now store the torque PZs with robust input bounds
         

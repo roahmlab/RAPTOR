@@ -491,7 +491,9 @@ PZSparse PZSparse::operator-=(const PZSparse& a) {
             j++;
         }
 
-        polynomial_new.push_back(temp);
+        if (temp.coeff != 0) {
+            polynomial_new.push_back(temp);
+        }
     }
  
     while (i < polynomial.size()) {
@@ -945,6 +947,18 @@ PZSparse PZSparse::operator/(const PZSparse& a) const {
     std::cerr << a << std::endl;
     throw std::runtime_error("PZSparse error: operator/(): not supported!");
     return PZSparse(0);
+}
+
+PZSparse PZSparse::operator/=(const PZSparse& a) {
+    // a is just a scalar
+    if (a.polynomial.size() == 0 && a.independent == 0) {
+        *this = *this / a.center;
+        return *this;
+    }
+
+    std::cerr << a << std::endl;
+    throw std::runtime_error("PZSparse error: operator/=(): not supported!");
+    return *this;
 }
 
 bool PZSparse::operator<(const PZSparse& a) const {

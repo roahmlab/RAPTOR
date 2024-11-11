@@ -130,6 +130,8 @@ public:
     
     PZSparse operator/(const PZSparse& a) const;
 
+    PZSparse operator/=(const PZSparse& a);
+
     bool operator<(const PZSparse& a) const;
 
     bool operator<(const double a) const;

@@ -115,8 +115,8 @@ bool ArmourOptimizer::get_bounds_info(
     // torque limits
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            g_l[i * NUM_FACTORS + j] = -robotInfoPtr_->torque_limits[j] + dynPtr_->torque_radii(j, i);
-            g_u[i * NUM_FACTORS + j] = robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i);
+            g_l[i * NUM_FACTORS + j] = TORQUE_LIMITS_LOWER[j] + dynPtr_->torque_radii(j, i);
+            g_u[i * NUM_FACTORS + j] = TORQUE_LIMITS_UPPER[j] - dynPtr_->torque_radii(j, i);
         }
     }    
     offset += NUM_FACTORS * num_time_steps;
@@ -138,29 +138,29 @@ bool ArmourOptimizer::get_bounds_info(
     // state limit constraints
     //     minimum joint position
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        g_l[i] = robotInfoPtr_->position_limits_lb[i - offset] + robotInfoPtr_->ultimate_bound_info.qe;
-        g_u[i] = robotInfoPtr_->position_limits_ub[i - offset] - robotInfoPtr_->ultimate_bound_info.qe;
+        g_l[i] = Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + robotInfoPtr_->ultimate_bound_info.qe;
+        g_u[i] = Utils::deg2rad(JOINT_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qe;
     }
     offset += NUM_FACTORS;
 
     //     maximum joint position
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        g_l[i] = robotInfoPtr_->position_limits_lb[i - offset] + robotInfoPtr_->ultimate_bound_info.qe;
-        g_u[i] = robotInfoPtr_->position_limits_ub[i - offset] - robotInfoPtr_->ultimate_bound_info.qe;
+        g_l[i] = Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + robotInfoPtr_->ultimate_bound_info.qe;
+        g_u[i] = Utils::deg2rad(JOINT_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qe;
     }
     offset += NUM_FACTORS;
 
     //     minimum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        g_l[i] = -robotInfoPtr_->velocity_limits[i - offset] + robotInfoPtr_->ultimate_bound_info.qde;
-        g_u[i] = robotInfoPtr_->velocity_limits[i - offset] - robotInfoPtr_->ultimate_bound_info.qde;
+        g_l[i] = Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + robotInfoPtr_->ultimate_bound_info.qde;
+        g_u[i] = Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qde;
     }
     offset += NUM_FACTORS;
 
     //     maximum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        g_l[i] = -robotInfoPtr_->velocity_limits[i - offset] + robotInfoPtr_->ultimate_bound_info.qde;
-        g_u[i] = robotInfoPtr_->velocity_limits[i - offset] - robotInfoPtr_->ultimate_bound_info.qde;
+        g_l[i] = Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + robotInfoPtr_->ultimate_bound_info.qde;
+        g_u[i] = Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qde;
     }
 
     return true;
@@ -520,8 +520,8 @@ void ArmourOptimizer::summarize_constraints(
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
             const Number constr_violation = fmax(
-                g[i * NUM_FACTORS + j] - (robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i)), 
-                -(robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i)) - g[i * NUM_FACTORS + j]);
+                g[i * NUM_FACTORS + j] - (TORQUE_LIMITS_UPPER[j] - dynPtr_->torque_radii(j, i)), 
+                (TORQUE_LIMITS_LOWER[j] + dynPtr_->torque_radii(j, i)) - g[i * NUM_FACTORS + j]);
 
             if (constr_violation > final_constr_violation) {
                 final_constr_violation = constr_violation;
@@ -534,8 +534,8 @@ void ArmourOptimizer::summarize_constraints(
                     std::cout << "ArmourOptimizer.cpp: Control torque of motor " << j + 1 << 
                                 " at time interval " << i << " exceeds limit!\n";
                     std::cout << "    value: " << g[i * NUM_FACTORS + j] << "\n";
-                    std::cout << "    range: [ " << -robotInfoPtr_->torque_limits[j] + dynPtr_->torque_radii(j, i) << ", "
-                                                 << robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i) << " ]\n";
+                    std::cout << "    range: [ " << TORQUE_LIMITS_LOWER[j] + dynPtr_->torque_radii(j, i) << ", "
+                                                 << TORQUE_LIMITS_UPPER[j] - dynPtr_->torque_radii(j, i) << " ]\n";
                 }
             }
         }
@@ -574,8 +574,8 @@ void ArmourOptimizer::summarize_constraints(
     //     minimum joint position
     for( Index i = offset; i < offset + 2 * NUM_FACTORS; i++ ) {
         const Number constr_violation = fmax(
-            g[i] - (robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe), 
-            -(robotInfoPtr_->position_limits_ub[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qe) - g[i]);
+            g[i] - (Utils::deg2rad(JOINT_LIMITS_UPPER[(i - offset) % NUM_FACTORS]) - robotInfoPtr_->ultimate_bound_info.qe), 
+            (Utils::deg2rad(JOINT_LIMITS_LOWER[(i - offset) % NUM_FACTORS]) + robotInfoPtr_->ultimate_bound_info.qe) - g[i]);
 
         if (constr_violation > final_constr_violation) {
             final_constr_violation = constr_violation;
@@ -587,9 +587,9 @@ void ArmourOptimizer::summarize_constraints(
             if (verbose) {
                 std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
-                std::cout << "    range: [ " << robotInfoPtr_->position_limits_lb[i - offset] + 
+                std::cout << "    range: [ " << Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
-                                             << robotInfoPtr_->position_limits_ub[i - offset] - 
+                                             << Utils::deg2rad(JOINT_LIMITS_UPPER[i - offset]) - 
                                                 robotInfoPtr_->ultimate_bound_info.qe << " ]\n";
             }
         }
@@ -599,8 +599,8 @@ void ArmourOptimizer::summarize_constraints(
     //     minimum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
         const Number constr_violation = fmax(
-            g[i] - (robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde), 
-            -(robotInfoPtr_->velocity_limits[(i - offset) % NUM_FACTORS] - robotInfoPtr_->ultimate_bound_info.qde) - g[i]);
+            g[i] - (Utils::deg2rad(VELOCITY_LIMITS_UPPER[(i - offset) % NUM_FACTORS]) - robotInfoPtr_->ultimate_bound_info.qde), 
+            (Utils::deg2rad(VELOCITY_LIMITS_LOWER[(i - offset) % NUM_FACTORS]) - robotInfoPtr_->ultimate_bound_info.qde) - g[i]);
 
         if (constr_violation > final_constr_violation) {
             final_constr_violation = constr_violation;
@@ -612,9 +612,9 @@ void ArmourOptimizer::summarize_constraints(
             if (verbose) {
                 std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
-                std::cout << "    range: [ " << -robotInfoPtr_->velocity_limits[i - offset] + 
+                std::cout << "    range: [ " << Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "
-                                             << robotInfoPtr_->velocity_limits[i - offset] - 
+                                             << Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - 
                                                 robotInfoPtr_->ultimate_bound_info.qde << " ]\n";
             }
         }
