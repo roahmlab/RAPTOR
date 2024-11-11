@@ -26,7 +26,7 @@ namespace RAPTOR {
 class CustomizedInverseDynamics : public InverseDynamics {
 public:
     using Model = pinocchio::Model;
-    using Data = pinocchio::DataTpl<double>;
+    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using Vec6 = Vector6d;

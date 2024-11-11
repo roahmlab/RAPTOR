@@ -40,9 +40,9 @@ int main() {
             duration, 
             robotInfoPtr_->ultimate_bound_info);
     
-    // create a KinematicsDynamics instance to compute link PZs and torque PZs
-    std::shared_ptr<KinematicsDynamics> kdPtr = 
-        std::make_shared<KinematicsDynamics>(robotInfoPtr_, trajPtr_);
+    // create a PZDynamics instance to compute link PZs and torque PZs
+    std::shared_ptr<PZDynamics> dynPtr_ = 
+        std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
 
     // define obstacles
     const int num_obstacles = 5;
@@ -72,26 +72,10 @@ int main() {
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
     auto start1 = std::chrono::high_resolution_clock::now();
-    GenerateJRS(robotInfoPtr_, trajPtr_);
+    dynPtr_->compute();
     auto end1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to generate JRS: " 
+    std::cout << "Time taken to generate reachable sets: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() 
-              << " ms" << std::endl;
-    
-    // generate Link and Torque PZs
-    auto start2 = std::chrono::high_resolution_clock::now();
-    GenerateLinkAndTorquePZs(robotInfoPtr_, trajPtr_, kdPtr);
-    auto end2 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to generate Link and Torque PZs: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2).count() 
-              << " ms" << std::endl;
-
-    // compute Robust Input Bounds
-    auto start3 = std::chrono::high_resolution_clock::now();
-    Eigen::MatrixXd torque_radius = ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr);
-    auto end3 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to compute Robust Input Bounds: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
               << " ms" << std::endl;
 
 // OPTIMIZATION
@@ -101,8 +85,7 @@ int main() {
                               t_plan, 
                               robotInfoPtr_, 
                               trajPtr_, 
-                              kdPtr, 
-                              torque_radius,
+                              dynPtr_, 
                               boxCenters,
                               boxOrientation,
                               boxSize,

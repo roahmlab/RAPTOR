@@ -23,12 +23,12 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
     model.damping.setZero();
     model.friction.setZero();
 
-    pinocchio::DataTpl<double> data(model);
+    pinocchio::Data data(model);
 
     // set joint configurations
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<BezierCurves>(
-            Eigen::VectorXd::LinSpaced(5, 0, 1), model.nq, 5);
+            2.0, 1, model.nq, TimeDiscretization::Uniform, 5);
 
     std::srand(std::time(nullptr));
     Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
@@ -45,8 +45,13 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_without_fixed_joints)
             model, trajPtr);
     cidPtr->compute(z, false);
 
-    //check the error
+    // check the difference
     BOOST_CHECK_SMALL((data.tau - cidPtr->tau(0)).norm(), 1e-10);
+
+    for (int i = 0; i < model.nv; i++) {
+        BOOST_CHECK_SMALL((data.f[i + 1].angular() - cidPtr->f(i).head(3)).norm(), 1e-10);
+        BOOST_CHECK_SMALL((data.f[i + 1].linear() - cidPtr->f(i).tail(3)).norm(), 1e-10);
+    }
 }
 
 // Test with fixed joints
@@ -72,7 +77,7 @@ BOOST_AUTO_TEST_CASE(test_inverse_dynamics_with_fixed_joints)
     pinocchio::Model model_reduced;
     std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
     pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
-    pinocchio::DataTpl<double> data_reduced(model_reduced);
+    pinocchio::Data data_reduced(model_reduced);
 
     Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
 

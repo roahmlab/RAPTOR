@@ -38,7 +38,7 @@ const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] = {
 class TalosDynamicsConstraints : public DynamicsConstraints {
 public:
     using Model = pinocchio::Model;
-    using Data = pinocchio::DataTpl<double>;
+    using Data = pinocchio::Data;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;

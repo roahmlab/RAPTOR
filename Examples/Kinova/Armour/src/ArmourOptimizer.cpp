@@ -9,8 +9,7 @@ bool ArmourOptimizer::set_parameters(
     Number t_plan_input,
     const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
     const std::shared_ptr<BezierCurveInterval>& trajPtr_input,
-    const std::shared_ptr<KinematicsDynamics>& kdPtr_input,
-    const MatX& torque_radius_input,
+    const std::shared_ptr<PZDynamics>& dynPtr_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
     const std::vector<Vec3>& boxSize_input,
@@ -35,7 +34,7 @@ bool ArmourOptimizer::set_parameters(
     trajPtr_ = trajPtr_input;
     num_time_steps = trajPtr_->num_time_steps;
 
-    kdPtr_ = kdPtr_input;
+    dynPtr_ = dynPtr_input;
 
     bcaPtrs.resize(num_time_steps);
     for (size_t i = 0; i < num_time_steps; i++) {
@@ -43,17 +42,10 @@ bool ArmourOptimizer::set_parameters(
             boxCenters_input, boxOrientation_input, boxSize_input);
         bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
     }
-
-    torque_radius = torque_radius_input;
     
     suction_force = suction_force_input;
     mu = mu_input;
     suction_radius = suction_radius_input;
-
-    constraint_number = NUM_FACTORS * num_time_steps + // torque limits
-                        3 * num_fixed_joints * num_time_steps + // contact constraints
-                        num_time_steps * num_spheres + // obstacle avoidance constraints
-                        NUM_FACTORS * 4; // joint position, velocity limits
 
     return true;
 }
@@ -72,8 +64,11 @@ bool ArmourOptimizer::get_nlp_info(
     n = NUM_FACTORS;
 
     // number of inequality constraint
-    numCons = constraint_number;
-    m = constraint_number;
+    numCons = NUM_FACTORS * num_time_steps + // torque limits
+              3 * num_fixed_joints * num_time_steps + // contact constraints
+              num_time_steps * num_spheres + // obstacle avoidance constraints
+              NUM_FACTORS * 4; // joint position, velocity limits
+    m = numCons;
 
     nnz_jac_g = m * n;
     nnz_h_lag = n * n;
@@ -101,7 +96,7 @@ bool ArmourOptimizer::get_bounds_info(
     if(n != NUM_FACTORS){
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
     }
-    if(m != constraint_number){
+    if(m != numCons){
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
     }
 
@@ -120,16 +115,16 @@ bool ArmourOptimizer::get_bounds_info(
     // torque limits
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            g_l[i * NUM_FACTORS + j] = -robotInfoPtr_->torque_limits[j] + torque_radius(j, i);
-            g_u[i * NUM_FACTORS + j] = robotInfoPtr_->torque_limits[j] - torque_radius(j, i);
+            g_l[i * NUM_FACTORS + j] = -robotInfoPtr_->torque_limits[j] + dynPtr_->torque_radii(j, i);
+            g_u[i * NUM_FACTORS + j] = robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i);
         }
     }    
     offset += NUM_FACTORS * num_time_steps;
 
-    // suction grasp constraints
+    // TODO: bounds for suction grasp constraints
     for( Index i = offset; i < offset + 3 * num_fixed_joints * num_time_steps; i++ ) {
         g_l[i] = -1e19;
-        g_u[i] = 0;
+        g_u[i] = 0.0;
     }
     offset += 3 * num_fixed_joints * num_time_steps;
 
@@ -292,42 +287,81 @@ bool ArmourOptimizer::eval_g(
     if(n != NUM_FACTORS){
         THROW_EXCEPTION(IpoptException, "Error wrong value of n in eval_g!");
     }
-    if(m != constraint_number){
+    if(m != numCons){
         THROW_EXCEPTION(IpoptException, "Error wrong value of m in eval_g!");
     }
 
     try {
         Index i = 0, offset = 0;
-        #pragma omp parallel for shared(kdPtr_, x, g) private(i) schedule(dynamic)
-        for (i = 0; i < num_time_steps; i++) {
-            for (int j = 0; j < NUM_FACTORS; j++) {
-                const Interval res = kdPtr_->torque_nom(j, i).slice(x);
-                g[i * NUM_FACTORS + j] = getCenter(res);
+
+        // torque limits
+        try {
+            #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
+            for (i = 0; i < num_time_steps; i++) {
+                for (int j = 0; j < NUM_FACTORS; j++) {
+                    const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
+                    const Interval res = PZtorque.slice(x);
+                    g[i * NUM_FACTORS + j] = getCenter(res);
+                }
             }
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_g!");
         }
         offset += num_time_steps * NUM_FACTORS;
 
         // TODO: add contact constraints
-        std::memset(g, 0, 3 * num_fixed_joints * num_time_steps * sizeof(Number));
-
-        offset += 3 * num_fixed_joints * num_time_steps;
+        if (num_fixed_joints > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        const Interval forceRange = 
+                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j)
+                                .slice(x);
+                        const Interval momentRange = 
+                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j)
+                                .slice(x);
+                    }            
+                    // TODO: fill in the contact constraints
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+            }
+            offset += 3 * num_fixed_joints * num_time_steps;
+        }
 
         // obstacle avoidance constraints
-        #pragma omp parallel for shared(kdPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
-        for (i = 0; i < num_time_steps; i++) {
-            for (int j = 0; j < num_spheres; j++) {
-                const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
-                const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
-                const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
+        try {
+            #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
+            for (i = 0; i < num_time_steps; i++) {
+                for (int j = 0; j < num_spheres; j++) {
+                    const std::string sphere_name = "collision-" + std::to_string(j);
+                    const pinocchio::FrameIndex frame_id = 
+                        robotInfoPtr_->model.getFrameId(sphere_name);
 
-                Vec3 sphere_center;
-                sphere_center << getCenter(x_res), 
-                                 getCenter(y_res), 
-                                 getCenter(z_res);
+                    const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
 
-                bcaPtrs[i]->computeDistance(sphere_center);
-                g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - kdPtr_->sphere_radii[j];
+                    const Interval x_res = PZsphere(0).slice(x);
+                    const Interval y_res = PZsphere(1).slice(x);
+                    const Interval z_res = PZsphere(2).slice(x);
+
+                    Vec3 sphere_center;
+                    sphere_center << getCenter(x_res), 
+                                     getCenter(y_res), 
+                                     getCenter(z_res);
+
+                    bcaPtrs[i]->computeDistance(sphere_center);
+                    g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - dynPtr_->sphere_radii(j, i);
+                }
             }
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_g!");
         }
         offset += num_time_steps * num_spheres;
 
@@ -362,7 +396,7 @@ bool ArmourOptimizer::eval_jac_g(
     if(n != NUM_FACTORS){
         THROW_EXCEPTION(IpoptException, "Error wrong value of n in eval_jac_g!");
     }
-    if(m != constraint_number){
+    if(m != numCons){
         THROW_EXCEPTION(IpoptException, "Error wrong value of m in eval_jac_g!");
     }
         
@@ -377,28 +411,61 @@ bool ArmourOptimizer::eval_jac_g(
         }
     }
     else {
+        Index i = 0, offset = 0;
+
+        // torque limits
         try {
-            Index i = 0, offset = 0;
-            #pragma omp parallel for shared(kdPtr_, x, values) private(i) schedule(dynamic)
+            #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
             for(i = 0; i < num_time_steps; i++) {
                 for (int j = 0; j < NUM_FACTORS; j++) {
-                    kdPtr_->torque_nom(j, i).slice(values + (i * NUM_FACTORS + j) * NUM_FACTORS, x);
+                    const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
+                    PZtorque.slice(values + (i * NUM_FACTORS + j) * NUM_FACTORS, x);
                 }
             }
-            offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
+        }
+        offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
 
-            // TODO: add contact constraints gradient
-            std::memset(values, 0, 3 * num_fixed_joints * num_time_steps * NUM_FACTORS * sizeof(Number));
-
+        // TODO: add contact constraints gradient
+        if (num_fixed_joints > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        const Interval forceRange = 
+                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j)
+                                .slice(x);
+                        const Interval momentRange = 
+                            dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j)
+                                .slice(x);
+                    }            
+                    // TODO: fill in the contact constraints gradient
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
+            }
             offset += 3 * num_fixed_joints * num_time_steps * NUM_FACTORS;
+        }
 
-            // obstacle avoidance constraints gradient
-            #pragma omp parallel for shared(kdPtr_, x, values) private(i) schedule(dynamic)
+        // obstacle avoidance constraints gradient
+        try {
+            #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
             for(i = 0; i < num_time_steps; i++) {
                 for (int j = 0; j < num_spheres; j++) {
-                    const Interval x_res = kdPtr_->sphere_centers(3 * j + 0, i).slice(x);
-                    const Interval y_res = kdPtr_->sphere_centers(3 * j + 1, i).slice(x);
-                    const Interval z_res = kdPtr_->sphere_centers(3 * j + 2, i).slice(x);
+                    const std::string sphere_name = "collision-" + std::to_string(j);
+                    const pinocchio::FrameIndex frame_id = 
+                        robotInfoPtr_->model.getFrameId(sphere_name);
+
+                    const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+
+                    const Interval x_res = PZsphere(0).slice(x);
+                    const Interval y_res = PZsphere(1).slice(x);
+                    const Interval z_res = PZsphere(2).slice(x);
 
                     Vec3 sphere_center;
                     sphere_center << getCenter(x_res), 
@@ -406,9 +473,9 @@ bool ArmourOptimizer::eval_jac_g(
                                      getCenter(z_res);
 
                     VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
-                    kdPtr_->sphere_centers(3 * j + 0, i).slice(dk_x_res, x);
-                    kdPtr_->sphere_centers(3 * j + 1, i).slice(dk_y_res, x);
-                    kdPtr_->sphere_centers(3 * j + 2, i).slice(dk_z_res, x);
+                    PZsphere(0).slice(dk_x_res, x);
+                    PZsphere(1).slice(dk_y_res, x);
+                    PZsphere(2).slice(dk_z_res, x);
 
                     MatX dk_sphere_center(3, NUM_FACTORS);
                     dk_sphere_center.row(0) = dk_x_res;
@@ -421,18 +488,18 @@ bool ArmourOptimizer::eval_jac_g(
                     std::memcpy(values + (i * num_spheres + j) * NUM_FACTORS + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
                 }
             }
-            offset += num_time_steps * num_spheres * NUM_FACTORS;
-
-            // state limit constraints
-            trajPtr_->returnJointPositionExtremumGradient(values + offset, x);
-            offset += NUM_FACTORS * 2 * NUM_FACTORS;
-
-            trajPtr_->returnJointVelocityExtremumGradient(values + offset, x);
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
         }
+        offset += num_time_steps * num_spheres * NUM_FACTORS;
+
+        // state limit constraints
+        trajPtr_->returnJointPositionExtremumGradient(values + offset, x);
+        offset += NUM_FACTORS * 2 * NUM_FACTORS;
+
+        trajPtr_->returnJointVelocityExtremumGradient(values + offset, x);
     }
 
     return true;
@@ -453,8 +520,8 @@ void ArmourOptimizer::summarize_constraints(
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
             const Number constr_violation = fmax(
-                g[i * NUM_FACTORS + j] - (robotInfoPtr_->torque_limits[j] - torque_radius(j, i)), 
-                -(robotInfoPtr_->torque_limits[j] - torque_radius(j, i)) - g[i * NUM_FACTORS + j]);
+                g[i * NUM_FACTORS + j] - (robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i)), 
+                -(robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i)) - g[i * NUM_FACTORS + j]);
 
             if (constr_violation > final_constr_violation) {
                 final_constr_violation = constr_violation;
@@ -464,11 +531,11 @@ void ArmourOptimizer::summarize_constraints(
                 ifFeasible = false;
                 
                 if (verbose) {
-                    std::cout << "ArmourOptimizer.cpp: Control torque of joint " << j << 
+                    std::cout << "ArmourOptimizer.cpp: Control torque of motor " << j + 1 << 
                                 " at time interval " << i << " exceeds limit!\n";
                     std::cout << "    value: " << g[i * NUM_FACTORS + j] << "\n";
-                    std::cout << "    range: [ " << -robotInfoPtr_->torque_limits[j] + torque_radius(j, i) << ", "
-                                                 << robotInfoPtr_->torque_limits[j] - torque_radius(j, i) << " ]\n";
+                    std::cout << "    range: [ " << -robotInfoPtr_->torque_limits[j] + dynPtr_->torque_radii(j, i) << ", "
+                                                 << robotInfoPtr_->torque_limits[j] - dynPtr_->torque_radii(j, i) << " ]\n";
                 }
             }
         }
@@ -476,8 +543,10 @@ void ArmourOptimizer::summarize_constraints(
     offset += NUM_FACTORS * num_time_steps;
 
     // TODO: fill in contact constraints
+    if (num_fixed_joints > 0) {
 
-    offset += 3 * num_fixed_joints * num_time_steps;
+        offset += 3 * num_fixed_joints * num_time_steps;
+    }
 
     // obstacle avoidance constraints
     for( Index i = 0; i < num_time_steps; i++ ) {
@@ -516,7 +585,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i - offset << " exceeds position limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << robotInfoPtr_->position_limits_lb[i - offset] + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
@@ -541,7 +610,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i - offset << " exceeds velocity limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << -robotInfoPtr_->velocity_limits[i - offset] + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "

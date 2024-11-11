@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::DataTpl<double> data(model);
+    pinocchio::Data data(model);
 
     ForwardKinematicsSolver fkSolver(&model);
 

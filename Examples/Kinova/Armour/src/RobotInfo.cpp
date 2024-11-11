@@ -77,9 +77,12 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     Vec3 gravity = map_to_vector(RobotConfig["gravity"], 3);
     model.gravity.linear() = gravity;
 
-    model.friction = map_to_vector(RobotConfig["friction"], num_motors);
-    model.damping = map_to_vector(RobotConfig["damping"], num_motors);
-    model.armature = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
+    model.friction.setZero();
+    model.friction.head(num_motors) = map_to_vector(RobotConfig["friction"], num_motors);
+    model.damping.setZero();
+    model.damping.head(num_motors) = map_to_vector(RobotConfig["damping"], num_motors);
+    model.armature.setZero();
+    model.armature.head(num_motors) = map_to_vector(RobotConfig["transmissionInertia"], num_motors);
     position_limits_lb = map_to_vector(RobotConfig["position_limits_lb"], num_motors);
     position_limits_ub = map_to_vector(RobotConfig["position_limits_ub"], num_motors);
     velocity_limits = map_to_vector(RobotConfig["velocity_limits"], num_motors);
@@ -106,24 +109,41 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     }
 
     num_spheres = 0;
+    sphere_radii.clear();
     for (const auto& entry : RobotConfig["collision_spheres"]) {
         std::string link_name = entry.first.as<std::string>();
         const YAML::Node& spheres = entry.second;
+        
+        if (model.existJointName(link_name)) {
+            for (const auto& sphere : spheres) {
+                const YAML::Node& offset_node = sphere["offset"];
+                const YAML::Node& radius_node = sphere["radius"];
+                Vec3 offset;
+                offset << offset_node[0].as<double>(), 
+                          offset_node[1].as<double>(), 
+                          offset_node[2].as<double>();
 
-        std::vector<std::pair<Vec3, double>> spheres_info;
+                sphere_radii.push_back(radius_node.as<double>());
 
-        for (const auto& sphere : spheres) {
-            const YAML::Node& offset_node = sphere["offset"];
+                pinocchio::SE3 sphere_placement;
+                sphere_placement.setIdentity();
+                sphere_placement.translation() = offset;
 
-            Vec3 offset;
-            offset << offset_node[0].as<double>(), offset_node[1].as<double>(), offset_node[2].as<double>();
-            double radius = sphere["radius"].as<double>();
+                model.addFrame(
+                    pinocchio::Frame(
+                        "collision-" + std::to_string(num_spheres),
+                        model.getJointId(link_name),
+                        0,
+                        sphere_placement,
+                        pinocchio::OP_FRAME)
+                    );
 
-            spheres_info.emplace_back(offset, radius);
+                num_spheres++;
+            }
         }
-
-        collision_spheres[link_name] = spheres_info;
-        num_spheres += spheres_info.size();
+        else {
+            throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
+        }
     }
 }
 
@@ -145,14 +165,6 @@ void RobotInfo::print() const {
     std::cout << "    M_max: " << ultimate_bound_info.M_max << std::endl;
     std::cout << "    M_min: " << ultimate_bound_info.M_min << std::endl;
     std::cout << "    Kr: " << ultimate_bound_info.Kr << std::endl;
-    std::cout << "Collision Spheres:" << std::endl;
-    for (const auto& entry : collision_spheres) {
-        std::cout << "    " << entry.first << std::endl;
-        for (const auto& sphere : entry.second) {
-            std::cout << "        Offset: " << sphere.first.transpose() << std::endl;
-            std::cout << "        Radius: " << sphere.second << std::endl;
-        }
-    }
 }
 
 }; // namespace Armour

@@ -13,7 +13,7 @@ int main() {
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
-    pinocchio::DataTpl<double> data(model);
+    pinocchio::Data data(model);
 
     // Disable rotor inertia, friction, and damping
     model.friction.setZero();

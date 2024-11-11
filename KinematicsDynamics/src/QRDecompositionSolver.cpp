@@ -60,7 +60,7 @@ void QRDecompositionSolver::computeRegroupMatrix(const double eps) {
     // Zero out elements in Kd that are below the threshold for numerical stability
     for (int i = 0; i < Kd.rows(); i++) {
         for (int j = 0; j < Kd.cols(); j++) {
-            if (std::abs(Kd(i, j)) < eps) {
+            if (fabs(Kd(i, j)) < eps) {
                 Kd(i, j) = 0.0;
             }
         }

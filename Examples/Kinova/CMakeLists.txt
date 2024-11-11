@@ -22,7 +22,7 @@ target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
-    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/PZDynamics/include
     ${CMAKE_SOURCE_DIR}/Costs/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
     ${CMAKE_SOURCE_DIR}/Optimization/include
@@ -44,11 +44,10 @@ target_link_libraries(Kinovalib PUBLIC
 
 # Armour
 add_library(Armourlib SHARED
-    Armour/src/PZsparse.cpp
+    Armour/src/PZSparse.cpp
     Armour/src/RobotInfo.cpp
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
-    Armour/src/ReachableSets.cpp
     Armour/src/ArmourOptimizer.cpp
 )
 
@@ -56,7 +55,7 @@ target_include_directories(Armourlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
-    ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
+    ${CMAKE_SOURCE_DIR}/PZDynamics/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
     ${CMAKE_SOURCE_DIR}/Optimization/include
     ${CMAKE_SOURCE_DIR}/Utils/include

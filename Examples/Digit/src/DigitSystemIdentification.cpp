@@ -245,7 +245,7 @@ bool DigitSystemIdentification::get_bounds_info(
             x_u[i] = x0(i) + 0.5;
         }
         else {
-            if (std::abs(x0(i)) > 0.1) {
+            if (fabs(x0(i)) > 0.1) {
                 if (x0(i) > 0) {
                     x_l[i] = (1 - default_maximum_uncertainty) * x0(i);
                     x_u[i] = (1 + default_maximum_uncertainty) * x0(i);

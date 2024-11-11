@@ -1,6 +1,7 @@
-#include "ReachableSets.h"
+#include "PZDynamics.h"
 #include "ArmourBezierCurves.h"
 #include "InverseDynamics.h"
+#include "CustomizedInverseDynamics.h"
 
 using namespace RAPTOR;
 using namespace Kinova;
@@ -11,8 +12,10 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
@@ -33,7 +36,7 @@ int main() {
     const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXd k_center = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
     const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
@@ -46,38 +49,22 @@ int main() {
             duration, 
             robotInfoPtr_->ultimate_bound_info);
     
-    // create a KinematicsDynamics instance to compute link PZs and torque PZs
-    std::shared_ptr<KinematicsDynamics> kdPtr = 
-        std::make_shared<KinematicsDynamics>(robotInfoPtr_, trajPtr_);
+    // create a PZDynamics instance to compute link PZs and torque PZs
+    std::shared_ptr<PZDynamics> dynPtr_ = 
+        std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
     auto start1 = std::chrono::high_resolution_clock::now();
-    GenerateJRS(robotInfoPtr_, trajPtr_);
+    dynPtr_->compute();
     auto end1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to generate JRS: " 
+    std::cout << "Time taken to generate reachable sets: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() 
               << " ms" << std::endl;
-    
-    // generate Link and Torque PZs
-    auto start2 = std::chrono::high_resolution_clock::now();
-    GenerateLinkAndTorquePZs(robotInfoPtr_, trajPtr_, kdPtr);
-    auto end2 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to generate Link and Torque PZs: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2).count() 
-              << " ms" << std::endl;
-
-    // // compute Robust Input Bounds
-    // auto start3 = std::chrono::high_resolution_clock::now();
-    // ComputeRobustInputBounds(robotInfoPtr_, trajPtr_, kdPtr);
-    // auto end3 = std::chrono::high_resolution_clock::now();
-    // std::cout << "Time taken to compute Robust Input Bounds: " 
-    //           << std::chrono::duration_cast<std::chrono::milliseconds>(end3 - start3).count() 
-    //           << " ms" << std::endl;
 
 // VALIDATION
     // randomly choose a trajectory parameter inside the range
-    const Eigen::VectorXd factor = Eigen::VectorXd::Random(robotInfoPtr_->num_motors); // [-1, 1]
+    const Eigen::VectorXd factor = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors); // [-1, 1]
     const Eigen::VectorXd k = k_center + k_range.cwiseProduct(factor);
 
     // create a trajectory instance (compute trajectory on discrete time instances)
@@ -88,7 +75,7 @@ int main() {
 
     std::shared_ptr<Trajectories> trajDiscretePtr_ = 
         std::make_unique<ArmourBezierCurves>(
-                duration, trajPtr_->num_time_steps, robotInfoPtr_->num_motors, Uniform, atp);
+            duration, trajPtr_->num_time_steps, robotInfoPtr_->num_motors, Uniform, atp);
 
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         // randomly sample inside each time interval
@@ -97,19 +84,19 @@ int main() {
                 (duration / trajPtr_->num_time_steps);
     }
 
+    // validate the joint trajectory reachable sets
     trajDiscretePtr_->compute(k, false);
 
-    // validate the joint trajectory reachable sets
         // cos of q (joint trajectory)
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            // slice the JRS PZ at k (the actual trajectory parameter)
-            const Interval cos_q_range = trajPtr_->cos_q_des(j, i).slice(factor);
-            const double actual_cos_q = cos(trajDiscretePtr_->q(i)(j));
+            const PZSparse test_pz = cos(trajPtr_->q_des(j, i));
+            const Interval cos_q_range = test_pz.slice(factor);
+            const double actual_cos_q = std::cos(trajDiscretePtr_->q(i)(j));
 
             // check if actual_cos_q is inside the range
-            if (actual_cos_q < cos_q_range.lower() - 1e-5 || 
-                actual_cos_q > cos_q_range.upper() + 1e-5) {
+            if (actual_cos_q < cos_q_range.lower() || 
+                actual_cos_q > cos_q_range.upper()) {
                 std::cerr << "Validation failed for cos(q) at time step " << i 
                           << " for motor " << j << ": "
                           << actual_cos_q << " not in [ " 
@@ -122,10 +109,12 @@ int main() {
         // sin of q (joint trajectory)
     for (int i = 0; i < trajPtr_->num_time_steps; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            const Interval sin_q_range = trajPtr_->sin_q_des(j, i).slice(factor);
-            const double actual_sin_q = sin(trajDiscretePtr_->q(i)(j));
-            if (actual_sin_q < sin_q_range.lower() - 1e-5 || 
-                actual_sin_q > sin_q_range.upper() + 1e-5) {
+            const PZSparse test_pz = sin(trajPtr_->q_des(j, i));
+            const Interval sin_q_range = test_pz.slice(factor);
+            const double actual_sin_q = std::sin(trajDiscretePtr_->q(i)(j));
+
+            if (actual_sin_q < sin_q_range.lower() || 
+                actual_sin_q > sin_q_range.upper()) {
                 std::cerr << "Validation failed for sin(q) at time step " << i 
                           << " for motor " << j << ": "
                           << actual_sin_q << " not in [ " 
@@ -140,8 +129,8 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             const Interval q_d_range = trajPtr_->qd_des(j, i).slice(factor);
             const double actual_q_d = trajDiscretePtr_->q_d(i)(j);
-            if (actual_q_d < q_d_range.lower() - 1e-4 || 
-                actual_q_d > q_d_range.upper() + 1e-4) {
+            if (actual_q_d < q_d_range.lower() || 
+                actual_q_d > q_d_range.upper()) {
                 std::cerr << "Validation failed for q_d at time step " << i 
                           << " for motor " << j << ": "
                           << actual_q_d << " not in [ " 
@@ -156,8 +145,8 @@ int main() {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
             Interval q_dd_range = trajPtr_->qdda_des(j, i).slice(factor);
             const double actual_q_dd = trajDiscretePtr_->q_dd(i)(j);
-            if (actual_q_dd < q_dd_range.lower() - 1e-3 || 
-                actual_q_dd > q_dd_range.upper() + 1e-3) {
+            if (actual_q_dd < q_dd_range.lower() || 
+                actual_q_dd > q_dd_range.upper()) {
                 std::cerr << "Validation failed for q_dd at time step " << i 
                           << " for motor " << j << ": "
                           << actual_q_dd << " not in [ " 
@@ -168,17 +157,19 @@ int main() {
     }
 
     // validate the torque PZs
-    std::shared_ptr<InverseDynamics> idPtr_ = 
-        std::make_shared<InverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_);
-    idPtr_->compute(k, false);
+    Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
+    jtype(jtype.size() - 1) = 0;
+    std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
+        std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
+    cidPtr_->compute(k, false);
     
-    for (int i = 0; i < idPtr_->N; i++) {
+    for (int i = 0; i < cidPtr_->N; i++) {
         for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-            const Interval torqueRange = kdPtr->torque_nom(j, i).slice(factor);
-            const double actualTorque = idPtr_->tau(i)(j);
+            const Interval torqueRange = dynPtr_->data_sparses[i].tau(j).slice(factor);
+            const double actualTorque = cidPtr_->tau(i)(j);
 
-            if (actualTorque < torqueRange.lower() - 1e-3 || 
-                actualTorque > torqueRange.upper() + 1e-3) {
+            if (actualTorque < torqueRange.lower() || 
+                actualTorque > torqueRange.upper()) {
                 std::cerr << "Validation failed for tau at time step " << i 
                           << " for motor " << j << ": "
                           << actualTorque << " not in [ " 
@@ -188,12 +179,37 @@ int main() {
         }
     }
 
+    // validate the contact force PZs
+    for (int i = 0; i < cidPtr_->N; i++) {
+        const Vector6d& actualLambda = cidPtr_->lambda(i);
+        for (int j = 0; j < 3; j++) {
+            const Interval forceRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j).slice(factor);
+            const Interval momentRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j).slice(factor);            
+            if (actualLambda(j + 3) < forceRange.lower() || 
+                actualLambda(j + 3) > forceRange.upper()) {
+                std::cerr << "Validation failed for contact force at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j+3) << " not in [ " 
+                          << forceRange.lower() << ", " 
+                          << forceRange.upper() << " ]" << std::endl;
+            }
+            if (actualLambda(j) < momentRange.lower() || 
+                actualLambda(j) > momentRange.upper()) {
+                std::cerr << "Validation failed for contact moment at time step " << i 
+                          << " for direction " << j << ": "
+                          << actualLambda(j) << " not in [ " 
+                          << momentRange.lower() << ", " 
+                          << momentRange.upper() << " ]" << std::endl;
+            }
+        }
+    }
+
     // // validate that torque_int overapproximate torque_nom
     // // you need to comment out line 44 - 47 in ReachableSets.cpp
-    // for (int i = 0; i < idPtr_->N; i++) {
+    // for (int i = 0; i < cidPtr_->N; i++) {
     //     for (int j = 0; j < robotInfoPtr_->num_motors; j++) {
-    //         const Interval torqueRange = kdPtr->torque_int(j, i).slice(factor);
-    //         const Interval torqueNomRange = kdPtr->torque_nom(j, i).slice(factor);
+    //         const Interval torqueRange = dynPtr_->torque_int(j, i).slice(factor);
+    //         const Interval torqueNomRange = dynPtr_->torque_nom(j, i).slice(factor);
     //         if (!((torqueRange.lower() < torqueNomRange.lower() - 1e-3) &&
     //               (torqueRange.upper() > torqueNomRange.upper() + 1e-3)))
     //         {
