@@ -1,7 +1,11 @@
 #ifndef PARAMETERIZED_TRAJECTORY_H
 #define PARAMETERIZED_TRAJECTORY_H
 
+#include "pinocchio/algorithm/model.hpp"
+#include "pinocchio/algorithm/crba.hpp"
+
 #include "RobotInfo.h"
+#include "Utils.h"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -40,7 +44,7 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    ultimate_bound ultimate_bound_info;
+    std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 
     VecX k_center;
     VecX k_range;
@@ -95,10 +99,12 @@ public:
         const VecX& k_center_inp,
         const VecX& k_range_inp,
         const double duration_inp,
-        const ultimate_bound& ultimate_bound_info_inp,
+        const std::shared_ptr<RobotInfo>& robotInfoPtr_inp,
         const size_t num_time_steps_inp = DEFAULT_NUM_TIME_STEPS);
 
     ~BezierCurveInterval() {};
+
+    void sample_eigenvalues(size_t num_samples = 1000);
 
     // set up the trajectory parameters
     void setTrajectoryParameters(

@@ -132,7 +132,7 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
         q0, q_d0, q_dd0, 
         k_center, k_range, 
         duration, 
-        robotInfoPtr_->ultimate_bound_info);
+        robotInfoPtr_);
 
     if (dynPtr_ == nullptr) {
         dynPtr_ = std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
@@ -219,17 +219,17 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
     }
     
     // recover trajectory information
-    trajInfo.resize(trajPtr_->num_time_steps, 3 * robotInfoPtr_->num_motors + 1);
+    trajInfo.resize(3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps);
     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-        const double t = duration * (i + 0.5) / (trajPtr_->num_time_steps - 1);
-        const double s = t / duration;
-        for (size_t j = 0; j < robotInfoPtr_->num_motors; j++) {
-            const double k_actual = mynlp->solution(j) * trajPtr_->k_range(j);
-            trajInfo(i, j) = q_des_func(trajPtr_->q0(j), trajPtr_->Tqd0(j), trajPtr_->TTqdd0(j), k_actual, s);
-            trajInfo(i, j + robotInfoPtr_->num_motors) = qd_des_func(trajPtr_->q0(j), trajPtr_->Tqd0(j), trajPtr_->TTqdd0(j), k_actual, s, duration);
-            trajInfo(i, j + 2 * robotInfoPtr_->num_motors) = qdd_des_func(trajPtr_->q0(j), trajPtr_->Tqd0(j), trajPtr_->TTqdd0(j), k_actual, s, duration);
-        }
-        trajInfo(i, robotInfoPtr_->num_motors * 3) = t;
+        VecX q(robotInfoPtr_->num_motors);
+        VecX qd(robotInfoPtr_->num_motors);
+        VecX qdd(robotInfoPtr_->num_motors);
+        const double t = duration * (i + 0.5) / trajPtr_->num_time_steps;
+        trajPtr_->computeTrajectories(mynlp->solution, t, q, qd, qdd);
+        trajInfo.col(i).head(robotInfoPtr_->num_motors) = q;
+        trajInfo.col(i).segment(robotInfoPtr_->num_motors, robotInfoPtr_->num_motors) = qd;
+        trajInfo.col(i).segment(robotInfoPtr_->num_motors * 2, robotInfoPtr_->num_motors) = qdd;
+        trajInfo(robotInfoPtr_->num_motors * 3, i) = t;
     }
 
     // recover sphere occupancy information for collision checking
@@ -271,7 +271,7 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
     // TODO: recover contact constraints (reachable sets) here
 
     // export to outputs
-    const size_t shape_ptr1[] = {trajPtr_->num_time_steps, 3 * robotInfoPtr_->num_motors + 1};
+    const size_t shape_ptr1[] = {3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps};
     auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
         trajInfo.data(),
         2,

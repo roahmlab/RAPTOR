@@ -38,7 +38,7 @@ int main() {
             q0, q_d0, q_dd0, 
             k_center, k_range, 
             duration, 
-            robotInfoPtr_->ultimate_bound_info);
+            robotInfoPtr_);
     
     // create a PZDynamics instance to compute link PZs and torque PZs
     std::shared_ptr<PZDynamics> dynPtr_ = 

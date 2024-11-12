@@ -19,13 +19,6 @@ int main() {
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
-    // turn off tracking error for validation
-    robotInfoPtr_->ultimate_bound_info.eps = 0;
-    robotInfoPtr_->ultimate_bound_info.qe = 0;
-    robotInfoPtr_->ultimate_bound_info.qde = 0;
-    robotInfoPtr_->ultimate_bound_info.qdae = 0;
-    robotInfoPtr_->ultimate_bound_info.qddae = 0;
-
     // turn off friction for validation
     robotInfoPtr_->model.friction.setZero();
     
@@ -47,7 +40,14 @@ int main() {
             q0, q_d0, q_dd0, 
             k_center, k_range, 
             duration, 
-            robotInfoPtr_->ultimate_bound_info);
+            robotInfoPtr_);
+
+    // turn off tracking error for validation
+    robotInfoPtr_->ultimate_bound_info.eps = 0;
+    robotInfoPtr_->ultimate_bound_info.qe = 0;
+    robotInfoPtr_->ultimate_bound_info.qde = 0;
+    robotInfoPtr_->ultimate_bound_info.qdae = 0;
+    robotInfoPtr_->ultimate_bound_info.qddae = 0;
     
     // create a PZDynamics instance to compute link PZs and torque PZs
     std::shared_ptr<PZDynamics> dynPtr_ = 

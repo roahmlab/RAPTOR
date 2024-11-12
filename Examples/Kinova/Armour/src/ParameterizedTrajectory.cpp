@@ -25,6 +25,8 @@ BezierCurveInterval::BezierCurveInterval() {
     qdda_des.resize(NUM_FACTORS, num_time_steps);
 
     ds = 1.0 / num_time_steps;
+
+    sample_eigenvalues();
 }
 
 BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp, 
@@ -33,7 +35,7 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
                                          const VecX& k_center_inp,
                                          const VecX& k_range_inp,
                                          const double duration_inp,
-                                         const ultimate_bound& ultimate_bound_info_inp,
+                                         const std::shared_ptr<RobotInfo>& robotInfoPtr_inp,
                                          const size_t num_time_steps_inp) : 
     q0(q0_inp),
     qd0(qd0_inp),
@@ -41,7 +43,7 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
     k_center(k_center_inp),
     k_range(k_range_inp),
     duration(duration_inp),
-    ultimate_bound_info(ultimate_bound_info_inp),
+    robotInfoPtr_(robotInfoPtr_inp),
     num_time_steps(num_time_steps_inp) {
     Tqd0 = qd0 * duration; 
     TTqdd0 = qdd0 * duration * duration; 
@@ -83,6 +85,76 @@ BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp,
     }
 
     ds = 1.0 / num_time_steps;
+
+    sample_eigenvalues();
+}
+
+void BezierCurveInterval::sample_eigenvalues(size_t num_samples) {
+    pinocchio::Model model = robotInfoPtr_->model;
+
+    if (robotInfoPtr_->num_joints > robotInfoPtr_->num_motors) {
+        pinocchio::Model model_reduced;
+        std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id = {(pinocchio::JointIndex)model.nv};
+        pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, Eigen::VectorXd::Zero(model.nv), model_reduced);
+        model_reduced.armature = model.armature.head(robotInfoPtr_->num_motors);
+        model = model_reduced;
+    }
+    pinocchio::Data data(model);
+
+    VecX q = VecX::Zero(robotInfoPtr_->num_motors);
+    VecX qd = VecX::Zero(robotInfoPtr_->num_motors);
+    VecX qdd = VecX::Zero(robotInfoPtr_->num_motors);
+    
+    double M_max = 0.0;
+    double M_min = std::numeric_limits<double>::max();
+
+    std::cout << "Sampling " << num_samples << " configurations..." << std::endl;
+    for (int h = 0; h < num_samples; h++) {
+        // generate random configurations along the trajectory
+        double t = std::rand() / (double)RAND_MAX * duration;
+        VecX k = VecX::Random(robotInfoPtr_->num_motors);
+        computeTrajectories(k, t, q, qd, qdd);
+        q += Eigen::VectorXd::Random(robotInfoPtr_->num_motors) * 0.05;
+
+        // compute the inertia mass matrix
+        MatX M = pinocchio::crba(model, data, q);
+        for (int i = 0; i < M.rows(); i++) {
+            for (int j = i + 1; j < M.cols(); j++) {
+                M(j, i) = M(i, j);
+            }
+        }
+
+        // compute the eigenvalues
+        Eigen::EigenSolver<MatX> es(M);
+        Eigen::VectorXd eigenvalues = es.eigenvalues().real();
+
+        // update the maximum and minimum eigenvalues
+        for (int i = 0; i < eigenvalues.size(); i++) {
+            M_max = std::max(M_max, eigenvalues(i));
+            M_min = std::min(M_min, eigenvalues(i));
+        }
+    }
+
+    std::cout << "M_max: " << M_max << std::endl;
+    std::cout << "M_min: " << M_min << std::endl;
+
+    auto& ultimate_bound_info = robotInfoPtr_->ultimate_bound_info;
+    ultimate_bound_info.M_max = M_max;
+    ultimate_bound_info.M_min = M_min;
+
+    // recompute the ultimate bound
+    robotInfoPtr_->ultimate_bound_info.eps = std::sqrt(2 * ultimate_bound_info.V_m / ultimate_bound_info.M_min);
+    ultimate_bound_info.qe = ultimate_bound_info.eps / ultimate_bound_info.Kr;
+    ultimate_bound_info.qde = 2 * ultimate_bound_info.eps;
+    ultimate_bound_info.qdae = ultimate_bound_info.eps;
+    ultimate_bound_info.qddae = 2 * ultimate_bound_info.Kr * ultimate_bound_info.eps;
+
+    std::cout << "Ultimate bound information updated:" << std::endl;
+    std::cout << "eps: " << ultimate_bound_info.eps << std::endl;
+    std::cout << "qe: " << Utils::rad2deg(ultimate_bound_info.qe) << " degree" << std::endl;
+    std::cout << "qde: " << Utils::rad2deg(ultimate_bound_info.qde) << " degree/s" << std::endl;
+    std::cout << "qdae: " << Utils::rad2deg(ultimate_bound_info.qdae) << " degree/s" << std::endl;
+    std::cout << "qddae: " << Utils::rad2deg(ultimate_bound_info.qddae) << " degree/s^2" << std::endl;
 }
 
 void BezierCurveInterval::setTrajectoryParameters(const VecX& q0_inp, 
@@ -148,6 +220,8 @@ void BezierCurveInterval::computeTrajectories(
 
 void BezierCurveInterval::makePolyZono(const int s_ind) {
     assert(s_ind < num_time_steps);
+
+    const auto& ultimate_bound_info = robotInfoPtr_->ultimate_bound_info;
 
     // const double s_lb = s_ind * ds;
     // const double s_ub = (s_ind + 1) * ds;
