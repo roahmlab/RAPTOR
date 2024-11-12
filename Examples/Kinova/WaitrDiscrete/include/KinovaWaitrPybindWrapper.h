@@ -89,7 +89,7 @@ public:
     double T = 1;
     int N = 32;
     int degree = ARMOUR_BEZIER_CURVE_DEGREE;
-    VecX qdes;
+    VecX q_des;
     double tplan = 0;
     int tplan_n = 0;
 

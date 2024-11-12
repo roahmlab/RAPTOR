@@ -12,7 +12,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     
     model.gravity.linear()(2) = GRAVITY;
 
-    qdes.resize(model.nv);
+    q_des.resize(model.nv);
 
     mynlp = new KinovaOptimizer();
     mynlp->display_info = display_info;
@@ -144,7 +144,7 @@ void KinovaPybindWrapper::set_target(const nb_1d_float q_des_inp,
     }
 
     for (int i = 0; i < model.nv; i++) {
-        qdes(i) = q_des_inp(i);
+        q_des(i) = q_des_inp(i);
     }
 
     tplan_n = int(tplan / T * N);
@@ -164,10 +164,10 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     // Define initial guess
-    // VecX z0 = 0.5 * (qdes - atp.q0);
-    VecX z0 = VecX::Zero(qdes.size());
-    // VecX z0 = qdes - atp.q0;
-    // VecX z0 = 2*(qdes - ((atp.q_dd0*T*T)/64 + (5*atp.q_d0*T)/32 + atp.q0/2)) - atp.q0;
+    // VecX z0 = 0.5 * (q_des - atp.q0);
+    VecX z0 = VecX::Zero(q_des.size());
+    // VecX z0 = q_des - atp.q0;
+    // VecX z0 = 2*(q_des - ((atp.q_dd0*T*T)/64 + (5*atp.q_d0*T)/32 + atp.q0/2)) - atp.q0;
 
     // Initialize Kinova optimizer
     try {
@@ -181,7 +181,7 @@ nb::tuple KinovaPybindWrapper::optimize() {
                               boxCenters,
                               boxOrientation,
                               boxSize,
-                              qdes,
+                              q_des,
                               tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,
@@ -251,7 +251,7 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
                                 boxCenters,
                                 boxOrientation,
                                 boxSize,
-                                qdes,
+                                q_des,
                                 tplan_n,
                                 joint_limits_buffer,
                                 velocity_limits_buffer,

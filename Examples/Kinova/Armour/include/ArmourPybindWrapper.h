@@ -5,17 +5,18 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 
-#include "KinovaOptimizer.h"
+#include "ArmourOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
 namespace RAPTOR {
 namespace Kinova {
+namespace Armour {
 
 namespace nb = nanobind;
 
-class KinovaPybindWrapper {
+class ArmourPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
@@ -26,17 +27,17 @@ public:
     using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
-    KinovaPybindWrapper() = default;
+    ArmourPybindWrapper() = default;
 
-    KinovaPybindWrapper(const std::string urdf_filename,
-                        const bool display_info);
+    ArmourPybindWrapper(const std::string urdf_filename,
+                        const std::string config_filename,
+                        const bool display_info = false);
 
     // Destructor
-    ~KinovaPybindWrapper() = default;
+    ~ArmourPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_float obstacles_inp,
-                       const double collision_buffer_inp);
+    void set_obstacles(const nb_2d_float obstacles_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -50,61 +51,57 @@ public:
     void set_trajectory_parameters(const nb_1d_float q0_inp,
                                    const nb_1d_float qd0_inp,
                                    const nb_1d_float qdd0_inp,
-                                   const double duration_inp);
-
-    void set_buffer(const nb_1d_float joint_limits_buffer_inp,
-                    const nb_1d_float velocity_limits_buffer_inp,
-                    const nb_1d_float torque_limits_buffer_inp);
-
-    void set_target(const nb_1d_float q_des_inp,
-                    const double tplan_inp);
+                                   const nb_1d_float k_center_inp,
+                                   const nb_1d_float k_range_inp,
+                                   const double duration_inp,
+                                   const nb_1d_float q_des_inp);
 
     nb::tuple optimize();
 
     nb::tuple analyze_solution();
 
     // Class members
-    // robot model
-    Model model;
+    std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
+
+    std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
+    std::shared_ptr<PZDynamics> dynPtr_ = nullptr;
 
     // obstacle information
     int num_obstacles = 0;
     std::vector<Vec3> boxCenters;
     std::vector<Vec3> boxOrientation;
     std::vector<Vec3> boxSize;
-    double collision_buffer = 0;
 
-    // trajectory information
-    ArmourTrajectoryParameters atp;
-    double T = 1;
-    int N = 17;
-    int degree = 5;
+    // trajectory parameters
+    VecX q0;
+    VecX q_d0;
+    VecX q_dd0;
+    VecX k_center;
+    VecX k_range;
+    double duration;
     VecX q_des;
-    double tplan = 0;
-    int tplan_n = 0;
-
-    // buffer information
-    VecX joint_limits_buffer;
-    VecX velocity_limits_buffer;
-    VecX torque_limits_buffer;
     
-    SmartPtr<KinovaOptimizer> mynlp;
+    SmartPtr<ArmourOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo; // trajectory information
+    // detailed information of the solution trajectory and the corresponding reachable sets
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> trajInfo;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_x;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_y;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_z;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_radius;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> torque_center;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> torque_radius;
+    // TODO: add access to contact constraints here
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;
     bool set_ipopt_parameters_check = false;
     bool set_trajectory_parameters_check = false;
-    bool set_buffer_check = false;
-    bool set_target_check = false;
     bool has_optimized = false;
 };
 
+}; // namespace Armour
 }; // namespace Kinova
 }; // namespace RAPTOR
 

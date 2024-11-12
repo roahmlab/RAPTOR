@@ -40,7 +40,7 @@ public:
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input,
-        const VecX& qdes_input,
+        const VecX& q_des_input,
         const int tplan_n_input,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
@@ -107,7 +107,7 @@ public:
 
     std::shared_ptr<InverseDynamics> idPtr_;
 
-    VecX qdes;
+    VecX q_des;
     int tplan_n = 0;
 };
 

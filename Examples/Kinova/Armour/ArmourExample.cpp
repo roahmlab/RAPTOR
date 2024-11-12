@@ -60,11 +60,6 @@ int main() {
         boxSize[i] << 0.1, 0.1, 0.1;
     }
 
-    // suction cup info
-    const double suction_force = 0.0; // N
-    const double mu = 0.7; // friction coefficient
-    const double suction_radius = 0.1; // m
-
     // targets
     Eigen::VectorXd q_des = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
     double t_plan = 0.5 * duration;
@@ -88,10 +83,7 @@ int main() {
                               dynPtr_, 
                               boxCenters,
                               boxOrientation,
-                              boxSize,
-                              suction_force,
-                              mu,
-                              suction_radius);
+                              boxSize);
     }
     catch (int errorCode) {
         throw std::runtime_error("Error initializing Ipopt! Check previous error message!");

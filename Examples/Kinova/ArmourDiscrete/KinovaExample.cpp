@@ -43,8 +43,8 @@ int main() {
     const int degree = ARMOUR_BEZIER_CURVE_DEGREE;
 
     // Define target
-    Eigen::VectorXd qdes(model.nq);
-    qdes.setConstant(1.0);
+    Eigen::VectorXd q_des(model.nq);
+    q_des.setConstant(1.0);
     const int tplan_n = N / 2;
 
     // Define initial guess
@@ -71,7 +71,7 @@ int main() {
                               boxCenters,
                               boxOrientation,
                               boxSize,
-                              qdes,
+                              q_des,
                               tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,

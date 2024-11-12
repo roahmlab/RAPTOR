@@ -12,7 +12,7 @@ KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filena
 
     model.gravity.linear()(2) = GRAVITY;
 
-    qdes = VecX::Zero(NUM_JOINTS);
+    q_des = VecX::Zero(NUM_JOINTS);
     joint_limits_buffer = VecX::Zero(NUM_JOINTS);
     velocity_limits_buffer = VecX::Zero(NUM_JOINTS);
     torque_limits_buffer = VecX::Zero(NUM_JOINTS);
@@ -192,7 +192,7 @@ void KinovaWaitrPybindWrapper::set_target(const nb_1d_float q_des_inp,
     }
 
     for (int i = 0; i < NUM_JOINTS; i++) {
-        qdes(i) = q_des_inp(i);
+        q_des(i) = q_des_inp(i);
     }
 
     tplan_n = int(tplan / T * N);
@@ -229,7 +229,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
                               boxCenters,
                               boxOrientation,
                               boxSize,
-                              qdes,
+                              q_des,
                               tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,
@@ -297,7 +297,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
                                 boxCenters,
                                 boxOrientation,
                                 boxSize,
-                                qdes,
+                                q_des,
                                 tplan_n,
                                 joint_limits_buffer,
                                 velocity_limits_buffer,

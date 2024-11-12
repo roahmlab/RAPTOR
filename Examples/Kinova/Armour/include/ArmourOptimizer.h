@@ -31,10 +31,7 @@ public:
         const std::shared_ptr<PZDynamics>& dynPtr_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
-        const std::vector<Vec3>& boxSize_input,
-        Number suction_force_input = 0.0,
-        Number mu_input = 0.7,
-        Number suction_radius_input = 0.05
+        const std::vector<Vec3>& boxSize_input
     );
 
     /**@name Overloaded from TNLP */
@@ -143,10 +140,6 @@ public:
     std::shared_ptr<PZDynamics> dynPtr_;
     
     std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
-
-    Number suction_force = 0.0; // suction force
-    Number mu = 0.5; // friction coefficient
-    Number suction_radius = 0.1; // suction cup radius
 
     size_t num_time_steps = 0;
     size_t num_spheres = 0;

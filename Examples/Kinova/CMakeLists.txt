@@ -369,6 +369,29 @@ nanobind_compile_options(KinovaHLP_nanobind PUBLIC
 set_property(TARGET KinovaHLP_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
+nanobind_add_module(armour_nanobind 
+    NB_SHARED LTO
+    Armour/ArmourPybind.cpp
+    Armour/src/ArmourPybindWrapper.cpp)
+target_include_directories(armour_nanobind PUBLIC
+    Kinova/Armour/include)
+target_link_libraries(armour_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    Armourlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(armour_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET armour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO
     ArmourDiscrete/KinovaPybind.cpp

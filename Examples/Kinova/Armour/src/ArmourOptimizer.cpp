@@ -12,10 +12,7 @@ bool ArmourOptimizer::set_parameters(
     const std::shared_ptr<PZDynamics>& dynPtr_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
-    const std::vector<Vec3>& boxSize_input,
-    Number suction_force_input,
-    Number mu_input,
-    Number suction_radius_input
+    const std::vector<Vec3>& boxSize_input
  ) 
  {
     enable_hessian = false;
@@ -42,10 +39,6 @@ bool ArmourOptimizer::set_parameters(
             boxCenters_input, boxOrientation_input, boxSize_input);
         bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
     }
-    
-    suction_force = suction_force_input;
-    mu = mu_input;
-    suction_radius = suction_radius_input;
 
     return true;
 }
@@ -298,7 +291,7 @@ bool ArmourOptimizer::eval_g(
         try {
             #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
             for (i = 0; i < num_time_steps; i++) {
-                for (int j = 0; j < NUM_FACTORS; j++) {
+                for (size_t j = 0; j < NUM_FACTORS; j++) {
                     const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
                     const Interval res = PZtorque.slice(x);
                     g[i * NUM_FACTORS + j] = getCenter(res);
@@ -325,7 +318,7 @@ bool ArmourOptimizer::eval_g(
                     g[i * NUM_CONTACT_CONSTRAINTS + offset] = supportForceRange.lower();
 
                     // (2) friction cone constraints
-                    for (int j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
+                    for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
                         const Interval frictionConstraintRange = dynPtr_->friction_PZs(j, i).slice(x);
 
                         // need to make sure the lower bound is larger than 0
@@ -333,7 +326,7 @@ bool ArmourOptimizer::eval_g(
                     }      
 
                     // (3) ZMP constraints
-                    for (int j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
+                    for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
                         const Interval zmpConstraintRange = dynPtr_->zmp_PZs(j, i).slice(x);
 
                         // need to make sure the lower bound is larger than 0
@@ -352,7 +345,7 @@ bool ArmourOptimizer::eval_g(
         try {
             #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
             for (i = 0; i < num_time_steps; i++) {
-                for (int j = 0; j < num_spheres; j++) {
+                for (size_t j = 0; j < num_spheres; j++) {
                     const std::string sphere_name = "collision-" + std::to_string(j);
                     const pinocchio::FrameIndex frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
@@ -431,7 +424,7 @@ bool ArmourOptimizer::eval_jac_g(
         try {
             #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
             for(i = 0; i < num_time_steps; i++) {
-                for (int j = 0; j < NUM_FACTORS; j++) {
+                for (size_t j = 0; j < NUM_FACTORS; j++) {
                     const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
                     PZtorque.slice(values + (i * NUM_FACTORS + j) * NUM_FACTORS, x);
                 }
@@ -462,7 +455,7 @@ bool ArmourOptimizer::eval_jac_g(
         try {
             #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
             for(i = 0; i < num_time_steps; i++) {
-                for (int j = 0; j < num_spheres; j++) {
+                for (size_t j = 0; j < num_spheres; j++) {
                     const std::string sphere_name = "collision-" + std::to_string(j);
                     const pinocchio::FrameIndex frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
