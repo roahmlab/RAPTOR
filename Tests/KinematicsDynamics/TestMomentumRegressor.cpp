@@ -1,14 +1,14 @@
-#define BOOST_TEST_MODULE RegressorInverseDynamicsTest
+#define BOOST_TEST_MODULE MomentumRegressorTest
 #include <boost/test/included/unit_test.hpp>
 
-#include "RegressorInverseDynamics.h"
+#include "MomentumRegressor.h"
 #include <chrono>
 #include "pinocchio/algorithm/rnea.hpp"
 #include "Polynomials.h"
 
 using namespace RAPTOR;
 
-BOOST_AUTO_TEST_SUITE(RegressorInverseDynamicsTest)
+BOOST_AUTO_TEST_SUITE(MomentumRegressorTest)
 
 BOOST_AUTO_TEST_CASE(ComputeTest) {
     // Define robot model
@@ -22,6 +22,9 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     model.friction.setZero();
     model.damping.setZero();
     model.armature.setZero();
+    
+    // Disable gravity
+    model.gravity.setZero();
 
     // Create a trajectory
     int N = 128;  // number of time steps
@@ -30,8 +33,8 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
-    // Initialize RegressorInverseDynamics
-    RegressorInverseDynamics regressor_id(model, trajPtr, false);
+    // Initialize MomentumRegressor
+    MomentumRegressor regressor_id(model, trajPtr);
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));
@@ -46,10 +49,10 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
         Eigen::VectorXd momentum_pinocchio = pinocchio::rnea(
             model, data, 
             trajPtr->q(i), 
-            trajPtr->q_d(i),
-            trajPtr->q_dd(i));
+            Eigen::VectorXd::Zero(model.nv), 
+            trajPtr->q_d(i));
 
-        BOOST_CHECK_SMALL((regressor_id.tau(i) - momentum_pinocchio).norm(), 1e-6);
+        BOOST_CHECK_SMALL((regressor_id.tau(i) - momentum_pinocchio).norm(), 1e-8);
     }
 }
 
@@ -73,8 +76,8 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
-    // Initialize RegressorInverseDynamics
-    RegressorInverseDynamics regressor_id(model, trajPtr);
+    // Initialize MomentumRegressor
+    MomentumRegressor regressor_id(model, trajPtr);
 
     // Generate random joint p, v, and a (not accurate)
     std::srand(std::time(nullptr));

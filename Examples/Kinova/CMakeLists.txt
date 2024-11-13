@@ -4,21 +4,17 @@ add_library(Kinovalib SHARED
     ArmourDiscrete/src/KinovaOptimizer.cpp
     ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
-    SystemIdentification/DataFilter/src/DataFilterOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
-    SystemIdentification/ExcitingTrajectories/src/EndEffectorConditionalNumberOptimizer.cpp
+    SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
     SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
-    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgFull.cpp
-    # SystemIdentification/IterativeSystemIdentification/src/SysIDAlgCombineAllCases.cpp)
 
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/InverseKinematics/include
     ${CMAKE_CURRENT_SOURCE_DIR}/ArmourDiscrete/include
     ${CMAKE_CURRENT_SOURCE_DIR}/WaitrDiscrete/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/DataFilter/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
@@ -166,31 +162,10 @@ target_compile_options(KinovaWaitr_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-###   
-add_executable(KinovaFilter_example 
-    SystemIdentification/DataFilter/KinovaAccelerationEstimator.cpp)
-target_include_directories(KinovaFilter_example PUBLIC
-    systemIdentification/DataFilter/include
-    SystemIdentification/ExcitingTrajectories/include
-    SystemIdentification/IterativeSystemIdentification/include)
-target_link_libraries(KinovaFilter_example PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Kinovalib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES})
-target_compile_options(KinovaFilter_example PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-
 ###
 add_executable(KinovaExciting_example 
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
 target_include_directories(KinovaExciting_example PUBLIC
-    ystemIdentification/DataFilter/include
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(KinovaExciting_example PUBLIC
@@ -208,15 +183,14 @@ target_compile_options(KinovaExciting_example PUBLIC
 
 
 ###
-add_executable(KinovaEndeffectorExciting_example
-    SystemIdentification/ExcitingTrajectories/KinovaRegressorExampleEndeffector.cpp)
+add_executable(KinovaPayloadExciting_example
+    SystemIdentification/ExcitingTrajectories/KinovaRegressorExamplePayload.cpp)
 
-target_include_directories(KinovaEndeffectorExciting_example PUBLIC
-    SystemIdentification/DataFilter/include
+target_include_directories(KinovaPayloadExciting_example PUBLIC
     SystemIdentification/ExcitingTrajectories/include
     SystemIdentification/IterativeSystemIdentification/include)
 
-target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
+target_link_libraries(KinovaPayloadExciting_example PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -227,7 +201,7 @@ target_link_libraries(KinovaEndeffectorExciting_example PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 
-target_compile_options(KinovaEndeffectorExciting_example PUBLIC
+target_compile_options(KinovaPayloadExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
     

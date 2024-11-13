@@ -4,6 +4,7 @@ namespace RAPTOR {
 
 RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input, 
                                                    const std::shared_ptr<Trajectories>& trajPtr_input,
+                                                   const bool include_motor_dynamics,
                                                    Eigen::VectorXi jtype_input) :
     jtype(jtype_input) {
     trajPtr_ = trajPtr_input;
@@ -28,9 +29,14 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     I.resize(1, modelPtr_->nv);
 
     numInertialParams = 10 * modelPtr_->nv;
-    numParams = 10 * modelPtr_->nv + // inertial parameters
-                3 * modelPtr_->nv;   // motor dynamics parameters
-    // numParams = 10 * modelPtr_->nv; // inertial parameters
+    if (include_motor_dynamics) {
+        numParams = 10 * modelPtr_->nv + // inertial parameters
+                    3 * modelPtr_->nv;   // motor dynamics parameters
+    }
+    else {
+        numParams = numInertialParams;
+    }
+
     phi = VecX::Zero(numParams); 
 
     for (int i = 0; i < modelPtr_->nv; i++) {
@@ -44,9 +50,11 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
             modelPtr_->inertias[pinocchio_joint_id]
                 .toDynamicParameters();
 
-        phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
-                                                     modelPtr_->damping(i),
-                                                     modelPtr_->armature(i);
+        if (include_motor_dynamics) {
+            phi.segment<3>(numInertialParams + 3 * i) << modelPtr_->friction(i),
+                                                         modelPtr_->damping(i),
+                                                         modelPtr_->armature(i);
+        }
     }
 
     a_grav << modelPtr_->gravity.angular(),
@@ -105,8 +113,6 @@ void RegressorInverseDynamics::compute(const VecX& z,
         // forward pass
         Vec6 vJ;
         Mat6 XJ, dXJdq;
-        // Yfull.setZero();
-        // Ycurrent.setZero();
 
         Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
         Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
@@ -327,16 +333,18 @@ void RegressorInverseDynamics::compute(const VecX& z,
         Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, numInertialParams) = Ycurrent;
 
         // motor dynamics
-        for (int j = 0; j < modelPtr_->nv; j++) {
-            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = Utils::sign(q_d(j));
-            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = q_d(j);
-            Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = q_dd(j);
+        if (numParams > numInertialParams) {
+            for (int j = 0; j < modelPtr_->nv; j++) {
+                Y(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = Utils::sign(q_d(j));
+                Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = q_d(j);
+                Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = q_dd(j);
 
-            if (compute_derivatives) {
-                for (int k = 0; k < trajPtr_->varLength; k++) {
-                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
-                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
-                    pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
+                if (compute_derivatives) {
+                    for (int k = 0; k < trajPtr_->varLength; k++) {
+                        pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
+                        pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
+                        pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
+                    }
                 }
             }
         }

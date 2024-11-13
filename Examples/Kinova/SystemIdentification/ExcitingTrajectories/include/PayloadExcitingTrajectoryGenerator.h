@@ -5,34 +5,49 @@
 
 #include "Optimizer.h"
 
+#include "MomentumRegressor.h"
 #include "FixedFrequencyFourierCurves.h"
-#include "FourierCurves.h"
+
+#include "EndEffectorRegressorConditionNumber.h"
 
 #include "JointLimits.h"
+#include "VelocityLimits.h"
+#include "TorqueLimits.h"
+#include "KinovaCustomizedConstraints.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
-class DataFilterOptimizer : public Optimizer {
+class PayloadExcitingTrajectoryGenerator : public Optimizer {
 public:
+    using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DataFilterOptimizer() = default;
+    PayloadExcitingTrajectoryGenerator() = default;
 
     /** Default destructor */
-    ~DataFilterOptimizer() = default;
+    ~PayloadExcitingTrajectoryGenerator() = default;
 
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const VecX& tspan_input,
-        const MatX& q_input,
-        const MatX& q_d_input,
+        const double T_input,
+        const int N_input,
         const int degree_input,
-        const int base_frequency_input
+        const double base_frequency_input,
+        const VecX& q0_input,
+        const VecX& q_d0_input,
+        const Model& model_input, 
+        const VecX& joint_limits_buffer_input,
+        const VecX& velocity_limits_buffer_input,
+        const VecX& torque_limits_buffer_input,
+        const bool use_momentum_regressor_or_not = true,
+        const bool include_gripper_or_not = true,
+        const double collison_buffer_input = 0.0,
+        Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
     /**@name Overloaded from TNLP */
@@ -46,40 +61,6 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the bounds for my problem */
-    bool get_bounds_info(
-        Index   n,
-        Number* x_l,
-        Number* x_u,
-        Index   m,
-        Number* g_l,
-        Number* g_u
-    ) final override;
-
-    /** Method to return the objective value */
-    bool eval_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number&       obj_value
-    ) final override;
-
-    /** Method to return the gradient of the objective */
-    bool eval_grad_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number*       grad_f
-    ) final override;
-
-    /** Method to return the hessian of the objective */
-    bool eval_hess_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        MatX&         hess_f
-    ) final override;
-
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -91,23 +72,17 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DataFilterOptimizer(
-       const DataFilterOptimizer&
+    PayloadExcitingTrajectoryGenerator(
+       const PayloadExcitingTrajectoryGenerator&
     );
 
-    DataFilterOptimizer& operator=(
-       const DataFilterOptimizer&
+    PayloadExcitingTrajectoryGenerator& operator=(
+       const PayloadExcitingTrajectoryGenerator&
     );
-
-    const Number SQUARE_ROOT_THRESHOLD = 1e-8;
-
-    MatX q_data;
-    MatX q_d_data;
-
-    Number position_weight = 5.0;
-    Number velocity_weight = 1.0;
 
     std::shared_ptr<Trajectories> trajPtr_;
+
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 };
 
 }; // namespace Kinova

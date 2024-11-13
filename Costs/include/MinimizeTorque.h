@@ -15,7 +15,7 @@ constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
 }; // namespace Torque
 
 /*
-minimize the torque of the entire trajectory
+minimize the torque required over the entire trajectory
 */
 class MinimizeTorque : public Costs {
 public:

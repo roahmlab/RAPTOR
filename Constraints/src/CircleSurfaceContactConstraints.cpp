@@ -22,7 +22,7 @@ void CircleSurfaceContactConstraints::compute(const VecX& z,
     }
 
     if (compute_hessian) {
-        throw std::invalid_argument("CircleSurfaceContactConstraints: compute_hessian is not implemented yet!");
+        throw std::invalid_argument("CircleSurfaceContactConstraints does not support hessian computation");
     }
     
     idPtr_->compute(z, compute_derivatives, compute_hessian);

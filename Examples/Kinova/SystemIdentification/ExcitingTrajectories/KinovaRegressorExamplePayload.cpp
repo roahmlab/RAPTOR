@@ -1,10 +1,12 @@
-#include "EndeffectorConditionNumberOptimizer.h"
+#include "PayloadExcitingTrajectoryGenerator.h"
 
 using namespace RAPTOR;
 using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
+    const bool use_momentum_regressor_or_not = true;
+
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
     
@@ -22,10 +24,16 @@ int main(int argc, char* argv[]) {
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
-    Eigen::VectorXd q0_input(model.nv);
-    q0_input << 1.001089876408351, 0.09140272042061115,  -1.648806446891836,   2.381092213417765,
-                     1.822374826812066,  0.1466609489107418,  0.9315315991321746;
-    Eigen::VectorXd q_d0_input = Eigen::VectorXd::Zero(model.nv);
+    // start from a specific static configuration
+    Eigen::VectorXd q0(model.nv);
+    q0 << 1.001089876408351, 
+          0.09140272042061115,  
+          -1.648806446891836,   
+          2.381092213417765,
+          1.822374826812066,  
+          0.1466609489107418,  
+          0.9315315991321746;
+    Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess
     int num_joints = model.nv;
@@ -44,18 +52,21 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.5);
 
-    // Initialize Kinova optimizer
-    SmartPtr<EndeffectorConditionNumberOptimizer> mynlp = new EndeffectorConditionNumberOptimizer();
+    // Initialize optimizer
+    SmartPtr<PayloadExcitingTrajectoryGenerator> mynlp = new PayloadExcitingTrajectoryGenerator();
     try {
 	    mynlp->set_parameters(z,
                               T,
                               N,
                               degree,
                               base_frequency,
+                              q0,
+                              q_d0,
                               model,
                               joint_limits_buffer,
                               velocity_limits_buffer,
-                              torque_limits_buffer);
+                              torque_limits_buffer,
+                              use_momentum_regressor_or_not);
         mynlp->constr_viol_tol = 1e-5;
     }
     catch (std::exception& e) {
@@ -117,8 +128,8 @@ int main(int argc, char* argv[]) {
                                                                                            TimeDiscretization::Uniform, 
                                                                                            degree,
                                                                                            base_frequency,
-                                                                                           q0_input,
-                                                                                           q_d0_input);
+                                                                                           q0,
+                                                                                           q_d0);
         traj->compute(mynlp->solution, false);
 
         if (argc > 1) {
@@ -143,10 +154,10 @@ int main(int argc, char* argv[]) {
                 solution << mynlp->solution(i) << std::endl;
             }
             for (int i = 0; i < 7; ++i){
-                solution << q0_input(i) << std::endl;
+                solution << q0(i) << std::endl;
             }
             for (int i = 0; i < 7; ++i){
-                solution << q_d0_input(i) << std::endl;
+                solution << q_d0(i) << std::endl;
             }
             solution << base_frequency << std::endl;
         }

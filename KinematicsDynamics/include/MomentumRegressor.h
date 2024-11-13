@@ -1,5 +1,5 @@
-#ifndef REGRESSOR_INVERSEDYNAMICS_H
-#define REGRESSOR_INVERSEDYNAMICS_H
+#ifndef MOMENTUM_REGRESSOR_H
+#define MOMENTUM_REGRESSOR_H
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -8,9 +8,7 @@
 #include "pinocchio/algorithm/joint-configuration.hpp"
 #include <pinocchio/algorithm/regressor.hpp>
 
-#include "CustomizedInverseDynamics.h"
-#include "Spatial.h"
-#include "Trajectories.h"
+#include "RegressorInverseDynamics.h"
 
 #include <cmath>
 #include <iostream> 
@@ -20,12 +18,14 @@
 
 namespace RAPTOR {
 
-// Compute inverse dynamics using tau = Y * phi,
+// Compute system momentum using H(q) * qdot = Y * phi,
 // where Y is the n x 10*n regressor matrix and 
 // phi is the vector of 10*n dynamic parameters (inertia, com, mass for each of the link).
 // phi is constant and directly loaded from the robot. 
 // The gradient of Y will also be computed.
-class RegressorInverseDynamics : public InverseDynamics {
+// Note that although MomentumRegressor is subclass of InverseDynamics, 
+// it does not compute torque but the system momentum, which is stored in tau.
+class MomentumRegressor : public RegressorInverseDynamics {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
@@ -37,39 +37,23 @@ public:
     using Mat6 = Matrix6d;
 
     // Constructor
-    RegressorInverseDynamics() = default;
+    MomentumRegressor() = default;
 
     // Constructor
-    RegressorInverseDynamics(const Model& model_input, 
-                             const std::shared_ptr<Trajectories>& trajPtr_input,
-                             const bool include_motor_dynamics = true,
-                             Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
+    MomentumRegressor(const Model& model_input, 
+                      const std::shared_ptr<Trajectories>& trajPtr_input,
+                      Eigen::VectorXi jtype_input = Eigen::VectorXi(0)) :
+        RegressorInverseDynamics(model_input, trajPtr_input, false, jtype_input) {};
 
     // Destructor
-    ~RegressorInverseDynamics() = default;
+    ~MomentumRegressor() = default;
 
     // class methods:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false) override;
-                                           
-    // class members:
-    Eigen::VectorXi jtype;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
-    Vec6 a_grav;
-    
-    VecX phi;
-
-    int numInertialParams = 0;
-    int numParams = 0;
-
-    MatX Y;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
-
-    int NB = 0;
 };
 
 }; // namespace RAPTOR
 
-#endif // REGRESSOR_INVERSEDYNAMICS_H
+#endif // MOMENTUM_REGRESSOR_H

@@ -15,7 +15,7 @@ constexpr double SQUARE_ROOT_THRESHOLD = 1e-6;
 }; // namespace Torque
 
 /*
-minimize the torque of the entire trajectory
+minimize the condition number of the torque regressor matrix over the entire trajectory
 */
 class EndEffectorRegressorConditionNumber : public Costs {
 public:

@@ -18,7 +18,7 @@ void EndEffectorRegressorConditionNumber::compute(const VecX& z,
     }
 
     if (compute_hessian) {
-        throw std::invalid_argument("CircleSurfaceContactConstraints: compute_hessian is not implemented yet!");
+        throw std::invalid_argument("EndEffectorRegressorConditionNumber does not support hessian computation");
     }
 
     // this will be called in ridPtr_->compute
@@ -40,6 +40,8 @@ void EndEffectorRegressorConditionNumber::compute(const VecX& z,
     const double& sigmaMax = singularValues(0);
     const double& sigmaMin = singularValues(lastRow);
 
+    // log of the condition number in 2-norm 
+    // (ratio between the largest and the smallest singular values)
     f = std::log(sigmaMax) - std::log(sigmaMin);
 
     if (compute_derivatives) {

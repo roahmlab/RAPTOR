@@ -19,9 +19,9 @@ void QRDecompositionSolver::generateRandomObservation(const int numInstances) {
     ObservationMatrix = MatX::Zero(numInstances * modelPtr_->nv, phi.size());
     // Compute regressor matrix for random joint configurations
     for (int i = 0; i < numInstances; i++) {
-        VecX q = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
-        VecX v = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
-        VecX a = 2 * M_PI * VecX::Random(modelPtr_->nv).array() - M_PI;
+        VecX q = 2 * M_PI * VecX::Random(modelPtr_->nv);
+        VecX v = 2 * M_PI * VecX::Random(modelPtr_->nv);
+        VecX a = 2 * M_PI * VecX::Random(modelPtr_->nv);
         pinocchio::computeJointTorqueRegressor(
             *modelPtr_, *dataPtr_,
             q, v, a);
