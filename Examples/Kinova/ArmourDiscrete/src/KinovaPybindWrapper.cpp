@@ -83,13 +83,13 @@ void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
 }
 
 void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float qd0_inp,
-                                                    const nb_1d_float qdd0_inp,
+                                                    const nb_1d_float q_d0_inp,
+                                                    const nb_1d_float q_dd0_inp,
                                                     const double duration_inp) {
     if (q0_inp.shape(0) != model.nv || 
-        qd0_inp.shape(0) != model.nv || 
-        qdd0_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("q0, qd0, qdd0 must be of size model.nv");
+        q_d0_inp.shape(0) != model.nv || 
+        q_dd0_inp.shape(0) != model.nv) {
+        throw std::invalid_argument("q0, q_d0, q_dd0 must be of size model.nv");
     }
 
     T = duration_inp;
@@ -104,8 +104,8 @@ void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
 
     for (int i = 0; i < model.nv; i++) {
         atp.q0(i) = q0_inp(i);
-        atp.q_d0(i) = qd0_inp(i);
-        atp.q_dd0(i) = qdd0_inp(i);
+        atp.q_d0(i) = q_d0_inp(i);
+        atp.q_dd0(i) = q_dd0_inp(i);
     }     
 
     set_trajectory_parameters_check = true;        

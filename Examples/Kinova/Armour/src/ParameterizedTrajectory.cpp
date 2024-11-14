@@ -6,8 +6,8 @@ namespace Armour {
 
 BezierCurveInterval::BezierCurveInterval() {
     q0 = VecX::Zero(NUM_FACTORS);
-    qd0 = VecX::Zero(NUM_FACTORS);
-    qdd0 = VecX::Zero(NUM_FACTORS);
+    q_d0 = VecX::Zero(NUM_FACTORS);
+    q_dd0 = VecX::Zero(NUM_FACTORS);
     Tqd0 = VecX::Zero(NUM_FACTORS);
     TTqdd0 = VecX::Zero(NUM_FACTORS);
 
@@ -30,23 +30,23 @@ BezierCurveInterval::BezierCurveInterval() {
 }
 
 BezierCurveInterval::BezierCurveInterval(const VecX& q0_inp, 
-                                         const VecX& qd0_inp, 
-                                         const VecX& qdd0_inp,
+                                         const VecX& q_d0_inp, 
+                                         const VecX& q_dd0_inp,
                                          const VecX& k_center_inp,
                                          const VecX& k_range_inp,
                                          const double duration_inp,
                                          const std::shared_ptr<RobotInfo>& robotInfoPtr_inp,
                                          const size_t num_time_steps_inp) : 
     q0(q0_inp),
-    qd0(qd0_inp),
-    qdd0(qdd0_inp),
+    q_d0(q_d0_inp),
+    q_dd0(q_dd0_inp),
     k_center(k_center_inp),
     k_range(k_range_inp),
     duration(duration_inp),
     robotInfoPtr_(robotInfoPtr_inp),
     num_time_steps(num_time_steps_inp) {
-    Tqd0 = qd0 * duration; 
-    TTqdd0 = qdd0 * duration * duration; 
+    Tqd0 = q_d0 * duration; 
+    TTqdd0 = q_dd0 * duration * duration; 
 
     // compute a uniform time partition
     s_intervals.reserve(num_time_steps + 1);
@@ -158,20 +158,20 @@ void BezierCurveInterval::sample_eigenvalues(size_t num_samples) {
 }
 
 void BezierCurveInterval::setTrajectoryParameters(const VecX& q0_inp, 
-                                                  const VecX& qd0_inp, 
-                                                  const VecX& qdd0_inp,
+                                                  const VecX& q_d0_inp, 
+                                                  const VecX& q_dd0_inp,
                                                   const VecX& k_center_inp,
                                                   const VecX& k_range_inp,
                                                   const double duration_inp) {
     q0 = q0_inp;
-    qd0 = qd0_inp;
-    qdd0 = qdd0_inp;
+    q_d0 = q_d0_inp;
+    q_dd0 = q_dd0_inp;
     k_center = k_center_inp;
     k_range = k_range_inp;
     duration = duration_inp;
 
-    Tqd0 = qd0 * duration; 
-    TTqdd0 = qdd0 * duration * duration;   
+    Tqd0 = q_d0 * duration; 
+    TTqdd0 = q_dd0 * duration * duration;   
 
     // initialize the extrema of the k independent part of q_des
     for (int i = 0; i < NUM_FACTORS; i++) {

@@ -53,4 +53,10 @@ KinovaWithoutGripper:
       "radius": 0.02
     - "offset": [0.03, -0.06, -0.055]
       "radius": 0.02
+    - "offset": [0.0, 0.0, -0.10] # gripper
+      "radius": 0.05
+    - "offset": [0.0, 0.0, -0.15]
+      "radius": 0.05
+    - "offset": [0.0, 0.0, -0.20]
+      "radius": 0.05
     

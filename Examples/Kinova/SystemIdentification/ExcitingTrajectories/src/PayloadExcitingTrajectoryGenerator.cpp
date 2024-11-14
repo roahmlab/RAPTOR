@@ -1,7 +1,5 @@
 #include "PayloadExcitingTrajectoryGenerator.h"
 
-
-
 namespace RAPTOR {
 namespace Kinova {
 

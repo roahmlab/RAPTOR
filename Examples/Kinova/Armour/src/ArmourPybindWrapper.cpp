@@ -74,18 +74,18 @@ void ArmourPybindWrapper::set_ipopt_parameters(const double tol,
 }
 
 void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float qd0_inp,
-                                                    const nb_1d_float qdd0_inp,
+                                                    const nb_1d_float q_d0_inp,
+                                                    const nb_1d_float q_dd0_inp,
                                                     const nb_1d_float k_center_inp,
                                                     const nb_1d_float k_range_inp,
                                                     const double duration_inp,
                                                     const nb_1d_float q_des_inp) {
     if (q0_inp.shape(0) != robotInfoPtr_->num_motors || 
-        qd0_inp.shape(0) != robotInfoPtr_->num_motors || 
-        qdd0_inp.shape(0) != robotInfoPtr_->num_motors) {
-        std::cerr << q0_inp.shape(0) << " " << qd0_inp.shape(0) << " " << qdd0_inp.shape(0) << std::endl;
+        q_d0_inp.shape(0) != robotInfoPtr_->num_motors || 
+        q_dd0_inp.shape(0) != robotInfoPtr_->num_motors) {
+        std::cerr << q0_inp.shape(0) << " " << q_d0_inp.shape(0) << " " << q_dd0_inp.shape(0) << std::endl;
         std::cerr << robotInfoPtr_->num_motors << std::endl;
-        throw std::invalid_argument("q0, qd0, qdd0 must be of size robotInfoPtr_->num_motors");
+        throw std::invalid_argument("q0, q_d0, q_dd0 must be of size robotInfoPtr_->num_motors");
     }
 
     if (k_center_inp.shape(0) != robotInfoPtr_->num_motors || 
@@ -110,8 +110,8 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
     q_dd0.resize(robotInfoPtr_->num_motors);
     for (size_t i = 0; i < robotInfoPtr_->num_motors; i++) {
         q0(i) = q0_inp(i);
-        q_d0(i) = qd0_inp(i);
-        q_dd0(i) = qdd0_inp(i);
+        q_d0(i) = q_d0_inp(i);
+        q_dd0(i) = q_dd0_inp(i);
     }   
 
     k_center.resize(robotInfoPtr_->num_motors);

@@ -18,7 +18,7 @@ constexpr double QDD_DES_K_DEP_MAXIMA = (0.5 - sqrtf(3.0) / 6);
 constexpr double QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0) / 6);
 
 // 5th order Bezier curve
-// The initial position/velocity/acceleration is equal to q0/qd0/qdd0
+// The initial position/velocity/acceleration is equal to q0/q_d0/q_dd0
 // The end position is equal to q0 + k
 // The end velocity/acceleration is equal to 0
 //
@@ -31,13 +31,13 @@ constexpr double QDD_DES_K_DEP_MINIMA = (0.5 + sqrtf(3.0) / 6);
 // k_actual = k * k_range
 //
 // q_des   = t^3*(6*t^2 - 15*t + 10) * k_actual + 
-//           q0 + qd0*t - 6*qd0*t^3 + 8*qd0*t^4 - 3*qd0*t^5 + (qdd0*t^2)/2 - (3*qdd0*t^3)/2 + (3*qdd0*t^4)/2 - (qdd0*t^5)/2
+//           q0 + q_d0*t - 6*q_d0*t^3 + 8*q_d0*t^4 - 3*q_d0*t^5 + (q_dd0*t^2)/2 - (3*q_dd0*t^3)/2 + (3*q_dd0*t^4)/2 - (q_dd0*t^5)/2
 //
 // qd_des  = 30*t^2*(t - 1)^2 * k_actual + 
-//           ((t - 1)^2*(2*qd0 + 4*qd0*t + 2*qdd0*t - 30*qd0*t^2 - 5*qdd0*t^2))/2
+//           ((t - 1)^2*(2*q_d0 + 4*q_d0*t + 2*q_dd0*t - 30*q_d0*t^2 - 5*q_dd0*t^2))/2
 //
 // qdd_des = 60*t*(2*t^2 - 3*t + 1) * k_actual + 
-//           -(t - 1)*(qdd0 - 36*qd0*t - 8*qdd0*t + 60*qd0*t^2 + 10*qdd0*t^2)
+//           -(t - 1)*(q_dd0 - 36*q_d0*t - 8*q_dd0*t + 60*q_d0*t^2 + 10*q_dd0*t^2)
 //
 class BezierCurveInterval{
 public:
@@ -55,11 +55,11 @@ public:
     std::vector<double> s_intervals;
 
     VecX q0;
-    VecX qd0;
-    VecX qdd0;
+    VecX q_d0;
+    VecX q_dd0;
 
-    VecX Tqd0; // qd0 * T
-    VecX TTqdd0; // qdd0 * T ^ 2
+    VecX Tqd0; // q_d0 * T
+    VecX TTqdd0; // q_dd0 * T ^ 2
 
     double q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
     double q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
@@ -94,8 +94,8 @@ public:
 
     BezierCurveInterval(
         const VecX& q0_inp, 
-        const VecX& qd0_inp, 
-        const VecX& qdd0_inp,
+        const VecX& q_d0_inp, 
+        const VecX& q_dd0_inp,
         const VecX& k_center_inp,
         const VecX& k_range_inp,
         const double duration_inp,
@@ -109,8 +109,8 @@ public:
     // set up the trajectory parameters
     void setTrajectoryParameters(
         const VecX& q0_inp, 
-        const VecX& qd0_inp, 
-        const VecX& qdd0_inp,
+        const VecX& q_d0_inp, 
+        const VecX& q_dd0_inp,
         const VecX& k_center_inp,
         const VecX& k_range_inp,
         const double duration_inp);
@@ -139,7 +139,7 @@ public:
 };
 
 // helper functions
-// q0, qd0, qdd0, k here are scalars since all joints are using the same Bezier curve representation
+// q0, q_d0, q_dd0, k here are scalars since all joints are using the same Bezier curve representation
 double q_des_func(const double q0, const double Tqd0, const double TTqdd0, const double k, const double s);
 
 double qd_des_func(const double q0, const double Tqd0, const double TTqdd0, const double k, const double s, const double T);

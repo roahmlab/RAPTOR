@@ -59,8 +59,8 @@ public:
                               const bool gradient_check);
 
     void set_trajectory_parameters(const nb_1d_float q0_inp,
-                                   const nb_1d_float qd0_inp,
-                                   const nb_1d_float qdd0_inp,
+                                   const nb_1d_float q_d0_inp,
+                                   const nb_1d_float q_dd0_inp,
                                    const double duration_inp);
 
     void set_buffer(const nb_1d_float joint_limits_buffer_inp,

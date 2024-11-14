@@ -45,11 +45,13 @@ add_library(Armourlib SHARED
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
     Armour/src/ArmourOptimizer.cpp
+    SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingTrajectoryGenerator.cpp
 )
 
 target_include_directories(Armourlib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/PZDynamics/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
@@ -61,6 +63,7 @@ target_link_libraries(Armourlib PUBLIC
     trajlib
     IDlib
     Conslib
+    Costslib
     Optlib
     ipopt
     coinhsl
@@ -185,11 +188,9 @@ target_compile_options(KinovaExciting_example PUBLIC
 ###
 add_executable(KinovaPayloadExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExamplePayload.cpp)
-
 target_include_directories(KinovaPayloadExciting_example PUBLIC
-    SystemIdentification/ExcitingTrajectories/include
-    SystemIdentification/IterativeSystemIdentification/include)
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(KinovaPayloadExciting_example PUBLIC
     trajlib 
     IDlib
@@ -200,18 +201,16 @@ target_link_libraries(KinovaPayloadExciting_example PUBLIC
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-
 target_compile_options(KinovaPayloadExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
-    
+
+###
 add_executable(SysidFriction_test
     SystemIdentification/IterativeSystemIdentification/TestFrictionParametersIdentification.cpp)
-
 target_include_directories(SysidFriction_test PUBLIC
-    SystemIdentification
-    SystemIdentification/IterativeSystemIdentification/include)
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(SysidFriction_test PUBLIC
     trajlib 
     IDlib
@@ -222,18 +221,16 @@ target_link_libraries(SysidFriction_test PUBLIC
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-
 target_compile_options(SysidFriction_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
+###
 add_executable(SysidBase_test
     SystemIdentification/IterativeSystemIdentification/TestBaseParametersIdentification.cpp)
-
 target_include_directories(SysidBase_test PUBLIC
-    SystemIdentification
-    SystemIdentification/IterativeSystemIdentification/include)
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(SysidBase_test PUBLIC
     trajlib 
     IDlib
@@ -244,17 +241,16 @@ target_link_libraries(SysidBase_test PUBLIC
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-
 target_compile_options(SysidBase_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+
+###
 add_executable(SysidEnd_test
     SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentification.cpp)
-
 target_include_directories(SysidEnd_test PUBLIC
-    SystemIdentification
-    SystemIdentification/IterativeSystemIdentification/include)
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(SysidEnd_test PUBLIC
     trajlib 
     IDlib
@@ -265,28 +261,15 @@ target_link_libraries(SysidEnd_test PUBLIC
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-
 target_compile_options(SysidEnd_test PUBLIC
     ${PINOCCHIO_FLAGS})
-
-add_executable(Combine_files
-    SystemIdentification/IterativeSystemIdentification/Combine_files.cpp)
-
-target_include_directories(Combine_files PUBLIC
-    SystemIdentification
-    SystemIdentification/IterativeSystemIdentification/include
-    ${CMAKE_SOURCE_DIR}/Utils/include)
-
-target_compile_options(Combine_files PUBLIC
-    ${PINOCCHIO_FLAGS})
+    
 
 ###
 add_executable(Armour_example 
     Armour/ArmourExample.cpp)
-
 target_include_directories(Armour_example PUBLIC
-    Armour/include)
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include)
 target_link_libraries(Armour_example PUBLIC
     trajlib 
     IDlib
@@ -297,8 +280,28 @@ target_link_libraries(Armour_example PUBLIC
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-
 target_compile_options(Armour_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+###
+add_executable(ArmourExciting_example 
+    SystemIdentification/ExcitingTrajectories/KinovaSafeRegressorExamplePayload.cpp)
+target_include_directories(ArmourExciting_example PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include)
+target_link_libraries(ArmourExciting_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Costslib
+    Optlib
+    Armourlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(ArmourExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
