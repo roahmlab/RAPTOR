@@ -137,7 +137,7 @@ include_directories(
 install(TARGETS 
     trajlib
     IDlib
-    Costslib
+    
     Conslib
     Optlib
     Kinovalib
