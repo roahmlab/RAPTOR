@@ -6,10 +6,10 @@ double solve_quadratic(double a, double b, double c, int sign){
     return (-b+sign*sqrt(pow(b,2)-4*a*c))/(2*a);
 }
 
-double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
-                                    const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
-                                    const double tc1_radius_1, const double tc1_radius_2, 
-                                    const double tc2_radius_1, const double tc2_radius_2){
+double TaperedCapsuleCollision::computeDistance(const Eigen::Vector3d& tc1_point_1, const Eigen::Vector3d& tc1_point_2, 
+                        const Eigen::Vector3d& tc2_point_1, const Eigen::Vector3d& tc2_point_2, 
+                        const double tc1_radius_1, const double tc1_radius_2, 
+                        const double tc2_radius_1, const double tc2_radius_2){
     double r1 = tc1_radius_1-tc1_radius_2;
     double r2 = tc2_radius_1-tc2_radius_2;
 
@@ -102,7 +102,7 @@ double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const V
 
     for(int i = 0; i<14; i++){
         if(u_test[i] <= 1 && u_test[i] >= 0 && t_test[i] <= 1 && t_test[i] >= 0){
-            distances[i] = (d1*t_test[i]-d2*u_test[i]-d12).norm() - r1*t_test[i] - r2*u_test[i] - tc1.r1 - tc2.r1;
+            distances[i] = (d1*t_test[i]-d2*u_test[i]-d12).norm() - r1*t_test[i] - r2*u_test[i] - tc1_radius_1 - tc2_radius_1;
         }
         else{
             distances[i] = INFINITY;

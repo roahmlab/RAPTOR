@@ -27,8 +27,8 @@ public:
 
     // class methods:
 
-    double computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
-                        const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
+    double computeDistance(const Eigen::Vector3d& tc1_point_1, const Eigen::Vector3d& tc1_point_2, 
+                        const Eigen::Vector3d& tc2_point_1, const Eigen::Vector3d& tc2_point_2, 
                         const double tc1_radius_1, const double tc1_radius_2, 
                         const double tc2_radius_1, const double tc2_radius_2);
                          
