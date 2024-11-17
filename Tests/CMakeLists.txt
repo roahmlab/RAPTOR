@@ -38,17 +38,11 @@ target_compile_options(ForwardKinematicsGradient_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
 add_executable(BimanualTest_test 
-    Armour/BimanualTest.cpp)
+    Constraints/BimanualTest.cpp)
 
 target_link_libraries(BimanualTest_test PUBLIC
-    ipopt
-    coinhsl
     Armourlib
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
-
-target_compile_options(BimanualTest_test PUBLIC
-    ${PINOCCHIO_FLAGS})
+    ${BOOST_LIBRARIES})
 
 add_executable(BoxCollisionAvoidance_test 
     Constraints/TestBoxCollisionAvoidance.cpp)
