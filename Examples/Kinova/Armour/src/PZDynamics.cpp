@@ -125,23 +125,42 @@ void PZDynamics::compute() {
 
             for (int i = 0; i < FRICTION_CONE_LINEARIZED_SIZE; i++) {
                 // TODO: compute friction PZs
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
-                //       using robotInfoPtr_->mu, which is a scalar, representing the friction coefficient of the contact surface
-                // friction_PZs(i, t_ind) = ?;
-
-                // call reduce() everytime you finish something
-                // friction_PZs(i, t_ind).reduce();
+                auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
+                // Writing linearized friction cone
+                Eigen::Matrix<PZSparse, 1, 3> Si = Eigen::Matrix<PZSparse, 1, 3>::Zero();
+                Si(0) = robotInfoPtr_->mu * cos(2 * M_PI * i / 8);
+                Si(1) = robotInfoPtr_->mu * sin(2 * M_PI * i / 8);
+                Si(2) = 1;
+                Eigen::Matrix<PZSparse, 1, 3> Si_1 = Eigen::Matrix<PZSparse, 1, 3>::Zero();
+                Si_1(0) = robotInfoPtr_->mu * cos(2 * M_PI * (i+1) / 8);
+                Si_1(1) = robotInfoPtr_->mu * sin(2 * M_PI * (i+1) / 8);
+                Si_1(2) = 1;
+                Eigen::Matrix<PZSparse, 1, 3> S = Si.cross(Si_1);
+                friction_PZs(i, t_ind) = force.dot(S);
+                friction_PZs(i, t_ind).reduce();
             }
 
             for (int i = 0; i < ZMP_LINEARIZED_SIZE; i++) {
                 // TODO: compute ZMP PZs
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].angular(), which is a 3 dim vector
-                //       using robotInfoPtr_->contact_surface_radius, which is a scalar, representing the radius of the contact surface
-                // zmp_PZs(i, t_ind) = ?;
-
-                // call reduce() everytime you finish something
-                // zmp_PZs(i, t_ind).reduce();
+                auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
+                auto moment = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular();
+                // unit normal vector
+                Eigen::Matrix<PZSparse, 1, 3> n = Eigen::Matrix<PZSparse, 1, 3>::Zero();
+                n(2) = 1;
+                // constraint vector
+                Eigen::Matrix<PZSparse, 1, 3> c = Eigen::Matrix<PZSparse, 1, 3>::Zero();
+                c(0) = robotInfoPtr_->contact_surface_radius * (cos(2 * M_PI * (i+1) / 8) - cos(2 * M_PI * i / 8));
+                c(1) = robotInfoPtr_->contact_surface_radius * (sin(2 * M_PI * (i+1) / 8) - sin(2 * M_PI * i / 8));
+                c(2) = 0;
+                // point A (half plane start point)
+                Eigen::Matrix<PZSparse, 1, 3> A = Eigen::Matrix<PZSparse, 1, 3>::Zero();
+                A(0) = robotInfoPtr_->contact_surface_radius * cos(2 * M_PI * i / 8);
+                A(1) = robotInfoPtr_->contact_surface_radius * sin(2 * M_PI * i / 8);
+                A(2) = 0;
+                auto n_dot_force = n.dot(force);
+                auto ZMP = n.cross(moment) - n_dot_force * A;
+                zmp_PZs(i, t_ind) = n.dot(c.cross(ZMP));
+                zmp_PZs(i, t_ind).reduce();
             }
         }
     }

@@ -119,7 +119,7 @@ bool ArmourOptimizer::get_bounds_info(
         g_l[i] = 0.0;
         g_u[i] = 1e19;
     }
-    offset += 3 * num_fixed_joints * num_time_steps;
+    offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
 
     // collision avoidance constraints
     for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
@@ -301,8 +301,7 @@ bool ArmourOptimizer::eval_g(
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "Error in eval_g!");
-        }
-        offset += num_time_steps * NUM_FACTORS;
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     offset += num_time_steps * NUM_FACTORS;
 
         // TODO: add contact constraints
         if (num_fixed_joints > 0) {
