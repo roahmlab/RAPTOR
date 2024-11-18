@@ -102,9 +102,9 @@ BOOST_AUTO_TEST_CASE(GradientCase1){
     Eigen::MatrixXd p11_pz(3, 2);
     p11_pz << 1,0.5,0,0,0,0;
     Eigen::MatrixXd p12_pz(3, 2);
-    p12_pz << 1,0.5,0,0,0,0;
+    p12_pz << 0,0,0,0,0.25,1;
     Eigen::MatrixXd p21_pz(3, 2);
-    p21_pz << 0,0,0,0,0.25,1;
+    p21_pz << 1,0.5,0,0,0,0;
     Eigen::MatrixXd p22_pz(3, 2);
     p22_pz << 0,0,0,0,0.25,1;
 
@@ -117,9 +117,6 @@ BOOST_AUTO_TEST_CASE(GradientCase1){
     TaperedCapsuleCollision collider;
     Eigen::MatrixXd dist_grad;
     distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
-
-    std::cout << "Distance: " << distance << "\n";
-    std::cout << "Dist Grad: " << dist_grad << "\n";
 
     BOOST_CHECK_SMALL(distance-(2.0653), 1e-4);
 

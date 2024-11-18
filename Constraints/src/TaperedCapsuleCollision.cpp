@@ -122,20 +122,12 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
         MatX pd2_pz = ptc2_point_2_pz - ptc2_point_1_pz;
         MatX pd12_pz = ptc2_point_1_pz - ptc1_point_1_pz;
 
-        std::cout << "Derivative" << "\n";
         MatX pa_pz = batchDot(d1,pd1_pz)+batchDot(d1, pd1_pz);
         MatX pb_pz = batchDot(d1,pd2_pz)+batchDot(d2, pd1_pz);
         MatX pc_pz = batchDot(d12,pd1_pz)+batchDot(d1, pd12_pz);
         MatX pe_pz = batchDot(d2,pd2_pz)+batchDot(d2, pd2_pz);
         MatX pf_pz = batchDot(d2,pd12_pz)+batchDot(d12, pd2_pz);
         MatX pg_pz = batchDot(d12,pd12_pz)+batchDot(d12, pd12_pz);
-
-        std::cout << "pa_pz: " << pa_pz << "\n";
-        std::cout << "pb_pz: " << pb_pz << "\n";
-        std::cout << "pc_pz: " << pc_pz << "\n";
-        std::cout << "pe_pz: " << pe_pz << "\n";
-        std::cout << "pf_pz: " << pf_pz << "\n";
-        std::cout << "pg_pz: " << pg_pz << "\n";
 
         MatX lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
         double purple = (d1 * tStar - d2 * uStar - d12).norm();
@@ -150,16 +142,11 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
         double L22 = e / purple - green*green/pow(purple,3);
         double L12 = -b / purple - orange * green /pow(purple,3);
 
-        std::cout << "L11: " << L11 << "\n";
-        std::cout << "L22: " << L22 << "\n";
-        std::cout << "L12: " << L12 << "\n";
-
         MatX dLambda1 = (tStar == 1) * -(lgrey * purple - orange * grey);
         MatX dLambda2 = (uStar == 1) * -(red * purple - green * grey);
         MatX dLambda3 = (tStar == 0) * (lgrey * purple - orange * grey);
         MatX dLambda4 = (uStar == 0) * (red * purple - green * grey);
 
-        std::cout << "dLambda1: " << dLambda1 << "\n";
 
         MatX H1 = (
             (pa_pz * tStar - pb_pz * uStar - pc_pz) / purple + dLambda1 - dLambda3
@@ -170,8 +157,6 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
              - green * batchDot(-d1 * tStar + d2 * uStar + d12,-pd1_pz * tStar + pd2_pz * uStar + pd12_pz) / pow(purple,3)
         ).transpose();
 
-        std::cout << "H1: " << H1 << "\n";
-        std::cout << "H2: " << H2 << "\n";
 
         MatX pt_pz = MatX::Zero(1, ptc1_point_1_pz.cols());
         MatX pu_pz = MatX::Zero(1, ptc1_point_1_pz.cols());
@@ -180,7 +165,7 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
             case 1:
             case 2:
             case 3:
-                pt_pz = -H1 / L11;
+                pu_pz = -H2 / L22;
                 // pu_pz = 0;
                 break;
             case 4:
@@ -188,7 +173,7 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
             case 6:
             case 7:
                 // pt_pz = 0;
-                pu_pz = -H2 / L22;
+                pt_pz = -H1 / L11;
                 break;
             case 8:
             case 9:
@@ -206,12 +191,10 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
 
         
 
-        std::cout << "pt_pz: " << pt_pz << "\n";
-        std::cout << "pu_pz: " << pt_pz << "\n";
         
-        MatX part1 = batchDot((d1 * tStar - d2 * uStar - d12), pd1_pz*tStar + d1*pt_pz - pd2_pz*uStar - d2*pu_pz - pd12_pz);
-        std::cout << "Part1: " << part1 << "\n";
-        pdist_pz = part1.transpose() / purple - r1 * pt_pz - r2 * pu_pz;
+
+        MatX part1 = batchDot((d1 * tStar - d2 * uStar - d12), pd1_pz*tStar + d1*pt_pz - pd2_pz*uStar - d2*pu_pz - pd12_pz) / purple;
+        pdist_pz = -(part1.transpose() - r1 * pt_pz - r2 * pu_pz);
 
     }
 
