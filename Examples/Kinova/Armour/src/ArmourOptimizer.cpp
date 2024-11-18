@@ -301,7 +301,7 @@ bool ArmourOptimizer::eval_g(
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "Error in eval_g!");
-        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     offset += num_time_steps * NUM_FACTORS;
+        }                                                                                                                                                                           offset += num_time_steps * NUM_FACTORS;
 
         // TODO: add contact constraints
         if (num_fixed_joints > 0) {
@@ -436,18 +436,35 @@ bool ArmourOptimizer::eval_jac_g(
         offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
 
         // TODO: add contact constraints gradient
-        if (num_fixed_joints > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    // TODO: fill in the contact constraints gradients
+        if (num_fixed_joints > 0)
+        {
+            try
+            {
+#pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++)
+                {
+                    // separation
+                    const auto &PZseparation = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2);
+                    PZseparation.slice(values + (i * NUM_CONTACT_CONSTRAINTS * num_fixed_joints + offset) * NUM_FACTORS, x);
+                    // friction cone
+                    for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++)
+                    {
+                        const auto &PZfriction = dynPtr_->friction_PZs(j, i);
+                        PZfriction.slice(values + (i * NUM_CONTACT_CONSTRAINTS * num_fixed_joints + offset + 1 + j) * NUM_FACTORS, x);
+                    }
+                    // ZMP
+                    for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++)
+                    {
+                        const auto &PZzmp = dynPtr_->zmp_PZs(j, i);
+                        PZzmp.slice(values + (i * NUM_CONTACT_CONSTRAINTS * num_fixed_joints + offset + 1 + FRICTION_CONE_LINEARIZED_SIZE + j) * NUM_FACTORS, x);
+                    }
                 }
             }
             catch (const std::exception& e) {
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
             }
-            offset += 3 * num_fixed_joints * num_time_steps * NUM_FACTORS;
+            offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps * NUM_FACTORS;
         }
 
         // obstacle avoidance constraints gradient
