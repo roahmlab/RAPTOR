@@ -44,6 +44,13 @@ target_link_libraries(BimanualTest_test PUBLIC
     Armourlib
     ${BOOST_LIBRARIES})
 
+add_executable(BimanualTest_speed 
+    Constraints/BimanualTestSpeed.cpp)
+
+target_link_libraries(BimanualTest_speed PUBLIC
+    Armourlib
+    ${BOOST_LIBRARIES})
+
 add_executable(BoxCollisionAvoidance_test 
     Constraints/TestBoxCollisionAvoidance.cpp)
 

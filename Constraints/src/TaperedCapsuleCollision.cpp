@@ -147,7 +147,6 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
         MatX dLambda3 = (tStar == 0) * (lgrey * purple - orange * grey);
         MatX dLambda4 = (uStar == 0) * (red * purple - green * grey);
 
-
         MatX H1 = (
             (pa_pz * tStar - pb_pz * uStar - pc_pz) / purple + dLambda1 - dLambda3
             - orange * batchDot(-d1 * tStar + d2 * uStar + d12,-pd1_pz * tStar + pd2_pz * uStar + pd12_pz) / pow(purple,3)
@@ -166,13 +165,11 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
             case 2:
             case 3:
                 pu_pz = -H2 / L22;
-                // pu_pz = 0;
                 break;
             case 4:
             case 5:
             case 6:
             case 7:
-                // pt_pz = 0;
                 pt_pz = -H1 / L11;
                 break;
             case 8:
@@ -184,16 +181,13 @@ double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2,
             case 11:
             case 12:
             case 13:
-                // pt_pz = 0;
-                // pu_pz = 0;
+
                 break;
         }
 
-        
-
-        
-
+        // Calculate gradient of distance
         MatX part1 = batchDot((d1 * tStar - d2 * uStar - d12), pd1_pz*tStar + d1*pt_pz - pd2_pz*uStar - d2*pu_pz - pd12_pz) / purple;
+
         pdist_pz = -(part1.transpose() - r1 * pt_pz - r2 * pu_pz);
 
     }
