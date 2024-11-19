@@ -9,28 +9,27 @@
 namespace RAPTOR {
 
 #define COLLISION_THRESHOLD 1e-4
-#define NUM_FACTORS 3
+#define NUM_FACTORS 2
 
-double solve_quadratic(float a, float b, float c, int sign);
+inline double solve_quadratic(float a, float b, float c, int sign);
 
-using Vec3 = Eigen::Vector3d;
-using MatX = Eigen::MatrixXd;
-MatX batchDot(const Vec3 vector, const MatX);
+inline Eigen::Vector<double,NUM_FACTORS> batchDot(const Eigen::Vector3d vector, const Eigen::Matrix<double,3,NUM_FACTORS> matrix);
 
-double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
-                        const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
-                        const MatX& ptc1_point_1_pz, const MatX& ptc1_point_2_pz, 
-                        const MatX& ptc2_point_1_pz, const MatX& ptc2_point_2_pz, 
-                        const double tc1_radius_1, const double tc1_radius_2, 
-                        const double tc2_radius_1, const double tc2_radius_2,
-                        MatX& pdist_pz);
 
 class TaperedCapsuleCollision {
 public:
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
+    using VecX = Eigen::Vector<double,NUM_FACTORS>;
+    using MatX = Eigen::Matrix<double,3,NUM_FACTORS>;
+
+    inline double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
+                        const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
+                        const MatX& ptc1_point_1_pz, const MatX& ptc1_point_2_pz, 
+                        const MatX& ptc2_point_1_pz, const MatX& ptc2_point_2_pz, 
+                        const double& tc1_radius_1, const double& tc1_radius_2, 
+                        const double& tc2_radius_1, const double& tc2_radius_2,
+                        VecX& pdist_pz);
 
     // Constructor
     TaperedCapsuleCollision() = default;
@@ -42,16 +41,16 @@ public:
     
     double computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
-                        const double tc1_radius_1, const double tc1_radius_2, 
-                        const double tc2_radius_1, const double tc2_radius_2);
+                        const double& tc1_radius_1, const double& tc1_radius_2, 
+                        const double& tc2_radius_1, const double& tc2_radius_2);
 
     double computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
                         const MatX& ptc1_point_1_pz, const MatX& ptc1_point_2_pz, 
                         const MatX& ptc2_point_1_pz, const MatX& ptc2_point_2_pz, 
-                        const double tc1_radius_1, const double tc1_radius_2, 
-                        const double tc2_radius_1, const double tc2_radius_2,
-                        MatX& pdiff_pz);
+                        const double& tc1_radius_1, const double& tc1_radius_2, 
+                        const double& tc2_radius_1, const double& tc2_radius_2,
+                        VecX& pdiff_pz);
                          
 };
 

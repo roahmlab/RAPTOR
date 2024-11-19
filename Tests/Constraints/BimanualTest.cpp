@@ -99,13 +99,13 @@ BOOST_AUTO_TEST_CASE(GradientCase1){
     Eigen::Vector3d p21(0,-2,-1);
     Eigen::Vector3d p22(0,-3,-1);
 
-    Eigen::MatrixXd p11_pz(3, 2);
+    Eigen::Matrix<double,3,2> p11_pz(3, 2);
     p11_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p12_pz(3, 2);
+    Eigen::Matrix<double,3,2> p12_pz(3, 2);
     p12_pz << 0,0,0,0,0.25,1;
-    Eigen::MatrixXd p21_pz(3, 2);
+    Eigen::Matrix<double,3,2> p21_pz(3, 2);
     p21_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p22_pz(3, 2);
+    Eigen::Matrix<double,3,2> p22_pz(3, 2);
     p22_pz << 0,0,0,0,0.25,1;
 
     double r11(0.5);
@@ -115,17 +115,18 @@ BOOST_AUTO_TEST_CASE(GradientCase1){
     double distance = 0.0;
 
     TaperedCapsuleCollision collider;
-    Eigen::MatrixXd dist_grad;
+    Eigen::Vector<double,2> dist_grad;
     distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
-
-    // std::cout << "Distance: " << distance << "\n";
-    // std::cout << "Dist Grad: " << dist_grad << "\n";
 
     BOOST_CHECK_SMALL(distance-(2.0653), 1e-4);
 
-    Eigen::MatrixXd correctGrad(1,2);
-    correctGrad << 0.0337, 0.2425;
-    BOOST_CHECK_SMALL((dist_grad-correctGrad).norm(), 1e-4);
+    Eigen::Vector2d z(2);
+    z << 1e-4, 1e-4;
+    double distance_delta = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11, r12, r21, r22);
+    auto analytic_grad = (dist_grad.transpose()*z);
+    Eigen::MatrixXd numerical_grad(1,1);
+    numerical_grad << distance_delta-distance;
+    BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm()*1e5 , 1e-4);
 }
 
 BOOST_AUTO_TEST_CASE(GradientCase2){
@@ -134,13 +135,13 @@ BOOST_AUTO_TEST_CASE(GradientCase2){
     Eigen::Vector3d p21(-1,1,1);
     Eigen::Vector3d p22(1,-2,3);
 
-    Eigen::MatrixXd p11_pz(3, 2);
+    Eigen::Matrix<double,3,2> p11_pz(3, 2);
     p11_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p12_pz(3, 2);
+    Eigen::Matrix<double,3,2> p12_pz(3, 2);
     p12_pz << 0,0,0,0,0.25,1;
-    Eigen::MatrixXd p21_pz(3, 2);
+    Eigen::Matrix<double,3,2> p21_pz(3, 2);
     p21_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p22_pz(3, 2);
+    Eigen::Matrix<double,3,2> p22_pz(3, 2);
     p22_pz << 0,0,0,0,0.25,1;
 
     double r11(0.5);
@@ -150,14 +151,18 @@ BOOST_AUTO_TEST_CASE(GradientCase2){
     double distance = 0.0;
 
     TaperedCapsuleCollision collider;
-    Eigen::MatrixXd dist_grad;
+    Eigen::Vector<double,2> dist_grad;
     distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
 
     BOOST_CHECK_SMALL(distance-(2.0653), 1e-4);
-
-    Eigen::MatrixXd correctGrad(1,2);
-    correctGrad << 0.0337, 0.2425;
-    BOOST_CHECK_SMALL((dist_grad-correctGrad).norm(), 1e-4);
+    
+    Eigen::Vector2d z(2);
+    z << 1e-4, 1e-4;
+    double distance_delta = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11, r12, r21, r22);
+    auto analytic_grad = (dist_grad.transpose()*z);
+    Eigen::MatrixXd numerical_grad(1,1);
+    numerical_grad << distance_delta-distance;
+    BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm()*1e5 , 1e-4);
 }
 
 BOOST_AUTO_TEST_CASE(GradientCase3){
@@ -166,33 +171,32 @@ BOOST_AUTO_TEST_CASE(GradientCase3){
     Eigen::Vector3d p21(0,-1,-1);
     Eigen::Vector3d p22(0,-3,-5);
 
-    Eigen::MatrixXd p11_pz(3, 2);
+    Eigen::Matrix<double,3,2> p11_pz(3, 2);
     p11_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p12_pz(3, 2);
+    Eigen::Matrix<double,3,2> p12_pz(3, 2);
     p12_pz << 0,0,0,0,0.25,1;
-    Eigen::MatrixXd p21_pz(3, 2);
+    Eigen::Matrix<double,3,2> p21_pz(3, 2);
     p21_pz << 1,0.5,0,0,0,0;
-    Eigen::MatrixXd p22_pz(3, 2);
+    Eigen::Matrix<double,3,2> p22_pz(3, 2);
     p22_pz << 0,0,0,0,0.25,1;
 
     double r11(0.5);
     double r12(1.0);
     double r21(0.5);
     double r22(1.0);
-    double distance = 0.0;
 
     TaperedCapsuleCollision collider;
-    Eigen::MatrixXd dist_grad;
-    auto start = std::chrono::high_resolution_clock::now();
-    distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
-    BOOST_CHECK_SMALL(distance-(2.7417), 1e-4);
+    Eigen::Vector<double,2> dist_grad;
 
-    Eigen::MatrixXd correctGrad(1,2);
-    correctGrad << 0., 0.;
-    BOOST_CHECK_SMALL((dist_grad-correctGrad).norm(), 1e-4);
+    double distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
+    
+    Eigen::Vector2d z(2);
+    z << 1e-4, 1e-4;
+    double distance_delta = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11, r12, r21, r22);
+    auto analytic_grad = (dist_grad.transpose()*z);
+    Eigen::MatrixXd numerical_grad(1,1);
+    numerical_grad << distance_delta-distance;
+    BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-4);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
