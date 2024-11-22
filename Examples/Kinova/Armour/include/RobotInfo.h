@@ -58,6 +58,13 @@ public:
     int num_spheres = 0;
     std::vector<double> sphere_radii;
 
+    // bimanual constraints info
+    int num_capsule_collisions = 0;
+    int num_arm_1_capsule = 0;
+    int num_arm_2_capsule = 0;
+    std::vector<std::string> arm_1_tc_spheres;
+    std::vector<std::string> arm_2_tc_spheres;
+
     RobotInfo() = default;
 
     RobotInfo(const std::string& urdf_filename,

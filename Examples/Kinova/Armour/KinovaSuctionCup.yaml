@@ -56,5 +56,31 @@ KinovaWithSuctionCup:
       "radius": 0.02
     - "offset": [0.03, -0.06, -0.055]
       "radius": 0.02
+  tapered_capsules_1:
+    joint_2:
+      - "sphere_1": "collision-0"
+      - "sphere_2": "collision-6"
+    joint_4:
+      - "sphere_1": "collision-7"
+      - "sphere_2": "collision-11"
+    joint_6:
+      - "sphere_1": "collision-12"
+      - "sphere_2": "collision-13"
+    joint_7:
+      - "sphere_1": "collision-14"
+      - "sphere_2": "collision-16"
+  tapered_capsules_2:
+    joint_2:
+      - "sphere": "collision-0"
+      - "sphere": "collision-6"
+    joint_4:
+      - "sphere": "collision-7"
+      - "sphere": "collision-11"
+    joint_6:
+      - "sphere": "collision-12"
+      - "sphere": "collision-13"
+    joint_7:
+      - "sphere": "collision-14"
+      - "sphere": "collision-16"
 
     

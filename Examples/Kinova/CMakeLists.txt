@@ -353,16 +353,16 @@ nanobind_add_module(armour_nanobind
 target_include_directories(armour_nanobind PUBLIC
     Kinova/Armour/include)
 target_link_libraries(armour_nanobind PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
+    # trajlib 
+    # IDlib
+    # Conslib
+    # Optlib
     Kinovalib
     Armourlib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio
+    # ipopt
+    # coinhsl
+    # ${BOOST_LIBRARIES} 
+    # pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 nanobind_compile_options(armour_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})

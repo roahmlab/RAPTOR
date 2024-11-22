@@ -21,11 +21,11 @@ inline Eigen::Vector<double,NUM_FACTORS> batchDot(const Eigen::Vector3d vector, 
 
 inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
-                        const MatX& ptc1_point_1_pz, const MatX& ptc1_point_2_pz, 
-                        const MatX& ptc2_point_1_pz, const MatX& ptc2_point_2_pz, 
+                        const Mat3F& ptc1_point_1_pz, const Mat3F& ptc1_point_2_pz, 
+                        const Mat3F& ptc2_point_1_pz, const Mat3F& ptc2_point_2_pz, 
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2,
-                        VecX& pdist_pz){
+                        VecF& pdist_pz){
     // auto start = std::chrono::high_resolution_clock::now();
     // std::cout << "Entering func" << std::endl;
 
@@ -127,30 +127,30 @@ inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1,
     if(ptc1_point_1_pz.size()>0){
         int colmns = ptc1_point_1_pz.cols();
         // Solve for gradients of T and U
-        MatX pd1_pz = ptc1_point_2_pz - ptc1_point_1_pz;
-        MatX pd2_pz = ptc2_point_2_pz - ptc2_point_1_pz;
-        MatX pd12_pz = ptc2_point_1_pz - ptc1_point_1_pz;
+        Mat3F pd1_pz = ptc1_point_2_pz - ptc1_point_1_pz;
+        Mat3F pd2_pz = ptc2_point_2_pz - ptc2_point_1_pz;
+        Mat3F pd12_pz = ptc2_point_1_pz - ptc1_point_1_pz;
 
         // Solve for gradients of terms used to find distance
-        VecX pa_pz = 2*batchDot(d1,pd1_pz);
-        VecX pb_pz = batchDot(d1,pd2_pz)+batchDot(d2, pd1_pz);
-        VecX pc_pz = batchDot(d12,pd1_pz)+batchDot(d1, pd12_pz);
-        VecX pe_pz = 2*batchDot(d2,pd2_pz);
-        VecX pf_pz = batchDot(d2,pd12_pz)+batchDot(d12, pd2_pz);
-        VecX pg_pz = 2*batchDot(d12,pd12_pz);
+        VecF pa_pz = 2*batchDot(d1,pd1_pz);
+        VecF pb_pz = batchDot(d1,pd2_pz)+batchDot(d2, pd1_pz);
+        VecF pc_pz = batchDot(d12,pd1_pz)+batchDot(d1, pd12_pz);
+        VecF pe_pz = 2*batchDot(d2,pd2_pz);
+        VecF pf_pz = batchDot(d2,pd12_pz)+batchDot(d12, pd2_pz);
+        VecF pg_pz = 2*batchDot(d12,pd12_pz);
 
         // auto time_pa = std::chrono::high_resolution_clock::now();
         // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_pa - time1);
         // std::cout << "Time taken to find p_alphabet_pz: " << duration.count()/1e3 << " microseconds" << std::endl;
 
         // Solve for more complex terms
-        VecX lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
+        VecF lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
         auto dist_vec = d1 * tStar - d2 * uStar - d12;
         double purple = (dist_vec).norm();
         double orange = a * tStar - b * uStar - c;
         double green = -b * tStar - e * uStar + f;
-        VecX red = -pb_pz * tStar + pe_pz * uStar + pf_pz;
-        VecX grey = (batchDot((d1 * tStar*tStar - d2 * tStar * uStar - d12 * tStar),pd1_pz)-
+        VecF red = -pb_pz * tStar + pe_pz * uStar + pf_pz;
+        VecF grey = (batchDot((d1 * tStar*tStar - d2 * tStar * uStar - d12 * tStar),pd1_pz)-
                     batchDot((d1 * tStar * uStar - d2 * uStar*uStar - d12 * uStar),pd2_pz)-
                     batchDot((d1 - d2 - d12), pd12_pz))/ (purple*purple);
 
@@ -164,30 +164,30 @@ inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1,
         double L22;
         double L12;
 
-        VecX dLambda1 = VecX::Zero(colmns);
+        VecF dLambda1 = VecF::Zero(colmns);
         if (tStar == 1){
             dLambda1 = -(lgrey * purple - orange * grey);
         }
-        VecX dLambda2 = VecX::Zero(colmns);
+        VecF dLambda2 = VecF::Zero(colmns);
         if (tStar == 0){
             dLambda2 = -(red * purple - green * grey);
         }
-        VecX dLambda3 = VecX::Zero(colmns);
+        VecF dLambda3 = VecF::Zero(colmns);
         if (uStar == 1){
             dLambda3 = (lgrey * purple - orange * grey);
         }
-        VecX dLambda4 = VecX::Zero(colmns);
+        VecF dLambda4 = VecF::Zero(colmns);
         if (uStar == 0){
             dLambda4 = (red * purple - green * grey);
         }
 
         auto H_inner = batchDot(-d1 * tStar + d2 * uStar + d12,-pd1_pz * tStar + pd2_pz * uStar + pd12_pz);
-        VecX H1;
-        VecX H2;
+        VecF H1;
+        VecF H2;
 
 
-        VecX pt_pz = VecX::Zero();
-        VecX pu_pz = VecX::Zero();
+        VecF pt_pz = VecF::Zero();
+        VecF pu_pz = VecF::Zero();
         switch(ind){
             case 0:
             case 1:
@@ -236,7 +236,7 @@ inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1,
         }
 
         // Calculate gradient of distance
-        VecX part1 = batchDot(dist_vec, pd1_pz*tStar + d1*pt_pz.transpose() - pd2_pz*uStar - d2*pu_pz.transpose() - pd12_pz) / purple;
+        VecF part1 = batchDot(dist_vec, pd1_pz*tStar + d1*pt_pz.transpose() - pd2_pz*uStar - d2*pu_pz.transpose() - pd12_pz) / purple;
 
         pdist_pz = (part1 - r1 * pt_pz - r2 * pu_pz);
 
@@ -255,11 +255,11 @@ inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1,
 
 double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
-                        const MatX& ptc1_point_1_pz, const MatX& ptc1_point_2_pz, 
-                        const MatX& ptc2_point_1_pz, const MatX& ptc2_point_2_pz, 
+                        const Mat3F& ptc1_point_1_pz, const Mat3F& ptc1_point_2_pz, 
+                        const Mat3F& ptc2_point_1_pz, const Mat3F& ptc2_point_2_pz, 
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2,
-                        VecX& pdist_pz){
+                        VecF& pdist_pz){
     // auto start = std::chrono::high_resolution_clock::now();
     double distance = distanceInternal(tc1_point_1, tc1_point_2, tc2_point_1, tc2_point_2, 
                 ptc1_point_1_pz, ptc1_point_2_pz, ptc2_point_1_pz, ptc2_point_2_pz,
@@ -274,8 +274,8 @@ double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const V
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2){
-    MatX nullDerivative;
-    VecX nullGradient;
+    Mat3F nullDerivative;
+    VecF nullGradient;
     double distance = distanceInternal(tc1_point_1, tc1_point_2, tc2_point_1, tc2_point_2, 
                 nullDerivative, nullDerivative, nullDerivative, nullDerivative,
                 tc1_radius_1, tc1_radius_2, tc2_radius_1, tc2_radius_2, nullGradient);
