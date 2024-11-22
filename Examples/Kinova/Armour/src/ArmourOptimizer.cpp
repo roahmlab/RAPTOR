@@ -40,7 +40,7 @@ bool ArmourOptimizer::set_parameters(
             boxCenters_input, boxOrientation_input, boxSize_input);
         bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
     }
-    tccPtr = std::make_shared<TaperedCapsuleCollision>();
+    tccPtr = std::make_shared<TaperedCapsuleCollision<NUM_FACTORS>>();
 
     return true;
 }

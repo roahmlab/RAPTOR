@@ -7,8 +7,8 @@
 using namespace RAPTOR;
 
 int main() {
-    TaperedCapsuleCollision collider;
-    int instances = 40*9;
+    TaperedCapsuleCollision<NUM_FACTORS> collider;
+    int instances = 900;
     Eigen::VectorXd dist(instances);
     double total_time = 0;
     
@@ -34,14 +34,14 @@ int main() {
     for(i = 0; i<instances; i++){
         
 
-        // auto start = std::chrono::high_resolution_clock::now();
-        //dist(i) = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
+        auto start = std::chrono::high_resolution_clock::now();
+        dist(i) = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, dist_grad);
         
-        // auto stop = std::chrono::high_resolution_clock::now();
-        // auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-        // // std::cout << "Time taken by function: " << duration.count()/1e3 << " microseconds" << std::endl;
-        // // std::cout << "Avg Dist:" << dist.mean() << std::endl;
-        // total_time = total_time*0.9+duration.count()*0.1;
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+        // std::cout << "Time taken by function: " << duration.count()/1e3 << " microseconds" << std::endl;
+        // std::cout << "Avg Dist:" << dist.mean() << std::endl;
+        total_time = total_time*0.9+duration.count()*0.1;
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);

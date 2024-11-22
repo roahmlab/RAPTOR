@@ -7,19 +7,24 @@ inline double solve_quadratic(double a, double b, double c, int sign){
     return (-b+sign*sqrt(pow(b,2)-4*a*c))/(2*a);
 }
 
-inline Eigen::Vector<double,NUM_FACTORS> batchDot(const Eigen::Vector3d vector, const Eigen::Matrix<double,3,NUM_FACTORS> matrix){
+// explicit instantiation for cases currently used
+template class TaperedCapsuleCollision<2>;
+template class TaperedCapsuleCollision<7>;
+
+
+template<int factors>
+inline Eigen::Vector<double,factors> TaperedCapsuleCollision<factors>::batchDot(const Vec3 vector, const Mat3F matrix){
     // equivalent to this line, but for loop is faster
     // (matrix.transpose()*vector)
-    int dims = matrix.cols();
-    Eigen::VectorXd result(dims);
+    Eigen::VectorXd result(factors);
     
-    for(uint i = 0; i<dims; i++){
+    for(uint i = 0; i<factors; i++){
         result[i] = vector.dot(matrix.col(i));
     }
     return result;
 }
 
-inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
+template<int factors> inline double TaperedCapsuleCollision<factors>::distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
                         const Mat3F& ptc1_point_1_pz, const Mat3F& ptc1_point_2_pz, 
                         const Mat3F& ptc2_point_1_pz, const Mat3F& ptc2_point_2_pz, 
@@ -253,7 +258,7 @@ inline double TaperedCapsuleCollision::distanceInternal(const Vec3& tc1_point_1,
     return finalDistance;
 }
 
-double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
+template<int factors> double TaperedCapsuleCollision<factors>::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
                         const Mat3F& ptc1_point_1_pz, const Mat3F& ptc1_point_2_pz, 
                         const Mat3F& ptc2_point_1_pz, const Mat3F& ptc2_point_2_pz, 
@@ -270,7 +275,7 @@ double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const V
     return distance;
 }
 
-double TaperedCapsuleCollision::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
+template<int factors> double TaperedCapsuleCollision<factors>::computeDistance(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2){

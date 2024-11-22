@@ -9,21 +9,20 @@
 namespace RAPTOR {
 
 #define COLLISION_THRESHOLD 1e-4
-#ifndef NUM_FACTORS
-#define NUM_FACTORS 7
-#endif
 
 inline double solve_quadratic(float a, float b, float c, int sign);
 
-inline Eigen::Vector<double,NUM_FACTORS> batchDot(const Eigen::Vector3d vector, const Eigen::Matrix<double,3,NUM_FACTORS> matrix);
 
-
+template<int factors>
 class TaperedCapsuleCollision {
 public:
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
-    using VecF = Eigen::Vector<double,NUM_FACTORS>;
-    using Mat3F = Eigen::Matrix<double,3,NUM_FACTORS>;
+    using VecF = Eigen::Vector<double,factors>;
+    using Mat3F = Eigen::Matrix<double,3,factors>;
+
+    inline Eigen::Vector<double,factors> batchDot(const Vec3 vector, const Mat3F matrix);
+
 
     inline double distanceInternal(const Vec3& tc1_point_1, const Vec3& tc1_point_2, 
                         const Vec3& tc2_point_1, const Vec3& tc2_point_2, 

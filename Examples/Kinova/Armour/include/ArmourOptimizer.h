@@ -141,7 +141,7 @@ public:
     std::shared_ptr<PZDynamics> dynPtr_;
     
     std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
-    std::shared_ptr<TaperedCapsuleCollision> tccPtr;
+    std::shared_ptr<TaperedCapsuleCollision<NUM_FACTORS>> tccPtr;
 
     size_t num_time_steps = 0;
     size_t num_spheres = 0;
