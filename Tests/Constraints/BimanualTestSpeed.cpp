@@ -8,7 +8,7 @@ using namespace RAPTOR;
 
 int main() {
     TaperedCapsuleCollision<NUM_FACTORS> collider;
-    int instances = 900;
+    int instances = 1;
     Eigen::VectorXd dist(instances);
     double total_time = 0;
     
@@ -39,13 +39,13 @@ int main() {
         
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-        // std::cout << "Time taken by function: " << duration.count()/1e3 << " microseconds" << std::endl;
+        std::cout << "Time taken by function: " << duration.count()/1e3 << " microseconds" << std::endl;
         // std::cout << "Avg Dist:" << dist.mean() << std::endl;
         total_time = total_time*0.9+duration.count()*0.1;
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-    std::cout << "Time taken by function: " << duration.count()/1e3 << " microseconds" << std::endl;
+    std::cout << "Time taken average: " << duration.count()/1e3 << " microseconds" << std::endl;
     std::cout << "Average Distance: " << dist.mean() << std::endl;
 
     return 0;

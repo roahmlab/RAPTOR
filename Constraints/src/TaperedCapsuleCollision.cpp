@@ -3,8 +3,26 @@
 
 namespace RAPTOR {
 
-inline double solve_quadratic(double a, double b, double c, int sign){
-    return (-b+sign*sqrt(pow(b,2)-4*a*c))/(2*a);
+inline void solve_quadratic(const double a, 
+                            const double b, 
+                            const double c,
+                            double* sol1,
+                            double* sol2) {
+    double discriminant = b*b - 4*a*c;
+    if (discriminant < -1e4) {
+        // std::cout << "No real roots: "  << discriminant << std::endl;
+        *sol1 = -1.0;
+        *sol2 = -1.0;
+        return;
+        // throw std::runtime_error("No real roots");
+    }
+    else if (discriminant < 1e4) {
+        discriminant = 0;
+    }
+    double sqrt_discriminant = sqrt(discriminant);
+    double twoa = 2*a;
+    *sol1 = (-b + sqrt_discriminant) / twoa;
+    *sol2 = (-b - sqrt_discriminant) / twoa;
 }
 
 // explicit instantiation for cases currently used
@@ -31,8 +49,6 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2,
                         VecF& pdist_pz){
-    // auto start = std::chrono::high_resolution_clock::now();
-    // std::cout << "Entering func" << std::endl;
 
     double r1 = tc1_radius_2-tc1_radius_1;
     double r2 = tc2_radius_2-tc2_radius_1;
@@ -48,9 +64,9 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
     double f = d2.dot(d12);
     double g = d12.dot(d12);
 
-    Eigen::Vector<double, 14> distances(14);
-    Eigen::Vector<double, 14> u_test(14);
-    Eigen::Vector<double, 14> t_test(14);
+    double distances[14];
+    double u_test[14];
+    double t_test[14];
     
     // end point to end point checks
     u_test[10] = 0.0;
@@ -65,49 +81,45 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
     
     // end point to edge checks
         // case 1-2
-    u_test[0] = solve_quadratic(e*(e-r2*r2), 2*f*(e-r2*r2), f*f-r2*r2*g, 1);
-    u_test[1] = solve_quadratic(e*(e-r2*r2), 2*f*(e-r2*r2), f*f-r2*r2*g, -1);
-    u_test[2] = solve_quadratic(e*(e-r2*r2), 2*(f-b)*(e-r2*r2), (f-b)*(f-b)-r2*r2*(g-2*c+a), 1);
-    u_test[3] = solve_quadratic(e*(e-r2*r2), 2*(f-b)*(e-r2*r2), (f-b)*(f-b)-r2*r2*(g-2*c+a), -1);
+    solve_quadratic(e*(e-r2*r2), 2*f*(e-r2*r2), f*f-r2*r2*g, &u_test[0], &u_test[1]);
+    solve_quadratic(e*(e-r2*r2), 2*(f-b)*(e-r2*r2), (f-b)*(f-b)-r2*r2*(g-2*c+a), &u_test[2], &u_test[3]);    
+
     t_test[0] = 0;
     t_test[1] = 0;
     t_test[2] = 1;
     t_test[3] = 1;
-        // case 3-4
+
     u_test[4] = 0;
     u_test[5] = 0;
     u_test[6] = 1;
     u_test[7] = 1;
-    t_test[4]  = solve_quadratic(a*(a-pow(r1,2)), -2*c*(a-pow(r1,2)), pow(c,2)-pow(r1,2)*g, 1);
-    t_test[5]  = solve_quadratic(a*(a-pow(r1,2)), -2*c*(a-pow(r1,2)), pow(c,2)-pow(r1,2)*g, -1);
-    t_test[6] = solve_quadratic(a*(a-pow(r1,2)), -2*(b+c)*(a-pow(r1,2)), pow((b+c),2)-pow(r1,2)*(e+2*f+g), 1);
-    t_test[7] = solve_quadratic(a*(a-pow(r1,2)), -2*(b+c)*(a-pow(r1,2)), pow((b+c),2)-pow(r1,2)*(e+2*f+g), -1);
+    solve_quadratic(a*(a-pow(r1,2)), -2*c*(a-pow(r1,2)), pow(c,2)-pow(r1,2)*g, &t_test[4], &t_test[5]);
+    solve_quadratic(a*(a-pow(r1,2)), -2*(b+c)*(a-pow(r1,2)), pow((b+c),2)-pow(r1,2)*(e+2*f+g), &t_test[6], &t_test[7]);
+    
     // edge to edge check
         // case 5
-    // double phi = (r2*b+r1*f)/(r2*a+r1*b);
-    // double gamma = (r2*c+r1*f)/(r2*a+r1*b);
-    // double alpha = a*phi-b;
-    // double beta = a*gamma-c;
-    
-    // double a_5 = alpha*alpha - r1*r1*phi*phi*a - r1*r1*e + 2*r1*r1*b*phi;
-    // double b_5 = 2*alpha*beta - 2*r1*r1*phi*gamma*a + 2*r1*r1*b*gamma + 2*r1*c*phi - 2*r1*r1*f;
-    // double c_5 = beta*beta - r1*r1*a*gamma*gamma + 2*r1*r1*c*gamma - r1*r1*g;
-    // u_test[8] = solve_quadratic(a_5, b_5, c_5, 1);
-    // u_test[9] = solve_quadratic(a_5, b_5, c_5, -1);
-    // t_test[8] = phi*u_test[8]+gamma;
-    // t_test[9] = phi*u_test[9]+gamma;
-
-    
-
-    t_test[8] = (c*r2 + f*r1)/(a*r2 + b*r1) + ((b*r2 + e*r1)*(a*r2*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e)) - b*b*b*c + b*r1*((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
+    double radicand = (g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e);
+    if(radicand < -1e5){
+        t_test[8] = -1.0;
+        t_test[9] = -1.0;
+        u_test[8] = -1.0;
+        u_test[9] = -1.0;
+        // std::cout << "No real roots"  << radicand << std::endl;
+    }
+    else{
+        if(radicand < 0){
+            radicand = 0;
+        }
+        double sqrt_radicand = sqrt(radicand);
+        t_test[8] = (c*r2 + f*r1)/(a*r2 + b*r1) + ((b*r2 + e*r1)*(a*r2*sqrt_radicand - b*b*b*c + b*r1*((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
          + a*a*f*r2*r2 + a*b*b*f - a*a*e*f - a*b*c*r2*r2 - b*c*e*r1*r1 + a*e*f*r1*r1 - 2*b*b*c*r1*r2 + a*b*c*e + 2*a*b*f*r1*r2))/((a*r2 + b*r1)*(a*a*e*e - a*a*e*r2*r2 - 2*a*b*b*e + a*b*b*r2*r2 - 2*a*b*e*r1*r2 - a*e*e*r1*r1 + b*b*b*b + 2*b*b*b*r1*r2 + b*b*e*r1*r1));
-    t_test[9] = (c*r2 + f*r1)/(a*r2 + b*r1) - ((b*r2 + e*r1)*(b*b*b*c + a*r2*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e)) + b*r1*((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
+        t_test[9] = (c*r2 + f*r1)/(a*r2 + b*r1) - ((b*r2 + e*r1)*(b*b*b*c + a*r2*sqrt_radicand + b*r1*((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
          - a*a*f*r2*r2 - a*b*b*f + a*a*e*f + a*b*c*r2*r2 + b*c*e*r1*r1 - a*e*f*r1*r1 + 2*b*b*c*r1*r2 - a*b*c*e - 2*a*b*f*r1*r2))/((a*r2 + b*r1)*(a*a*e*e - a*a*e*r2*r2 - 2*a*b*b*e + a*b*b*r2*r2 - 2*a*b*e*r1*r2 - a*e*e*r1*r1 + b*b*b*b + 2*b*b*b*r1*r2 + b*b*e*r1*r1));
-
-    u_test[8] = (a*r2*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e)) - b*b*b*c + b*r1*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
+        u_test[8] = (a*r2*sqrt_radicand - b*b*b*c + b*r1*sqrt_radicand
          + a*a*f*r2*r2 + a*b*b*f - a*a*e*f - a*b*c*r2*r2 - b*c*e*r1*r1 + a*e*f*r1*r1 - 2*b*b*c*r1*r2 + a*b*c*e + 2*a*b*f*r1*r2)/(a*a*e*e - a*a*e*r2*r2 - 2*a*b*b*e + a*b*b*r2*r2 - 2*a*b*e*r1*r2 - a*e*e*r1*r1 + b*b*b*b + 2*b*b*b*r1*r2 + b*b*e*r1*r1);
-    u_test[9] = -(b*b*b*c + a*r2*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e)) + b*r1*sqrt((g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e))
+        u_test[9] = -(b*b*b*c + a*r2*sqrt_radicand + b*r1*sqrt_radicand
          - a*a*f*r2*r2 - a*b*b*f + a*a*e*f + a*b*c*r2*r2 + b*c*e*r1*r1 - a*e*f*r1*r1 + 2*b*b*c*r1*r2 - a*b*c*e - 2*a*b*f*r1*r2)/(a*a*e*e - a*a*e*r2*r2 - 2*a*b*b*e + a*b*b*r2*r2 - 2*a*b*e*r1*r2 - a*e*e*r1*r1 + b*b*b*b + 2*b*b*b*r1*r2 + b*b*e*r1*r1);
+    }    
 
     for(int i = 0; i<14; i++){
         if(u_test[i] <= 1 && u_test[i] >= 0 && t_test[i] <= 1 && t_test[i] >= 0){
@@ -118,16 +130,15 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         }
     }
 
-    // std::cout << "Finding dist" << std::endl;
-
-    Eigen::VectorXd::Index ind = -1;
-    double finalDistance = distances.minCoeff(&ind) - tc1_radius_1 - tc2_radius_1;
+    size_t ind = 0;
+    for (int i = 1; i < 14; i++){
+        if (distances[i] < distances[ind]){
+            ind = i;
+        }
+    }
+    double finalDistance = distances[ind] - tc1_radius_1 - tc2_radius_1;
     double uStar = u_test[ind];
     double tStar = t_test[ind];
-
-    // auto time1 = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time1 - start);
-    // std::cout << "Time taken to find dist: " << duration.count()/1e3 << " microseconds" << std::endl;
 
     if(ptc1_point_1_pz.size()>0){
         int colmns = ptc1_point_1_pz.cols();
@@ -144,10 +155,6 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         VecF pf_pz = batchDot(d2,pd12_pz)+batchDot(d12, pd2_pz);
         VecF pg_pz = 2*batchDot(d12,pd12_pz);
 
-        // auto time_pa = std::chrono::high_resolution_clock::now();
-        // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_pa - time1);
-        // std::cout << "Time taken to find p_alphabet_pz: " << duration.count()/1e3 << " microseconds" << std::endl;
-
         // Solve for more complex terms
         VecF lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
         auto dist_vec = d1 * tStar - d2 * uStar - d12;
@@ -159,11 +166,6 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
                     batchDot((d1 * tStar * uStar - d2 * uStar*uStar - d12 * uStar),pd2_pz)-
                     batchDot((d1 - d2 - d12), pd12_pz))/ (purple*purple);
 
-        // auto time_colors = std::chrono::high_resolution_clock::now();
-        // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_colors - time_pa);
-        // std::cout << "Time taken to find colors: " << duration.count()/1e3 << " microseconds" << std::endl;
-
-        // 
         double gradient_factor = 1/pow(purple,3);
         double L11;
         double L22;
@@ -245,16 +247,8 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
 
         pdist_pz = (part1 - r1 * pt_pz - r2 * pu_pz);
 
-        // auto time2 = std::chrono::high_resolution_clock::now();
-        // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time_colors);
-        // std::cout << "Time taken to find grad: " << duration.count()/1e3 << " microseconds" << std::endl;
     }
     
-
-    // auto stop = std::chrono::high_resolution_clock::now();
-    // duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-    // std::cout << "Time taken by distInternal: " << duration.count()/1e3 << " microseconds" << std::endl;
-
     return finalDistance;
 }
 
@@ -265,13 +259,10 @@ template<int factors> double TaperedCapsuleCollision<factors>::computeDistance(c
                         const double& tc1_radius_1, const double& tc1_radius_2, 
                         const double& tc2_radius_1, const double& tc2_radius_2,
                         VecF& pdist_pz){
-    // auto start = std::chrono::high_resolution_clock::now();
     double distance = distanceInternal(tc1_point_1, tc1_point_2, tc2_point_1, tc2_point_2, 
                 ptc1_point_1_pz, ptc1_point_2_pz, ptc2_point_1_pz, ptc2_point_2_pz,
                 tc1_radius_1, tc1_radius_2, tc2_radius_1, tc2_radius_2, pdist_pz);
                 auto stop = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-    // std::cout << "Time taken by computeDist: " << duration.count()/1e3 << " microseconds" << std::endl;
     return distance;
 }
 

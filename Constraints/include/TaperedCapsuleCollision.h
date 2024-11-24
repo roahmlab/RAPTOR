@@ -10,7 +10,11 @@ namespace RAPTOR {
 
 #define COLLISION_THRESHOLD 1e-4
 
-inline double solve_quadratic(float a, float b, float c, int sign);
+inline void solve_quadratic(const double a, 
+                            const double b, 
+                            const double c,
+                            double* sol1,
+                            double* sol2);
 
 
 template<int factors>
