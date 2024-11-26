@@ -381,8 +381,8 @@ bool ArmourOptimizer::eval_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsule;
-            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsule;
+            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsules;
+            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 for (size_t arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
@@ -586,8 +586,8 @@ bool ArmourOptimizer::eval_jac_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsule;
-            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsule;
+            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsules;
+            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, values) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 for (size_t arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
@@ -648,7 +648,7 @@ bool ArmourOptimizer::eval_jac_g(
                     for (size_t arm_2_index = 0; arm_2_index<arm_2_capsule_num; arm_2_index++){
                         std::string sphere_name2 = "collision-" + std::to_string(arm_2_index);
                         pinocchio::FrameIndex frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name);
+                            robotInfoPtr_->model.getFrameId(sphere_name2);
 
                         auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                         Interval x_res2 = PZsphere(0).slice(x);
@@ -662,7 +662,7 @@ bool ArmourOptimizer::eval_jac_g(
                         // TODO: get sphere names from TC index
                         sphere_name2 = "collision-" + std::to_string(arm_2_index+1);
                         frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name);
+                            robotInfoPtr_->model.getFrameId(sphere_name2);
 
                         PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                         x_res = PZsphere(0).slice(x);

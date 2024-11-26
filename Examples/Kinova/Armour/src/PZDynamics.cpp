@@ -66,7 +66,7 @@ void PZDynamics::compute() {
 
     // generate joint trajectory reachable sets
     try {
-        #pragma omp parallel for shared(trajPtr_) private(t_ind) schedule(static, trajPtr_->num_time_steps / NUM_THREADS)
+        #pragma omp parallel for shared(trajPtr_) private(t_ind) schedule(dynamic)
         for(t_ind = 0; t_ind < num_time_steps; t_ind++) {
             trajPtr_->makePolyZono(t_ind);
         }
