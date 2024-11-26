@@ -60,9 +60,9 @@ public:
 
     // bimanual constraints info
     int num_capsule_collisions = 0;
-    int num_arm_1_capsules = 0;
+    int num_capsules = 0;
     int num_arm_2_capsules = 0;
-    std::vector<std::string> arm_1_tc_spheres;
+    std::vector<std::string> tc_spheres;
     std::vector<std::string> arm_2_tc_spheres;
 
     RobotInfo() = default;

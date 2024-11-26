@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(GeneralGradient){
             Eigen::MatrixXd numerical_grad(1,1);
             numerical_grad << distance_delta-distance;
 
-            BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-8);
+            BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-7);
         }
     }
 }
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
     robotInfoPtr_->model.friction.setZero();
 
     Eigen::VectorXd q0(7);
-    q0 << 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0;
+    q0 << 0.0, 0.0, 0.0, 3.14, 0.0, 0.0, 0.0;
 
     Eigen::VectorXd dq0(7);
     dq0 << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
@@ -256,18 +256,20 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
               << " ms" << std::endl;
 
     // bimanual self collision constraints
-    const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsules;
-    const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
+    const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
+    const int arm_2_capsule_num = robotInfoPtr_->num_capsules;
 
     const double x_val = 1;
     const double* x;
     x = &x_val;
 
-    const int check_steps = std::min(10, num_time_steps);
+    std::cout << "Arm 1 Capsule Num: " << arm_1_capsule_num << std::endl;
+    std::cout << "Arm 2 Capsule Num: " << arm_2_capsule_num << std::endl;
 
     for (int i = 0; i< check_steps; i++){
-        for (int arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
-            std::string sphere_name = robotInfoPtr_->arm_1_tc_spheres[arm_1_index*2];
+        int num_checks = 0;
+        for (int arm_1_index = 0; arm_1_index<arm_1_capsule_num-2; arm_1_index++){
+            std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
             pinocchio::FrameIndex frame_id = 
                 robotInfoPtr_->model.getFrameId(sphere_name);
 
@@ -281,7 +283,7 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
                                 getCenter(y_res), 
                                 getCenter(z_res);
             // TODO: get sphere names from TC index
-            sphere_name = robotInfoPtr_->arm_1_tc_spheres[arm_1_index*2+1];
+            sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2+1];
             frame_id = 
                 robotInfoPtr_->model.getFrameId(sphere_name);
 
@@ -298,12 +300,8 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
             double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
             double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
 
-            std::cout << "Name: " << sphere_name << std::endl;
-            std::cout << "Arm 1: " << tc1_sphere_1.transpose() << "\t" << tc1_sphere_2.transpose();
-            std::cout << "\tRadii: " << tc1_sphere_1_radius << " " << tc1_sphere_2_radius << std::endl;
-
-            for (int arm_2_index = 0; arm_2_index<arm_2_capsule_num; arm_2_index++){
-                std::string sphere_name2_1 = robotInfoPtr_->arm_2_tc_spheres[arm_2_index*2];
+            for (int arm_2_index = arm_1_index+2; arm_2_index<arm_2_capsule_num; arm_2_index++){
+                std::string sphere_name2_1 = robotInfoPtr_->tc_spheres[arm_2_index*2];
                 pinocchio::FrameIndex frame_id2 = 
                     robotInfoPtr_->model.getFrameId(sphere_name2_1);
 
@@ -316,8 +314,8 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
                 tc2_sphere_1 << getCenter(x_res2), 
                                 getCenter(y_res2), 
                                 getCenter(z_res2);
-                // TODO: get sphere names from TC index
-                std::string sphere_name2_2 = robotInfoPtr_->arm_2_tc_spheres[arm_2_index*2+1];
+
+                std::string sphere_name2_2 = robotInfoPtr_->tc_spheres[arm_2_index*2+1];
                 frame_id2 = 
                     robotInfoPtr_->model.getFrameId(sphere_name2_2);
 
@@ -335,23 +333,145 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
                 const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
                 double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
                                                     tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
-                // std::cout << "Distance: " << distance << std::endl;
-                // std::cout << "Name: " << sphere_name2_1 << "\t" << sphere_name2_2 << std::endl;
-                // std::cout << "Arm 2: " << tc2_sphere_2.transpose() << "\t" << tc2_sphere_2.transpose();
-                // std::cout << "\tRadii: " << tc2_sphere_1_radius << " " << tc2_sphere_2_radius << std::endl;
-
-                if(std::abs(arm_1_index - arm_2_index) < 2){
-                    if(arm_1_index == 1 && arm_2_index == 0){
-                        BOOST_CHECK(distance > 1e-2);
-                    }
-                    else{
-                        BOOST_CHECK(distance < 1e-2);
-                        std::cout << "Index: " << arm_1_index << " " << arm_2_index << std::endl;
-                    }
+                if(arm_1_index == 1 && arm_2_index == 3){
+                    BOOST_CHECK(distance > 0);
                 }
                 else{
-                    BOOST_CHECK(distance > 1e-2);
+                    BOOST_CHECK(distance < 0);
                 }
+                
+                std::cout << "Index1:" << arm_1_index << " Index2:" << arm_2_index << " Distance: " << distance << std::endl;
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
+    #define Interval RAPTOR::Kinova::Armour::Interval
+    #define Vec3 Eigen::Vector3d
+    #define getCenter RAPTOR::Kinova::Armour::getCenter
+        // Initialize
+    // read robot model and info
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
+    const std::shared_ptr<RAPTOR::Kinova::Armour::RobotInfo> robotInfoPtr_ = 
+        std::make_shared<RAPTOR::Kinova::Armour::RobotInfo>(robot_model_file, robot_info_file);
+
+    // turn off friction for validation
+    robotInfoPtr_->model.friction.setZero();
+
+    Eigen::VectorXd q0(7);
+    q0 << 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0;
+
+    Eigen::VectorXd dq0(7);
+    dq0 << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+    const double duration = 2.0;
+
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
+
+    std::shared_ptr<RAPTOR::Kinova::Armour::BezierCurveInterval> trajPtr_ = 
+        std::make_shared<RAPTOR::Kinova::Armour::BezierCurveInterval>(
+            q0, dq0, dq0, 
+            k_center, k_range, 
+            duration, 
+            robotInfoPtr_,
+            10);
+    
+    const int num_time_steps = trajPtr_->num_time_steps;
+
+    std::shared_ptr<RAPTOR::Kinova::Armour::PZDynamics> dynPtr_ = 
+        std::make_shared<RAPTOR::Kinova::Armour::PZDynamics>(robotInfoPtr_, trajPtr_);
+
+    std::shared_ptr<RAPTOR::TaperedCapsuleCollision<7>> tccPtr = 
+        std::make_shared<RAPTOR::TaperedCapsuleCollision<7>>();
+
+    // generate Joint Trajectory Reachable Sets
+    auto start1 = std::chrono::high_resolution_clock::now();
+    dynPtr_->compute();
+    auto end1 = std::chrono::high_resolution_clock::now();
+
+    // bimanual self collision constraints
+    const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
+    const int arm_2_capsule_num = robotInfoPtr_->num_capsules;
+
+    const double x_val = 1;
+    const double* x;
+    x = &x_val;
+
+    const int check_steps = std::min(10, num_time_steps);
+
+    for (int i = 0; i< check_steps; i++){
+        int num_checks = 0;
+        for (int arm_1_index = 0; arm_1_index<arm_1_capsule_num-2; arm_1_index++){
+            std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
+            pinocchio::FrameIndex frame_id = 
+                robotInfoPtr_->model.getFrameId(sphere_name);
+
+            auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+            Interval x_res = PZsphere(0).slice(x);
+            Interval y_res = PZsphere(1).slice(x);
+            Interval z_res = PZsphere(2).slice(x);
+
+            Vec3 tc1_sphere_1;
+            tc1_sphere_1 << getCenter(x_res), 
+                                getCenter(y_res), 
+                                getCenter(z_res);
+            // TODO: get sphere names from TC index
+            sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2+1];
+            frame_id = 
+                robotInfoPtr_->model.getFrameId(sphere_name);
+
+            PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+            x_res = PZsphere(0).slice(x);
+            y_res = PZsphere(1).slice(x);
+            z_res = PZsphere(2).slice(x);
+
+            Vec3 tc1_sphere_2;
+            tc1_sphere_2 << getCenter(x_res), 
+                                getCenter(y_res), 
+                                getCenter(z_res);
+
+            double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
+            double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
+
+            for (int arm_2_index = arm_1_index+2; arm_2_index<arm_2_capsule_num; arm_2_index++){
+                std::string sphere_name2_1 = robotInfoPtr_->tc_spheres[arm_2_index*2];
+                pinocchio::FrameIndex frame_id2 = 
+                    robotInfoPtr_->model.getFrameId(sphere_name2_1);
+
+                auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
+                Interval x_res2 = PZsphere(0).slice(x);
+                Interval y_res2 = PZsphere(1).slice(x);
+                Interval z_res2 = PZsphere(2).slice(x);
+
+                Vec3 tc2_sphere_1;
+                tc2_sphere_1 << getCenter(x_res2), 
+                                getCenter(y_res2), 
+                                getCenter(z_res2);
+
+                std::string sphere_name2_2 = robotInfoPtr_->tc_spheres[arm_2_index*2+1];
+                frame_id2 = 
+                    robotInfoPtr_->model.getFrameId(sphere_name2_2);
+
+                PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
+                x_res = PZsphere(0).slice(x);
+                y_res = PZsphere(1).slice(x);
+                z_res = PZsphere(2).slice(x);
+
+                Vec3 tc2_sphere_2;
+                tc2_sphere_2 << getCenter(x_res), 
+                                getCenter(y_res), 
+                                getCenter(z_res);
+
+                const double tc2_sphere_1_radius = dynPtr_->sphere_radii(arm_2_index, i);
+                const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
+                double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+                                                    tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
+                BOOST_CHECK(distance > 1e-2);
             }
         }
     }

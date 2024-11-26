@@ -117,7 +117,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     }
 
     num_spheres = 0;
-    num_arm_1_capsules = 0;
+    num_capsules = 0;
     sphere_radii.clear();
     for (const auto& entry : RobotConfig["collision_spheres"]) {
         std::string link_name = entry.first.as<std::string>();
@@ -155,7 +155,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         }
     }
     // Import tapered capsules for arm 1
-    for (const auto& entry : RobotConfig["tapered_capsules_1"]){
+    for (const auto& entry : RobotConfig["tapered_capsules"]){
         std::string link_name = entry.first.as<std::string>();
         const YAML::Node& spheres = entry.second;
         if (model.existJointName(link_name)) {
@@ -166,40 +166,18 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
                 std::string sphere_1 = sphere["sphere_1"].as<std::string>();
                 std::string sphere_2 = sphere["sphere_2"].as<std::string>();
 
-                arm_1_tc_spheres.push_back(sphere_1);
-                arm_1_tc_spheres.push_back(sphere_2);
+                // Currently no validation, trusts YAML to have valid collision element names
+                tc_spheres.push_back(sphere_1);
+                tc_spheres.push_back(sphere_2);
 
-                num_arm_1_capsules++;
+                num_capsules++;
             }
         }
         else {
             throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
         }
     }
-    // Import tapered capsules for arm 2
-    for (const auto& entry : RobotConfig["tapered_capsules_2"]){
-        std::string link_name = entry.first.as<std::string>();
-        const YAML::Node& spheres = entry.second;
-        
-        if (model.existJointName(link_name)) {
-            for (const auto& sphere : spheres) {
-                const YAML::Node& offset_node = sphere["offset"];
-                const YAML::Node& radius_node = sphere["radius"];
-
-                std::string sphere_1 = sphere["sphere_1"].as<std::string>();
-                std::string sphere_2 = sphere["sphere_2"].as<std::string>();
-
-                arm_2_tc_spheres.push_back(sphere_1);
-                arm_2_tc_spheres.push_back(sphere_2);
-
-                num_arm_2_capsules++;
-            }
-        }
-        else {
-            throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
-        }
-    }
-    num_capsule_collisions = num_arm_1_capsules*num_arm_2_capsules;
+    num_capsule_collisions = ((num_capsules*num_capsules)*(num_capsules-3)+2)/2;
 }
 
 void RobotInfo::print() const {

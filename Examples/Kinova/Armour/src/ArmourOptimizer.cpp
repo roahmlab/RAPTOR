@@ -381,12 +381,12 @@ bool ArmourOptimizer::eval_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsules;
+            const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
             const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 for (size_t arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
-                    std::string sphere_name = robotInfoPtr_->arm_1_tc_spheres[arm_1_index*2];
+                    std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
                     pinocchio::FrameIndex frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
 
@@ -400,7 +400,7 @@ bool ArmourOptimizer::eval_g(
                                      getCenter(y_res), 
                                      getCenter(z_res);
                     // TODO: get sphere names from TC index
-                    sphere_name = robotInfoPtr_->arm_1_tc_spheres[arm_1_index*2+1];
+                    sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2+1];
                     frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
 
@@ -586,7 +586,7 @@ bool ArmourOptimizer::eval_jac_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_arm_1_capsules;
+            const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
             const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, values) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
