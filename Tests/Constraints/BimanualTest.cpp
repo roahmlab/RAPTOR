@@ -266,8 +266,9 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
     std::cout << "Arm 1 Capsule Num: " << arm_1_capsule_num << std::endl;
     std::cout << "Arm 2 Capsule Num: " << arm_2_capsule_num << std::endl;
 
+    const int check_steps = std::min(10, num_time_steps);
+
     for (int i = 0; i< check_steps; i++){
-        int num_checks = 0;
         for (int arm_1_index = 0; arm_1_index<arm_1_capsule_num-2; arm_1_index++){
             std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
             pinocchio::FrameIndex frame_id = 

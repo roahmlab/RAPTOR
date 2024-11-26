@@ -16,7 +16,7 @@ inline void solve_quadratic(const double a,
         return;
         // throw std::runtime_error("No real roots");
     }
-    else if (discriminant < 1e4) {
+    else if (discriminant < 0) {
         discriminant = 0;
     }
     double sqrt_discriminant = sqrt(discriminant);

@@ -40,7 +40,11 @@ bool ArmourOptimizer::set_parameters(
             boxCenters_input, boxOrientation_input, boxSize_input);
         bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
     }
-    tccPtr = std::make_shared<TaperedCapsuleCollision<NUM_FACTORS>>();
+    bcaPtrs.resize(num_time_steps);
+    for (size_t i = 0; i < num_time_steps; i++) {
+        tccPtr[i] = std::make_shared<TaperedCapsuleCollision<NUM_FACTORS>>();
+
+    }
 
     return true;
 }
@@ -130,6 +134,8 @@ bool ArmourOptimizer::get_bounds_info(
         g_u[i] = 1e19;
     }
     offset += num_time_steps * num_spheres;
+
+    // self collsion constraints
     for( Index i = offset; i < offset + num_time_steps * num_capsule_collisions; i++ ) {
         g_l[i] = 0.0;
         g_u[i] = 1e19;
@@ -381,11 +387,11 @@ bool ArmourOptimizer::eval_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
-            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
+            const int capsule_num = robotInfoPtr_->num_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
-                for (size_t arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
+                int num_checks = 0;
+                for (int arm_1_index = 0; arm_1_index<capsule_num-2; arm_1_index++){
                     std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
                     pinocchio::FrameIndex frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
@@ -397,8 +403,8 @@ bool ArmourOptimizer::eval_g(
 
                     Vec3 tc1_sphere_1;
                     tc1_sphere_1 << getCenter(x_res), 
-                                     getCenter(y_res), 
-                                     getCenter(z_res);
+                                        getCenter(y_res), 
+                                        getCenter(z_res);
                     // TODO: get sphere names from TC index
                     sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2+1];
                     frame_id = 
@@ -411,18 +417,18 @@ bool ArmourOptimizer::eval_g(
 
                     Vec3 tc1_sphere_2;
                     tc1_sphere_2 << getCenter(x_res), 
-                                     getCenter(y_res), 
-                                     getCenter(z_res);
+                                        getCenter(y_res), 
+                                        getCenter(z_res);
 
                     double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
                     double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
 
-                    for (int arm_2_index = 0; arm_2_index<arm_2_capsule_num; arm_2_index++){
-                        std::string sphere_name2 = robotInfoPtr_->arm_2_tc_spheres[arm_2_index*2];
+                    for (int arm_2_index = arm_1_index+2; arm_2_index<capsule_num; arm_2_index++){
+                        std::string sphere_name2_1 = robotInfoPtr_->tc_spheres[arm_2_index*2];
                         pinocchio::FrameIndex frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name);
+                            robotInfoPtr_->model.getFrameId(sphere_name2_1);
 
-                        auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+                        auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
                         Interval x_res2 = PZsphere(0).slice(x);
                         Interval y_res2 = PZsphere(1).slice(x);
                         Interval z_res2 = PZsphere(2).slice(x);
@@ -431,12 +437,12 @@ bool ArmourOptimizer::eval_g(
                         tc2_sphere_1 << getCenter(x_res2), 
                                         getCenter(y_res2), 
                                         getCenter(z_res2);
-                        // TODO: get sphere names from TC index
-                        sphere_name2 = robotInfoPtr_->arm_2_tc_spheres[arm_2_index*2+1];
-                        frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name);
 
-                        PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+                        std::string sphere_name2_2 = robotInfoPtr_->tc_spheres[arm_2_index*2+1];
+                        frame_id2 = 
+                            robotInfoPtr_->model.getFrameId(sphere_name2_2);
+
+                        PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
                         x_res = PZsphere(0).slice(x);
                         y_res = PZsphere(1).slice(x);
                         z_res = PZsphere(2).slice(x);
@@ -448,9 +454,12 @@ bool ArmourOptimizer::eval_g(
 
                         const double tc2_sphere_1_radius = dynPtr_->sphere_radii(arm_2_index, i);
                         const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
-                        const int index_g = i * arm_1_capsule_num*arm_2_capsule_num + arm_1_index + arm_2_index + offset;
-                        g[index_g] = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+
+                        const int index_g = i * num_capsule_collisions + num_checks + offset;
+                        g[index_g] = tccPtr[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
                                                             tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
+
+                        num_checks++;
                     }
                 }
             }
@@ -586,11 +595,10 @@ bool ArmourOptimizer::eval_jac_g(
 
         // bimanual self collision constraints
         try {
-            const int arm_1_capsule_num = robotInfoPtr_->num_capsules;
-            const int arm_2_capsule_num = robotInfoPtr_->num_arm_2_capsules;
+            const int num_capsules = robotInfoPtr_->num_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, values) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
-                for (size_t arm_1_index = 0; arm_1_index<arm_1_capsule_num; arm_1_index++){
+                for (size_t arm_1_index = 0; arm_1_index<num_capsules-2; arm_1_index++){
                     std::string sphere_name = "collision-" + std::to_string(arm_1_index);
                     pinocchio::FrameIndex frame_id = 
                         robotInfoPtr_->model.getFrameId(sphere_name);
@@ -645,7 +653,7 @@ bool ArmourOptimizer::eval_jac_g(
                     Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_1_fixed(dk_tc1_sphere_1);
                     Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_2_fixed(dk_tc1_sphere_2);
 
-                    for (size_t arm_2_index = 0; arm_2_index<arm_2_capsule_num; arm_2_index++){
+                    for (size_t arm_2_index = arm_1_index+2; arm_2_index<num_capsules; arm_2_index++){
                         std::string sphere_name2 = "collision-" + std::to_string(arm_2_index);
                         pinocchio::FrameIndex frame_id2 = 
                             robotInfoPtr_->model.getFrameId(sphere_name2);
@@ -702,8 +710,8 @@ bool ArmourOptimizer::eval_jac_g(
 
                         Eigen::Vector<double, NUM_FACTORS> dk_distances(NUM_FACTORS);
 
-                        const int index_g = i * arm_1_capsule_num*arm_2_capsule_num + arm_1_index + arm_2_index + offset;
-                        auto distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+                        const int index_g = i * num_capsules*num_capsules + arm_1_index + arm_2_index + offset;
+                        auto distance = tccPtr[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
                                                             dk_tc1_sphere_1_fixed, dk_tc1_sphere_2_fixed, dk_tc2_sphere_1_fixed, dk_tc2_sphere_2_fixed,
                                                             tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius,
                                                             dk_distances);
