@@ -35,6 +35,7 @@ public:
     using Mat3 = Eigen::Matrix3d;
     using Vec6 = Vector6d;
     using Mat6 = Matrix6d;
+    using MatRegressor = Eigen::Matrix<double, 6, 10>;
 
     // Constructor
     RegressorInverseDynamics() = default;

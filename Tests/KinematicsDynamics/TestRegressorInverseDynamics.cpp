@@ -43,13 +43,13 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     // Compute momentums using pinocchio::rnea and compare the results
     trajPtr->compute(z, false);
     for (int i = 0; i < N; i++) {
-        Eigen::VectorXd momentum_pinocchio = pinocchio::rnea(
+        Eigen::VectorXd tau_pinocchio = pinocchio::rnea(
             model, data, 
             trajPtr->q(i), 
             trajPtr->q_d(i),
             trajPtr->q_dd(i));
 
-        BOOST_CHECK_SMALL((regressor_id.tau(i) - momentum_pinocchio).norm(), 1e-6);
+        BOOST_CHECK_SMALL((regressor_id.tau(i) - tau_pinocchio).norm(), 1e-6);
     }
 }
 
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     // Create a trajectory
     int N = 2;  // number of time steps
     double T = 10.0;  // total time
-    int degree = 2;  // degree of the polynomial
+    int degree = 3;  // degree of the polynomial
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 

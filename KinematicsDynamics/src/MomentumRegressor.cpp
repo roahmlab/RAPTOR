@@ -23,10 +23,10 @@ void MomentumRegressor::compute(const VecX& z,
     #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, I, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
     for (i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
-        const VecX& q_dd = trajPtr_->q_d(i);
+        const VecX& q_d = trajPtr_->q_d(i);
 
         const MatX& pq_pz = trajPtr_->pq_pz(i);
-        const MatX& pq_dd_pz = trajPtr_->pq_d_pz(i);
+        const MatX& pq_d_pz = trajPtr_->pq_d_pz(i);
 
         if (compute_derivatives) {
             ptau_pz(i) = MatX::Zero(trajPtr_->Nact, trajPtr_->varLength);
@@ -40,12 +40,12 @@ void MomentumRegressor::compute(const VecX& z,
         Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
         Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
         Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
         Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
         Xup.resize(1, modelPtr_->nv);
         dXupdq.resize(1, modelPtr_->nv);
         S.resize(1, modelPtr_->nv);
-        a.resize(1, modelPtr_->nv);
+        v.resize(1, modelPtr_->nv);
         pa_pz.resize(1, modelPtr_->nv);
 
         // The following has nothing to do with motor dynamics parameters
@@ -82,22 +82,22 @@ void MomentumRegressor::compute(const VecX& z,
             }
 
             if (parent_id > -1) {
-                a(j) = Xup(j) * a(parent_id) + S(j) * q_dd(j);
+                v(j) = Xup(j) * v(parent_id) + S(j) * q_d(j);
 
                 if (compute_derivatives) {
                     // compute pa_pz
                     pa_pz(j) = Xup(j) * pa_pz(parent_id);
 
                     if (j < trajPtr_->Nact) {
-                        // deal with S(j) * q_dd(j);
+                        // deal with S(j) * q_d(j);
                         for (int k = 0; k < S(j).size(); k++) {
                             if (S(j)(k) != 0) {
-                                pa_pz(j).row(k) += S(j)(k) * pq_dd_pz.row(j);
+                                pa_pz(j).row(k) += S(j)(k) * pq_d_pz.row(j);
                             }
                         }
 
-                        // deal with dXupdq(j) * a(parent_id)
-                        Vec6 dXupdq_a_parent_id = dXupdq(j) * a(parent_id);
+                        // deal with dXupdq(j) * v(parent_id)
+                        Vec6 dXupdq_a_parent_id = dXupdq(j) * v(parent_id);
                         for (int k = 0; k < 6; k++) {
                             pa_pz(j).row(k) += dXupdq_a_parent_id(k) * pq_pz.row(j);
                         }
@@ -105,7 +105,7 @@ void MomentumRegressor::compute(const VecX& z,
                 }
             }
             else {
-                a(j) = S(j) * q_dd(j);
+                v(j) = S(j) * q_d(j);
 
                 if (compute_derivatives) {// compute pa_pz
                     pa_pz(j) = MatX::Zero(6, trajPtr_->varLength);
@@ -113,44 +113,44 @@ void MomentumRegressor::compute(const VecX& z,
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
                             if (S(j)(k) != 0) {
-                                pa_pz(j).row(k) = S(j)(k) * pq_dd_pz.row(j);
+                                pa_pz(j).row(k) = S(j)(k) * pq_d_pz.row(j);
                             }
                         }
                     }
                 }
             }
 
-            const double& a1 = a(j)(0);
-            const double& a2 = a(j)(1);
-            const double& a3 = a(j)(2);
-            const double& a4 = a(j)(3);
-            const double& a5 = a(j)(4);
-            const double& a6 = a(j)(5);
+            const double& v1 = v(j)(0);
+            const double& v2 = v(j)(1);
+            const double& v3 = v(j)(2);
+            const double& v4 = v(j)(3);
+            const double& v5 = v(j)(4);
+            const double& v6 = v(j)(5);
 
             Yfull.block(6 * j, 10 * j, 6, 10) << 
-                 0,     0,   a6,   -a5,    a1,    a2,     0,   a3,    0,    0,
-                 0,   -a6,    0,    a4,     0,    a1,    a2,    0,   a3,    0,
-                 0,    a5,  -a4,     0,     0,     0,     0,   a1,   a2,   a3,
-                a4,     0,  -a3,    a2,     0,     0,     0,    0,    0,    0,
-                a5,    a3,    0,   -a1,     0,     0,     0,    0,    0,    0,
-                a6,   -a2,   a1,     0,     0,     0,     0,    0,    0,    0;
+                 0,     0,   v6,   -v5,    v1,    v2,     0,   v3,    0,    0,
+                 0,   -v6,    0,    v4,     0,    v1,    v2,    0,   v3,    0,
+                 0,    v5,  -v4,     0,     0,     0,     0,   v1,   v2,   v3,
+                v4,     0,  -v3,    v2,     0,     0,     0,    0,    0,    0,
+                v5,    v3,    0,   -v1,     0,     0,     0,    0,    0,    0,
+                v6,   -v2,   v1,     0,     0,     0,     0,    0,    0,    0;
      
             if (compute_derivatives) {
                 for (int k = 0; k < trajPtr_->varLength; k++) {
-                    const double& pa1 = pa_pz(j)(0, k);
-                    const double& pa2 = pa_pz(j)(1, k);
-                    const double& pa3 = pa_pz(j)(2, k);
-                    const double& pa4 = pa_pz(j)(3, k);
-                    const double& pa5 = pa_pz(j)(4, k);
-                    const double& pa6 = pa_pz(j)(5, k);
+                    const double& pv1 = pa_pz(j)(0, k);
+                    const double& pv2 = pa_pz(j)(1, k);
+                    const double& pv3 = pa_pz(j)(2, k);
+                    const double& pv4 = pa_pz(j)(3, k);
+                    const double& pv5 = pa_pz(j)(4, k);
+                    const double& pv6 = pa_pz(j)(5, k);
 
                     pYfull_pz(k).block(6 * j, 10 * j, 6, 10) <<
-                        0,       0,   pa6,   -pa5,   pa1,   pa2,     0,  pa3,    0,    0,
-                        0,    -pa6,     0,    pa4,     0,   pa1,   pa2,    0,  pa3,    0,
-                        0,     pa5,  -pa4,      0,     0,     0,     0,  pa1,  pa2,  pa3,
-                        pa4,     0,  -pa3,    pa2,     0,     0,     0,    0,    0,    0,
-                        pa5,   pa3,     0,   -pa1,     0,     0,     0,    0,    0,    0,
-                        pa6,  -pa2,   pa1,      0,     0,     0,     0,    0,    0,    0;
+                        0,       0,   pv6,   -pv5,   pv1,   pv2,     0,  pv3,    0,    0,
+                        0,    -pv6,     0,    pv4,     0,   pv1,   pv2,    0,  pv3,    0,
+                        0,     pv5,  -pv4,      0,     0,     0,     0,  pv1,  pv2,  pv3,
+                        pv4,     0,  -pv3,    pv2,     0,     0,     0,    0,    0,    0,
+                        pv5,   pv3,     0,   -pv1,     0,     0,     0,    0,    0,    0,
+                        pv6,  -pv2,   pv1,      0,     0,     0,     0,    0,    0,    0;
                 }
             }
         }
@@ -185,22 +185,7 @@ void MomentumRegressor::compute(const VecX& z,
 
         Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, numInertialParams) = Ycurrent;
 
-        // // motor dynamics
-        // for (int j = 0; j < modelPtr_->nv; j++) {
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = Utils::sign(q_d(j));
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = q_d(j);
-        //     Y(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = q_dd(j);
-
-        //     if (compute_derivatives) {
-        //         for (int k = 0; k < trajPtr_->varLength; k++) {
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j    ) = 0;
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 1) = pq_d_pz(j, k);
-        //             pY_pz(k)(i * modelPtr_->nv + j, numInertialParams + 3 * j + 2) = pq_dd_pz(j, k);
-        //         }
-        //     }
-        // }
-
-        // compute system momentum
+        // compute system momentum (what is stored in tau is the system momentum) 
         tau(i) = Y.middleRows(i * modelPtr_->nv, modelPtr_->nv) * phi;
 
         if (compute_derivatives) {
