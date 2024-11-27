@@ -68,10 +68,10 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         ptau_pz(i) = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
     }
 
-    Y = MatX::Zero(trajPtr_->N * modelPtr_->nv, numParams);
+    Y = MatX::Zero(N * modelPtr_->nv, numParams);
     pY_pz.resize(trajPtr_->varLength);
     for (int i = 0; i < trajPtr_->varLength; i++) {
-        pY_pz(i) = MatX::Zero(trajPtr_->N * modelPtr_->nv, numParams);
+        pY_pz(i) = MatX::Zero(N * modelPtr_->nv, numParams);
     }
 }
 
@@ -89,7 +89,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     if (compute_hessian) {
-        throw std::invalid_argument("CustomizedInverseDynamics: Hessian not implemented yet");
+        throw std::invalid_argument("RegressorInverseDynamics: Hessian not implemented yet");
     }
 
     int i = 0;
@@ -106,25 +106,18 @@ void RegressorInverseDynamics::compute(const VecX& z,
         // below is the original Roy Featherstone's inverse dynamics algorithm
         // refer to https://royfeatherstone.org/spatial/v2/index.html#ID
 
-        // forward pass
         Vec6 vJ;
         Mat6 XJ, dXJdq;
 
-        Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
-        Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
-        Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
-        Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
-        Xup.resize(1, modelPtr_->nv);
-        dXupdq.resize(1, modelPtr_->nv);
-        S.resize(1, modelPtr_->nv);
-        v.resize(1, modelPtr_->nv);
-        pv_pz.resize(1, modelPtr_->nv);
-        a.resize(1, modelPtr_->nv);
-        pa_pz.resize(1, modelPtr_->nv);
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup(modelPtr_->nv);
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> S(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> v(modelPtr_->nv);
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> a(modelPtr_->nv);
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz(modelPtr_->nv);
 
+        // forward pass
         for (int j = 0; j < modelPtr_->nv; j++) {
             const int pinocchio_joint_id = j + 1; // the first joint in pinocchio is the root joint
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;

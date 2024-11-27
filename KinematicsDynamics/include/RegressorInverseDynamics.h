@@ -6,7 +6,7 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
-#include <pinocchio/algorithm/regressor.hpp>
+#include "pinocchio/algorithm/regressor.hpp"
 
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"

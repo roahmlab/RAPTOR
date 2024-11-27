@@ -6,7 +6,7 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
-#include <pinocchio/algorithm/regressor.hpp>
+#include "pinocchio/algorithm/regressor.hpp"
 
 #include "RegressorInverseDynamics.h"
 
@@ -43,7 +43,13 @@ public:
     MomentumRegressor(const Model& model_input, 
                       const std::shared_ptr<Trajectories>& trajPtr_input,
                       Eigen::VectorXi jtype_input = Eigen::VectorXi(0)) :
-        RegressorInverseDynamics(model_input, trajPtr_input, false, jtype_input) {};
+        RegressorInverseDynamics(model_input, trajPtr_input, false, jtype_input) {
+        Y_CTv.resize(N * modelPtr_->nv, numParams);
+        pY_CTv_pz.resize(trajPtr_->varLength);
+        for (int i = 0; i < trajPtr_->varLength; i++) {
+            pY_CTv_pz(i).resize(N * modelPtr_->nv, numParams);
+        }
+    };
 
     // Destructor
     ~MomentumRegressor() = default;
@@ -52,6 +58,18 @@ public:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
                          bool compute_hessian = false) override;
+
+    // class members:
+
+    // this has been defined in RegressorInverseDynamics 
+    // and stores the regressor for system momentum H(q) * v
+    // MatX Y;
+    // Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
+
+    // this stores the regressor for C^T(q, v) * v
+    // which is needed to compute the time derivative of the system momentum
+    MatX Y_CTv;
+    Eigen::Array<MatX, 1, Eigen::Dynamic> pY_CTv_pz;
 };
 
 }; // namespace RAPTOR
