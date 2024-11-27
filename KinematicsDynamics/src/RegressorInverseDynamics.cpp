@@ -68,10 +68,10 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
         ptau_pz(i) = MatX::Zero(modelPtr_->nv, trajPtr_->varLength);
     }
 
-    Y = MatX::Zero(trajPtr_->N * modelPtr_->nv, numParams);
+    Y = MatX::Zero(N * modelPtr_->nv, numParams);
     pY_pz.resize(trajPtr_->varLength);
     for (int i = 0; i < trajPtr_->varLength; i++) {
-        pY_pz(i) = MatX::Zero(trajPtr_->N * modelPtr_->nv, numParams);
+        pY_pz(i) = MatX::Zero(N * modelPtr_->nv, numParams);
     }
 }
 
@@ -89,7 +89,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     if (compute_hessian) {
-        throw std::invalid_argument("CustomizedInverseDynamics: Hessian not implemented yet");
+        throw std::invalid_argument("RegressorInverseDynamics: Hessian not implemented yet");
     }
 
     int i = 0;
@@ -103,48 +103,21 @@ void RegressorInverseDynamics::compute(const VecX& z,
         const MatX& pq_d_pz = trajPtr_->pq_d_pz(i);
         const MatX& pq_dd_pz = trajPtr_->pq_dd_pz(i);
 
-        if (compute_derivatives) {
-            ptau_pz(i) = MatX::Zero(trajPtr_->Nact, trajPtr_->varLength);
-        }
-
         // below is the original Roy Featherstone's inverse dynamics algorithm
         // refer to https://royfeatherstone.org/spatial/v2/index.html#ID
 
-        // forward pass
         Vec6 vJ;
         Mat6 XJ, dXJdq;
 
-        Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
-        Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
-        Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
-        Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
-        Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
-        Xup.resize(1, modelPtr_->nv);
-        dXupdq.resize(1, modelPtr_->nv);
-        S.resize(1, modelPtr_->nv);
-        v.resize(1, modelPtr_->nv);
-        pv_pz.resize(1, modelPtr_->nv);
-        a.resize(1, modelPtr_->nv);
-        pa_pz.resize(1, modelPtr_->nv);
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup(modelPtr_->nv);
+        Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> S(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> v(modelPtr_->nv);
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz(modelPtr_->nv);
+        Eigen::Array<Vec6, 1, Eigen::Dynamic> a(modelPtr_->nv);
+        Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz(modelPtr_->nv);
 
-        // The following has nothing to do with motor dynamics parameters
-        MatX Yfull = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
-        Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
-        pYfull_pz.resize(trajPtr_->varLength);
-        for (int i = 0; i < trajPtr_->varLength; i++) {
-            pYfull_pz(i) = MatX::Zero(6 * modelPtr_->nv, numInertialParams);
-        }
-
-        MatX Ycurrent = MatX::Zero(modelPtr_->nv, numInertialParams);
-
-        if (compute_derivatives) {
-            for (int k = 0; k < trajPtr_->varLength; k++) {
-                pYfull_pz(k).setZero();
-            }
-        }
-
+        // forward pass
         for (int j = 0; j < modelPtr_->nv; j++) {
             const int pinocchio_joint_id = j + 1; // the first joint in pinocchio is the root joint
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
@@ -252,7 +225,14 @@ void RegressorInverseDynamics::compute(const VecX& z,
                     }
                 }
             }
+        }
 
+        // backward pass
+        MatRegressor bodyRegressor;
+        Eigen::Array<MatRegressor, 1, Eigen::Dynamic> pbodyRegressor_pz(trajPtr_->varLength);
+
+        for (int j = modelPtr_->nv - 1; j >= 0; j--) {
+            // compute local bodyRegressor
             const double& v1 = v(j)(0);
             const double& v2 = v(j)(1);
             const double& v3 = v(j)(2);
@@ -267,7 +247,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
             const double& a5 = a(j)(4);
             const double& a6 = a(j)(5);
 
-            Yfull.block(6 * j, 10 * j, 6, 10) << 
+            bodyRegressor << 
                                  0,                  0, a6 + v1*v5 - v2*v4, v1*v6 - a5 - v3*v4,     a1,    a2 - v1*v3, -v2*v3,    a3 + v1*v2, v2*v2 - v3*v3,  v2*v3,
                                  0, v2*v4 - v1*v5 - a6,                  0, a4 + v2*v6 - v3*v5,  v1*v3,    a1 + v2*v3,     a2, v3*v3 - v1*v1,    a3 - v1*v2, -v1*v3,
                                  0, a5 - v1*v6 + v3*v4, v3*v5 - v2*v6 - a4,                  0, -v1*v2, v1*v1 - v2*v2,  v1*v2,    a1 - v2*v3,    a2 + v1*v3,     a3,
@@ -291,7 +271,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
                     const double& pa5 = pa_pz(j)(4, k);
                     const double& pa6 = pa_pz(j)(5, k);
 
-                    pYfull_pz(k).block(6 * j, 10 * j, 6, 10) <<
+                    pbodyRegressor_pz(k) <<
                                                               0,                                       0, pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4, v1*pv6 + pv1*v6 - pa5 - v3*pv4 - pv3*v4,              pa1, pa2 - v1*pv3 - pv1*v3, -pv2*v3 - v2*pv3, pa3 + v1*pv2 + pv1*v2,   2*v2*pv2 - 2*v3*pv3,  pv2*v3 + v2*pv3,
                                                               0, v2*pv4 + pv2*v4 - v1*pv5 - pv1*v5 - pa6,                                       0, pa4 + v2*pv6 + pv2*v6 - v3*pv5 - pv3*v5,  v1*pv3 + pv1*v3, pa1 + v2*pv3 + pv2*v3,              pa2,   2*v3*pv3 - 2*v1*pv1, pa3 - v1*pv2 - pv1*v2, -v1*pv3 - pv1*v3,
                                                               0, v3*pv4 + pv3*v4 - v1*pv6 - pv1*v6 + pa5, v3*pv5 + pv3*v5 - v2*pv6 - pv2*v6 - pa4,                                       0, -v1*pv2 - pv1*v2,   2*v1*pv1 - 2*v2*pv2,  v1*pv2 + pv1*v2, pa1 - v2*pv3 - pv2*v3, pa2 + v1*pv3 + pv1*v3,              pa3,
@@ -300,37 +280,32 @@ void RegressorInverseDynamics::compute(const VecX& z,
                         pa6 + v1*pv5 + pv1*v5 - v2*pv4 - pv2*v4,                   v1*pv3 + pv1*v3 - pa2,                   pa1 + v2*pv3 + pv2*v3,                    -2*v1*pv1 - 2*v2*pv2,                0,                     0,                0,                     0,                     0,                0;
                 }
             }
-        }
 
-        // backward pass
-        for (int j = modelPtr_->nv - 1; j >= 0; j--) {
-            const int pinocchio_joint_id = j + 1; // the first joint in pinocchio is the root joint
-            const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
+            // fill in regressor and backpropagate
+            for (int h = j; h >= 0; h = modelPtr_->parents[h + 1] - 1) {
+                Y.block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
+                    S(j).transpose() * bodyRegressor;
 
-            if (parent_id > -1) {
                 if (compute_derivatives) {
-                    MatX dXupdq_Yfull = dXupdq(j).transpose() * Yfull.middleRows(6 * j, 6);
                     for (int k = 0; k < trajPtr_->varLength; k++) {
-                        MatX temp1 = Xup(j).transpose() * pYfull_pz(k).middleRows(6 * j, 6);
-                        pYfull_pz(k).middleRows(6 * parent_id, 6) += 
-                            temp1 + dXupdq_Yfull * pq_pz(j, k);
+                        pY_pz(k).block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
+                            S(j).transpose() * pbodyRegressor_pz(k);
                     }
                 }
 
-                MatX temp2 = Xup(j).transpose() * Yfull.middleRows(6 * j, 6);
-                Yfull.middleRows(6 * parent_id, 6) += temp2;
-            }
+                if (modelPtr_->parents[h + 1] > 0) {
+                    if (compute_derivatives) {
+                        MatRegressor dXupdq_Yfull = dXupdq(h).transpose() * bodyRegressor;
+                        for (int k = 0; k < trajPtr_->varLength; k++) {
+                            pbodyRegressor_pz(k) = 
+                                Xup(h).transpose() * pbodyRegressor_pz(k) + dXupdq_Yfull * pq_pz(h, k);
+                        }
+                    }
 
-            Ycurrent.row(j) = S(j).transpose() * Yfull.middleRows(6 * j, 6);
-
-            if (compute_derivatives) {
-                for (int k = 0; k < trajPtr_->varLength; k++) {
-                    pY_pz(k).block(i * modelPtr_->nv + j, 0, 1, numInertialParams) = S(j).transpose() * pYfull_pz(k).middleRows(6 * j, 6);
+                    bodyRegressor = Xup(h).transpose() * bodyRegressor;
                 }
             }
         }
-
-        Y.block(i * modelPtr_->nv, 0, modelPtr_->nv, numInertialParams) = Ycurrent;
 
         // motor dynamics
         if (numParams > numInertialParams) {

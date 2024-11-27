@@ -42,6 +42,7 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
 
     // Compute momentums using RegressorInverseDynamics
     regressor_id.compute(z, false);
+    Eigen::VectorXd CTv = regressor_id.Y_CTv * regressor_id.phi;
 
     // Compute momentums using pinocchio::rnea and compare the results
     trajPtr->compute(z, false);
@@ -51,8 +52,10 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
             trajPtr->q(i), 
             Eigen::VectorXd::Zero(model.nv), 
             trajPtr->q_d(i));
+        pinocchio::computeCoriolisMatrix(model, data, trajPtr->q(i), trajPtr->q_d(i));
 
         BOOST_CHECK_SMALL((regressor_id.tau(i) - momentum_pinocchio).norm(), 1e-8);
+        BOOST_CHECK_SMALL((CTv.segment(i * model.nv, model.nv) - data.C.transpose() * trajPtr->q_d(i)).norm(), 1e-8);
     }
 }
 
@@ -70,8 +73,8 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     model.armature.setZero();
 
     // Create a trajectory
-    int N = 2;  // number of time steps
-    double T = 10.0;  // total time
+    int N = 10;  // number of time steps
+    double T = 1.0;  // total time
     int degree = 2;  // degree of the polynomial
     std::shared_ptr<Trajectories> trajPtr = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
@@ -86,6 +89,7 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     // Compute momentums using RegressorInverseDynamics
     regressor_id.compute(z, true);
     const auto pY_pz = regressor_id.pY_pz;
+    const auto pY_CTv_pz = regressor_id.pY_CTv_pz;
 
     // Compute numerical gradient
     for (int i = 0; i < z.size(); i++) {
@@ -94,18 +98,22 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
         regressor_id.compute(z_plus, false);
         const Eigen::VectorXd tau_plus = regressor_id.tau(0);
         const Eigen::MatrixXd Y_plus = regressor_id.Y;
+        const Eigen::MatrixXd Y_CTv_plus = regressor_id.Y_CTv;
 
         Eigen::VectorXd z_minus = z;
         z_minus(i) -= 1e-8;
         regressor_id.compute(z_minus, false);
         const Eigen::VectorXd tau_minus = regressor_id.tau(0);
         const Eigen::MatrixXd Y_minus = regressor_id.Y;
+        const Eigen::MatrixXd Y_CTv_minus = regressor_id.Y_CTv;
 
         Eigen::VectorXd J_tau_numerical = (tau_plus - tau_minus) / 2e-8;
         Eigen::MatrixXd J_Y_numerical = (Y_plus - Y_minus) / 2e-8;
+        Eigen::MatrixXd J_Y_CTv_numerical = (Y_CTv_plus - Y_CTv_minus) / 2e-8;
 
         BOOST_CHECK_SMALL((regressor_id.ptau_pz(0).col(i) - J_tau_numerical).norm(), 1e-5);
-        BOOST_CHECK_SMALL((pY_pz(i) - J_Y_numerical).cwiseAbs().maxCoeff(), 1e-3);
+        BOOST_CHECK_SMALL((pY_pz(i) - J_Y_numerical).cwiseAbs().maxCoeff(), 1e-5);
+        BOOST_CHECK_SMALL((pY_CTv_pz(i) - J_Y_CTv_numerical).cwiseAbs().maxCoeff(), 1e-5);
     }
 }
 
