@@ -37,17 +37,17 @@ target_link_libraries(ForwardKinematicsGradient_test PUBLIC
 target_compile_options(ForwardKinematicsGradient_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
-add_executable(BimanualTest_test 
-    Constraints/BimanualTest.cpp)
+add_executable(TaperedCapsuleCollision_test 
+    Constraints/TestTaperedCapsuleCollisionAvoidance.cpp)
 
-target_link_libraries(BimanualTest_test PUBLIC
+target_link_libraries(TaperedCapsuleCollision_test PUBLIC
     Armourlib
     ${BOOST_LIBRARIES})
 
-add_executable(BimanualTest_speed 
-    Constraints/BimanualTestSpeed.cpp)
+add_executable(TaperedCapsuleCollision_speed 
+    Constraints/TestTaperedCapsuleCollisionAvoidanceSpeed.cpp)
 
-target_link_libraries(BimanualTest_speed PUBLIC
+target_link_libraries(TaperedCapsuleCollision_speed PUBLIC
     Armourlib
     ${BOOST_LIBRARIES})
 

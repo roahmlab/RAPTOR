@@ -59,7 +59,8 @@ void LMIConstraints::compute(const VecX& z,
         g(i * 10 + 8) = LMI.bottomRightCorner<3, 3>().determinant();
         g(i * 10 + 9) = LMI.determinant();
 
-        if (compute_derivatives) {MatX pg_pz_local = MatX::Zero(10, 10);
+        if (compute_derivatives) {
+            MatX pg_pz_local = MatX::Zero(10, 10);
 
             const double& z1 = z(10 * i + 0);
             const double& z2 = z(10 * i + 1);
