@@ -123,10 +123,10 @@ void RegressorInverseDynamics::compute(const VecX& z,
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
 
             if (compute_derivatives) {
-                jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
             }
             else {
-                jcalc(XJ, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, S(j), jtype(j), q(j));
             }
 
             vJ = S(j) * q_d(j);
@@ -138,7 +138,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
 
             if (parent_id > -1) {
                 v(j) = Xup(j) * v(parent_id) + vJ;
-                Mat6 crm_v_j = crm(v(j));
+                Mat6 crm_v_j = Spatial::crm(v(j));
                 a(j) = Xup(j) * a(parent_id) + crm_v_j * vJ + S(j) * q_dd(j);
 
                 if (compute_derivatives) {
