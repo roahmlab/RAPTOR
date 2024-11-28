@@ -40,22 +40,34 @@ For manipulation tasks, like the robotic arm picks one object and places it at a
 
 ## Introduction to Each Trajectories
 
-### Plain class
+### Plain
 
 This class implements a very naive "trajectory", which is just the joint positions at one time instance.
 The velocity and the acceleration are by default zero since there's no actual movement.
 
-### Polynomials class
+### TrajectoryData
+
+This class does not define any trajectories, but load the time, joint positions and joint velocties from a file.
+Otherwise, it generates random joint trajectories for users.
+The file needs to contain a data matrix that
+ - the first column is the time.
+ - the second column to the n + 1 th column are the joint positions.
+ - the n + 2 th column to the 2n + 1 th column are the joint velocities.
+
+Note that this class does not implement anything in `compute` function.
+It does not fill in derivatives or hessians as well.
+
+### Polynomials
 
 This class implements a polynomial representation of the trajectory, where the coefficients of the polynomial are decision variables.
 
-### BezierCurves class
+### BezierCurves
 
 This class implements a [Bezier curve](https://en.wikipedia.org/wiki/B%C3%A9zier_curve) representation of the trajectory, where the Bezier coefficients are decision variables.
 Note that the Bezier curve is only defined on interval [0,1] originally.
 We scale the curve to the interval [0,T] where T is the duration of the trajectory and a constant positive number.
 
-### PiecewiseBezierCurves class
+### PiecewiseBezierCurves
 
 This class implements a series of Bezier curves so that they are piecewise continuous on its second-order derivative.
 
@@ -85,7 +97,7 @@ Note that this initial position is not part of the decision variables and is tre
 The same things hold for end position, which is another optional input so that the robot stops at this position 0 velocity and 0 acceleration.
 The motivation here is to directly constrain the start and the end of the entire trajectory using the property of Bezier curves, so that we have less decision variables and less constraints.
 
-### ArmourBezierCurves class
+### ArmourBezierCurves
 
 This class is inherited from BezierCurves and describes a 5th-order Bezier curve that starts from specific position, velocity, acceleration, and ends at a desired position (which is the only decision variable here) with 0 velocity and 0 acceleration.
 That means there's only 1 decision variable for each joint of the robot.
