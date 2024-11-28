@@ -20,6 +20,7 @@ class ArmourPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
+    using Mat3 = Eigen::Matrix3d;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -38,6 +39,10 @@ public:
 
     // Class methods
     void set_obstacles(const nb_2d_float obstacles_inp);
+
+    void set_object_properties(const nb_1d_float object_inertia,
+                               const nb_1d_float object_com,
+                               const double object_mass);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,

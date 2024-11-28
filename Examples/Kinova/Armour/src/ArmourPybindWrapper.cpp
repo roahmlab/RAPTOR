@@ -23,6 +23,23 @@ ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
     }
 }
 
+void ArmourPybindWrapper::set_object_properties(const nb_1d_float object_inertia,
+                               const nb_1d_float object_com,
+                               const double object_mass) {
+    if (object_inertia.shape(0) != 9 || object_com.shape(0) != 3) {
+        throw std::invalid_argument("Object inertia must have 9 elements and object com must have 3 elements");
+    }
+    
+    Mat3 object_inertia_mat;
+    object_inertia_mat << object_inertia(0), object_inertia(1), object_inertia(2),
+                          object_inertia(3), object_inertia(4), object_inertia(5),
+                          object_inertia(6), object_inertia(7), object_inertia(8);
+
+    robotInfoPtr_->model.inertias[robotInfoPtr_->model.nbodies - 1] = pinocchio::Inertia(object_mass, 
+                                                           Vec3(object_com(0), object_com(1), object_com(2)),
+                                                           object_inertia_mat);
+}
+
 void ArmourPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
