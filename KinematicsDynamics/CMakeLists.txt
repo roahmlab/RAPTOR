@@ -7,7 +7,6 @@ add_library(IDlib SHARED
     src/DynamicsConstraints.cpp
     src/ConstrainedInverseDynamics.cpp
     src/Transform.cpp
-    src/Spatial.cpp
     src/ForwardKinematics.cpp
 )
 

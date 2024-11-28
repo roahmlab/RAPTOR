@@ -5,7 +5,6 @@
 #include <Eigen/Sparse>
 
 #include "pinocchio/parsers/urdf.hpp"
-
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
 #include "InverseDynamics.h"
@@ -29,8 +28,8 @@ public:
     using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
-    using Vec6 = Vector6d;
-    using Mat6 = Matrix6d;
+    using Vec6 = Eigen::Vector<double, 6>;
+    using Mat6 = Eigen::Matrix<double, 6, 6>;
 
     // Constructor
     CustomizedInverseDynamics() = default;
