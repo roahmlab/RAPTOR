@@ -92,7 +92,12 @@ public:
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> spheres_radius;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> torque_center;
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> torque_radius;
-    // TODO: add access to contact constraints here
+    Eigen::Matrix<double, 1, Eigen::Dynamic, Eigen::RowMajor> separation_force_center;
+    Eigen::Matrix<double, 1, Eigen::Dynamic, Eigen::RowMajor> separation_force_radius;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> friction_cone_center;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> friction_cone_radius;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> zmp_center;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> zmp_radius;
 
     // Flags to check if the parameters are set
     bool set_obstacles_check = false;

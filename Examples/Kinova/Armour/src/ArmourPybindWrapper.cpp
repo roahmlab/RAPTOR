@@ -215,7 +215,8 @@ nb::tuple ArmourPybindWrapper::optimize() {
 
 nb::tuple ArmourPybindWrapper::analyze_solution() {
     if (!has_optimized) {
-        throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        // throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        std::cerr << "ArmourPybindWrapper::Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
     }
     
     // recover trajectory information
@@ -268,7 +269,40 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
 
     torque_radius = dynPtr_->torque_radii;
 
-    // TODO: recover contact constraints (reachable sets) here
+    // recover contact constraints (reachable sets) here
+    if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+        separation_force_center.resize(trajPtr_->num_time_steps);
+        separation_force_radius.resize(trajPtr_->num_time_steps);
+        friction_cone_center.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        friction_cone_radius.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        zmp_center.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        zmp_radius.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+
+        for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
+            // (1) support force larger than 0
+            const Interval supportForceRange = 
+                dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
+                    .slice(mynlp->solution);
+            separation_force_center(i) = getCenter(supportForceRange);
+            separation_force_radius(i) = supportForceRange.upper();
+
+            // (2) friction cone constraints
+            for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
+                const Interval frictionConstraintRange = 
+                    dynPtr_->friction_PZs(j, i).slice(mynlp->solution);
+                friction_cone_center(j, i) = getCenter(frictionConstraintRange);
+                friction_cone_radius(j, i) = frictionConstraintRange.upper();
+            }      
+
+            // (3) ZMP constraints
+            for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
+                const Interval zmpConstraintRange = 
+                    dynPtr_->zmp_PZs(j, i).slice(mynlp->solution);
+                zmp_center(j, i) = getCenter(zmpConstraintRange);
+                zmp_radius(j, i) = zmpConstraintRange.upper();
+            }
+        }
+    }
 
     // export to outputs
     const size_t shape_ptr1[] = {3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps};
@@ -319,8 +353,54 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
         nb::handle()
     );
 
-    // TODO: export contact constraints (reachable sets) here
+    const size_t shape_ptr4[] = {trajPtr_->num_time_steps};
+    auto separation_force_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        separation_force_center.data(),
+        1,
+        shape_ptr4,
+        nb::handle()
+    );
+    auto separation_force_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        separation_force_radius.data(),
+        1,
+        shape_ptr4,
+        nb::handle()
+    );
 
+    const size_t shape_ptr5[] = {FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    auto friction_cone_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        friction_cone_center.data(),
+        2,
+        shape_ptr5,
+        nb::handle()
+    );
+    auto friction_cone_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        friction_cone_radius.data(),
+        2,
+        shape_ptr5,
+        nb::handle()
+    );
+
+    const size_t shape_ptr6[] = {ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    auto zmp_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        zmp_center.data(),
+        2,
+        shape_ptr6,
+        nb::handle()
+    );
+    auto zmp_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        zmp_radius.data(),
+        2,
+        shape_ptr6,
+        nb::handle()
+    );
+
+    if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+        return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii, 
+                              separation_force_centers, separation_force_radii, 
+                              friction_cone_centers, friction_cone_radii, 
+                              zmp_centers, zmp_radii);
+    }
     return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii);
 }
 

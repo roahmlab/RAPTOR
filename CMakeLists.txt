@@ -6,7 +6,7 @@ project(RAPTOR
     DESCRIPTION "Rapid and Robust Trajectory Optimization for Robots")
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
 include(CTest)
