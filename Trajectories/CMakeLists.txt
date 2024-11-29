@@ -6,6 +6,7 @@ add_library(trajlib SHARED
     src/ArmourBezierCurves.cpp
     src/Polynomials.cpp 
     src/Plain.cpp
+    src/TrajectoryData.cpp
     src/TrajectoryGroup.cpp
 )
 
