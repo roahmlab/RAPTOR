@@ -26,7 +26,6 @@ RegressorInverseDynamics::RegressorInverseDynamics(const Model& model_input,
     NB = modelPtr_->nv;
 
     Xtree.resize(1, modelPtr_->nv);
-    I.resize(1, modelPtr_->nv);
 
     numInertialParams = 10 * modelPtr_->nv;
     if (include_motor_dynamics) {
@@ -93,7 +92,7 @@ void RegressorInverseDynamics::compute(const VecX& z,
     }
 
     int i = 0;
-    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, I, a_grav, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
+    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, a_grav, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
     for (i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
         const VecX& q_d = trajPtr_->q_d(i);

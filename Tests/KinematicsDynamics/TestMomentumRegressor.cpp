@@ -30,32 +30,32 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     int N = 128;  // number of time steps
     double T = 10.0;  // total time
     int degree = 5;  // degree of the polynomial
-    std::shared_ptr<Trajectories> trajPtr = 
+    std::shared_ptr<Trajectories> trajPtr_ = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
     // Initialize MomentumRegressor
-    MomentumRegressor regressor_id(model, trajPtr);
+    MomentumRegressor regressor_id(model, trajPtr_);
 
-    // Generate random joint p, v, and a (not accurate)
+    // Generate random joint p, v, and a
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr->varLength);
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
 
     // Compute momentums using RegressorInverseDynamics
     regressor_id.compute(z, false);
     Eigen::VectorXd CTv = regressor_id.Y_CTv * regressor_id.phi;
 
     // Compute momentums using pinocchio::rnea and compare the results
-    trajPtr->compute(z, false);
+    trajPtr_->compute(z, false);
     for (int i = 0; i < N; i++) {
         Eigen::VectorXd momentum_pinocchio = pinocchio::rnea(
             model, data, 
-            trajPtr->q(i), 
+            trajPtr_->q(i), 
             Eigen::VectorXd::Zero(model.nv), 
-            trajPtr->q_d(i));
-        pinocchio::computeCoriolisMatrix(model, data, trajPtr->q(i), trajPtr->q_d(i));
+            trajPtr_->q_d(i));
+        pinocchio::computeCoriolisMatrix(model, data, trajPtr_->q(i), trajPtr_->q_d(i));
 
         BOOST_CHECK_SMALL((regressor_id.tau(i) - momentum_pinocchio).norm(), 1e-8);
-        BOOST_CHECK_SMALL((CTv.segment(i * model.nv, model.nv) - data.C.transpose() * trajPtr->q_d(i)).norm(), 1e-8);
+        BOOST_CHECK_SMALL((CTv.segment(i * model.nv, model.nv) - data.C.transpose() * trajPtr_->q_d(i)).norm(), 1e-8);
     }
 }
 
@@ -76,15 +76,15 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     int N = 10;  // number of time steps
     double T = 1.0;  // total time
     int degree = 2;  // degree of the polynomial
-    std::shared_ptr<Trajectories> trajPtr = 
+    std::shared_ptr<Trajectories> trajPtr_ = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
     // Initialize MomentumRegressor
-    MomentumRegressor regressor_id(model, trajPtr);
+    MomentumRegressor regressor_id(model, trajPtr_);
 
-    // Generate random joint p, v, and a (not accurate)
+    // Generate random joint p, v, and a
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr->varLength);
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
 
     // Compute momentums using RegressorInverseDynamics
     regressor_id.compute(z, true);
