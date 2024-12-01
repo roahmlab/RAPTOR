@@ -1,5 +1,6 @@
 #include "TaperedCapsuleCollision.h"
 #include <chrono>
+#include <iomanip>
 
 namespace RAPTOR {
 
@@ -9,10 +10,13 @@ inline void solve_quadratic(const double a,
                             double* sol1,
                             double* sol2) {
     double discriminant = b * b - 4 * a * c;
-    if (discriminant < 0) {
+    if (discriminant < -1e-4) {
         *sol1 = -1.0;
         *sol2 = -1.0;
         return;
+    }
+    else if (discriminant < 0) {
+        discriminant = 0;
     }
     double sqrt_discriminant = std::sqrt(discriminant);
     double twoa = 2 * a;
@@ -99,7 +103,6 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         t_test[9] = -1.0;
         u_test[8] = -1.0;
         u_test[9] = -1.0;
-        // std::cout << "No real roots"  << radicand << std::endl;
     }
     else{
         if(radicand < 0) {
@@ -167,19 +170,19 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         double L22;
         double L12;
 
-        VecF dLambda1;
+        VecF dLambda1 = VecF::Zero();
         if (tStar == 1) {
             dLambda1 = -(lgrey * purple - orange * grey);
         }
-        VecF dLambda2;
+        VecF dLambda2 = VecF::Zero();
         if (tStar == 0) {
             dLambda2 = -(red * purple - green * grey);
         }
-        VecF dLambda3;
+        VecF dLambda3 = VecF::Zero();
         if (uStar == 1) {
             dLambda3 = (lgrey * purple - orange * grey);
         }
-        VecF dLambda4;
+        VecF dLambda4 = VecF::Zero();
         if (uStar == 0) {
             dLambda4 = (red * purple - green * grey);
         }
@@ -188,8 +191,8 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
 
         VecF H1;
         VecF H2;
-        VecF pt_pz;
-        VecF pu_pz;
+        VecF pt_pz = VecF::Zero();
+        VecF pu_pz = VecF::Zero();;
 
         switch(ind) {
             case 0:

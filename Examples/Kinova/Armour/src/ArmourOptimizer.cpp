@@ -40,10 +40,9 @@ bool ArmourOptimizer::set_parameters(
             boxCenters_input, boxOrientation_input, boxSize_input);
         bcaPtrs[i]->onlyComputeDerivativesForMinimumDistance = true;
     }
-    bcaPtrs.resize(num_time_steps);
+    tccPtr.resize(num_time_steps);
     for (size_t i = 0; i < num_time_steps; i++) {
         tccPtr[i] = std::make_shared<TaperedCapsuleCollision<NUM_FACTORS>>();
-
     }
 
     return true;
@@ -66,7 +65,7 @@ bool ArmourOptimizer::get_nlp_info(
     numCons = NUM_FACTORS * num_time_steps + // torque limits
               NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
               num_time_steps * num_spheres + // obstacle avoidance constraints
-              num_time_steps * num_capsule_collisions + 
+              num_time_steps * num_capsule_collisions + // bimanual constraintss
               NUM_FACTORS * 4; // joint position, velocity limits
     m = numCons;
 
@@ -388,6 +387,7 @@ bool ArmourOptimizer::eval_g(
         // bimanual self collision constraints
         try {
             const int capsule_num = robotInfoPtr_->num_capsules;
+            std::cout << "Capsule Num Con: " << capsule_num << std::endl;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 int num_checks = 0;
@@ -479,6 +479,15 @@ bool ArmourOptimizer::eval_g(
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+    }
+
+    for (Index i = 0; i < m; i++) {
+        std::cout << "g[" << i << "]: " << g[i] << std::endl;
+        if (std::isnan(g[i])) {
+            std::cerr << "g[" << i << "] is nan!" << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+        }
+        
     }
 
     return true;
@@ -593,11 +602,13 @@ bool ArmourOptimizer::eval_jac_g(
         }
         offset += num_time_steps * num_spheres * NUM_FACTORS;
 
-        // bimanual self collision constraints
+        // bimanual self collision constraints gradient
         try {
             const int num_capsules = robotInfoPtr_->num_capsules;
+            std::cout << "Capsule Num Jac: " << num_capsules << std::endl;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, values) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
+                int num_checks = 0;
                 for (size_t arm_1_index = 0; arm_1_index<num_capsules-2; arm_1_index++){
                     std::string sphere_name = "collision-" + std::to_string(arm_1_index);
                     pinocchio::FrameIndex frame_id = 
@@ -710,13 +721,15 @@ bool ArmourOptimizer::eval_jac_g(
 
                         Eigen::Vector<double, NUM_FACTORS> dk_distances(NUM_FACTORS);
 
-                        const int index_g = i * num_capsules*num_capsules + arm_1_index + arm_2_index + offset;
+                        const int index_g = i * num_capsule_collisions + num_checks;
                         auto distance = tccPtr[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
                                                             dk_tc1_sphere_1_fixed, dk_tc1_sphere_2_fixed, dk_tc2_sphere_1_fixed, dk_tc2_sphere_2_fixed,
                                                             tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius,
                                                             dk_distances);
 
-                        std::memcpy(values + (index_g) * NUM_FACTORS, dk_distances.data(), NUM_FACTORS * sizeof(Number));
+                        std::memcpy(values + (index_g * NUM_FACTORS) + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
+                        
+                        num_checks++;
                     }
                 }
             }
@@ -726,7 +739,7 @@ bool ArmourOptimizer::eval_jac_g(
             THROW_EXCEPTION(IpoptException, "Error in egal_g bimanual constraints!");
         }
 
-        offset += num_time_steps * num_capsule_collisions;
+        offset += num_time_steps * num_capsule_collisions * NUM_FACTORS;
 
         // state limit constraints
         trajPtr_->returnJointPositionExtremumGradient(values + offset, x);
@@ -802,6 +815,28 @@ void ArmourOptimizer::summarize_constraints(
         }
     }
     offset += num_time_steps * num_spheres;
+
+    // bimanual avoidance constraints
+    for( Index i = 0; i < num_time_steps; i++ ) {
+        for( Index j = 0; j < num_capsule_collisions; j++ ) {
+            const Number constr_violation = -g[i * num_capsule_collisions + j + offset];
+
+            if (constr_violation > final_constr_violation) {
+                final_constr_violation = constr_violation;
+            }
+
+            if (constr_violation > constr_viol_tol) {
+                ifFeasible = false;
+                
+                if (verbose) {
+                    std::cout << "ArmourOptimizer.cpp: Capsule Collision " << j << 
+                                " at time interval " << i << " collides with self!\n";
+                    std::cout << "    distance: " << g[i * num_capsule_collisions + j + offset] << "\n";
+                }
+            }
+        }
+    }
+    offset += num_time_steps * num_capsule_collisions;
 
     // state limit constraints
     //     minimum joint position

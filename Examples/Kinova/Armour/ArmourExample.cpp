@@ -88,6 +88,7 @@ int main() {
     catch (int errorCode) {
         throw std::runtime_error("Error initializing Ipopt! Check previous error message!");
     }
+    std::cout << "Parameters set!" << std::endl;
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 

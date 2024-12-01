@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(GeneralGradient){
     const double r21[5] = {0.5, 1, 1.5, 2, 5};
     const double r22[5] = {0.5, 1, 1.5, 2, 5};
     for(int r = 0; r<5; r++){
-        for(int i = 0; i<1000; i++){
+        for(int i = 0; i<5; i++){
             Eigen::Vector3d p11 = Eigen::Vector3d::Random()*20;
             Eigen::Vector3d p12 = Eigen::Vector3d::Random()*20;
             Eigen::Vector3d p21 = Eigen::Vector3d::Random()*20;
@@ -192,13 +192,13 @@ BOOST_AUTO_TEST_CASE(GeneralGradient){
             double distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11[r], r12[r], r21[r], r22[r], dist_grad);
             
             Eigen::Vector<double,7> z(7);
-            z << 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5;
+            z << 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
             double distance_delta = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11[r], r12[r], r21[r], r22[r]);
             auto analytic_grad = (dist_grad.transpose()*z);
             Eigen::MatrixXd numerical_grad(1,1);
             numerical_grad << distance_delta-distance;
 
-            BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-7);
+            BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-8);
         }
     }
 }

@@ -59,4 +59,17 @@ KinovaWithoutGripper:
       "radius": 0.05
     - "offset": [0.0, 0.0, -0.20]
       "radius": 0.05
+  tapered_capsules:
+    joint_2:
+      - "sphere_1": "collision-0"
+        "sphere_2": "collision-6"
+    joint_4:
+      - "sphere_1": "collision-7"
+        "sphere_2": "collision-11"
+    joint_6:
+      - "sphere_1": "collision-12"
+        "sphere_2": "collision-13"
+    joint_7:
+      - "sphere_1": "collision-14"
+        "sphere_2": "collision-16"
     
