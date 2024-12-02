@@ -1,6 +1,7 @@
 #ifndef INTERVAL_MOMENTUM_REGRESSOR_H
 #define INTERVAL_MOMENTUM_REGRESSOR_H
 
+#include "MomentumRegressor.h"
 #include "IntervalRegressorInverseDynamics.h"
 
 namespace RAPTOR {
@@ -10,7 +11,7 @@ namespace RAPTOR {
 // phi is the vector of 10*n dynamic parameters (inertia, com, mass for each of the link).
 // phi is constant and directly loaded from the robot. 
 // The gradient of Y will also be computed.
-class IntervalMomentumRegressor : public IntervalRegressorInverseDynamics {
+class IntervalMomentumRegressor : public MomentumRegressor {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
@@ -33,33 +34,44 @@ public:
     IntervalMomentumRegressor(const Model& model_input, 
                               const std::shared_ptr<TrajectoryData>& trajPtr_input,
                               const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
-                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0)) :
-        IntervalRegressorInverseDynamics(model_input, trajPtr_input, sensor_noise_input, jtype_input) {
-        Y_CTv.resize(N * modelPtr_->nv, numParams);
-        pY_CTv_pz.resize(trajPtr_->varLength);
-        for (int i = 0; i < trajPtr_->varLength; i++) {
-            pY_CTv_pz(i).resize(N * modelPtr_->nv, numParams);
-        }
-    };
+                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
     ~IntervalMomentumRegressor() = default;
 
     // class methods:
     virtual void compute(const VecXd& z,
-                         bool compute_derivatives = true) final override;
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) final override;
 
     // class members:
+    SensorNoiseInfo sensor_noise;
 
-    // this has been defined in IntervalRegressorInverseDynamics 
-    // and stores the regressor for system momentum H(q) * v
-    // MatXInt Y;
-    // Eigen::Array<MatXInt, 1, Eigen::Dynamic> pY_pz;
+    std::shared_ptr<Model> modelPtr_ = nullptr;
+    std::shared_ptr<Data> dataPtr_ = nullptr;
 
-    // this stores the regressor for C^T(q, v) * v
-    // which is needed to compute the time derivative of the system momentum
+    std::shared_ptr<Trajectories> trajPtr_ = nullptr;
+
+    int N = 0; // number of time instances in tspan
+
+    Eigen::VectorXi jtype;
+    Eigen::Array<Mat6d, 1, Eigen::Dynamic> Xtree;
+    Vec6d a_grav;
+    
+    VecXd phi;
+
+    int numParams = 0;
+
+    MatXInt Y;
+    Eigen::Array<MatXInt, 1, Eigen::Dynamic> pY_pz;
+
     MatXInt Y_CTv;
     Eigen::Array<MatXInt, 1, Eigen::Dynamic> pY_CTv_pz;
+
+    Eigen::Array<VecXInt, 1, Eigen::Dynamic> tau;
+    Eigen::Array<MatXInt, 1, Eigen::Dynamic> ptau_pz;
+
+    int NB = 0;
 };
 
 }; // namespace RAPTOR

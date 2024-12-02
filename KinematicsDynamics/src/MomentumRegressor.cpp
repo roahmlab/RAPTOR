@@ -20,7 +20,7 @@ void MomentumRegressor::compute(const VecX& z,
     }
 
     int i = 0;
-    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, I, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
+    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
     for (i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
         const VecX& q_d = trajPtr_->q_d(i);

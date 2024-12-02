@@ -68,12 +68,13 @@ IntervalRegressorInverseDynamics::IntervalRegressorInverseDynamics(const Model& 
 }
 
 void IntervalRegressorInverseDynamics::compute(const VecXd& z,
-                                               bool compute_derivatives) {
+                                               bool compute_derivatives,
+                                               bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }
 
-    trajPtr_->compute(z, compute_derivatives);
+    trajPtr_->compute(z, compute_derivatives, compute_hessian);
 
     int i = 0;
     #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, a_grav, Y, pY_pz) private(i) schedule(dynamic, 1)

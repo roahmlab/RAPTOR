@@ -11,6 +11,7 @@
 #include <boost/numeric/interval.hpp>
 #include <boost/numeric/interval/utility.hpp> 
 
+#include "RegressorInverseDynamics.h"
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
 #include "TrajectoryData.h"
@@ -47,7 +48,7 @@ typedef struct SensorNoiseInfo_ {
 // phi is the vector of 10*n dynamic parameters (inertia, com, mass for each of the link).
 // phi is constant and directly loaded from the robot. 
 // The gradient of Y will also be computed.
-class IntervalRegressorInverseDynamics {
+class IntervalRegressorInverseDynamics : public RegressorInverseDynamics {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
@@ -77,7 +78,8 @@ public:
 
     // class methods:
     virtual void compute(const VecXd& z,
-                         bool compute_derivatives = true);
+                         bool compute_derivatives = true,
+                         bool compute_hessian = false) override;
                                            
     // class members:
     SensorNoiseInfo sensor_noise;
@@ -85,7 +87,7 @@ public:
     std::shared_ptr<Model> modelPtr_ = nullptr;
     std::shared_ptr<Data> dataPtr_ = nullptr;
 
-    std::shared_ptr<TrajectoryData> trajPtr_ = nullptr;
+    std::shared_ptr<Trajectories> trajPtr_ = nullptr;
 
     int N = 0; // number of time instances in tspan
 

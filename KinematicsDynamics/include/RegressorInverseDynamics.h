@@ -57,7 +57,6 @@ public:
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
     Vec6 a_grav;
     
     VecX phi;

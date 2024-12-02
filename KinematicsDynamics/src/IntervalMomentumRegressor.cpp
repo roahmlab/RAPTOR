@@ -2,8 +2,80 @@
 
 namespace RAPTOR {
 
+IntervalMomentumRegressor::IntervalMomentumRegressor(const Model& model_input, 
+                                                     const std::shared_ptr<TrajectoryData>& trajPtr_input,
+                                                     const SensorNoiseInfo sensor_noise_input,
+                                                     Eigen::VectorXi jtype_input) :
+    jtype(jtype_input),
+    sensor_noise(sensor_noise_input) {
+    trajPtr_ = trajPtr_input;
+    N = trajPtr_->N;
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(model_input);
+
+    if (jtype.size() > 0) {
+        if (modelPtr_->nv != jtype.size()) {
+            std::cerr << "modelPtr_->nv = " << modelPtr_->nv << std::endl;
+            std::cerr << "jtype.size() = " << jtype.size() << std::endl;
+            throw std::invalid_argument("modelPtr_->nv != jtype.size()");
+        }
+    }
+    else {
+        jtype = convertPinocchioJointType(*modelPtr_);
+    }
+
+    NB = modelPtr_->nv;
+
+    Xtree.resize(1, modelPtr_->nv);
+
+    numParams = 10 * modelPtr_->nv;
+
+    phi.resize(numParams);
+
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1; // the first joint in pinocchio is the root joint
+
+        // plux in Roy Featherstone's code (transformation matrix from parent to child)
+        Xtree(i) = Utils::plux(modelPtr_->jointPlacements[pinocchio_joint_id].rotation().transpose(), 
+                               modelPtr_->jointPlacements[pinocchio_joint_id].translation());
+
+        phi.segment<10>(10 * i) = 
+            modelPtr_->inertias[pinocchio_joint_id]
+                .toDynamicParameters();
+    }
+
+    a_grav << modelPtr_->gravity.angular(),
+              modelPtr_->gravity.linear();
+
+    tau.resize(1, N);
+    ptau_pz.resize(1, N);
+
+    for (int i = 0; i < N; i++) {
+        tau(i) = VecXInt::Zero(modelPtr_->nv);
+        ptau_pz(i) = MatXInt::Zero(modelPtr_->nv, trajPtr_->varLength);
+    }
+
+    Y = MatXInt::Zero(N * modelPtr_->nv, numParams);
+
+    // In the original RegressorInverseDynamics, z represents the decision variable, 
+    // such as coefficients of the polynomial trajectory.
+    // Here, z represents the q, q_d, q_dd themselves since we are using TrajectoryData class.
+    // trajPtr_->varLength should just be 3 * modelPtr_->nv = 3 * trajPtr_->Nact.
+    pY_pz.resize(trajPtr_->varLength);
+    for (int i = 0; i < trajPtr_->varLength; i++) {
+        pY_pz(i) = MatXInt::Zero(N * modelPtr_->nv, numParams);
+    }
+
+    Y_CTv.resize(N * modelPtr_->nv, numParams);
+    pY_CTv_pz.resize(trajPtr_->varLength);
+    for (int i = 0; i < trajPtr_->varLength; i++) {
+        pY_CTv_pz(i).resize(N * modelPtr_->nv, numParams);
+    }
+};
+
 void IntervalMomentumRegressor::compute(const VecXd& z,
-                                        bool compute_derivatives) {
+                                        bool compute_derivatives,
+                                        bool compute_hessian) {
     if (trajPtr_ == nullptr) {
         throw std::runtime_error("trajPtr_ is not defined yet!");
     }
