@@ -5,6 +5,7 @@ add_library(IDlib SHARED
     src/RegressorInverseDynamics.cpp
     src/MomentumRegressor.cpp
     src/IntervalRegressorInverseDynamics.cpp
+    src/IntervalMomentumRegressor.cpp
     src/DynamicsConstraints.cpp
     src/ConstrainedInverseDynamics.cpp
     src/Transform.cpp

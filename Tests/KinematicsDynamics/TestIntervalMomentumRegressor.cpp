@@ -1,14 +1,15 @@
-#define BOOST_TEST_MODULE IntervalRegressorInverseDynamicsTest
+#define BOOST_TEST_MODULE IntervalMomentumRegressorTest
 #include <boost/test/included/unit_test.hpp>
 
-#include "IntervalRegressorInverseDynamics.h"
+#include "IntervalMomentumRegressor.h"
+#include "MomentumRegressor.h"
 #include <chrono>
 #include "pinocchio/algorithm/rnea.hpp"
 #include "pinocchio/algorithm/rnea-derivatives.hpp"
 
 using namespace RAPTOR;
 
-BOOST_AUTO_TEST_SUITE(IntervalRegressorInverseDynamicsTest)
+BOOST_AUTO_TEST_SUITE(IntervalMomentumRegressorTest)
 
 BOOST_AUTO_TEST_CASE(ComputeTest) {
     // Define robot model
@@ -23,24 +24,30 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     model.damping.setZero();
     model.armature.setZero();
 
+    // Disable gravity
+    model.gravity.setZero();
+
     // Create a trajectory
     int N = 128;  // number of time steps
     double T = 10.0;  // total time
     std::shared_ptr<TrajectoryData> trajPtr_ = 
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
-    // Initialize IntervalRegressorInverseDynamics
+    // Initialize IntervalMomentumRegressor
     SensorNoiseInfo sensor_noise;
     sensor_noise.position_error = Interval(0.0);
     sensor_noise.velocity_error = Interval(0.0);
     sensor_noise.acceleration_error = Interval(0.0);
-    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+    IntervalMomentumRegressor regressor_id(model, trajPtr_, sensor_noise);
+    MomentumRegressor regressor_id2(model, trajPtr_);
 
     // This is just a placeholder, TrajectoryData does not use this
     Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
 
-    // Compute inverse dynamics using IntervalRegressorInverseDynamics
+    // Compute inverse dynamics using IntervalMomentumRegressor
     regressor_id.compute(z, false);
+    regressor_id2.compute(z, false);
+    auto CTv = intervalDoubleMatrixMultiply(regressor_id.Y_CTv, regressor_id.phi);
 
     // Compute inverse dynamics using pinocchio::rnea and compare the results
     trajPtr_->compute(z, false);
@@ -48,12 +55,16 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
         Eigen::VectorXd tau_pinocchio = pinocchio::rnea(
             model, data, 
             trajPtr_->q(i), 
-            trajPtr_->q_d(i),
-            trajPtr_->q_dd(i));
+            Eigen::VectorXd::Zero(model.nv), 
+            trajPtr_->q_d(i));
+        pinocchio::computeCoriolisMatrix(model, data, trajPtr_->q(i), trajPtr_->q_d(i));
+        Eigen::VectorXd CTv_pinocchio = data.C.transpose() * trajPtr_->q_d(i);
 
         for (int j = 0; j < model.nv; j++) {
             BOOST_CHECK_SMALL(regressor_id.tau(i)(j).upper() - regressor_id.tau(i)(j).lower(), 1e-10);
             BOOST_CHECK_SMALL(regressor_id.tau(i)(j).lower() - tau_pinocchio(j), 1e-6);
+            BOOST_CHECK_SMALL(CTv(i * model.nv + j).upper() - CTv(i * model.nv + j).lower(), 1e-10);
+            BOOST_CHECK_SMALL(CTv(i * model.nv + j).lower() - CTv_pinocchio(j), 1e-6);
         }
     }
 }
@@ -71,23 +82,26 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     model.damping.setZero();
     model.armature.setZero();
 
+    // Disable gravity
+    model.gravity.setZero();
+
     // Create a trajectory
     int N = 2;  // number of time steps
     double T = 10.0;  // total time
     std::shared_ptr<TrajectoryData> trajPtr_ = 
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
-    // Initialize IntervalRegressorInverseDynamics
+    // Initialize IntervalMomentumRegressor
     SensorNoiseInfo sensor_noise;
     sensor_noise.position_error = Interval(0.0);
     sensor_noise.velocity_error = Interval(0.0);
     sensor_noise.acceleration_error = Interval(0.0);
-    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+    IntervalMomentumRegressor regressor_id(model, trajPtr_, sensor_noise);
 
     // This is just a placeholder, TrajectoryData does not use this
     Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
 
-    // Compute inverse dynamics using IntervalRegressorInverseDynamics
+    // Compute inverse dynamics using IntervalMomentumRegressor
     regressor_id.compute(z, true);
 
     // Compute inverse dynamics using pinocchio::rnea and compare the results
@@ -98,7 +112,7 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
 
     for (int i = 0; i < N; i++) {
         pinocchio::computeRNEADerivatives(model, data, 
-            trajPtr_->q(i), trajPtr_->q_d(i), trajPtr_->q_dd(i),
+            trajPtr_->q(i), Eigen::VectorXd::Zero(model.nv), trajPtr_->q_d(i),
             rnea_partial_dq, rnea_partial_dv, rnea_partial_da);
 
         rnea_partial_da.triangularView<Eigen::StrictlyLower>() = rnea_partial_da.transpose().triangularView<Eigen::StrictlyLower>();
@@ -109,9 +123,9 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
             }
 
             for (int k = 0; k < model.nv; k++) {
-                BOOST_CHECK_SMALL(regressor_id.ptau_pz(i)(j, k).lower() - rnea_partial_dq(j, k), 1e-6);
-                BOOST_CHECK_SMALL(regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_dv(j, k), 1e-6);
-                BOOST_CHECK_SMALL(regressor_id.ptau_pz(i)(j, k + 2 * model.nv).lower() - rnea_partial_da(j, k), 1e-6);
+                BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k).lower() - rnea_partial_dq(j, k)), 1e-6);
+                // BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_dv(j, k)), 1e-6);
+                BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_da(j, k)), 1e-6);
             }
         }
     }

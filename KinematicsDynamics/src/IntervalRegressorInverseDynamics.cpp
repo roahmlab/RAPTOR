@@ -97,7 +97,6 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
 
         Vec6Int vJ;
         Mat6Int XJ, dXJdq;
-
         Eigen::Array<Mat6Int, 1, Eigen::Dynamic> Xup(modelPtr_->nv);
         Eigen::Array<Mat6Int, 1, Eigen::Dynamic> dXupdq(modelPtr_->nv);
         Eigen::Array<Vec6Int, 1, Eigen::Dynamic> S(modelPtr_->nv);
