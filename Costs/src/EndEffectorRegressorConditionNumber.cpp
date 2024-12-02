@@ -45,7 +45,7 @@ void EndEffectorRegressorConditionNumber::compute(const VecX& z,
     f = std::log(sigmaMax) - std::log(sigmaMin);
 
     if (compute_derivatives) {
-        // refer to https://j-towns.github.io/papers/svd-derivative.pdf
+        // refer to (17) in https://j-towns.github.io/papers/svd-derivative.pdf
         // for analytical gradient of singular values
         for (int i = 0; i < trajPtr_->varLength; i++) {
             const int startCol = (ridPtr_->NB - 1) * 10; 
