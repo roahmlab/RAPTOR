@@ -7,17 +7,17 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
     const MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
 
     N = traj_data.rows();
-    Nact = (traj_data.cols() - 1) / 2;
+    Nact = (traj_data.cols() - 1) / 3;
 
     if (Nact <= 0) {
         throw std::invalid_argument("0 actuated joints");
     }
-
-    if (2 * Nact + 1 != traj_data.cols()) {
+   
+    if (3 * Nact + 1 != traj_data.cols()) {
         throw std::invalid_argument("Invalid trajectory file format");
     }
 
-    tspan = traj_data.col(0);
+    tspan = traj_data.col(0)/1e9;
     T = tspan(N - 1);
 
     // output information

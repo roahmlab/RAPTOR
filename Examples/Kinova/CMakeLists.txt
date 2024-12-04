@@ -8,8 +8,9 @@ add_library(Kinovalib SHARED
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
     SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
-
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorMoment.cpp)
+    
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/InverseKinematics/include
@@ -304,6 +305,48 @@ target_link_libraries(ArmourExciting_example PUBLIC
 target_compile_options(ArmourExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
+
+###
+add_executable(SysidEndEffectorMoment_test
+    SystemIdentification/IterativeSystemIdentification/Test_EndEffectorMoment.cpp)
+target_include_directories(SysidEndEffectorMoment_test PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(SysidEndEffectorMoment_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    # mosek64
+    # fusion64
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(SysidEndEffectorMoment_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+###
+# add_executable(Mosek_optimizer_test
+#     SystemIdentification/IterativeSystemIdentification/Mosek_optimizer.cpp)
+# target_include_directories(SysidEndEffectorMoment_test PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+#     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+# target_link_libraries(Mosek_optimizer_test PUBLIC
+#     trajlib 
+#     IDlib
+#     Conslib
+#     Optlib
+#     Kinovalib
+#     ipopt
+#     coinhsl
+#     mosek64
+#     fusion64
+#     ${BOOST_LIBRARIES} 
+#     pinocchio::pinocchio)
+# target_compile_options(Mosek_optimizer_test PUBLIC
+#     ${PINOCCHIO_FLAGS})
 
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
