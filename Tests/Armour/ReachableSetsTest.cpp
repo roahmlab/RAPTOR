@@ -181,7 +181,7 @@ int main() {
 
     // validate the contact force PZs
     for (int i = 0; i < cidPtr_->N; i++) {
-        const Vector6d& actualLambda = cidPtr_->lambda(i);
+        const Eigen::Vector<double, 6>& actualLambda = cidPtr_->lambda(i);
         for (int j = 0; j < 3; j++) {
             const Interval forceRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j).slice(factor);
             const Interval momentRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j).slice(factor);            

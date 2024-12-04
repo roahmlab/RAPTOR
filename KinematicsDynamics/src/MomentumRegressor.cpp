@@ -20,7 +20,7 @@ void MomentumRegressor::compute(const VecX& z,
     }
 
     int i = 0;
-    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, I, a_grav, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
+    #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
     for (i = 0; i < N; i++) {
         const VecX& q = trajPtr_->q(i);
         const VecX& q_d = trajPtr_->q_d(i);
@@ -50,10 +50,10 @@ void MomentumRegressor::compute(const VecX& z,
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
 
             if (compute_derivatives) {
-                jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
             }
             else {
-                jcalc(XJ, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, S(j), jtype(j), q(j));
             }
 
             Xup(j) = XJ * Xtree(j);
@@ -149,7 +149,7 @@ void MomentumRegressor::compute(const VecX& z,
                     }
                 }
 
-                Sd = crm(v(h)) * S(h);
+                Sd = Spatial::crm(v(h)) * S(h);
 
                 if (compute_derivatives) {
                     pSd_pz.row(0) = S(h)(2) * pv_pz(h).row(1) - S(h)(1) * pv_pz(h).row(2);

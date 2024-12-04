@@ -5,8 +5,6 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
-    const bool use_momentum_regressor_or_not = true;
-
     // Define robot model
     const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
     
@@ -65,8 +63,7 @@ int main(int argc, char* argv[]) {
                               model,
                               joint_limits_buffer,
                               velocity_limits_buffer,
-                              torque_limits_buffer,
-                              use_momentum_regressor_or_not);
+                              torque_limits_buffer);
         mynlp->constr_viol_tol = 1e-5;
     }
     catch (std::exception& e) {

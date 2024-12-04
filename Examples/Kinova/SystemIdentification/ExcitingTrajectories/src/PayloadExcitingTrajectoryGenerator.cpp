@@ -26,7 +26,6 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
-    const bool use_momentum_regressor_or_not,
     const bool include_gripper_or_not,
     const double collison_buffer_input,
     Eigen::VectorXi jtype_input
@@ -44,17 +43,10 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
                                                              q_d0_input);
 
     // momentum regressor or torque (inverse dynamics) regressor
-    if (use_momentum_regressor_or_not) {
-        ridPtr_ = std::make_shared<MomentumRegressor>(model_input, 
-                                                      trajPtr_,
-                                                      jtype_input);
-    }
-    else {
-        ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
-                                                             trajPtr_,
-                                                             true,
-                                                             jtype_input);
-    }
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
+                                                         trajPtr_,
+                                                         true,
+                                                         jtype_input);
 
     // add end effector regressor condition number into cost
     costsPtrVec_.push_back(std::make_unique<EndEffectorRegressorConditionNumber>(trajPtr_, 

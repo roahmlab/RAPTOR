@@ -5,7 +5,7 @@
 
 #include "Optimizer.h"
 
-#include "MomentumRegressor.h"
+#include "RegressorInverseDynamics.h"
 #include "FixedFrequencyFourierCurves.h"
 
 #include "EndEffectorRegressorConditionNumber.h"
@@ -44,7 +44,6 @@ public:
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
-        const bool use_momentum_regressor_or_not = true,
         const bool include_gripper_or_not = true,
         const double collison_buffer_input = 0.0,
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)

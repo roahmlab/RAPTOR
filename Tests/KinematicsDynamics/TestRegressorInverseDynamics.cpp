@@ -27,27 +27,27 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
     int N = 128;  // number of time steps
     double T = 10.0;  // total time
     int degree = 5;  // degree of the polynomial
-    std::shared_ptr<Trajectories> trajPtr = 
+    std::shared_ptr<Trajectories> trajPtr_ = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
     // Initialize RegressorInverseDynamics
-    RegressorInverseDynamics regressor_id(model, trajPtr, false);
+    RegressorInverseDynamics regressor_id(model, trajPtr_, false);
 
-    // Generate random joint p, v, and a (not accurate)
+    // Generate random joint p, v, and a
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr->varLength);
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
 
-    // Compute momentums using RegressorInverseDynamics
+    // Compute inverse dynamics using RegressorInverseDynamics
     regressor_id.compute(z, false);
 
-    // Compute momentums using pinocchio::rnea and compare the results
-    trajPtr->compute(z, false);
+    // Compute inverse dynamics using pinocchio::rnea and compare the results
+    trajPtr_->compute(z, false);
     for (int i = 0; i < N; i++) {
         Eigen::VectorXd tau_pinocchio = pinocchio::rnea(
             model, data, 
-            trajPtr->q(i), 
-            trajPtr->q_d(i),
-            trajPtr->q_dd(i));
+            trajPtr_->q(i), 
+            trajPtr_->q_d(i),
+            trajPtr_->q_dd(i));
 
         BOOST_CHECK_SMALL((regressor_id.tau(i) - tau_pinocchio).norm(), 1e-6);
     }
@@ -70,17 +70,17 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     int N = 10;  // number of time steps
     double T = 1.0;  // total time
     int degree = 3;  // degree of the polynomial
-    std::shared_ptr<Trajectories> trajPtr = 
+    std::shared_ptr<Trajectories> trajPtr_ = 
         std::make_shared<Polynomials>(T, N, model.nv, Uniform, degree);
 
     // Initialize RegressorInverseDynamics
-    RegressorInverseDynamics regressor_id(model, trajPtr);
+    RegressorInverseDynamics regressor_id(model, trajPtr_);
 
-    // Generate random joint p, v, and a (not accurate)
+    // Generate random joint p, v, and a
     std::srand(std::time(nullptr));
-    Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr->varLength);
+    Eigen::VectorXd z = Eigen::VectorXd::Random(trajPtr_->varLength);
 
-    // Compute momentums using RegressorInverseDynamics
+    // Compute inverse dynamics using RegressorInverseDynamics
     regressor_id.compute(z, true);
     const auto pY_pz = regressor_id.pY_pz;
 

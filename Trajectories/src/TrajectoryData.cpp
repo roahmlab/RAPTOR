@@ -29,7 +29,7 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
 
     // no variable length parameters, we don't compute gradient here
     // trajectory data is usually large so save some memory here
-    varLength = 0; 
+    varLength = 0;
     initialize_memory();
 
     for (int i = 0; i < N; i++) {
@@ -49,12 +49,20 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
 TrajectoryData::TrajectoryData(double T_input,
                                int N_input, 
                                int Nact_input) :
-    Trajectories(0, T_input, N_input, Nact_input, TimeDiscretization::Uniform) {
+    Trajectories(3 * Nact_input, T_input, N_input, Nact_input, TimeDiscretization::Uniform) {
     // randomly generate trajectory data
     for (int i = 0; i < N; i++) {
         q(i).setRandom();
         q_d(i).setRandom();
         q_dd(i).setRandom();
+
+        pq_pz(i).setZero();
+        pq_d_pz(i).setZero();
+        pq_dd_pz(i).setZero();
+
+        pq_pz(i).middleCols(0, Nact).setIdentity();
+        pq_d_pz(i).middleCols(Nact, Nact).setIdentity();
+        pq_dd_pz(i).middleCols(2 * Nact, Nact).setIdentity();
     }
 }
 

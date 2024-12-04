@@ -128,6 +128,32 @@ target_link_libraries(RegressorInverseDynamics_test PUBLIC
 target_compile_options(RegressorInverseDynamics_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
+add_executable(IntervalRegressorInverseDynamics_test 
+    KinematicsDynamics/TestIntervalRegressorInverseDynamics.cpp)
+
+target_link_libraries(IntervalRegressorInverseDynamics_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(IntervalRegressorInverseDynamics_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(IntervalMomentumRegressor_test 
+    KinematicsDynamics/TestIntervalMomentumRegressor.cpp)
+
+target_link_libraries(IntervalMomentumRegressor_test PUBLIC
+    trajlib
+    IDlib
+    Conslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(IntervalMomentumRegressor_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
 add_executable(MomentumRegressor_test 
     KinematicsDynamics/TestMomentumRegressor.cpp)
 
