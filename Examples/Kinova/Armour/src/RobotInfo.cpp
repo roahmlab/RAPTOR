@@ -177,7 +177,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
             throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
         }
     }
-    num_capsule_collisions = ((num_capsules*num_capsules)*(num_capsules-3)+2)/2;
+    num_capsule_collisions = ((num_capsules)*(num_capsules-3)+2)/2;
 }
 
 void RobotInfo::print() const {

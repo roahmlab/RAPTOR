@@ -157,6 +157,10 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         VecF lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
         auto dist_vec = d1 * tStar - d2 * uStar - d12;
         double purple = dist_vec.norm();
+        // TODO: Real Fix
+        if(purple==0) {
+            purple = 1e-6;
+        }
         double orange = a * tStar - b * uStar - c;
         double green = -b * tStar - e * uStar + f;
         VecF red = -pb_pz * tStar + pe_pz * uStar + pf_pz;

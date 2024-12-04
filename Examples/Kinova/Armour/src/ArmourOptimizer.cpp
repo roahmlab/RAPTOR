@@ -136,7 +136,7 @@ bool ArmourOptimizer::get_bounds_info(
 
     // self collsion constraints
     for( Index i = offset; i < offset + num_time_steps * num_capsule_collisions; i++ ) {
-        g_l[i] = 0.0;
+        g_l[i] = 0.2;
         g_u[i] = 1e19;
     }
     offset += num_time_steps * num_capsule_collisions;
@@ -387,7 +387,6 @@ bool ArmourOptimizer::eval_g(
         // bimanual self collision constraints
         try {
             const int capsule_num = robotInfoPtr_->num_capsules;
-            std::cout << "Capsule Num Con: " << capsule_num << std::endl;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 int num_checks = 0;
@@ -482,7 +481,6 @@ bool ArmourOptimizer::eval_g(
     }
 
     for (Index i = 0; i < m; i++) {
-        std::cout << "g[" << i << "]: " << g[i] << std::endl;
         if (std::isnan(g[i])) {
             std::cerr << "g[" << i << "] is nan!" << std::endl;
             THROW_EXCEPTION(IpoptException, "Error in eval_g!");
@@ -605,7 +603,6 @@ bool ArmourOptimizer::eval_jac_g(
         // bimanual self collision constraints gradient
         try {
             const int num_capsules = robotInfoPtr_->num_capsules;
-            std::cout << "Capsule Num Jac: " << num_capsules << std::endl;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, values) private(i) schedule(dynamic)
             for (i = 0; i< num_time_steps; i++){
                 int num_checks = 0;
