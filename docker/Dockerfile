@@ -73,11 +73,33 @@ RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=bind,source=docker/scripts/install-ompl.sh,target=/tmp/install-ompl.sh \
     bash /tmp/install-ompl.sh
 
-ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin
+# Download and extract MOSEK
+# COPY docker/scripts/mosektoolslinux64x86.tar.bz2 /tmp/mosek.tar.bz2
+# RUN mkdir -p /opt/mosek && \
+#     tar -xjf /tmp/mosek.tar.bz2 -C /opt/mosek --strip-components=1 && \
+#     rm /tmp/mosek.tar.bz2
+
+# COPY docker/scripts/mosek.lic /opt/mosek/mosek.lic
+
+# ENV PATH=/opt/mosek/10.2/tools/platform/linux64x86/bin:$PATH
+# ENV MOSEKLM_LICENSE_FILE=/opt/mosek/mosek.lic
+
+# # MOSEK env
+# ENV MOSEK_HOME=/opt/mosek/10.2
+# ENV PATH=$MOSEK_HOME/tools/platform/linux64x86/bin:$PATH
+# ENV LD_LIBRARY_PATH=$MOSEK_HOME/tools/platform/linux64x86/bin:$LD_LIBRARY_PATH
+# ENV CMAKE_PREFIX_PATH=$MOSEK_HOME/tools/platform/linux64x86/h:$CMAKE_PREFIX_PATH 
+
+# # # Compile MOSEK Fusion C++ API
+# WORKDIR $MOSEK_HOME/tools/platform/linux64x86/src/fusion_cxx
+# RUN make install   
+
+
+ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin:$PATH
 ENV PKG_CONFIG_PATH /opt/openrobots/lib/pkgconfig
-ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib:/usr/local/share
+ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib:/usr/local/share:$LD_LIBRARY_PATH
 ENV PYTHONPATH /opt/openrobots/lib/python3.10/site-packages
-ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local:/usr/local/include/ompl-1.6
+ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local:/usr/local/include/ompl-1.6:$CMAKE_PREFIX_PATH 
 
 # Set the entry point to VSCode's default command
 CMD ["/bin/bash"]

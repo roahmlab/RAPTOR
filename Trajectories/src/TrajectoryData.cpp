@@ -7,13 +7,15 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
     const MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
 
     N = traj_data.rows();
-    Nact = (traj_data.cols() - 1) / 2;
+    Nact = (traj_data.cols() - 1) / 3;
 
     if (Nact <= 0) {
         throw std::invalid_argument("0 actuated joints");
     }
-
-    if (2 * Nact + 1 != traj_data.cols()) {
+   
+    if (2 * Nact + 1 != traj_data.cols() &&
+        3 * Nact + 1 != traj_data.cols()) {
+        std::cerr << Nact << ' ' << traj_data.cols() << std::endl;
         throw std::invalid_argument("Invalid trajectory file format");
     }
 
@@ -25,22 +27,22 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
     std::cout << "TrajectoryData: T = " << T << std::endl;
     std::cout << "TrajectoryData: Nact = " << Nact << std::endl;
 
-    // load trajectories
-    varLength = 3 * Nact; // decision variables for q, q_d, q_dd are just themselves
+    // no variable length parameters, we don't compute gradient here
+    // trajectory data is usually large so save some memory here
+    varLength = 0;
     initialize_memory();
 
     for (int i = 0; i < N; i++) {
         q(i) = traj_data.row(i).segment(1, Nact);
         q_d(i) = traj_data.row(i).segment(1 + Nact, Nact);
-        q_dd(i).setZero();
+    }
 
-        pq_pz(i).setZero();
-        pq_d_pz(i).setZero();
-        pq_dd_pz(i).setZero();
-
-        pq_pz(i).middleCols(0, Nact).setIdentity();
-        pq_d_pz(i).middleCols(Nact, Nact).setIdentity();
-        pq_dd_pz(i).middleCols(2 * Nact, Nact).setIdentity();
+    // this could be acceleration estimation or applied torque from the sensor
+    if (3 * Nact + 1 == traj_data.cols()) {
+        std::cout << "TrajectoryData: q_dd or torque is loaded from the file" << std::endl;
+        for (int i = 0; i < N; i++) {
+            q_dd(i) = traj_data.row(i).segment(1 + 2 * Nact, Nact);
+        }
     }
 }
 

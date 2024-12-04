@@ -6,10 +6,9 @@ add_library(Kinovalib SHARED
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
-    SystemIdentification/IterativeSystemIdentification/src/BaseParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
-
+    
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/InverseKinematics/include
@@ -226,26 +225,6 @@ target_compile_options(SysidFriction_test PUBLIC
 
 
 ###
-add_executable(SysidBase_test
-    SystemIdentification/IterativeSystemIdentification/TestBaseParametersIdentification.cpp)
-target_include_directories(SysidBase_test PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
-target_link_libraries(SysidBase_test PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
-    Kinovalib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
-target_compile_options(SysidBase_test PUBLIC
-    ${PINOCCHIO_FLAGS})
-
-
-###
 add_executable(SysidEnd_test
     SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentification.cpp)
 target_include_directories(SysidEnd_test PUBLIC
@@ -303,7 +282,7 @@ target_link_libraries(ArmourExciting_example PUBLIC
     pinocchio::pinocchio)
 target_compile_options(ArmourExciting_example PUBLIC
     ${PINOCCHIO_FLAGS})
-
+    
 
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 

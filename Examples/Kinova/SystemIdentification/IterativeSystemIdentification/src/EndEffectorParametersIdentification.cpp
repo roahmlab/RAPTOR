@@ -14,89 +14,98 @@ namespace RAPTOR {
 
 bool EndEffectorParametersIdentification::set_parameters(
     const Model& model_input,
-    const std::shared_ptr<MatX>& posPtr_input,
-    const std::shared_ptr<MatX>& velPtr_input,
-    const std::shared_ptr<MatX>& accPtr_input,
-    const std::shared_ptr<MatX>& torquePtr_input,
-    const std::shared_ptr<VecX>& full_parametersPtr_input,
-    const bool include_offset_input
+    const std::string filename_input,
+    const int H_input,
+    const VecX offset_input
 )
 { 
     enable_hessian = false;
 
+    // parse the robot model
     modelPtr_ = std::make_shared<Model>(model_input);
-    dataPtr_ = std::make_shared<Data>(model_input);
+    dataPtr_ = std::make_shared<Data>(*modelPtr_);
 
-    // only choose optimize the end-effector
-    Nact = modelPtr_->nv;
+    phi = Eigen::VectorXd::Zero(10 * modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1;
+        phi.segment<10>(10 * i) =
+            modelPtr_->inertias[pinocchio_joint_id]
+                .toDynamicParameters();
+    }
+    phi_original = phi;
 
-    fullparametersPtr_ = full_parametersPtr_input;
-
-    if (fullparametersPtr_->size() < 13 * Nact) {
-        throw std::invalid_argument("Error: fullparametersPtr_ size is too small.");
+    offset = offset_input;
+    if (offset.size() != modelPtr_->nv) { // offset is disabled
+        offset = VecX::Zero(modelPtr_->nv);
     }
 
-    friction = fullparametersPtr_->segment(10 * Nact , Nact);
-    damping = fullparametersPtr_->segment(11 * Nact, Nact);
-    armature = fullparametersPtr_->segment(12 * Nact, Nact);
-    offset = VecX::Zero(Nact);
-    if (include_offset) {
-        offset = fullparametersPtr_->tail(Nact);
+    // this trajectory is to compute momentum regressors
+    trajPtr_ = std::make_shared<TrajectoryData>(filename_input);
+
+    // this trajectory is to compute gravity regressors,
+    // so set velocity to 0 while acceleration is already 0 in TrajectoryData
+    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input);
+    for (int i = 0; i < trajPtr2_->N; i++) {
+        trajPtr2_->q_d(i).setZero();
+        trajPtr2_->q_dd(i).setZero();
     }
 
-    posPtr_ = posPtr_input;
-    velPtr_ = velPtr_input;
-    accPtr_ = accPtr_input;
-    torquePtr_ = torquePtr_input;
+    // create regressor compute object
+    mrPtr_ = std::make_shared<MomentumRegressor>(*modelPtr_, trajPtr_);
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(*modelPtr_, trajPtr2_, false);
 
-    if (posPtr_->rows() != velPtr_->rows() || 
-        posPtr_->rows() != accPtr_->rows() || 
-        posPtr_->rows() != torquePtr_->rows() ||
-        posPtr_->rows() != modelPtr_->nv) {
-        throw std::invalid_argument("Error: input data matrices have different number of rows");
+    // trajectoryData does not require any decision variable, 
+    // so simply put an empty Eigen vector as placeholder here
+    mrPtr_->compute(VecX::Zero(1), false);
+    ridPtr_->compute(VecX::Zero(1), false);
+
+    // forward integration horizon
+    H = H_input;
+    const int num_seg = trajPtr_->N / H;
+
+    if (num_seg <= 0) {
+        throw std::invalid_argument("0 segments");
     }
 
-    if (posPtr_->cols() != velPtr_->cols() || 
-        posPtr_->cols() != accPtr_->cols() || 
-        posPtr_->cols() != torquePtr_->cols()) {
-        throw std::invalid_argument("Error: input data matrices have different number of columns");
+    // now compute regression elements A and b
+    // which are essentially combination of different dynamic regressors
+    A.resize(modelPtr_->nv * num_seg, 10 * modelPtr_->nv);
+    b.resize(modelPtr_->nv * num_seg);
+
+    int i = 0;
+    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A, b) private(i) schedule(dynamic, 1)
+    for (i = 0; i < trajPtr_->N - H - 1; i += H) {
+        int seg_start = i;
+        int seg_end = seg_start + H;
+
+        const Eigen::MatrixXd& Y_Hqd_1 = mrPtr_->Y.middleRows(seg_start * modelPtr_->nv, modelPtr_->nv);
+        const Eigen::MatrixXd& Y_Hqd_2 = mrPtr_->Y.middleRows(seg_end * modelPtr_->nv, modelPtr_->nv);
+
+        Eigen::MatrixXd int_Y_CTqd_g = Eigen::MatrixXd::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
+        Eigen::VectorXd int_ctrl = Eigen::VectorXd::Zero(modelPtr_->nv);
+
+        for (int j = seg_start; j < seg_end; j++) {
+            double dt = trajPtr_->tspan(j+1) - trajPtr_->tspan(j);
+
+            Eigen::MatrixXd Y_CTqd_i = mrPtr_->Y_CTv.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+            Eigen::MatrixXd Yg_i = ridPtr_->Y.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+
+            int_Y_CTqd_g += (Y_CTqd_i - Yg_i) * dt;
+
+            // Note that here trajPtr_->q_dd stores the applied torque
+            int_ctrl += (trajPtr_->q_dd(j)
+                        - modelPtr_->friction.cwiseProduct(trajPtr_->q_d(j).cwiseSign())
+                        - modelPtr_->damping.cwiseProduct(trajPtr_->q_d(j))
+                        - offset) * dt;
+        }
+        
+        int s = i / H;
+        A.middleRows(s * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
+        b.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl - modelPtr_->armature.cwiseProduct(trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
     }
 
-    N = posPtr_->cols();
-
-    include_offset = include_offset_input;
-
-    // initialize observation matrices
-    FullObservationMatrix = MatX::Zero(N * Nact, 10 * Nact);
-    for (int i = 0; i < N; i++) {
-        const VecX& q = posPtr_->col(i);
-        const VecX& v = velPtr_->col(i);
-        const VecX& a = accPtr_->col(i);
-
-        pinocchio::computeJointTorqueRegressor(
-            *modelPtr_, *dataPtr_, 
-            q, v, a);
-
-        FullObservationMatrix.middleRows(i * Nact, Nact) = 
-            dataPtr_->jointTorqueRegressor;
-    }
-
-    // directly set up initial condition here
-    int n = 10;  // End-effector parameters
-
-    x0 = VecX::Zero(n);
-
-    // initial guess for independent parameters
-    // is just what is included in the optimised in the full parameters optimise
-    x0 = fullparametersPtr_->segment(10 * (Nact-1), 10);
-    std::cout << "end_effector parameters"<< x0.transpose() <<std::endl;
-
-    // initial guess for motor friction parameters is just 0
-
-    // initialize LMI constraints for all links
-    constraintsPtrVec_.push_back(std::make_unique<LMIConstraints>(1,
-                                                                  n));       
-    constraintsNameVec_.push_back("LMI constraints"); 
+    // simply give 0 as initial guess
+    x0 = VecX::Zero(10); 
 
     return true;
 }
@@ -110,14 +119,11 @@ bool EndEffectorParametersIdentification::get_nlp_info(
 )
 {
     // number of decision variables
-    n =10;       // End-effector parameters 
-    numVars= n;
+    n = 10;       // End-effector parameters 
+    numVars = n;
 
     // number of inequality constraint
     numCons = 0;
-    for (Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
-        numCons += constraintsPtrVec_[i]->m;
-    }
     m = numCons;
 
     nnz_jac_g = n * m;
@@ -125,43 +131,6 @@ bool EndEffectorParametersIdentification::get_nlp_info(
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;
-
-    return true;
-}
-
-bool EndEffectorParametersIdentification::get_bounds_info(
-    Index n, 
-    Number* x_l, 
-    Number* x_u,
-    Index m, 
-    Number* g_l, 
-    Number* g_u
-)
-{
-    // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
-    // If desired, we could assert to make sure they are what we think they are.
-    if (n != numVars) {
-        THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");
-    }
-    if (m != numCons) {
-        THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
-    }
-
-    // use base class function to set bounds in g_l and g_u
-    Optimizer::get_bounds_info(n, x_l, x_u, m, g_l, g_u);
-
-    // set variable bounds (overwrite previous bounds in x_l and x_u)
-    // inertial parameters
-    for (Index i = 0; i < 10; i++) {
-        if (x0(i) > 0) {
-            x_l[i] = (1 - default_maximum_uncertainty) * x0(i);
-            x_u[i] = (1 + default_maximum_uncertainty) * x0(i);
-        }
-        else {
-            x_l[i] = (1 + default_maximum_uncertainty) * x0(i);
-            x_u[i] = (1 - default_maximum_uncertainty) * x0(i);
-        }
-    }
 
     return true;
 }
@@ -178,29 +147,46 @@ bool EndEffectorParametersIdentification::eval_f(
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
-    fullparametersPtr_->segment((Nact -1) * 10, 10)= z;
 
-    // the tau_inertials of end_effector
-    VecX tau_inertials = FullObservationMatrix * fullparametersPtr_->head(10 * Nact);
+    // log-Cholesky parameterization
+    const double d1 = z[0];
+    const double d2 = z[1];
+    const double d3 = z[2];
+    const double d4 = z[3];
+    const double s12 = z[4];
+    const double s23 = z[5];
+    const double s13 = z[6];
+    const double t1 = z[7];
+    const double t2 = z[8];
+    const double t3 = z[9];
 
-    obj_value = 0;
+    Mat4 U;
+    U << std::exp(d1), s12,          s13,          t1,
+         0.0,          std::exp(d2), s23,          t2,
+         0.0,          0.0,          std::exp(d3), t3,
+         0.0,          0.0,          0.0,          std::exp(d4);
 
-    for (Index i =0 ; i < N; i++) {
-        const VecX& q_d = velPtr_->col(i);
-        const VecX& q_dd = accPtr_->col(i);
-        const VecX& tau = torquePtr_->col(i);
-        const VecX& tau_inertial = tau_inertials.segment(i * Nact, Nact);
+    // Compute LMI = U' * U
+    Mat4 LMI = U.transpose() * U;
 
-        VecX total_friction_force = 
-            friction.cwiseProduct(q_d.cwiseSign()) +
-            damping.cwiseProduct(q_d) +
-            armature.cwiseProduct(q_dd) +
-            offset;
+    // End-effector parameters
+    VecX theta = VecX::Zero(10);
+    theta(0) = LMI(3, 3);                        
+    theta.segment<3>(1) = LMI.block<3, 1>(0, 3); 
+    theta(4) = LMI(1, 1) + LMI(2, 2);            // IXX
+    theta(5) = -LMI(0, 1);                       // IXY
+    theta(6) = LMI(0, 0) + LMI(2, 2);            // IYY
+    theta(7) = -LMI(0, 2);                       // IXZ
+    theta(8) = -LMI(1, 2);                       // IYZ
+    theta(9) = LMI(0, 0) + LMI(1, 1);            // IZZ
 
-        VecX tau_estimated = tau_inertial + total_friction_force;
+    // Update the inertia parameters
+    phi.tail(10) = theta;
 
-        obj_value += 0.5 * (tau_estimated - tau).squaredNorm();
-    } 
+    // Compute the ojective function
+    VecX diff = A * phi - b;
+
+    obj_value = 0.5 * diff.dot(diff) / b.size();
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -217,31 +203,99 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
     VecX grad_f_vec = VecX::Zero(n);
 
-    fullparametersPtr_->segment(10 * (Nact-1), 10)= z;
+    // log-Cholesky parameterization
+    const double d1 = z[0];
+    const double d2 = z[1];
+    const double d3 = z[2];
+    const double d4 = z[3];
+    const double s12 = z[4];
+    const double s23 = z[5];
+    const double s13 = z[6];
+    const double t1 = z[7];
+    const double t2 = z[8];
+    const double t3 = z[9];
 
-    VecX tau_inertials =FullObservationMatrix * fullparametersPtr_->head(10 * Nact);
+    Mat4 U;
+    U << std::exp(d1), s12,      s13,      t1,
+         0.0,     std::exp(d2),  s23,      t2,
+         0.0,     0.0,      std::exp(d3),  t3,
+         0.0,     0.0,      0.0,      std::exp(d4);
 
-    for (Index i = 0; i < N; i++) {
-        const VecX& q_d = velPtr_->col(i);
-        const VecX& q_dd = accPtr_->col(i);
-        const VecX& tau = torquePtr_->col(i);
-        const VecX& tau_inertial = tau_inertials.segment(i * Nact, Nact);
+    // Compute LMI = U' * U
+    Mat4 LMI = U.transpose() * U;
 
-        VecX total_friction_force = 
-            friction.cwiseProduct(q_d.cwiseSign()) +
-            damping.cwiseProduct(q_d) +
-            armature.cwiseProduct(q_dd) +
-            offset;
+    // End-effector parameters
+    VecX theta = VecX::Zero(10);
+    theta(0) = LMI(3, 3);                        
+    theta.segment<3>(1) = LMI.block<3, 1>(0, 3); 
+    theta(4) = LMI(1, 1) + LMI(2, 2);            // IXX
+    theta(5) = -LMI(0, 1);                       // IXY
+    theta(6) = LMI(0, 0) + LMI(2, 2);            // IYY
+    theta(7) = -LMI(0, 2);                       // IXZ
+    theta(8) = -LMI(1, 2);                       // IYZ
+    theta(9) = LMI(0, 0) + LMI(1, 1);            // IZZ
 
-        VecX tau_estimated = tau_inertial + total_friction_force;
-        VecX tau_diff = tau_estimated - tau;
+    phi.tail(10)= theta;
+    VecX diff = A * phi - b;
 
-        grad_f_vec.head(10) += tau_diff.transpose() * (FullObservationMatrix.block( i * Nact, 
-                                                                                    10 * (Nact -1),
-                                                                                    Nact,
-                                                                                    10));
+    // Compute the gradient of dtheta_ dx by matlab symbolic toolbox
+    double t5 = std::exp(d1);
+    double t6 = std::exp(d2);
+    double t7 = std::exp(d3);
+    double t8 = d1*2.0;
+    double t9 = d2*2.0;
+    double t10 = d3*2.0;
+    double t11 = s12*2.0;
+    double t12 = s13*2.0;
+    double t13 = s23*2.0;
+    double t14 = std::exp(t8);
+    double t15 = std::exp(t9);
+    double t16 = std::exp(t10);
+    double t17 = -t5;
+    double t18 = t14*2.0;
+    double t19 = t15*2.0;
+    double t20 = t16*2.0;
 
-    }
+    MatX dtheta_dx = MatX::Zero(10, 10);
+    dtheta_dx(0, 3) = std::exp(d4 * 2.0) * 2.0;
+    dtheta_dx(0, 7) = t1 * 2.0;
+    dtheta_dx(0, 8) = t2 * 2.0;
+    dtheta_dx(0, 9) = t3 * 2.0;
+    dtheta_dx(1, 0) = t1 * t5;
+    dtheta_dx(1, 7) = t5;
+    dtheta_dx(2, 1) = t2 * t6;
+    dtheta_dx(2, 4) = t1;
+    dtheta_dx(2, 7) = s12;
+    dtheta_dx(2, 8) = t6;
+    dtheta_dx(3, 2) = t3 * t7;
+    dtheta_dx(3, 5) = t2;
+    dtheta_dx(3, 6) = t1;
+    dtheta_dx(3, 7) = s13;
+    dtheta_dx(3, 8) = s23;
+    dtheta_dx(3, 9) = t7;
+    dtheta_dx(4, 1) = t19;
+    dtheta_dx(4, 2) = t20;
+    dtheta_dx(4, 4) = t11;
+    dtheta_dx(4, 5) = t13;
+    dtheta_dx(4, 6) = t12;
+    dtheta_dx(5, 0) = s12 * t17;
+    dtheta_dx(5, 4) = t17;
+    dtheta_dx(6, 0) = t18;
+    dtheta_dx(6, 2) = t20;
+    dtheta_dx(6, 5) = t13;
+    dtheta_dx(6, 6) = t12;
+    dtheta_dx(7, 0) = s13 * t17;
+    dtheta_dx(7, 6) = t17;
+    dtheta_dx(8, 1) = -s23 * t6;
+    dtheta_dx(8, 4) = -s13;
+    dtheta_dx(8, 5) = -t6;
+    dtheta_dx(8, 6) = -s12;
+    dtheta_dx(9, 0) = t18;
+    dtheta_dx(9, 1) = t19;
+    dtheta_dx(9, 4) = t11;
+
+    // Compute the gradient
+    grad_f_vec = (diff.transpose() * A.rightCols(10) * dtheta_dx) / b.size();
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -249,51 +303,4 @@ bool EndEffectorParametersIdentification::eval_grad_f(
 
     return true;
 }
-
-// [TNLP_eval_hess_f]
-// return the hessian of the objective function hess_{x} f(x) as a dense matrix
-bool EndEffectorParametersIdentification::eval_hess_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   MatX&         hess_f
-)
-{
-    if (n != numVars) {
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
-    }
-
-    // const int& dim_id = regroupPtr_->dim_id;
-    // const int& dim_d = regroupPtr_->dim_d;
-    // const int dim = dim_id + dim_d;
-
-    hess_f = MatX::Zero(n, n);  
-
-    // for (Index i = 0; i < N; i++) {
-    //     const VecX& q_d = velPtr_->col(i);
-    //     const VecX& q_dd = accPtr_->col(i);
-    //     const MatX& romi = FullObservationMatrix.block( i * Nact, 
-    //                                                     10* (Nact -1),
-    //                                                     Nact,
-    //                                                     10);
-    //     const MatX romi_T = romi.transpose();
-        
-    //     hess_f += 
-    //         romi_T * romi;
-  
-    // }
-
-    const MatX& romi = FullObservationMatrix.block( 0, 
-                                                    10* (Nact -1),
-                                                    FullObservationMatrix.rows(),
-                                                    10);
-    const MatX romi_T = romi.transpose();
-    
-    hess_f = 
-        romi_T * romi;
-
-    return true;
-}
-// [TNLP_eval_hess_f]
-
 }; // namespace RAPTOR
