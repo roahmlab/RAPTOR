@@ -1,11 +1,11 @@
-#ifndef ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
-#define ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
-
-#include "Optimizer.h"
-// #include "QRDecompositionSolver.h"
-#include "LMIConstraints.h"
+#ifndef ENDEFFECTOR_IDENTIFICATION_H
+#define ENDEFFECTOR_IDENTIFICATION_H
 
 #include "pinocchio/algorithm/regressor.hpp"
+
+#include "Optimizer.h"
+#include "MomentumRegressor.h"
+#include "TrajectoryData.h"
 
 namespace RAPTOR {
 
@@ -17,6 +17,7 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
     using Mat3 = Eigen::Matrix3d;
+    using Mat4 = Eigen::Matrix4d;
 
     /** Default constructor */
     EndEffectorParametersIdentification() = default;
@@ -27,12 +28,9 @@ public:
     // [set_parameters]
     bool set_parameters(
         const Model& model_input,
-        const std::shared_ptr<MatX>& posPtr_input,
-        const std::shared_ptr<MatX>& velPtr_input,
-        const std::shared_ptr<MatX>& accPtr_input,
-        const std::shared_ptr<MatX>& torquePtr_input,
-        const std::shared_ptr<VecX>& full_parametersPtr_input, 
-        const bool include_offset_input = false
+        const std::string filename_input,
+        const int H_input = 10,
+        const VecX offset_input = VecX::Zero(0)
     );
 
     /**@name Overloaded from TNLP */
@@ -46,16 +44,7 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the bounds for my problem */
-    bool get_bounds_info(
-        Index   n,
-        Number* x_l,
-        Number* x_u,
-        Index   m,
-        Number* g_l,
-        Number* g_u
-    ) final override;
-
+    // /** Method to return the bounds for my problem */
     /** Method to return the objective value */
     bool eval_f(
         Index         n,
@@ -70,14 +59,6 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) final override;
-
-    /** Method to return the hessian of the objective */
-    bool eval_hess_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        MatX&         hess_f
     ) final override;
     
     /**@name Methods to block default compiler methods.
@@ -99,31 +80,29 @@ public:
        const EndEffectorParametersIdentification&
     );
 
-    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
-
+    // class members:
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
 
-    MatX FullObservationMatrix; // full observation matrix
-    MatX EndeffectorObservation; // Endeffector observation matrix
-    
-    VecX friction;
-    VecX damping;
-    VecX armature;
+    VecX phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
+    VecX phi_original; // dynamic parameters read from the original robot model
+   
+    std::shared_ptr<TrajectoryData> trajPtr_;
+    std::shared_ptr<TrajectoryData> trajPtr2_;
+
+    std::shared_ptr<MomentumRegressor> mrPtr_;
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
+
+        // forward integration horizon
+    int H = 10;
+
+        // offset in friction parameters
+    bool include_offset = false;
     VecX offset;
 
-    // shared pointers to data
-    std::shared_ptr<MatX> posPtr_;
-    std::shared_ptr<MatX> velPtr_;
-    std::shared_ptr<MatX> accPtr_;
-    std::shared_ptr<MatX> torquePtr_;
-    std::shared_ptr<VecX> fullparametersPtr_; 
-
-    MatX tau_inertials; // computed from the trajectory without friction
-    int Nact = 0; // number of motors
-    int N = 0; // number of samples
-
-    bool include_offset = false;
+        // regression data
+    MatX A;
+    VecX b;
 };
 
 }; // namespace RAPTOR
