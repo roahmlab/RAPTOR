@@ -124,7 +124,6 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
 
             for (int k = 0; k < model.nv; k++) {
                 BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k).lower() - rnea_partial_dq(j, k)), 1e-6);
-                // BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_dv(j, k)), 1e-6);
                 BOOST_CHECK_SMALL((regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_da(j, k)), 1e-6);
             }
         }

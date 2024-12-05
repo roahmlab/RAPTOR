@@ -36,6 +36,11 @@ using Interval = bn::interval<
     > 
 >;
 
+namespace IntervalHelper {
+double getCenter(const Interval& x);
+double getRadius(const Interval& x);
+}; // namespace IntervalHelper
+
 // maximum noise on joint encoder sensor measurements
 typedef struct SensorNoiseInfo_ {
     Interval position_error = Interval(0.0);

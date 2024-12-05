@@ -2,6 +2,15 @@
 
 namespace RAPTOR {
 
+namespace IntervalHelper {
+double getCenter(const Interval& x) {
+    return 0.5 * (x.lower() + x.upper());
+}
+double getRadius(const Interval& x) {
+    return 0.5 * (x.upper() - x.lower());
+}
+}; // namespace IntervalHelper
+
 IntervalRegressorInverseDynamics::IntervalRegressorInverseDynamics(const Model& model_input, 
                                                                    const std::shared_ptr<TrajectoryData>& trajPtr_input,
                                                                    const SensorNoiseInfo sensor_noise_input,
@@ -52,7 +61,7 @@ IntervalRegressorInverseDynamics::IntervalRegressorInverseDynamics(const Model& 
 
     for (int i = 0; i < N; i++) {
         tau(i) = VecXInt::Zero(modelPtr_->nv);
-        ptau_pz(i) = MatXInt::Zero(modelPtr_->nv, trajPtr_->varLength);
+        ptau_pz(i) = MatXInt::Zero(modelPtr_->nv, 3 * modelPtr_->nv);
     }
 
     Y = MatXInt::Zero(N * modelPtr_->nv, numParams);
@@ -60,9 +69,8 @@ IntervalRegressorInverseDynamics::IntervalRegressorInverseDynamics(const Model& 
     // In the original RegressorInverseDynamics, z represents the decision variable, 
     // such as coefficients of the polynomial trajectory.
     // Here, z represents the q, q_d, q_dd themselves since we are using TrajectoryData class.
-    // trajPtr_->varLength should just be 3 * modelPtr_->nv = 3 * trajPtr_->Nact.
-    pY_pz.resize(trajPtr_->varLength);
-    for (int i = 0; i < trajPtr_->varLength; i++) {
+    pY_pz.resize(3 * modelPtr_->nv);
+    for (int i = 0; i < 3 * modelPtr_->nv; i++) {
         pY_pz(i) = MatXInt::Zero(N * modelPtr_->nv, numParams);
     }
 }
@@ -187,7 +195,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
 
                 if (compute_derivatives) {
                     // compute pv_pz
-                    pv_pz(j) = MatXInt::Zero(6, trajPtr_->varLength);
+                    pv_pz(j) = MatXInt::Zero(6, 3 * modelPtr_->nv);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
@@ -198,7 +206,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
                     }
 
                     // compute pa_pz
-                    pa_pz(j) = MatXInt::Zero(6, trajPtr_->varLength);
+                    pa_pz(j) = MatXInt::Zero(6, 3 * modelPtr_->nv);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
@@ -218,7 +226,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
 
         // backward pass
         MatRegressorInt bodyRegressor;
-        Eigen::Array<MatRegressorInt, 1, Eigen::Dynamic> pbodyRegressor_pz(trajPtr_->varLength);
+        Eigen::Array<MatRegressorInt, 1, Eigen::Dynamic> pbodyRegressor_pz(3 * modelPtr_->nv);
 
         for (int j = modelPtr_->nv - 1; j >= 0; j--) {
             // compute local bodyRegressor
@@ -245,7 +253,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
                 a6 + v1*v5 - v2*v4,         v1*v3 - a2,         a1 + v2*v3,     -v1*v1 - v2*v2,      0,             0,      0,             0,             0,      0;
                  
             if (compute_derivatives) {
-                for (int k = 0; k < trajPtr_->varLength; k++) {
+                for (int k = 0; k < 3 * modelPtr_->nv; k++) {
                     const Interval& pv1 = pv_pz(j)(0, k);
                     const Interval& pv2 = pv_pz(j)(1, k);
                     const Interval& pv3 = pv_pz(j)(2, k);
@@ -276,7 +284,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
                     intervalMatrixMultiply(S(j).transpose(), bodyRegressor);
 
                 if (compute_derivatives) {
-                    for (int k = 0; k < trajPtr_->varLength; k++) {
+                    for (int k = 0; k < 3 * modelPtr_->nv; k++) {
                         pY_pz(k).block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
                             intervalMatrixMultiply(S(j).transpose(), pbodyRegressor_pz(k));
                     }
@@ -284,7 +292,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
 
                 if (modelPtr_->parents[h + 1] > 0) {
                     if (compute_derivatives) {
-                        for (int k = 0; k < trajPtr_->varLength; k++) {
+                        for (int k = 0; k < 3 * modelPtr_->nv; k++) {
                             pbodyRegressor_pz(k) = 
                                 intervalMatrixMultiply(Xup(h).transpose(), pbodyRegressor_pz(k));
                         }
@@ -300,7 +308,7 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
         tau(i) = intervalDoubleMatrixMultiply(Y.middleRows(i * modelPtr_->nv, modelPtr_->nv), phi);
 
         if (compute_derivatives) {
-            for (int k = 0; k < trajPtr_->varLength; k++) {
+            for (int k = 0; k < 3 * modelPtr_->nv; k++) {
                 ptau_pz(i).col(k) = intervalDoubleMatrixMultiply(pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv), phi);
             }
         }

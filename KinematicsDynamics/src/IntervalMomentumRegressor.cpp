@@ -52,23 +52,22 @@ IntervalMomentumRegressor::IntervalMomentumRegressor(const Model& model_input,
 
     for (int i = 0; i < N; i++) {
         tau(i) = VecXInt::Zero(modelPtr_->nv);
-        ptau_pz(i) = MatXInt::Zero(modelPtr_->nv, trajPtr_->varLength);
+        ptau_pz(i) = MatXInt::Zero(modelPtr_->nv, 2 * modelPtr_->nv);
     }
 
     Y = MatXInt::Zero(N * modelPtr_->nv, numParams);
 
     // In the original RegressorInverseDynamics, z represents the decision variable, 
     // such as coefficients of the polynomial trajectory.
-    // Here, z represents the q, q_d, q_dd themselves since we are using TrajectoryData class.
-    // trajPtr_->varLength should just be 3 * modelPtr_->nv = 3 * trajPtr_->Nact.
-    pY_pz.resize(trajPtr_->varLength);
-    for (int i = 0; i < trajPtr_->varLength; i++) {
+    // Here, z represents the q, q_d themselves since we are using TrajectoryData class.
+    pY_pz.resize(2 * modelPtr_->nv);
+    for (int i = 0; i < 2 * modelPtr_->nv; i++) {
         pY_pz(i) = MatXInt::Zero(N * modelPtr_->nv, numParams);
     }
 
     Y_CTv.resize(N * modelPtr_->nv, numParams);
-    pY_CTv_pz.resize(trajPtr_->varLength);
-    for (int i = 0; i < trajPtr_->varLength; i++) {
+    pY_CTv_pz.resize(2 * modelPtr_->nv);
+    for (int i = 0; i < 2 * modelPtr_->nv; i++) {
         pY_CTv_pz(i).resize(N * modelPtr_->nv, numParams);
     }
 };
@@ -103,14 +102,14 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
         Mat6Int XJ, dXJdq;
         MatRegressorInt bodyRegressor;
         Vec6Int Sd;
-        MatXInt pSd_pz(6, trajPtr_->varLength);
+        MatXInt pSd_pz(6, 2 * modelPtr_->nv);
 
         Eigen::Array<Mat6Int, 1, Eigen::Dynamic> Xup(modelPtr_->nv);
         Eigen::Array<Mat6Int, 1, Eigen::Dynamic> dXupdq(modelPtr_->nv);
         Eigen::Array<Vec6Int, 1, Eigen::Dynamic> S(modelPtr_->nv);
         Eigen::Array<Vec6Int, 1, Eigen::Dynamic> v(modelPtr_->nv);
         Eigen::Array<MatXInt, 1, Eigen::Dynamic> pv_pz(modelPtr_->nv);
-        Eigen::Array<MatRegressorInt, 1, Eigen::Dynamic> pbodyRegressor_pz(trajPtr_->varLength);
+        Eigen::Array<MatRegressorInt, 1, Eigen::Dynamic> pbodyRegressor_pz(2 * modelPtr_->nv);
 
         // forward pass
         for (int j = 0; j < modelPtr_->nv; j++) {
@@ -158,7 +157,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                 v(j) = vJ;
 
                 if (compute_derivatives) {// compute pv_pz
-                    pv_pz(j) = MatXInt::Zero(6, trajPtr_->varLength);
+                    pv_pz(j) = MatXInt::Zero(6, 2 * modelPtr_->nv);
 
                     if (j < trajPtr_->Nact) {
                         for (int k = 0; k < S(j).size(); k++) {
@@ -187,7 +186,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                 v6,   -v2,   v1,     0,     0,     0,     0,    0,    0,    0;
                  
             if (compute_derivatives) {
-                for (int k = 0; k < trajPtr_->varLength; k++) {
+                for (int k = 0; k < 2 * modelPtr_->nv; k++) {
                     const Interval& pv1 = pv_pz(j)(0, k);
                     const Interval& pv2 = pv_pz(j)(1, k);
                     const Interval& pv3 = pv_pz(j)(2, k);
@@ -212,7 +211,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                     intervalMatrixMultiply(S(j).transpose(), bodyRegressor);
 
                 if (compute_derivatives) {
-                    for (int k = 0; k < trajPtr_->varLength; k++) {
+                    for (int k = 0; k < 2 * modelPtr_->nv; k++) {
                         pY_pz(k).block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
                             intervalMatrixMultiply(S(j).transpose(), pbodyRegressor_pz(k));
                     }
@@ -234,7 +233,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                     intervalMatrixMultiply(Sd.transpose(), bodyRegressor);
 
                 if (compute_derivatives) {
-                    for (int k = 0; k < trajPtr_->varLength; k++) {
+                    for (int k = 0; k < 2 * modelPtr_->nv; k++) {
                         pY_CTv_pz(k).block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
                             intervalMatrixMultiply(pSd_pz.col(k).transpose(), bodyRegressor) +
                             intervalMatrixMultiply(Sd.transpose(), pbodyRegressor_pz(k));
@@ -243,7 +242,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
 
                 if (modelPtr_->parents[h + 1] > 0) {
                     if (compute_derivatives) {
-                        for (int k = 0; k < trajPtr_->varLength; k++) {
+                        for (int k = 0; k < 2 * modelPtr_->nv; k++) {
                             pbodyRegressor_pz(k) = 
                                 intervalMatrixMultiply(Xup(h).transpose(), pbodyRegressor_pz(k));
                         }
@@ -259,7 +258,7 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
         tau(i) = intervalDoubleMatrixMultiply(Y.middleRows(i * modelPtr_->nv, modelPtr_->nv), phi);
 
         if (compute_derivatives) {
-            for (int k = 0; k < trajPtr_->varLength; k++) {
+            for (int k = 0; k < 2 * modelPtr_->nv; k++) {
                 ptau_pz(i).col(k) = intervalDoubleMatrixMultiply(pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv), phi);
             }
         }
