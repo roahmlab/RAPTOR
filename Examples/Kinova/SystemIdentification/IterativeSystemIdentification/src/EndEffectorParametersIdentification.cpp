@@ -41,11 +41,11 @@ bool EndEffectorParametersIdentification::set_parameters(
     }
 
     // this trajectory is to compute momentum regressors
-    trajPtr_ = std::make_shared<TrajectoryData>(filename_input);
+    trajPtr_ = std::make_shared<TrajectoryData>(filename_input, sensor_noise_input);
 
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
-    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input);
+    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input, sensor_noise_input);
     for (int i = 0; i < trajPtr2_->N; i++) {
         trajPtr2_->q_d(i).setZero();
         trajPtr2_->q_dd(i).setZero();
@@ -109,25 +109,18 @@ bool EndEffectorParametersIdentification::set_parameters(
     x0 = VecXd::Zero(10); 
 
     // parse sensor noise
-    sensor_noise = sensor_noise_input;
-
-    if ((IntervalHelper::getCenter(sensor_noise.position_error) == 0 &&
-         IntervalHelper::getRadius(sensor_noise.position_error) == 0) &&
-        (IntervalHelper::getCenter(sensor_noise.velocity_error) == 0 &&
-         IntervalHelper::getRadius(sensor_noise.velocity_error) == 0) &&
-        (IntervalHelper::getCenter(sensor_noise.acceleration_error) == 0 &&
-         IntervalHelper::getRadius(sensor_noise.acceleration_error) == 0)) {
+    if (sensor_noise_input.position_error.norm() == 0.0 &&
+        sensor_noise_input.velocity_error.norm() == 0.0 &&
+        sensor_noise_input.acceleration_error.norm() == 0.0) {
         std::cout << "No sensor noise is added" << std::endl;
     }
     else {
         std::cout << "Sensor noise is added" << std::endl;
-        std::cout << "Position error: " << sensor_noise.position_error.lower() 
-                                 << ' ' << sensor_noise.position_error.upper() << std::endl;
-        std::cout << "Velocity error: " << sensor_noise.velocity_error.lower() 
-                                 << ' ' << sensor_noise.velocity_error.upper() << std::endl;
+        std::cout << "Position error:\n " << sensor_noise_input.position_error.transpose() << std::endl;
+        std::cout << "Velocity error:\n " << sensor_noise_input.velocity_error.transpose() << std::endl;
 
-        mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_, sensor_noise);
-        ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_, sensor_noise);
+        mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
+        ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
     }
 
     return true;
@@ -358,9 +351,11 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     Aint2.resize(modelPtr_->nv * num_segment, 10 * modelPtr_->nv);
 
+    const auto& sensor_noise = trajPtr_->sensor_noise;
+
     int i = 0;
     #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrIntPtr_, ridIntPtr_, Aint, bint) private(i) schedule(dynamic, 1)
-    for (i = 0; i < 256 - H - 1; i += H) {
+    for (i = 0; i < trajPtr_->N - H - 1; i += H) {
         int seg_start = i;
         int seg_end = seg_start + H;
 
@@ -380,8 +375,8 @@ void EndEffectorParametersIdentification::finalize_solution(
 
             // Note that here trajPtr_->q_dd stores the applied torque
             for (int k = 0; k < modelPtr_->nv; k++) {
-                const Interval q_d_int = trajPtr_->q_d(j)(k) + sensor_noise.velocity_error;
-                const Interval q_dd_int = trajPtr_->q_dd(j)(k) + sensor_noise.acceleration_error;
+                const Interval q_d_int = trajPtr_->q_d(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(k));
+                const Interval q_dd_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(k));
                 
                 int_ctrl(k) += (q_dd_int - 
                                 modelPtr_->friction(k) * Utils::sign(trajPtr_->q_d(j)(k)) - 
@@ -391,8 +386,8 @@ void EndEffectorParametersIdentification::finalize_solution(
         }
 
         for (int k = 0; k < modelPtr_->nv; k++) {
-            const Interval q_d_seg_start_int = trajPtr_->q_d(seg_start)(k) + sensor_noise.velocity_error;
-            const Interval q_d_seg_end_int = trajPtr_->q_d(seg_end)(k) + sensor_noise.velocity_error;
+            const Interval q_d_seg_start_int = trajPtr_->q_d(seg_start)(k) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(k));
+            const Interval q_d_seg_end_int = trajPtr_->q_d(seg_end)(k) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(k));
             int_ctrl(k) -= modelPtr_->armature(k) * (q_d_seg_end_int - q_d_seg_start_int);
         }
         

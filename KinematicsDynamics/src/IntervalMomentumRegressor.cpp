@@ -4,10 +4,8 @@ namespace RAPTOR {
 
 IntervalMomentumRegressor::IntervalMomentumRegressor(const Model& model_input, 
                                                      const std::shared_ptr<TrajectoryData>& trajPtr_input,
-                                                     const SensorNoiseInfo sensor_noise_input,
                                                      Eigen::VectorXi jtype_input) :
-    jtype(jtype_input),
-    sensor_noise(sensor_noise_input) {
+    jtype(jtype_input) {
     trajPtr_ = trajPtr_input;
     N = trajPtr_->N;
     modelPtr_ = std::make_shared<Model>(model_input);
@@ -83,6 +81,8 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
 
     trajPtr_->compute(z, compute_derivatives);
 
+    const auto& sensor_noise = trajPtr_->sensor_noise;
+
     int i = 0;
     #pragma omp parallel for shared(trajPtr_, modelPtr_, jtype, Xtree, Y, pY_pz, tau, ptau_pz) private(i) schedule(dynamic, 1)
     for (i = 0; i < N; i++) {
@@ -93,8 +93,8 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
         VecXInt q(q_meas.size());
         VecXInt q_d(q_d_meas.size());
         for (int j = 0; j < q_meas.size(); j++) {
-            q(j) = q_meas(j) + sensor_noise.position_error;
-            q_d(j) = q_d_meas(j) + sensor_noise.velocity_error;
+            q(j) = q_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
+            q_d(j) = q_d_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
         }
 
         // below is the extended regressor algorithm from ROAM-Lab
@@ -275,8 +275,8 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                 // an alternative way to compute the bound of tau using first order Taylor expansion
                 Interval tau_alt = Interval(mrPtr_->tau(i)(j));
                 for (int k = 0; k < modelPtr_->nv; k++) {
-                    tau_alt += ptau_pz(i)(j, k) * sensor_noise.position_error;
-                    tau_alt += ptau_pz(i)(j, k + modelPtr_->nv) * sensor_noise.velocity_error;
+                    tau_alt += ptau_pz(i)(j, k) * IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
+                    tau_alt += ptau_pz(i)(j, k + modelPtr_->nv) * IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
                 }
 
                 // update tau if the alternative tau bound is tighter
@@ -289,12 +289,12 @@ void IntervalMomentumRegressor::compute(const VecXd& z,
                     Interval Y_CTv_alt = Interval(mrPtr_->Y_CTv(i * modelPtr_->nv + j, h));
 
                     for (int k = 0; k < modelPtr_->nv; k++) {
-                        Y_alt += pY_pz(k)(i * modelPtr_->nv + j, h) * sensor_noise.position_error;
-                        Y_CTv_alt += pY_CTv_pz(k)(i * modelPtr_->nv + j, h) * sensor_noise.position_error;
+                        Y_alt += pY_pz(k)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
+                        Y_CTv_alt += pY_CTv_pz(k)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
                     }
                     for (int k = 0; k < modelPtr_->nv; k++) {
-                        Y_alt += pY_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * sensor_noise.velocity_error;
-                        Y_CTv_alt += pY_CTv_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * sensor_noise.velocity_error;
+                        Y_alt += pY_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
+                        Y_CTv_alt += pY_CTv_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
                     }
 
                     if (IntervalHelper::getRadius(Y_alt) < IntervalHelper::getRadius(Y(i * modelPtr_->nv + j, h))) {

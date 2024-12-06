@@ -2,7 +2,9 @@
 
 namespace RAPTOR {
 
-TrajectoryData::TrajectoryData(const std::string& filename_input) {
+TrajectoryData::TrajectoryData(const std::string& filename_input,
+                               const SensorNoiseInfo sensor_noise_input) :
+    sensor_noise(sensor_noise_input) {
     // parse file
     const MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
 
@@ -44,17 +46,47 @@ TrajectoryData::TrajectoryData(const std::string& filename_input) {
             q_dd(i) = traj_data.row(i).segment(1 + 2 * Nact, Nact);
         }
     }
+
+    // check sensor noise format
+    if (sensor_noise.position_error.size() == 0 &&
+        sensor_noise.velocity_error.size() == 0 &&
+        sensor_noise.acceleration_error.size() == 0) {
+        sensor_noise.position_error = VecX::Zero(Nact);
+        sensor_noise.velocity_error = VecX::Zero(Nact);
+        sensor_noise.acceleration_error = VecX::Zero(Nact);    
+    }
+    else if (sensor_noise.position_error.size() != Nact ||
+        sensor_noise.velocity_error.size() != Nact ||
+        sensor_noise.acceleration_error.size() != Nact) {
+        throw std::invalid_argument("Invalid sensor noise format");
+    }
 }
 
 TrajectoryData::TrajectoryData(double T_input,
                                int N_input, 
-                               int Nact_input) :
-    Trajectories(0, T_input, N_input, Nact_input, TimeDiscretization::Uniform) {
+                               int Nact_input,
+                               const SensorNoiseInfo sensor_noise_input) :
+    Trajectories(0, T_input, N_input, Nact_input, TimeDiscretization::Uniform),
+    sensor_noise(sensor_noise_input) {
     // randomly generate trajectory data
     for (int i = 0; i < N; i++) {
         q(i).setRandom();
         q_d(i).setRandom();
         q_dd(i).setRandom();
+    }
+
+    // check sensor noise format
+    if (sensor_noise.position_error.size() == 0 &&
+        sensor_noise.velocity_error.size() == 0 &&
+        sensor_noise.acceleration_error.size() == 0) {
+        sensor_noise.position_error = VecX::Zero(Nact);
+        sensor_noise.velocity_error = VecX::Zero(Nact);
+        sensor_noise.acceleration_error = VecX::Zero(Nact);    
+    }
+    else if (sensor_noise.position_error.size() != Nact ||
+        sensor_noise.velocity_error.size() != Nact ||
+        sensor_noise.acceleration_error.size() != Nact) {
+        throw std::invalid_argument("Invalid sensor noise format");
     }
 }
 

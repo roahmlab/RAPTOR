@@ -65,10 +65,16 @@ int main(int argc, char* argv[]) {
     }
 
     // Sensor noise info
-    SensorNoiseInfo sensor_noise;
-    sensor_noise.position_error = Interval(-0.000191986, 0.000191986);
-    sensor_noise.velocity_error = Interval(-0.00191986, 0.00191986);
-    sensor_noise.acceleration_error = Interval(-0.001, 0.001);
+    SensorNoiseInfo sensor_noise(model.nv);
+    sensor_noise.position_error << Utils::deg2rad(0.02),
+                                   Utils::deg2rad(0.02),
+                                   Utils::deg2rad(0.02),
+                                   Utils::deg2rad(0.02),
+                                   Utils::deg2rad(0.011),
+                                   Utils::deg2rad(0.011),
+                                   Utils::deg2rad(0.011); // from Kinova official support, resolution of joint encoders
+    sensor_noise.velocity_error = 10 * sensor_noise.position_error;
+    sensor_noise.acceleration_error = 10 * sensor_noise.position_error;          
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
