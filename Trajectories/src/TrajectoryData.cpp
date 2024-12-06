@@ -9,6 +9,19 @@ TrajectoryData::TrajectoryData(const std::string& filename_input,
     // parse file
     MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
 
+    N = traj_data.rows();
+    Nact = (traj_data.cols() - 1) / 3;
+
+    if (Nact <= 0) {
+        throw std::invalid_argument("0 actuated joints");
+    }
+
+    if (2 * Nact + 1 != traj_data.cols() &&
+        3 * Nact + 1 != traj_data.cols()) {
+        std::cerr << Nact << ' ' << traj_data.cols() << std::endl;
+        throw std::invalid_argument("Invalid trajectory file format");
+    }
+
     // check downsample format
     if (downsample_rate <= 0) {
         throw std::invalid_argument("Invalid downsample rate");
@@ -19,19 +32,7 @@ TrajectoryData::TrajectoryData(const std::string& filename_input,
         MatX new_traj_data(num_samples, traj_data.cols());
         Utils::uniformlySampleMatrixInRows(traj_data, new_traj_data, num_samples);
         traj_data = new_traj_data; // this operation can not be reversed!
-    }
-
-    N = traj_data.rows();
-    Nact = (traj_data.cols() - 1) / 3;
-
-    if (Nact <= 0) {
-        throw std::invalid_argument("0 actuated joints");
-    }
-   
-    if (2 * Nact + 1 != traj_data.cols() &&
-        3 * Nact + 1 != traj_data.cols()) {
-        std::cerr << Nact << ' ' << traj_data.cols() << std::endl;
-        throw std::invalid_argument("Invalid trajectory file format");
+        N = traj_data.rows();
     }
 
     tspan = traj_data.col(0);

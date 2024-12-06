@@ -1,27 +1,32 @@
-#include "ConditionNumberOptimizer.h"
+#include "ExcitingTrajectoryGenerator.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
-// ConditionNumberOptimizer::ConditionNumberOptimizer()
+// ExcitingTrajectoryGenerator::ExcitingTrajectoryGenerator()
 // {
 // }
 
 
 // // destructor
-// ConditionNumberOptimizer::~ConditionNumberOptimizer()
+// ExcitingTrajectoryGenerator::~ExcitingTrajectoryGenerator()
 // {
 // }
 
-bool ConditionNumberOptimizer::set_parameters(
+bool ExcitingTrajectoryGenerator::set_parameters(
     const VecX& x0_input,
     const Number T_input,
     const int N_input,
     const int degree_input,
     const double base_frequency_input,
+    const VecX& q0_input,
+    const VecX& q_d0_input,
     const Model& model_input, 
     const std::string& regroupMatrixFileName,
+    const std::vector<Vec3>& boxCenters,
+    const std::vector<Vec3>& boxOrientations,
+    const std::vector<Vec3>& boxSizes,
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
@@ -34,12 +39,7 @@ bool ConditionNumberOptimizer::set_parameters(
     x0 = x0_input.segment(0,(2*degree_input+1)*model_input.nv);
     regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
 
-    // fixed frequency fourier curves with 0 initial velocity
-    VecX q0_input(model_input.nv);
-    q0_input << 1.001089876408351, 0.09140272042061115,  -1.648806446891836,   2.381092213417765,
-                     1.822374826812066,  0.1466609489107418,  0.9315315991321746;
-    VecX q_d0_input = VecX::Zero(model_input.nv);
-
+    // fixed frequency fourier curves
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
                                                              N_input, 
                                                              model_input.nv, 
@@ -104,43 +104,25 @@ bool ConditionNumberOptimizer::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
-    // Customized constraints (collision avoidance with ground)
-    std::vector<Vec3> Center = {Vec3(0.0, 0.0, 0.15), // ground
-                                Vec3(0.53, 0.49, 0.56),  // back wall
-                                Vec3(-0.39, -0.82, 0.56), // camera bar near the control
-                                Vec3(-0.39, 0.42, 0.56), // second bar bewteen 10 and 20 change to wall
-                                Vec3(0.0, 0.0, 1.12) // ceiling
-                                };    
-    std::vector<Vec3> Orientation = {Vec3(0.0, 0.0, 0.0),
-                                     Vec3(0.0, 0.0, 0.0),
-                                     Vec3(0.0, 0.0, 0.0),
-                                     Vec3(0.0, 0.0, 0.0),
-                                     Vec3(0.0, 0.0, 0.0)
-                                    };
-    std::vector<Vec3> Size = {Vec3(5.0, 5.0, 0.01),
-                              Vec3(5.0, 0.08, 1.12),
-                              Vec3(0.08, 0.08, 1.12),
-                              Vec3(0.10, 1.28, 1.28),
-                              Vec3(5.0, 5.0, 0.05)
-                             };   
+    // Customized constraints (collision avoidance with environment)  
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               Center,
-                                                                               Orientation,
-                                                                               Size,
+                                                                               boxCenters,
+                                                                               boxOrientations,
+                                                                               boxSizes,
                                                                                include_gripper_or_not,
                                                                                collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
     // check dimensions of regroupMatrix
     if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
-        throw std::invalid_argument("ConditionNumberOptimizer: regroupMatrix has wrong dimensions!");
+        throw std::invalid_argument("ExcitingTrajectoryGenerator: regroupMatrix has wrong dimensions!");
     }
 
     return true;
 }
 
-bool ConditionNumberOptimizer::get_nlp_info(
+bool ExcitingTrajectoryGenerator::get_nlp_info(
         Index&          n,
         Index&          m,
         Index&          nnz_jac_g,
@@ -167,7 +149,7 @@ bool ConditionNumberOptimizer::get_nlp_info(
     return true;
 }
 
-bool ConditionNumberOptimizer::eval_f(
+bool ExcitingTrajectoryGenerator::eval_f(
     Index         n,
     const Number* x,
     bool          new_x,
@@ -199,7 +181,7 @@ bool ConditionNumberOptimizer::eval_f(
     return true;
 }
 
-bool ConditionNumberOptimizer::eval_grad_f(
+bool ExcitingTrajectoryGenerator::eval_grad_f(
     Index         n,
     const Number* x,
     bool          new_x,

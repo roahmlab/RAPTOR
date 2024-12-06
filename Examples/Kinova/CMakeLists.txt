@@ -4,7 +4,7 @@ add_library(Kinovalib SHARED
     ArmourDiscrete/src/KinovaOptimizer.cpp
     ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
-    SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
+    SystemIdentification/ExcitingTrajectories/src/ExcitingTrajectoryGenerator
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
     SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
