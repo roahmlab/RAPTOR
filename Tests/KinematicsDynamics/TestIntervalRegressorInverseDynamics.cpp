@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
     // Initialize IntervalRegressorInverseDynamics
-    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_);
 
     // This is just a placeholder, TrajectoryData does not use this
     Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
@@ -73,7 +73,8 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     std::shared_ptr<TrajectoryData> trajPtr_ = 
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
-    // Initialize IntervalRegressorInverseDynamicsIntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+    // Initialize IntervalRegressorInverseDynamics
+    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_);
 
     // This is just a placeholder, TrajectoryData does not use this
     Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
