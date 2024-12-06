@@ -10,6 +10,13 @@ Eigen::MatrixXd matrixSquareRoot(Eigen::MatrixXd& A);
 Eigen::VectorXd x_to_theta(Eigen::VectorXd& x);
 
 int main(int argc, char* argv[]) {
+    // macro NUM_THREADS should be define in cmake
+    #ifdef NUM_THREADS
+        omp_set_num_threads(NUM_THREADS);
+    #else
+        throw std::runtime_error("macro NUM_THREADS is not defined!");
+    #endif
+
     // check if the file number is provided
     if (argc < 2) {
         throw std::invalid_argument("No arguments provided. please choose the trajectory file");
@@ -55,14 +62,20 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd offset = Eigen::VectorXd::Zero(model.nv);
     if (friction_parameters.size() == 4 * model.nv) {
         offset = friction_parameters.tail(model.nv);
-        std::cout << offset.transpose() << std::endl;
     }
+
+    // Sensor noise info
+    SensorNoiseInfo sensor_noise;
+    sensor_noise.position_error = Interval(-0.000191986, 0.000191986);
+    sensor_noise.velocity_error = Interval(-0.00191986, 0.00191986);
+    sensor_noise.acceleration_error = Interval(-0.001, 0.001);
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
     try {
 	    mynlp->set_parameters(model, 
                               trajectory_filename,
+                              sensor_noise,
                               H,
                               offset);
     }
@@ -73,7 +86,7 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-8);
+    app->Options()->SetNumericValue("tol", 1e-10);
 	app->Options()->SetNumericValue("max_wall_time", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 3000);

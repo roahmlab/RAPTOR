@@ -5,6 +5,7 @@
 
 #include "Optimizer.h"
 #include "MomentumRegressor.h"
+#include "IntervalMomentumRegressor.h"
 #include "TrajectoryData.h"
 
 namespace RAPTOR {
@@ -13,11 +14,11 @@ class EndEffectorParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
-    using Vec3 = Eigen::Vector3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
-    using Mat3 = Eigen::Matrix3d;
-    using Mat4 = Eigen::Matrix4d;
+    using VecXd = Eigen::VectorXd;
+    using MatXd = Eigen::MatrixXd;
+    using Mat4d = Eigen::Matrix4d;
+    using VecXInt = Eigen::Vector<Interval, Eigen::Dynamic>;
+    using MatXInt = Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic>;
 
     /** Default constructor */
     EndEffectorParametersIdentification() = default;
@@ -29,8 +30,9 @@ public:
     bool set_parameters(
         const Model& model_input,
         const std::string filename_input,
+        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
         const int H_input = 10,
-        const VecX offset_input = VecX::Zero(0)
+        const VecXd offset_input = VecXd::Zero(0)
     );
 
     /**@name Overloaded from TNLP */
@@ -60,6 +62,20 @@ public:
         bool          new_x,
         Number*       grad_f
     ) final override;
+
+    void finalize_solution(
+        SolverReturn               status,
+        Index                      n,
+        const Number*              x,
+        const Number*              z_L,
+        const Number*              z_U,
+        Index                      m,
+        const Number*              g,
+        const Number*              lambda,
+        Number                     obj_value,
+        const IpoptData*           ip_data,
+        IpoptCalculatedQuantities* ip_cq
+    ) final override;
     
     /**@name Methods to block default compiler methods.
     *
@@ -84,8 +100,8 @@ public:
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
 
-    VecX phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
-    VecX phi_original; // dynamic parameters read from the original robot model
+    VecXd phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
+    VecXd phi_original; // dynamic parameters read from the original robot model
    
     std::shared_ptr<TrajectoryData> trajPtr_;
     std::shared_ptr<TrajectoryData> trajPtr2_;
@@ -93,16 +109,29 @@ public:
     std::shared_ptr<MomentumRegressor> mrPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 
+    std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
+    std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
+
         // forward integration horizon
     int H = 10;
+    int num_segment = 0;
 
         // offset in friction parameters
     bool include_offset = false;
-    VecX offset;
+    VecXd offset;
+
+        // sensor noise
+    SensorNoiseInfo sensor_noise;
 
         // regression data
-    MatX A;
-    VecX b;
+    MatXd A;
+    VecXd b;
+
+    MatXInt Aint;
+    VecXInt bint;
+
+    MatXInt Aint2;
+    VecXInt bint2;
 };
 
 }; // namespace RAPTOR
