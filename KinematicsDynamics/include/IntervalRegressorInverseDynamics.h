@@ -111,6 +111,8 @@ public:
     Eigen::Array<MatXInt, 1, Eigen::Dynamic> ptau_pz;
 
     int NB = 0;
+
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_ = nullptr;
 };
 
 // muliply operator between Eigen interval matrices and vectors

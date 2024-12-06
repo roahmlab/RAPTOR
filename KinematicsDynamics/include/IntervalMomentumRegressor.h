@@ -72,6 +72,8 @@ public:
     Eigen::Array<MatXInt, 1, Eigen::Dynamic> ptau_pz;
 
     int NB = 0;
+
+    std::shared_ptr<MomentumRegressor> mrPtr_ = nullptr;
 };
 
 }; // namespace RAPTOR

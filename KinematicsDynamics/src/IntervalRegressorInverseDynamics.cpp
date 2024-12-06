@@ -73,6 +73,8 @@ IntervalRegressorInverseDynamics::IntervalRegressorInverseDynamics(const Model& 
     for (int i = 0; i < 3 * modelPtr_->nv; i++) {
         pY_pz(i) = MatXInt::Zero(N * modelPtr_->nv, numParams);
     }
+
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(*modelPtr_, trajPtr_, false);
 }
 
 void IntervalRegressorInverseDynamics::compute(const VecXd& z,
@@ -310,6 +312,45 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
         if (compute_derivatives) {
             for (int k = 0; k < 3 * modelPtr_->nv; k++) {
                 ptau_pz(i).col(k) = intervalDoubleMatrixMultiply(pY_pz(k).middleRows(i * modelPtr_->nv, modelPtr_->nv), phi);
+            }
+        }
+    }
+
+    if (compute_derivatives) {
+        ridPtr_->compute(z, false);
+
+        #pragma omp parallel for shared(ridPtr_, tau, ptau_pz, Y, pY_pz) private(i) schedule(dynamic, 1)
+        for (i = 0; i < trajPtr_->N; i++) {
+            for (int j = 0; j < modelPtr_->nv; j++) {
+                // an alternative way to compute the bound of tau using first order Taylor expansion
+                Interval tau_alt = Interval(ridPtr_->tau(i)(j));
+                for (int k = 0; k < modelPtr_->nv; k++) {
+                    tau_alt += ptau_pz(i)(j, k) * sensor_noise.position_error;
+                    tau_alt += ptau_pz(i)(j, k + modelPtr_->nv) * sensor_noise.velocity_error;
+                }
+
+                // update tau if the alternative tau bound is tighter
+                if (IntervalHelper::getRadius(tau_alt) < IntervalHelper::getRadius(tau(i)(j))) {
+                    tau(i)(j) = tau_alt;
+                }
+                
+                for (int h = 0; h < 10 * modelPtr_->nv; h++) {
+                    Interval Y_alt = Interval(ridPtr_->Y(i * modelPtr_->nv + j, h));
+
+                    for (int k = 0; k < modelPtr_->nv; k++) {
+                        Y_alt += pY_pz(k)(i * modelPtr_->nv + j, h) * sensor_noise.position_error;
+                    }
+                    for (int k = 0; k < modelPtr_->nv; k++) {
+                        Y_alt += pY_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * sensor_noise.velocity_error;
+                    }
+                    for (int k = 0; k < modelPtr_->nv; k++) {
+                        Y_alt += pY_pz(k + 2 * modelPtr_->nv)(i * modelPtr_->nv + j, h) * sensor_noise.acceleration_error;
+                    }
+
+                    if (IntervalHelper::getRadius(Y_alt) < IntervalHelper::getRadius(Y(i * modelPtr_->nv + j, h))) {
+                        Y(i * modelPtr_->nv + j, h) = Y_alt;
+                    }
+                }
             }
         }
     }

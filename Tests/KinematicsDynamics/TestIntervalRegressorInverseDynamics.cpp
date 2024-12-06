@@ -30,10 +30,6 @@ BOOST_AUTO_TEST_CASE(ComputeTest) {
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
     // Initialize IntervalRegressorInverseDynamics
-    SensorNoiseInfo sensor_noise;
-    sensor_noise.position_error = Interval(0.0);
-    sensor_noise.velocity_error = Interval(0.0);
-    sensor_noise.acceleration_error = Interval(0.0);
     IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
 
     // This is just a placeholder, TrajectoryData does not use this
@@ -77,12 +73,7 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
     std::shared_ptr<TrajectoryData> trajPtr_ = 
         std::make_shared<TrajectoryData>(T, N, model.nv);
 
-    // Initialize IntervalRegressorInverseDynamics
-    SensorNoiseInfo sensor_noise;
-    sensor_noise.position_error = Interval(0.0);
-    sensor_noise.velocity_error = Interval(0.0);
-    sensor_noise.acceleration_error = Interval(0.0);
-    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+    // Initialize IntervalRegressorInverseDynamicsIntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
 
     // This is just a placeholder, TrajectoryData does not use this
     Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(trajPtr_->varLength);
@@ -113,6 +104,57 @@ BOOST_AUTO_TEST_CASE(GradientTest) {
                 BOOST_CHECK_SMALL(regressor_id.ptau_pz(i)(j, k + model.nv).lower() - rnea_partial_dv(j, k), 1e-6);
                 BOOST_CHECK_SMALL(regressor_id.ptau_pz(i)(j, k + 2 * model.nv).lower() - rnea_partial_da(j, k), 1e-6);
             }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(ComputeTestWithNoise) {
+    // Define robot model
+    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
+    
+    pinocchio::Model model;
+    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Data data(model);
+
+    // Disable rotor inertia, friction, and damping
+    model.friction.setZero();
+    model.damping.setZero();
+    model.armature.setZero();
+
+    // Disable gravity
+    model.gravity.setZero();
+
+    // Create a trajectory
+    int N = 128;  // number of time steps
+    double T = 10.0;  // total time
+    std::shared_ptr<TrajectoryData> trajPtr_ = 
+        std::make_shared<TrajectoryData>(T, N, model.nv);
+
+    // Initialize IntervalRegressorInverseDynamics
+    SensorNoiseInfo sensor_noise;
+    sensor_noise.position_error = Interval(-0.000191986, 0.000191986);
+    sensor_noise.velocity_error = Interval(-0.00191986, 0.00191986);
+    sensor_noise.acceleration_error = Interval(-0.00191986, 0.00191986);
+    IntervalRegressorInverseDynamics regressor_id(model, trajPtr_, sensor_noise);
+
+    // This is just a placeholder, TrajectoryData does not use this
+    Eigen::VectorXd z = M_2_PI * Eigen::VectorXd::Random(model.nv);
+
+    // Compute inverse dynamics using IntervalRegressorInverseDynamics
+    regressor_id.compute(z, true);
+
+    // Compute inverse dynamics using pinocchio::rnea and compare the results
+    trajPtr_->compute(z, false);
+    for (int i = 0; i < N; i++) {
+        Eigen::VectorXd tau_pinocchio = pinocchio::rnea(
+            model, data, 
+            trajPtr_->q(i), 
+            trajPtr_->q_d(i),
+            trajPtr_->q_dd(i));
+
+        for (int j = 0; j < model.nv; j++) {
+            BOOST_CHECK_LE(regressor_id.tau(i)(j).lower(), tau_pinocchio(j) + 1e-14);
+            BOOST_CHECK_GE(regressor_id.tau(i)(j).upper(), tau_pinocchio(j) - 1e-14);
         }
     }
 }
