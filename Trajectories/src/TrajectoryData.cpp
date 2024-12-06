@@ -3,10 +3,23 @@
 namespace RAPTOR {
 
 TrajectoryData::TrajectoryData(const std::string& filename_input,
-                               const SensorNoiseInfo sensor_noise_input) :
+                               const SensorNoiseInfo sensor_noise_input,
+                               const int downsample_rate) :
     sensor_noise(sensor_noise_input) {
     // parse file
-    const MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
+    MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
+
+    // check downsample format
+    if (downsample_rate <= 0) {
+        throw std::invalid_argument("Invalid downsample rate");
+    }
+    else if (downsample_rate > 1) {
+        int num_samples = traj_data.rows() / downsample_rate;
+        std::cout << "Performing downsample from " << traj_data.rows() << " to " << num_samples << std::endl;
+        MatX new_traj_data(num_samples, traj_data.cols());
+        Utils::uniformlySampleMatrixInRows(traj_data, new_traj_data, num_samples);
+        traj_data = new_traj_data; // this operation can not be reversed!
+    }
 
     N = traj_data.rows();
     Nact = (traj_data.cols() - 1) / 3;

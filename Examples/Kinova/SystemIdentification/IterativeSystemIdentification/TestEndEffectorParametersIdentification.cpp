@@ -29,6 +29,12 @@ int main(int argc, char* argv[]) {
         H = std::stoi(argv[2]);
     }
 
+    int downsample_rate = 1;
+
+    if (argc > 3) {
+        downsample_rate = std::stoi(argv[3]);
+    }
+
     // Load the robot model
     const std::string urdf_filename  = "/workspaces/RAPTOR/Robots/kinova-gen3/kinova.urdf";
 
@@ -73,8 +79,8 @@ int main(int argc, char* argv[]) {
                                    Utils::deg2rad(0.011),
                                    Utils::deg2rad(0.011),
                                    Utils::deg2rad(0.011); // from Kinova official support, resolution of joint encoders
-    sensor_noise.velocity_error = 10 * sensor_noise.position_error;
-    sensor_noise.acceleration_error = 10 * sensor_noise.position_error;          
+    sensor_noise.velocity_error = 5 * sensor_noise.position_error;
+    sensor_noise.acceleration_error = 5 * sensor_noise.position_error;       
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
@@ -83,6 +89,7 @@ int main(int argc, char* argv[]) {
                               trajectory_filename,
                               sensor_noise,
                               H,
+                              downsample_rate,
                               offset);
     }
     catch (std::exception& e) {
@@ -92,7 +99,7 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-10);
+    app->Options()->SetNumericValue("tol", 1e-8);
 	app->Options()->SetNumericValue("max_wall_time", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 3000);

@@ -17,6 +17,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     const std::string filename_input,
     const SensorNoiseInfo sensor_noise_input,
     const int H_input,
+    const int downsample_rate,
     const VecXd offset_input
 )
 { 
@@ -41,11 +42,15 @@ bool EndEffectorParametersIdentification::set_parameters(
     }
 
     // this trajectory is to compute momentum regressors
-    trajPtr_ = std::make_shared<TrajectoryData>(filename_input, sensor_noise_input);
+    trajPtr_ = std::make_shared<TrajectoryData>(filename_input, 
+                                                sensor_noise_input,
+                                                downsample_rate);
 
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
-    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input, sensor_noise_input);
+    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input, 
+                                                 sensor_noise_input,
+                                                 downsample_rate);
     for (int i = 0; i < trajPtr2_->N; i++) {
         trajPtr2_->q_d(i).setZero();
         trajPtr2_->q_dd(i).setZero();
@@ -442,7 +447,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     MatX AAT_perturb(10, 10);
     for (int i = 0; i < AATint.rows(); i++) {
         for (int j = 0; j < AATint.cols(); j++) {
-            AAT_perturb(i, j) = 0.5 * IntervalHelper::getRadius(AATint(i, j));
+            AAT_perturb(i, j) = IntervalHelper::getRadius(AATint(i, j));
         }
     }
 

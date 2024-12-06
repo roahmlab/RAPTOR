@@ -33,7 +33,8 @@ public:
     TrajectoryData() = default;
 
     TrajectoryData(const std::string& filename_input,
-                   const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo());
+                   const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+                   const int downsample_rate = 1);
 
     TrajectoryData(double T_input,
                    int N_input, 
