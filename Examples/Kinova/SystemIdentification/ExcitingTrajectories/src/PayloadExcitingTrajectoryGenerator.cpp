@@ -108,7 +108,7 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
     constraintsNameVec_.push_back("torque limits"); 
 
     // Customized constraints (collision avoidance with obstacles)
-     
+    if (boxCenters.size() > 0) {
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
                                                                                boxCenters,
@@ -118,6 +118,7 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
                                                                                collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+    }
 
     x0 = x0_input.head(trajPtr_->varLength);
 

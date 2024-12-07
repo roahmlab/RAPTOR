@@ -426,15 +426,6 @@ void EndEffectorParametersIdentification::finalize_solution(
         }
     }
 
-    // // for (int i = 0; i < bint.size(); i++) {
-    // //     if (b(i) > bint(i).upper() || 
-    // //         b(i) < bint(i).lower()) {
-    // //         std::cerr << i << std::endl;
-    // //         std::cerr << b(i) << " [" << bint(i).lower() << ", " << bint(i).upper() << "]" << std::endl;
-    // //         throw std::runtime_error("Wrong computation of bint");
-    // //     }
-    // // }
-
     MatX AAT = A.rightCols(10).transpose()  * A.rightCols(10);
     MatXInt AATint = intervalMatrixMultiply(Aint.rightCols(10).transpose(), Aint.rightCols(10));
     for (int i = 0; i < AATint.rows(); i++) {
@@ -452,6 +443,8 @@ void EndEffectorParametersIdentification::finalize_solution(
     }
 
     std::cout << AAT_perturb << std::endl;
+
+    std::cout << AAT << std::endl;
 }
 
 }; // namespace RAPTOR

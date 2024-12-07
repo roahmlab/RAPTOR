@@ -104,7 +104,8 @@ bool ExcitingTrajectoryGenerator::set_parameters(
                                                                 TORQUE_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("torque limits"); 
 
-    // Customized constraints (collision avoidance with environment)  
+    // Customized constraints (collision avoidance)  
+    if (boxCenters.size() > 0) {
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
                                                                                boxCenters,
@@ -114,6 +115,8 @@ bool ExcitingTrajectoryGenerator::set_parameters(
                                                                                collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+    }
+    
     // check dimensions of regroupMatrix
     if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
         throw std::invalid_argument("ExcitingTrajectoryGenerator: regroupMatrix has wrong dimensions!");
