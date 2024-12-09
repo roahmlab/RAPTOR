@@ -51,8 +51,9 @@ int main(int argc, char* argv[]) {
     }
 
     // load the data
-    std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
-    
+    // std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
+    std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
+
     // load friction parameters
     const std::string friction_parameters_filename = folder_name + "friction_params.csv";
     Eigen::VectorXd friction_parameters = Utils::initializeEigenMatrixFromFile(friction_parameters_filename).col(0);
@@ -72,15 +73,17 @@ int main(int argc, char* argv[]) {
 
     // Sensor noise info
     SensorNoiseInfo sensor_noise(model.nv);
-    sensor_noise.position_error << Utils::deg2rad(0.02),
-                                   Utils::deg2rad(0.02),
-                                   Utils::deg2rad(0.02),
-                                   Utils::deg2rad(0.02),
-                                   Utils::deg2rad(0.011),
-                                   Utils::deg2rad(0.011),
-                                   Utils::deg2rad(0.011); // from Kinova official support, resolution of joint encoders
-    sensor_noise.velocity_error = 5 * sensor_noise.position_error;
-    sensor_noise.acceleration_error = 5 * sensor_noise.position_error;       
+    // sensor_noise.position_error << Utils::deg2rad(0.02),
+    //                                Utils::deg2rad(0.02),
+    //                                Utils::deg2rad(0.02),
+    //                                Utils::deg2rad(0.02),
+    //                                Utils::deg2rad(0.011),
+    //                                Utils::deg2rad(0.011),
+    //                                Utils::deg2rad(0.011); // from Kinova official support, resolution of joint encoders
+    // sensor_noise.velocity_error = 5 * sensor_noise.position_error;
+    sensor_noise.position_error.setZero();
+    sensor_noise.velocity_error.setZero();
+    sensor_noise.acceleration_error = 5 * sensor_noise.position_error;
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
@@ -102,7 +105,7 @@ int main(int argc, char* argv[]) {
     app->Options()->SetNumericValue("tol", 1e-8);
 	app->Options()->SetNumericValue("max_wall_time", 100);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 3000);
+    app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
@@ -115,7 +118,7 @@ int main(int argc, char* argv[]) {
 
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetStringValue("derivative_test", "second-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
     // app->Options()->SetNumericValue("point_perturbation_radius", 1);
