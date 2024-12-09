@@ -7,8 +7,18 @@ namespace RAPTOR {
 
 // maximum noise on joint encoder sensor measurements
 typedef struct SensorNoiseInfo_ {
+    enum SensorNoiseType {
+        Constant = 0, // constant noise
+        Ratio // noise is a ratio of the measurement, for example 0.1 means 10% noise
+    };
+
+    SensorNoiseType position_error_type = SensorNoiseType::Constant;
     Eigen::VectorXd position_error;
+
+    SensorNoiseType velocity_error_type = SensorNoiseType::Constant;
     Eigen::VectorXd velocity_error;
+
+    SensorNoiseType acceleration_error_type = SensorNoiseType::Constant;
     Eigen::VectorXd acceleration_error;
 
     SensorNoiseInfo_() {

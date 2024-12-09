@@ -9,11 +9,18 @@ double getCenter(const Interval& x) {
 double getRadius(const Interval& x) {
     return 0.5 * (x.upper() - x.lower());
 }
-Interval makeErrorInterval(const double x) {
-    if (x < 0) {
-        throw std::invalid_argument("error bound should be non-negative");
+Interval makeErrorInterval(const double error, 
+                           const SensorNoiseInfo::SensorNoiseType type, 
+                           const double value) {
+    if (error < 0) {
+        throw std::invalid_argument("error should be non-negative!");
     }
-    return Interval(-x, x);
+    if (type == SensorNoiseInfo::SensorNoiseType::Constant) {
+        return Interval(-error, error);
+    }
+    else { // type == SensorNoiseInfo::SensorNoiseType::Ratio
+        return std::abs(value) * Interval(-error, error);
+    }
 }
 }; // namespace IntervalHelper
 
@@ -104,9 +111,15 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
         VecXInt q_d(q_d_meas.size());
         VecXInt q_dd(q_dd_meas.size());
         for (int j = 0; j < q_meas.size(); j++) {
-            q(j) = q_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
-            q_d(j) = q_d_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
-            q_dd(j) = q_dd_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j));
+            q(j) = q_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.position_error(j), 
+                                                                 sensor_noise.position_error_type, 
+                                                                 q_meas(j));
+            q_d(j) = q_d_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j), 
+                                                                     sensor_noise.velocity_error_type, 
+                                                                     q_d_meas(j));
+            q_dd(j) = q_dd_meas(j) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j), 
+                                                                       sensor_noise.acceleration_error_type, 
+                                                                       q_dd_meas(j));
         }
 
         // below is the original Roy Featherstone's inverse dynamics algorithm
@@ -328,12 +341,22 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
         #pragma omp parallel for shared(ridPtr_, tau, ptau_pz, Y, pY_pz) private(i) schedule(dynamic, 1)
         for (i = 0; i < trajPtr_->N; i++) {
             for (int j = 0; j < modelPtr_->nv; j++) {
+                const Interval position_error = IntervalHelper::makeErrorInterval(sensor_noise.position_error(j), 
+                                                                                  sensor_noise.position_error_type, 
+                                                                                  trajPtr_->q(i)(j));
+                const Interval velocity_error = IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j),
+                                                                                  sensor_noise.velocity_error_type, 
+                                                                                  trajPtr_->q_d(i)(j));
+                const Interval acceleration_error = IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j),
+                                                                                      sensor_noise.acceleration_error_type, 
+                                                                                      trajPtr_->q_dd(i)(j));
+
                 // an alternative way to compute the bound of tau using first order Taylor expansion
                 Interval tau_alt = Interval(ridPtr_->tau(i)(j));
                 for (int k = 0; k < modelPtr_->nv; k++) {
-                    tau_alt += ptau_pz(i)(j, k) * IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
-                    tau_alt += ptau_pz(i)(j, k + modelPtr_->nv) * IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
-                    tau_alt += ptau_pz(i)(j, k + 2 * modelPtr_->nv) * IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j));
+                    tau_alt += ptau_pz(i)(j, k) * position_error;
+                    tau_alt += ptau_pz(i)(j, k + modelPtr_->nv) * velocity_error;
+                    tau_alt += ptau_pz(i)(j, k + 2 * modelPtr_->nv) * acceleration_error;
                 }
 
                 // update tau if the alternative tau bound is tighter
@@ -345,13 +368,13 @@ void IntervalRegressorInverseDynamics::compute(const VecXd& z,
                     Interval Y_alt = Interval(ridPtr_->Y(i * modelPtr_->nv + j, h));
 
                     for (int k = 0; k < modelPtr_->nv; k++) {
-                        Y_alt += pY_pz(k)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.position_error(j));
+                        Y_alt += pY_pz(k)(i * modelPtr_->nv + j, h) * position_error;
                     }
                     for (int k = 0; k < modelPtr_->nv; k++) {
-                        Y_alt += pY_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.velocity_error(j));
+                        Y_alt += pY_pz(k + modelPtr_->nv)(i * modelPtr_->nv + j, h) * velocity_error;
                     }
                     for (int k = 0; k < modelPtr_->nv; k++) {
-                        Y_alt += pY_pz(k + 2 * modelPtr_->nv)(i * modelPtr_->nv + j, h) * IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j));
+                        Y_alt += pY_pz(k + 2 * modelPtr_->nv)(i * modelPtr_->nv + j, h) * acceleration_error;
                     }
 
                     if (IntervalHelper::getRadius(Y_alt) < IntervalHelper::getRadius(Y(i * modelPtr_->nv + j, h))) {

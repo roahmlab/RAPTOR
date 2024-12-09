@@ -15,8 +15,10 @@ public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
     using VecXd = Eigen::VectorXd;
+    using Vec10d = Eigen::Vector<double, 10>;
     using MatXd = Eigen::MatrixXd;
     using Mat4d = Eigen::Matrix4d;
+    using Mat10d = Eigen::Matrix<double, 10, 10>;
     using VecXInt = Eigen::Vector<Interval, Eigen::Dynamic>;
     using MatXInt = Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -47,7 +49,18 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    // /** Method to return the bounds for my problem */
+    /** convert the decision variable to the dynamic parameters of the end effector */
+    Vec10d z_to_theta(const VecXd& z);
+
+    Vec10d d_z_to_theta(
+        const VecXd& z,
+        Mat10d& dtheta);
+
+    Vec10d dd_z_to_theta(
+        const VecXd& z,
+        Mat10d& dtheta,
+        Eigen::Array<Mat10d, 1, 10>& ddtheta);
+
     /** Method to return the objective value */
     bool eval_f(
         Index         n,
@@ -62,6 +75,14 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
+    ) final override;
+
+    /** Method to return the hessian of the objective */
+    bool eval_hess_f(
+        Index         n,
+        const Number* x,
+        bool          new_x,
+        MatX&         hess_f
     ) final override;
 
     void finalize_solution(
