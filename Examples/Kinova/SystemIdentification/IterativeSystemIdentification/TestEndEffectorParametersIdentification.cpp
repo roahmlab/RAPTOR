@@ -51,8 +51,8 @@ int main(int argc, char* argv[]) {
     }
 
     // load the data
-    // std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
-    std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
+    std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
+    // std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
 
     // load friction parameters
     const std::string friction_parameters_filename = folder_name + "friction_params.csv";
@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
     // sensor_noise.velocity_error = 5 * sensor_noise.position_error;
     sensor_noise.position_error.setZero();
     sensor_noise.velocity_error.setZero();
-    sensor_noise.acceleration_error = 5 * sensor_noise.position_error;
+    sensor_noise.acceleration_error_type = SensorNoiseInfo::SensorNoiseType::Ratio;
+    sensor_noise.acceleration_error.setConstant(0.05);
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();

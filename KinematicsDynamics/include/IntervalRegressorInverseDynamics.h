@@ -39,7 +39,9 @@ using Interval = bn::interval<
 namespace IntervalHelper {
 double getCenter(const Interval& x);
 double getRadius(const Interval& x);
-Interval makeErrorInterval(const double x);
+Interval makeErrorInterval(const double error, 
+                           const SensorNoiseInfo::SensorNoiseType type, 
+                           const double value);
 }; // namespace IntervalHelper
 
 // Compute inverse dynamics using tau = Y * phi,

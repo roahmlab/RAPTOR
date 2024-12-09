@@ -279,8 +279,14 @@ void EndEffectorParametersIdentification::finalize_solution(
 
             // Note that here trajPtr_->q_dd stores the applied torque
             for (int k = 0; k < modelPtr_->nv; k++) {
-                // const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(k));
-                const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(0.05 * std::abs(trajPtr_->q_dd(j)(k)));
+                const Interval position_error = Interval(-sensor_noise.position_error(k),
+                                                         sensor_noise.position_error(k));
+                const Interval velocity_error = Interval(-sensor_noise.velocity_error(k),
+                                                         sensor_noise.velocity_error(k));
+
+                const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j), 
+                                                                                                     sensor_noise.acceleration_error_type, 
+                                                                                                     trajPtr_->q_dd(j)(k));
                 
                 int_ctrl(k) += (torque_int - 
                                 modelPtr_->friction(k) * Utils::sign(trajPtr_->q_d(j)(k)) - 
@@ -299,54 +305,9 @@ void EndEffectorParametersIdentification::finalize_solution(
         bint.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl;
     }
 
-    // // fast check
-    // int index = 0;
-    // for (Index i = 60; i < Aint.rows(); i++) {
-    //     for (int j = 0; j < Aint.cols(); j++) {
-    //         // if (A(i, j) > Aint(i, j).upper() || 
-    //         //     A(i, j) < Aint(i, j).lower()) {
-    //         //     std::cerr << i << ' ' << j << std::endl;
-    //         //     std::cerr << A(i, j) << " [" << Aint(i, j).lower() << ", " << Aint(i, j).upper() << "]" << std::endl;
-    //         //     throw std::runtime_error("Wrong computation of Aint");
-    //         // }
-
-    //         // if (index <= 1000) {
-    //         //     std::cout << " [" << Aint(i, j).lower() << ", " << Aint(i, j).upper() << "]" << std::endl;
-    //         //     index++;
-    //         // }
-
-    //         double center = IntervalHelper::getCenter(Aint(i, j));
-    //         double radius = IntervalHelper::getRadius(Aint(i, j));
-
-    //         if (center != 0) {
-    //             std::cout << center << ' ' << radius << ' ' << radius / center << std::endl;
-    //         }
-    //     }
-    // }
-
     for (Index i = 0; i < bint.size(); i++) {
         std::cout << bint(i).lower() << ' ' << bint(i).upper() << std::endl;
     }
-
-    // MatX AAT = A.rightCols(10).transpose()  * A.rightCols(10);
-    // MatXInt AATint = intervalMatrixMultiply(Aint.rightCols(10).transpose(), Aint.rightCols(10));
-    // for (Index i = 0; i < AATint.rows(); i++) {
-    //     for (int j = 0; j < AATint.cols(); j++) {
-    //         std::cout << " [" << AATint(i, j).lower() << ", " << AATint(i, j).upper() << "]  ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-    // MatX AAT_perturb(10, 10);
-    // for (Index i = 0; i < AATint.rows(); i++) {
-    //     for (int j = 0; j < AATint.cols(); j++) {
-    //         AAT_perturb(i, j) = IntervalHelper::getRadius(AATint(i, j));
-    //     }
-    // }
-
-    // std::cout << AAT_perturb << std::endl;
-
-    // std::cout << AAT << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {
