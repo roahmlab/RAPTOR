@@ -21,6 +21,13 @@ bool EndEffectorParametersIdentification::set_parameters(
     const VecXd offset_input
 )
 { 
+    // macro NUM_THREADS should be define in cmake
+    #ifdef NUM_THREADS
+        omp_set_num_threads(NUM_THREADS);
+    #else
+        throw std::runtime_error("macro NUM_THREADS is not defined!");
+    #endif
+
     enable_hessian = true;
 
     // parse the robot model
@@ -123,9 +130,10 @@ bool EndEffectorParametersIdentification::set_parameters(
         std::cout << "Sensor noise is added" << std::endl;
         std::cout << "Position error:\n " << sensor_noise_input.position_error.transpose() << std::endl;
         std::cout << "Velocity error:\n " << sensor_noise_input.velocity_error.transpose() << std::endl;
+        std::cout << "Acceleration/Torque error:\n " << sensor_noise_input.acceleration_error.transpose() << std::endl;
 
-        mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
-        ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
+        // mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
+        // ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
     }
 
     return true;
@@ -249,64 +257,86 @@ void EndEffectorParametersIdentification::finalize_solution(
 ) {
     Optimizer::finalize_solution(status, n, x, z_L, z_U, m, g, lambda, obj_value, ip_data, ip_cq);
 
-    return;
-
-    // if (mrIntPtr_ == nullptr || ridIntPtr_ == nullptr) {
-    //     return;
-    // }
-
     std::cout << "Performing error analysis" << std::endl;
 
-    // // now compute interval version of regression elements A and b
-    // // which are essentially combination of different dynamic regressors
-    // mrIntPtr_->compute(VecXd::Zero(1), true);
-    // ridIntPtr_->compute(VecXd::Zero(1), true);
+    // bint.resize(modelPtr_->nv * num_segment);
 
-    bint.resize(modelPtr_->nv * num_segment);
+    // const auto& sensor_noise = trajPtr_->sensor_noise;
 
-    const auto& sensor_noise = trajPtr_->sensor_noise;
+    // Index i = 0;
+    // #pragma omp parallel for shared(modelPtr_, trajPtr_, sensor_noise, bint) private(i) schedule(dynamic, 1)
+    // for (i = 0; i < trajPtr_->N - H - 1; i += H) {
+    //     int seg_start = i;
+    //     int seg_end = seg_start + H;
 
-    Index i = 0;
-    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrIntPtr_, ridIntPtr_, Aint, bint) private(i) schedule(dynamic, 1)
-    for (i = 0; i < trajPtr_->N - H - 1; i += H) {
-        int seg_start = i;
-        int seg_end = seg_start + H;
+    //     VecXInt int_ctrl = VecXInt::Zero(modelPtr_->nv);
 
-        VecXInt int_ctrl = VecXInt::Zero(modelPtr_->nv);
+    //     for (int j = seg_start; j < seg_end; j++) {
+    //         double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
 
-        for (int j = seg_start; j < seg_end; j++) {
-            double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
+    //         // Note that here trajPtr_->q_dd stores the applied torque
+    //         for (int k = 0; k < modelPtr_->nv; k++) {
+    //             const Interval position_error = Interval(-sensor_noise.position_error(k),
+    //                                                      sensor_noise.position_error(k));
+    //             const Interval velocity_error = Interval(-sensor_noise.velocity_error(k),
+    //                                                      sensor_noise.velocity_error(k));
 
-            // Note that here trajPtr_->q_dd stores the applied torque
-            for (int k = 0; k < modelPtr_->nv; k++) {
-                const Interval position_error = Interval(-sensor_noise.position_error(k),
-                                                         sensor_noise.position_error(k));
-                const Interval velocity_error = Interval(-sensor_noise.velocity_error(k),
-                                                         sensor_noise.velocity_error(k));
-
-                const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j), 
-                                                                                                     sensor_noise.acceleration_error_type, 
-                                                                                                     trajPtr_->q_dd(j)(k));
+    //             const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j), 
+    //                                                                                                  sensor_noise.acceleration_error_type, 
+    //                                                                                                  trajPtr_->q_dd(j)(k));
                 
-                int_ctrl(k) += (torque_int - 
-                                modelPtr_->friction(k) * Utils::sign(trajPtr_->q_d(j)(k)) - 
-                                modelPtr_->damping(k) * trajPtr_->q_d(j)(k) - 
-                                offset(k)) * dt;
-            }
-        }
+    //             int_ctrl(k) += (torque_int - 
+    //                             modelPtr_->friction(k) * Utils::sign(trajPtr_->q_d(j)(k)) - 
+    //                             modelPtr_->damping(k) * trajPtr_->q_d(j)(k) - 
+    //                             offset(k)) * dt;
+    //         }
+    //     }
 
-        for (int k = 0; k < modelPtr_->nv; k++) {
-            const Interval q_d_seg_start_int = Interval(trajPtr_->q_d(seg_start)(k));
-            const Interval q_d_seg_end_int = Interval(trajPtr_->q_d(seg_end)(k));
-            int_ctrl(k) -= modelPtr_->armature(k) * (q_d_seg_end_int - q_d_seg_start_int);
-        }
+    //     for (int k = 0; k < modelPtr_->nv; k++) {
+    //         const Interval q_d_seg_start_int = Interval(trajPtr_->q_d(seg_start)(k));
+    //         const Interval q_d_seg_end_int = Interval(trajPtr_->q_d(seg_end)(k));
+    //         int_ctrl(k) -= modelPtr_->armature(k) * (q_d_seg_end_int - q_d_seg_start_int);
+    //     }
         
-        int s = i / H;
-        bint.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl;
-    }
+    //     int s = i / H;
+    //     bint.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl;
+    // }
 
-    for (Index i = 0; i < bint.size(); i++) {
-        std::cout << bint(i).lower() << ' ' << bint(i).upper() << std::endl;
+    Mat10d dtheta;
+    Eigen::Array<Mat10d, 1, 10> ddtheta;
+    phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
+    VecXd diff = A * phi - b;
+
+    Mat10d temp0 = A.rightCols(10).transpose() * A.rightCols(10);
+    // std::cout << temp0 << std::endl;
+    Eigen::JacobiSVD<Mat10d> svd(temp0);
+    const Vec10d& singularValues = svd.singularValues();
+    const size_t lastRow = singularValues.size() - 1;
+    const double& sigmaMax = singularValues(0);
+    const double& sigmaMin = singularValues(lastRow);
+    std::cout << sigmaMin << ' ' << sigmaMax << ' ' << sigmaMax / sigmaMin << std::endl;
+
+    MatXd temp1 = A.rightCols(10) * dtheta;
+    MatXd temp2 = diff.transpose() * A;
+    Mat10d temp3 = temp1.transpose() * temp1;
+    Mat10d temp4;
+    temp4.setZero();
+    for (Index i = 0; i < 10; i++) {
+        temp4 += temp2(i) * ddtheta(i);
+    }
+    Mat10d p_z_p_eta = temp3 + temp4;
+    Vec10d p_z_p_x = -VecXd::Ones(b.size()).transpose() * A.rightCols(10) * dtheta;
+
+    Eigen::LLT<MatXd> llt(p_z_p_eta);
+    Vec10d p_eta_p_x;
+    Vec10d p_theta_p_x;
+    if (llt.info() == Eigen::Success) {
+        p_eta_p_x = llt.solve(p_z_p_x);
+        p_theta_p_x = dtheta * p_eta_p_x;
+        std::cout << p_theta_p_x << std::endl;
+    }
+    else {
+        throw std::runtime_error("Chelosky not successful!");
     }
 }
 

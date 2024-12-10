@@ -131,8 +131,8 @@ public:
     std::shared_ptr<MomentumRegressor> mrPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 
-    std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
-    std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
+    // std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
+    // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
 
         // forward integration horizon
     int H = 10;
@@ -149,11 +149,7 @@ public:
     MatXd A;
     VecXd b;
 
-    MatXInt Aint;
     VecXInt bint;
-
-    MatXInt Aint2;
-    VecXInt bint2;
 };
 
 }; // namespace RAPTOR
