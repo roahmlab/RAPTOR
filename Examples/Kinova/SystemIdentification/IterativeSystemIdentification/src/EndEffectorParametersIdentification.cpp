@@ -25,7 +25,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     #ifdef NUM_THREADS
         omp_set_num_threads(NUM_THREADS);
     #else
-        throw std::runtime_error("macro NUM_THREADS is not defined!");
+        THROW_EXCEPTION(IpoptException, "macro NUM_THREADS is not defined!");
     #endif
 
     enable_hessian = true;
@@ -72,7 +72,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     num_segment = trajPtr_->N / H;
 
     if (num_segment <= 0) {
-        throw std::invalid_argument("0 segments");
+        THROW_EXCEPTION(IpoptException, "0 segments");
     }
 
     // trajectoryData does not require any decision variable, 
@@ -128,10 +128,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     }
     else {
         std::cout << "Sensor noise is added" << std::endl;
-        std::cout << "Position error:\n " << sensor_noise_input.position_error.transpose() << std::endl;
-        std::cout << "Velocity error:\n " << sensor_noise_input.velocity_error.transpose() << std::endl;
-        std::cout << "Acceleration/Torque error:\n " << sensor_noise_input.acceleration_error.transpose() << std::endl;
-
+        
         // mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
         // ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
     }
@@ -197,6 +194,10 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     Number *grad_f
 )
 {
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
+    }
+
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
     VecXd grad_f_vec = VecXd::Zero(n);
     
@@ -220,6 +221,10 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     bool          new_x,
     MatX&         hess_f
 ) {
+    if(n != numVars){
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
+    }
+
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
     hess_f = MatX::Zero(n, n);
 
@@ -259,62 +264,12 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Performing error analysis" << std::endl;
 
-    // bint.resize(modelPtr_->nv * num_segment);
-
-    // const auto& sensor_noise = trajPtr_->sensor_noise;
-
-    // Index i = 0;
-    // #pragma omp parallel for shared(modelPtr_, trajPtr_, sensor_noise, bint) private(i) schedule(dynamic, 1)
-    // for (i = 0; i < trajPtr_->N - H - 1; i += H) {
-    //     int seg_start = i;
-    //     int seg_end = seg_start + H;
-
-    //     VecXInt int_ctrl = VecXInt::Zero(modelPtr_->nv);
-
-    //     for (int j = seg_start; j < seg_end; j++) {
-    //         double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
-
-    //         // Note that here trajPtr_->q_dd stores the applied torque
-    //         for (int k = 0; k < modelPtr_->nv; k++) {
-    //             const Interval position_error = Interval(-sensor_noise.position_error(k),
-    //                                                      sensor_noise.position_error(k));
-    //             const Interval velocity_error = Interval(-sensor_noise.velocity_error(k),
-    //                                                      sensor_noise.velocity_error(k));
-
-    //             const Interval torque_int = trajPtr_->q_dd(j)(k) + IntervalHelper::makeErrorInterval(sensor_noise.acceleration_error(j), 
-    //                                                                                                  sensor_noise.acceleration_error_type, 
-    //                                                                                                  trajPtr_->q_dd(j)(k));
-                
-    //             int_ctrl(k) += (torque_int - 
-    //                             modelPtr_->friction(k) * Utils::sign(trajPtr_->q_d(j)(k)) - 
-    //                             modelPtr_->damping(k) * trajPtr_->q_d(j)(k) - 
-    //                             offset(k)) * dt;
-    //         }
-    //     }
-
-    //     for (int k = 0; k < modelPtr_->nv; k++) {
-    //         const Interval q_d_seg_start_int = Interval(trajPtr_->q_d(seg_start)(k));
-    //         const Interval q_d_seg_end_int = Interval(trajPtr_->q_d(seg_end)(k));
-    //         int_ctrl(k) -= modelPtr_->armature(k) * (q_d_seg_end_int - q_d_seg_start_int);
-    //     }
-        
-    //     int s = i / H;
-    //     bint.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl;
-    // }
+    const auto& sensor_noise = trajPtr_->sensor_noise;
 
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
     VecXd diff = A * phi - b;
-
-    Mat10d temp0 = A.rightCols(10).transpose() * A.rightCols(10);
-    // std::cout << temp0 << std::endl;
-    Eigen::JacobiSVD<Mat10d> svd(temp0);
-    const Vec10d& singularValues = svd.singularValues();
-    const size_t lastRow = singularValues.size() - 1;
-    const double& sigmaMax = singularValues(0);
-    const double& sigmaMin = singularValues(lastRow);
-    std::cout << sigmaMin << ' ' << sigmaMax << ' ' << sigmaMax / sigmaMin << std::endl;
 
     MatXd temp1 = A.rightCols(10) * dtheta;
     MatXd temp2 = diff.transpose() * A;
@@ -325,19 +280,89 @@ void EndEffectorParametersIdentification::finalize_solution(
         temp4 += temp2(i) * ddtheta(i);
     }
     Mat10d p_z_p_eta = temp3 + temp4;
-    Vec10d p_z_p_x = -VecXd::Ones(b.size()).transpose() * A.rightCols(10) * dtheta;
-
     Eigen::LLT<MatXd> llt(p_z_p_eta);
-    Vec10d p_eta_p_x;
-    Vec10d p_theta_p_x;
+    Mat10d p_z_p_eta_inv;
     if (llt.info() == Eigen::Success) {
-        p_eta_p_x = llt.solve(p_z_p_x);
-        p_theta_p_x = dtheta * p_eta_p_x;
-        std::cout << p_theta_p_x << std::endl;
+        p_z_p_eta_inv = llt.solve(Mat10d::Identity());
     }
     else {
-        throw std::runtime_error("Chelosky not successful!");
+        std::cerr << p_z_p_eta << std::endl;
+        THROW_EXCEPTION(IpoptException, "*** Chelosky decomposition not successful!");
     }
+
+    theta_uncertainty.setZero();
+    Vec10d p_z_p_x;
+    Vec10d p_eta_p_x;
+    Vec10d p_theta_p_x;
+
+    // compute p_b_p_x for each of the x
+    // (1) applied torque data: num_segment * H * modelPtr_->nv
+    for (Index i = 0; i < trajPtr_->N - H - 1; i += H) {
+        int seg_start = i;
+        int seg_end = seg_start + H;
+        int s = i / H;
+        for (int j = seg_start; j < seg_end; j++) {
+            double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
+            for (Index k = 0; k < modelPtr_->nv; k++) {
+                // p_b_p_x = dt;
+                p_z_p_x = -dt * temp1.row(s * modelPtr_->nv + k);
+                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                p_theta_p_x = dtheta * p_eta_p_x;
+                double torque_error = 0.0;
+                if (sensor_noise.acceleration_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
+                    torque_error = std::abs(trajPtr_->q_dd(j)(k) * sensor_noise.acceleration_error(k));
+                }
+                else {
+                    torque_error = sensor_noise.acceleration_error(k);
+                }
+                theta_uncertainty += p_theta_p_x.cwiseAbs() * torque_error;
+            }
+        }
+    }
+
+    // (2) friction parameters: 4 * modelPtr_->nv
+    for (Index i = 0; i < trajPtr_->N - H - 1; i += H) {
+        int seg_start = i;
+        int seg_end = seg_start + H;
+        int s = i / H;
+        for (int j = seg_start; j < seg_end; j++) {
+            double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
+            for (Index k = 0; k < modelPtr_->nv; k++) {
+                // friction
+                // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
+                p_z_p_x = -dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
+                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                p_theta_p_x = dtheta * p_eta_p_x;
+                double friction_parameter_error = std::abs(0.05 * modelPtr_->friction(k));
+                theta_uncertainty += p_theta_p_x.cwiseAbs() * friction_parameter_error;
+
+                // damping
+                // p_b_p_x = dt * trajPtr_->q_d(j)(k);
+                p_z_p_x = -dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
+                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                p_theta_p_x = dtheta * p_eta_p_x;
+                double damping_parameter_error = std::abs(0.05 * modelPtr_->damping(k));
+                theta_uncertainty += p_theta_p_x.cwiseAbs() * damping_parameter_error;
+
+                // offset
+                // p_b_p_x = dt;
+                p_z_p_x = -dt * temp1.row(s * modelPtr_->nv + k);
+                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                p_theta_p_x = dtheta * p_eta_p_x;
+                double offset_error = std::abs(0.05 * offset(k));
+                theta_uncertainty += p_theta_p_x.cwiseAbs() * offset_error;
+            }
+        }
+    }
+
+    // (3) other link inertial parameters: 10 * (modelPtr_->nv - 1)
+    MatXd p_b_p_x = -A.leftCols(10 * (modelPtr_->nv - 1));
+    MatXd p_z_p_x_2 = -p_b_p_x.transpose() * temp1;
+    MatXd p_eta_p_x_2 = -p_z_p_eta_inv * p_z_p_x_2.transpose();
+    MatXd p_theta_p_x_2 = dtheta * p_eta_p_x_2;
+    theta_uncertainty += p_theta_p_x_2.cwiseAbs() * phi_original.head(10 * (modelPtr_->nv - 1)).cwiseAbs() * 0.05;
+
+    std::cout << "Uncertainty on the estimated end-effector inertial parameters: " << theta_uncertainty.transpose() << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {

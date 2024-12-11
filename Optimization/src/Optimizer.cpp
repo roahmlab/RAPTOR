@@ -84,7 +84,7 @@ bool Optimizer::get_bounds_info(
     }
 
     // report constraints distribution
-    if (display_info) {
+    if (display_info && constraintsPtrVec_.size() > 0) {
         std::cout << "Dimension of each constraints and their locations: \n";
         iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
@@ -773,7 +773,9 @@ void Optimizer::summarize_constraints(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
     }
 
-    if (display_info && verbose) std::cout << "Constraint violation report:" << std::endl;
+    if (display_info && verbose && constraintsPtrVec_.size() > 0) {
+        std::cout << "Constraint violation report:" << std::endl;
+    }
 
     Index iter = 0;
     ifFeasible = true;

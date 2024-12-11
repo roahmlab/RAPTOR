@@ -142,14 +142,11 @@ public:
     bool include_offset = false;
     VecXd offset;
 
-        // sensor noise
-    SensorNoiseInfo sensor_noise;
-
         // regression data
     MatXd A;
     VecXd b;
 
-    VecXInt bint;
+    Vec10d theta_uncertainty;
 };
 
 }; // namespace RAPTOR
