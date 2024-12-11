@@ -8,15 +8,6 @@ SHELL ["/bin/bash", "-c"]
 
 # Copy the HSL source code folder into the Docker image
 COPY docker/HSL.zip /app
-# COPY docker/hsl_ma57.zip /app
-# COPY docker/hsl_ma86.zip /app
-
-# # Copy the pardiso libraries into the Docker image
-# COPY docker/pardiso/include/pardiso.h /usr/local/include/pardiso.h
-# COPY docker/pardiso/lib/libpardiso.so /usr/local/lib/libpardiso.so
-# COPY docker/pardiso/lib/libpardiso_no_deps.so /usr/local/lib/libpardiso_no_deps.so
-# COPY docker/pardiso/panua.lic /app/panua.lic
-# ENV  PARDISO_LIC_PATH /app
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
@@ -48,8 +39,6 @@ RUN apt-get update && apt-get install -y \
     xvfb
 
 #     # install python packages
-# RUN pip install --upgrade pip && \
-#     pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 RUN pip install --upgrade pip && \
     pip install scipy matplotlib pyyaml pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 
@@ -72,28 +61,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=bind,source=docker/scripts/install-ompl.sh,target=/tmp/install-ompl.sh \
     bash /tmp/install-ompl.sh
-
-# Download and extract MOSEK
-# COPY docker/scripts/mosektoolslinux64x86.tar.bz2 /tmp/mosek.tar.bz2
-# RUN mkdir -p /opt/mosek && \
-#     tar -xjf /tmp/mosek.tar.bz2 -C /opt/mosek --strip-components=1 && \
-#     rm /tmp/mosek.tar.bz2
-
-# COPY docker/scripts/mosek.lic /opt/mosek/mosek.lic
-
-# ENV PATH=/opt/mosek/10.2/tools/platform/linux64x86/bin:$PATH
-# ENV MOSEKLM_LICENSE_FILE=/opt/mosek/mosek.lic
-
-# # MOSEK env
-# ENV MOSEK_HOME=/opt/mosek/10.2
-# ENV PATH=$MOSEK_HOME/tools/platform/linux64x86/bin:$PATH
-# ENV LD_LIBRARY_PATH=$MOSEK_HOME/tools/platform/linux64x86/bin:$LD_LIBRARY_PATH
-# ENV CMAKE_PREFIX_PATH=$MOSEK_HOME/tools/platform/linux64x86/h:$CMAKE_PREFIX_PATH 
-
-# # # Compile MOSEK Fusion C++ API
-# WORKDIR $MOSEK_HOME/tools/platform/linux64x86/src/fusion_cxx
-# RUN make install   
-
 
 ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin:$PATH
 ENV PKG_CONFIG_PATH /opt/openrobots/lib/pkgconfig

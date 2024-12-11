@@ -16,7 +16,7 @@
 namespace RAPTOR {
 namespace Kinova {
 
-class ConditionNumberOptimizer : public Optimizer {
+class ExcitingTrajectoryGenerator : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
@@ -24,20 +24,25 @@ public:
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    ConditionNumberOptimizer() = default;
+    ExcitingTrajectoryGenerator() = default;
 
     /** Default destructor */
-    ~ConditionNumberOptimizer() = default;
+    ~ExcitingTrajectoryGenerator() = default;
 
     // [set_parameters]
     bool set_parameters(
         const VecX& x0_input,
-        const double T_input,
+        const Number T_input,
         const int N_input,
         const int degree_input,
         const double base_frequency_input,
+        const VecX& q0_input,
+        const VecX& q_d0_input,
         const Model& model_input, 
         const std::string& regroupMatrixFileName,
+        const std::vector<Vec3>& boxCenters,
+        const std::vector<Vec3>& boxOrientations,
+        const std::vector<Vec3>& boxSizes,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
@@ -84,12 +89,12 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    ConditionNumberOptimizer(
-       const ConditionNumberOptimizer&
+    ExcitingTrajectoryGenerator(
+       const ExcitingTrajectoryGenerator&
     );
 
-    ConditionNumberOptimizer& operator=(
-       const ConditionNumberOptimizer&
+    ExcitingTrajectoryGenerator& operator=(
+       const ExcitingTrajectoryGenerator&
     );
 
     MatX regroupMatrix;

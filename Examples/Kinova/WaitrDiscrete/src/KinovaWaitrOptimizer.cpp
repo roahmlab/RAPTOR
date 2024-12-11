@@ -207,7 +207,7 @@ bool KinovaWaitrOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);

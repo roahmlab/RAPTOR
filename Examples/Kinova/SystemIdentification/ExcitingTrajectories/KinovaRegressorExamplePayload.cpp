@@ -34,13 +34,38 @@ int main(int argc, char* argv[]) {
     Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess
-    int num_joints = model.nv;
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 2 * 0.2 * Eigen::VectorXd::Random((2 * degree + 3) * num_joints).array() - 0.1;
-    z.segment((2 * degree + 1) * num_joints, num_joints) = 
-        2 * 1.0 * Eigen::VectorXd::Random(num_joints).array() - 1.0;
-    z.segment((2 * degree + 1) * num_joints + num_joints, num_joints) = 
-        2 * 0.5 * Eigen::VectorXd::Random(num_joints).array() - 0.5;
+    Eigen::VectorXd z = 0.05 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array();
+    // z.segment((2 * degree + 1) * model.nv, model.nv) = 
+    //     1.0 * Eigen::VectorXd::Random(model.nv).array();
+    // z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
+    //     0.5 * Eigen::VectorXd::Random(model.nv).array();
+
+    // Define obstacles
+    std::vector<Eigen::Vector3d> boxCenters = {
+        Eigen::Vector3d(0.0, 0.0, 0.15),
+        Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
+        Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
+        Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
+        Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
+        Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
+    };
+    std::vector<Eigen::Vector3d> boxOrientations = {
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0)
+    };
+    std::vector<Eigen::Vector3d> boxSizes = {
+        Eigen::Vector3d(5.0, 5.0, 0.01),
+        Eigen::Vector3d(5.0, 0.05, 1.12),
+        Eigen::Vector3d( 0.05, 0.05, 1.12),
+        Eigen::Vector3d( 0.05, 1.28, 1.28),
+        Eigen::Vector3d( 5, 5, 0.05),
+        Eigen::Vector3d( 0.15, 0.15, 0.15)
+    };
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
@@ -61,6 +86,9 @@ int main(int argc, char* argv[]) {
                               q0,
                               q_d0,
                               model,
+                              boxCenters,
+                              boxOrientations,
+                              boxSizes,
                               joint_limits_buffer,
                               velocity_limits_buffer,
                               torque_limits_buffer);
@@ -120,33 +148,24 @@ int main(int argc, char* argv[]) {
     // Re-evaluate the solution at a higher resolution and print the results.
     if (mynlp->ifFeasible) {
         std::shared_ptr<Trajectories> traj = std::make_shared<FixedFrequencyFourierCurves>(T, 
-                                                                                           2000, 
-                                                                                           num_joints, 
+                                                                                           5000, 
+                                                                                           model.nv, 
                                                                                            TimeDiscretization::Uniform, 
                                                                                            degree,
                                                                                            base_frequency,
                                                                                            q0,
                                                                                            q_d0);
-        traj->compute(mynlp->solution, false);
+        std::shared_ptr<RegressorInverseDynamics> rid = std::make_shared<RegressorInverseDynamics>(model, 
+                                                                                                   traj,
+                                                                                                   true);
+        rid->compute(mynlp->solution, false);
 
         if (argc > 1) {
             const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
-            std::ofstream position(outputfolder + "exciting-position-" + std::string(argv[1]) + ".csv");
-            std::ofstream velocity(outputfolder + "exciting-velocity-" + std::string(argv[1]) + ".csv");
-            std::ofstream acceleration(outputfolder + "exciting-acceleration-" + std::string(argv[1]) + ".csv");
+            std::ofstream trajectory(outputfolder + "exciting-trajectory-" + std::string(argv[1]) + ".csv");
 
             solution << std::setprecision(16);
-            position << std::setprecision(16);
-            velocity << std::setprecision(16);
-            acceleration << std::setprecision(16);
-
-            for (int i = 0; i < traj->N; i++) {
-                position << traj->q(i).transpose() << std::endl;
-                velocity << traj->q_d(i).transpose() << std::endl;
-                acceleration << traj->q_dd(i).transpose() << std::endl;
-            }
-
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
             }
@@ -157,21 +176,27 @@ int main(int argc, char* argv[]) {
                 solution << q_d0(i) << std::endl;
             }
             solution << base_frequency << std::endl;
+
+            trajectory << std::setprecision(16);
+            for (int i = 0; i < traj->N; i++) {
+                trajectory << traj->tspan(i) << ' ';
+                trajectory << traj->q(i).transpose() << ' ';
+                trajectory << traj->q_d(i).transpose() << ' ';
+                trajectory << rid->tau(i).transpose() << std::endl;
+            }
         }
         else {
             std::ofstream solution("exciting-solution.csv");
-            std::ofstream position("exciting-position.csv");
-            std::ofstream velocity("exciting-velocity.csv");
-            std::ofstream acceleration("exciting-acceleration.csv");
-
-            for (int i = 0; i < traj->N; i++) {
-                position << traj->q(i).transpose() << std::endl;
-                velocity << traj->q_d(i).transpose() << std::endl;
-                acceleration << traj->q_dd(i).transpose() << std::endl;
-            }
+            std::ofstream trajectory("exciting-trajectory.csv");
 
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
+            }
+
+            for (int i = 0; i < traj->N; i++) {
+                trajectory << traj->q(i).transpose() << ' ';
+                trajectory << traj->q_d(i).transpose() << ' ';
+                trajectory << rid->tau(i).transpose() << std::endl;
             }
         }
     }

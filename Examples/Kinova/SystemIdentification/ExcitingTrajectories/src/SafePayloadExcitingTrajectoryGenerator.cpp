@@ -10,8 +10,7 @@ bool SafePayloadExcitingTrajectoryGenerator::set_parameters(
     const std::shared_ptr<PZDynamics>& dynPtr_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
-    const std::vector<Vec3>& boxSize_input,
-    const bool use_momentum_regressor_or_not
+    const std::vector<Vec3>& boxSize_input
  ) 
  {
     enable_hessian = false;
@@ -48,16 +47,9 @@ bool SafePayloadExcitingTrajectoryGenerator::set_parameters(
         TimeDiscretization::Uniform,
         atp);
 
-    // momentum regressor or torque (inverse dynamics) regressor
-    if (use_momentum_regressor_or_not) {
-        ridPtr_ = std::make_shared<MomentumRegressor>(robotInfoPtr_->model, 
-                                                      trajPtr_);
-    }
-    else {
-        ridPtr_ = std::make_shared<RegressorInverseDynamics>(robotInfoPtr_->model, 
-                                                             trajPtr_,
-                                                             true);
-    }
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(robotInfoPtr_->model, 
+                                                         trajPtr_,
+                                                         true);
 
     costPtr_ = std::make_unique<EndEffectorRegressorConditionNumber>(trajPtr_, 
                                                                      ridPtr_);
@@ -80,7 +72,6 @@ bool SafePayloadExcitingTrajectoryGenerator::get_nlp_info(
 
     // number of inequality constraint
     numCons = NUM_FACTORS * num_time_steps + // torque limits
-              NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
               num_time_steps * num_spheres + // obstacle avoidance constraints
               NUM_FACTORS * 4; // joint position, velocity limits
     m = numCons;
@@ -135,13 +126,6 @@ bool SafePayloadExcitingTrajectoryGenerator::get_bounds_info(
         }
     }    
     offset += NUM_FACTORS * num_time_steps;
-
-    // TODO: bounds for contact constraints
-    for( Index i = offset; i < offset + NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps; i++ ) {
-        g_l[i] = 0.0;
-        g_u[i] = 1e19;
-    }
-    offset += 3 * num_fixed_joints * num_time_steps;
 
     // collision avoidance constraints
     for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
@@ -239,7 +223,7 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_f(
     costPtr_->compute(k_actual, false);
     obj_value = costPtr_->f;
 
-    update_minimal_cost_solution(n, Utils::initializeEigenVectorFromArray(x, n), new_x, obj_value);
+    update_minimal_cost_solution(n, k, new_x, obj_value);
 
     return true;
 }
@@ -309,43 +293,6 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
         }
         offset += num_time_steps * NUM_FACTORS;
 
-        // TODO: add contact constraints
-        if (num_fixed_joints > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    // TODO: fill in the contact constraints
-
-                    // (1) support force larger than 0
-                    const Interval supportForceRange = 
-                        dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
-                            .slice(x);
-                    g[i * NUM_CONTACT_CONSTRAINTS + offset] = supportForceRange.lower();
-
-                    // (2) friction cone constraints
-                    for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
-                        const Interval frictionConstraintRange = dynPtr_->friction_PZs(j, i).slice(x);
-
-                        // need to make sure the lower bound is larger than 0
-                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + j + offset] = frictionConstraintRange.lower();
-                    }      
-
-                    // (3) ZMP constraints
-                    for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
-                        const Interval zmpConstraintRange = dynPtr_->zmp_PZs(j, i).slice(x);
-
-                        // need to make sure the lower bound is larger than 0
-                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + FRICTION_CONE_LINEARIZED_SIZE + j + offset] = zmpConstraintRange.lower();
-                    }
-                }
-            }
-            catch (const std::exception& e) {
-                std::cerr << e.what() << std::endl;
-                THROW_EXCEPTION(IpoptException, "Error in eval_g!");
-            }
-            offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
-        }
-
         // obstacle avoidance constraints
         try {
             #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
@@ -377,9 +324,11 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
         }
         offset += num_time_steps * num_spheres;
 
+        // joint limits
         trajIntervalPtr_->returnJointPositionExtremum(g + offset, x);
         offset += NUM_FACTORS * 2;
 
+        // velocity limits
         trajIntervalPtr_->returnJointVelocityExtremum(g + offset, x);
     }
     catch (const std::exception& e) {
@@ -390,7 +339,6 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
     return true;
 }
 // [TNLP_eval_g]
-
 
 // [TNLP_eval_jac_g]
 // return the structure or values of the Jacobian
@@ -440,21 +388,6 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_jac_g(
             THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
         }
         offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
-
-        // TODO: add contact constraints gradient
-        if (num_fixed_joints > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    // TODO: fill in the contact constraints gradients
-                }
-            }
-            catch (const std::exception& e) {
-                std::cerr << e.what() << std::endl;
-                THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
-            }
-            offset += 3 * num_fixed_joints * num_time_steps * NUM_FACTORS;
-        }
 
         // obstacle avoidance constraints gradient
         try {
@@ -545,12 +478,6 @@ void SafePayloadExcitingTrajectoryGenerator::summarize_constraints(
         }
     }    
     offset += NUM_FACTORS * num_time_steps;
-
-    // TODO: fill in contact constraints validation
-    if (num_fixed_joints > 0) {
-
-        offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
-    }
 
     // obstacle avoidance constraints
     for( Index i = 0; i < num_time_steps; i++ ) {

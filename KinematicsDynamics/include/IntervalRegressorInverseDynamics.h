@@ -39,14 +39,10 @@ using Interval = bn::interval<
 namespace IntervalHelper {
 double getCenter(const Interval& x);
 double getRadius(const Interval& x);
+Interval makeErrorInterval(const double error, 
+                           const SensorNoiseInfo::SensorNoiseType type, 
+                           const double value);
 }; // namespace IntervalHelper
-
-// maximum noise on joint encoder sensor measurements
-typedef struct SensorNoiseInfo_ {
-    Interval position_error = Interval(0.0);
-    Interval velocity_error = Interval(0.0);
-    Interval acceleration_error = Interval(0.0);
-} SensorNoiseInfo;
 
 // Compute inverse dynamics using tau = Y * phi,
 // where Y is the n x 10*n regressor matrix and 
@@ -75,7 +71,6 @@ public:
     // Constructor
     IntervalRegressorInverseDynamics(const Model& model_input, 
                                      const std::shared_ptr<TrajectoryData>& trajPtr_input,
-                                     const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
                                      Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
@@ -87,12 +82,10 @@ public:
                          bool compute_hessian = false) override;
                                            
     // class members:
-    SensorNoiseInfo sensor_noise;
-
     std::shared_ptr<Model> modelPtr_ = nullptr;
     std::shared_ptr<Data> dataPtr_ = nullptr;
 
-    std::shared_ptr<Trajectories> trajPtr_ = nullptr;
+    std::shared_ptr<TrajectoryData> trajPtr_ = nullptr;
 
     int N = 0; // number of time instances in tspan
 
