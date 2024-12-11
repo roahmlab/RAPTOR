@@ -10,7 +10,16 @@
 	},
 	"features": {
 		"ghcr.io/wxw-matt/devcontainer-features/command_runner:0": {}
-	}
+	},
+	"extensions": [
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"ms-vscode.cpptools",
+		"ms-vscode.cmake-tools",
+		"twxs.cmake",
+		"vadimcn.vscode-lldb",
+		"ros.ros"
+	],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

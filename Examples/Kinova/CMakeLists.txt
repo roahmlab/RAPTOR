@@ -370,15 +370,15 @@ nanobind_compile_options(oracle_waitr_nanobind PUBLIC
 set_property(TARGET oracle_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-nanobind_add_module(safepayloadexciting_nanobind 
+nanobind_add_module(safe_payload_exciting_nanobind 
     NB_SHARED LTO
     SystemIdentification/ExcitingTrajectories/SafePayloadExcitingPybind.cpp
     SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingPybindWrapper.cpp
     SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingTrajectoryGenerator.cpp)
-target_include_directories(safepayloadexciting_nanobind PUBLIC
+target_include_directories(safe_payload_exciting_nanobind PUBLIC
     Armour/include
     SystemIdentification/ExcitingTrajectories/include)
-target_link_libraries(safepayloadexciting_nanobind PUBLIC
+target_link_libraries(safe_payload_exciting_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -390,6 +390,29 @@ target_link_libraries(safepayloadexciting_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(safepayloadexciting_nanobind PUBLIC
+nanobind_compile_options(safe_payload_exciting_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET safepayloadexciting_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET safe_payload_exciting_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(end_effector_sysid_nanobind 
+    NB_SHARED LTO
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorPybindWrapper.cpp
+    SystemIdentification/IterativeSystemIdentification/EndEffectorWrapper.cpp)
+target_include_directories(armour_nanobind PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(end_effector_sysid_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(end_effector_sysid_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET end_effector_sysid_nanobind  PROPERTY POSITION_INDEPENDENT_CODE ON)
