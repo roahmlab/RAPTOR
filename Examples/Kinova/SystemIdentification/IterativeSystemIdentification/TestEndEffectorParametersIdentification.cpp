@@ -44,8 +44,8 @@ int main(int argc, char* argv[]) {
     }
 
     // load the data
-    // std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
-    std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
+    std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
+    // std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
 
     // load friction parameters
     const std::string friction_parameters_filename = folder_name + "friction_params.csv";
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-8);
 	app->Options()->SetNumericValue("max_wall_time", 100);
-	app->Options()->SetIntegerValue("print_level", 0);
+	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -142,6 +142,5 @@ int main(int argc, char* argv[]) {
     std::cout << "solution: " << mynlp->solution.transpose()<< std::endl;
     std::cout << "parameter solution: " << mynlp->z_to_theta(mynlp->solution).transpose() << std::endl;
     
-
     return 0;
 }

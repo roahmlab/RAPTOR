@@ -397,8 +397,8 @@ set_property(TARGET safe_payload_exciting_nanobind PROPERTY POSITION_INDEPENDENT
 
 nanobind_add_module(end_effector_sysid_nanobind 
     NB_SHARED LTO
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorPybindWrapper.cpp
-    SystemIdentification/IterativeSystemIdentification/EndEffectorWrapper.cpp)
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationPybindWrapper.cpp
+    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationPybind.cpp)
 target_include_directories(armour_nanobind PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)

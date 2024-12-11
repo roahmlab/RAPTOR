@@ -8,7 +8,7 @@ using namespace RAPTOR;
 using namespace Kinova;
 using namespace Armour;
 
-NB_MODULE(safepayloadexciting_nanobind, m) {
+NB_MODULE(safe_payload_exciting_nanobind, m) {
     m.doc() = "nanobind armour_nanobind plugin";
 
     nb::class_<SafePayloadExcitingPybindWrapper>(m, "SafePayloadExcitingPybindWrapper")
