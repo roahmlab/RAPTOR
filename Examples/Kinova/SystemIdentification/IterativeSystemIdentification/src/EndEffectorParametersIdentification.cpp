@@ -17,6 +17,7 @@ bool EndEffectorParametersIdentification::set_parameters(
     const std::string filename_input,
     const SensorNoiseInfo sensor_noise_input,
     const int H_input,
+    const TimeFormat time_format,
     const int downsample_rate,
     const VecXd offset_input
 )
@@ -51,12 +52,14 @@ bool EndEffectorParametersIdentification::set_parameters(
     // this trajectory is to compute momentum regressors
     trajPtr_ = std::make_shared<TrajectoryData>(filename_input, 
                                                 sensor_noise_input,
+                                                time_format,
                                                 downsample_rate);
 
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
     trajPtr2_ = std::make_shared<TrajectoryData>(filename_input, 
                                                  sensor_noise_input,
+                                                 time_format,
                                                  downsample_rate);
     for (Index i = 0; i < trajPtr2_->N; i++) {
         trajPtr2_->q_d(i).setZero();

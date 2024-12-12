@@ -34,6 +34,7 @@ public:
         const std::string filename_input,
         const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
         const int H_input = 10,
+        const TimeFormat time_format = TimeFormat::Second,
         const int downsample_rate = 1,
         const VecXd offset_input = VecXd::Zero(0)
     );

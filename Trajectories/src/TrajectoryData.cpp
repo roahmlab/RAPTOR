@@ -4,6 +4,7 @@ namespace RAPTOR {
 
 TrajectoryData::TrajectoryData(const std::string& filename_input,
                                const SensorNoiseInfo sensor_noise_input,
+                               const TimeFormat time_format,
                                const int downsample_rate) :
     sensor_noise(sensor_noise_input) {
     // parse file
@@ -36,6 +37,24 @@ TrajectoryData::TrajectoryData(const std::string& filename_input,
     }
 
     tspan = traj_data.col(0);
+
+    // check time format
+    if (time_format == TimeFormat::Millisecond) {
+        tspan *= 1e-3;
+    }
+    else if (time_format == TimeFormat::Microsecond) {
+        tspan *= 1e-6;
+    }
+    else if (time_format == TimeFormat::Nanosecond) {
+        tspan *= 1e-9;
+    }
+
+    for (int i = 1; i < tspan.size(); i++) {
+        if (tspan(i - 1) > tspan(i)) {
+            throw std::invalid_argument("Invalid time format: time is not increasing");
+        }
+    }
+
     T = tspan(N - 1);
 
     // output information

@@ -31,8 +31,9 @@ public:
 
     EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
                                            const std::string trajectory_filename,
-                                           const std::string friction_parameters_filename,
+                                           const nb_1d_float friction_parameters_input,
                                            const int H_input,
+                                           const std::string time_format_string,
                                            const bool display_info);
 
     // Destructor
@@ -56,6 +57,7 @@ public:
 
         // trajectory information
     std::string trajectory_filename;
+    TimeFormat time_format;
 
         // system identification settings
     int H = 10; // forward integration horizon

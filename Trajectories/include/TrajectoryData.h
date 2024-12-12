@@ -34,6 +34,13 @@ typedef struct SensorNoiseInfo_ {
     };
 } SensorNoiseInfo;
 
+enum TimeFormat {
+    Second = 0,
+    Millisecond,
+    Microsecond,
+    Nanosecond
+};
+
 class TrajectoryData : public Trajectories {
 public:
     using VecX = Eigen::VectorXd;
@@ -44,6 +51,7 @@ public:
 
     TrajectoryData(const std::string& filename_input,
                    const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+                   const TimeFormat time_format = TimeFormat::Second,
                    const int downsample_rate = 1);
 
     TrajectoryData(double T_input,

@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) {
                               trajectory_filename,
                               sensor_noise,
                               H,
+                              TimeFormat::Second,
                               downsample_rate,
                               offset);
     }

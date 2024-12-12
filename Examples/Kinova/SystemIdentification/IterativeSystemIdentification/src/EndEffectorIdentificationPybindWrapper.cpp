@@ -5,8 +5,9 @@ namespace Kinova {
 
 EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
                                                                                const std::string trajectory_filename,
-                                                                               const std::string friction_parameters_filename,
+                                                                               const nb_1d_float friction_parameters_input,
                                                                                const int H_input,
+                                                                               const std::string time_format_string,
                                                                                const bool display_info):
     H(H_input),
     trajectory_filename(trajectory_filename) {
@@ -16,18 +17,40 @@ EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(c
     model = model_double.cast<double>();
 
     // load friction parameters
-    Eigen::VectorXd friction_parameters = Utils::initializeEigenMatrixFromFile(friction_parameters_filename).col(0);
-    if (friction_parameters.size() != 3 * model.nv &&
-        friction_parameters.size() != 4 * model.nv) {
-        std::cerr << "Friction_parameters size: " << friction_parameters.size() << std::endl;
-        throw std::runtime_error("Friction solution file is wrong");
+    if (friction_parameters_input.size() != 3 * model.nv &&
+        friction_parameters_input.size() != 4 * model.nv) {
+        std::cerr << "Friction_parameters size: " << friction_parameters_input.size() << std::endl;
+        throw std::runtime_error("Friction solution input is wrong");
     }
+
+    Eigen::VectorXd friction_parameters = Eigen::Map<Eigen::VectorXd>(friction_parameters_input.data(), friction_parameters_input.size());
     model.friction = friction_parameters.head(model.nv);
     model.damping = friction_parameters.segment(model.nv, model.nv);
     model.armature  = friction_parameters.segment(2 * model.nv, model.nv);
     offset = Eigen::VectorXd::Zero(model.nv);
     if (friction_parameters.size() == 4 * model.nv) {
         offset = friction_parameters.tail(model.nv);
+    }
+
+    // time format info
+    if (time_format_string == "Second" || 
+        time_format_string == "second") {
+        time_format = TimeFormat::Second;
+    }
+    else if (time_format_string == "Millisecond" || 
+             time_format_string == "millisecond") {
+        time_format = TimeFormat::Millisecond;
+    }
+    else if (time_format_string == "Microsecond" ||
+             time_format_string == "microsecond") {
+        time_format = TimeFormat::Microsecond;
+    }
+    else if (time_format_string == "Nanosecond" ||
+             time_format_string == "nanosecond") {
+        time_format = TimeFormat::Nanosecond;
+    }
+    else {
+        throw std::runtime_error("Invalid time format string!");
     }
 
     // sensor noise info
@@ -82,6 +105,7 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
                               trajectory_filename,
                               sensor_noise,
                               H,
+                              time_format,
                               downsample_rate,
                               offset);
 
