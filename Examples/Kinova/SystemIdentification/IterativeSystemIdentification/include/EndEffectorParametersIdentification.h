@@ -147,6 +147,8 @@ public:
     MatXd A;
     VecXd b;
 
+        // results
+    Vec10d theta_solution;
     Vec10d theta_uncertainty;
 };
 

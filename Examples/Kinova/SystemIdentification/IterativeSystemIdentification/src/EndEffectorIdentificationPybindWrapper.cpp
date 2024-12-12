@@ -91,7 +91,6 @@ void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double t
     }
 
     set_ipopt_parameters_check = true;
-    has_optimized = false;
 }
 
 nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
@@ -144,15 +143,18 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    has_optimized = mynlp->ifFeasible;
+    const size_t shape_ptr[] = {10};
+    auto result1 = nb::ndarray<nb::numpy, const double>(mynlp->theta_solution.data(),
+                                                        1,
+                                                        shape_ptr,
+                                                        nb::handle());
 
-    VecX theta_sol = mynlp->z_to_theta(mynlp->solution);
-    const size_t shape_ptr[] = {theta_sol.size()};
-    auto result = nb::ndarray<nb::numpy, const double>(theta_sol.data(),
-                                                       1,
-                                                       shape_ptr,
-                                                       nb::handle());
-    return nb::make_tuple(result, mynlp->ifFeasible);
+    auto result2 = nb::ndarray<nb::numpy, const double>(mynlp->theta_uncertainty.data(),
+                                                        1,
+                                                        shape_ptr,
+                                                        nb::handle()); 
+
+    return nb::make_tuple(result1, result2);
 }
     
 }; // namespace Kinova

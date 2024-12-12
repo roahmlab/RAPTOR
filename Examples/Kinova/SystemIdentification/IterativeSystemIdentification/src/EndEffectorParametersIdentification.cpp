@@ -265,6 +265,8 @@ void EndEffectorParametersIdentification::finalize_solution(
 ) {
     Optimizer::finalize_solution(status, n, x, z_L, z_U, m, g, lambda, obj_value, ip_data, ip_cq);
 
+    theta_solution = z_to_theta(solution);
+
     std::cout << "Performing error analysis" << std::endl;
 
     const auto& sensor_noise = trajPtr_->sensor_noise;

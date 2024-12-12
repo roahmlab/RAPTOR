@@ -20,6 +20,7 @@ class EndEffectorIdentificationPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
+    using Vec10 = Eigen::Vector<double, 10>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -70,7 +71,6 @@ public:
 
     // Flags to check if the parameters are set
     bool set_ipopt_parameters_check = false;
-    bool has_optimized = false;
 };
 
 }; // namespace Kinova
