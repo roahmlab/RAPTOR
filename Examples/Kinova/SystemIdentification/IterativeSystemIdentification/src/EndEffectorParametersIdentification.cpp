@@ -88,6 +88,10 @@ bool EndEffectorParametersIdentification::set_parameters(
     A.resize(modelPtr_->nv * num_segment, 10 * modelPtr_->nv);
     b.resize(modelPtr_->nv * num_segment);
 
+    // initialize weights for the nonlinear least square problem
+    weights = VecXd::Ones(modelPtr_->nv * num_segment);
+    nonzero_weights = weights.size();
+
     Index i = 0;
     #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A, b) private(i) schedule(dynamic, 1)
     for (i = 0; i < trajPtr_->N - H - 1; i += H) {
@@ -118,6 +122,16 @@ bool EndEffectorParametersIdentification::set_parameters(
         int s = i / H;
         A.middleRows(s * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
         b.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl - modelPtr_->armature.cwiseProduct(trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
+    }
+
+    // assign weights to A and b
+    Aweighted.resize(A.rows(), A.cols());
+    bweighted.resize(b.size());
+
+    #pragma omp parallel for shared(weights, A, b) private(i) schedule(dynamic, 1)
+    for (i = 0; i < b.size(); i++) {
+        Aweighted.row(i) = A.row(i) * weights(i);
+        bweighted(i) = b(i) * weights(i);
     }
 
     // simply give 0 as initial guess
@@ -181,9 +195,9 @@ bool EndEffectorParametersIdentification::eval_f(
     phi.tail(10) = z_to_theta(z);
 
     // Compute the ojective function
-    VecXd diff = A * phi - b;
+    VecXd diff = Aweighted * phi - bweighted;
 
-    obj_value = 0.5 * diff.dot(diff) / b.size();
+    obj_value = 0.5 * diff.dot(diff) / bweighted.size();
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -206,10 +220,10 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     
     Mat10d dtheta;
     phi.tail(10) = d_z_to_theta(z, dtheta);
-    VecXd diff = A * phi - b;
+    VecXd diff = Aweighted * phi - bweighted;
 
     // Compute the gradient
-    grad_f_vec = (diff.transpose() * A.rightCols(10) * dtheta) / b.size();
+    grad_f_vec = (diff.transpose() * Aweighted.rightCols(10) * dtheta) / bweighted.size();
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -234,18 +248,18 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(z, dtheta, ddtheta);
-    VecXd diff = A * phi - b;
+    VecXd diff = Aweighted * phi - bweighted;
 
     // Compute the Hessian
-    MatX temp1 = A.rightCols(10) * dtheta;
+    MatX temp1 = Aweighted.rightCols(10) * dtheta;
     hess_f = temp1.transpose() * temp1;
 
-    MatX temp2 = diff.transpose() * A.rightCols(10);
+    MatX temp2 = diff.transpose() * Aweighted.rightCols(10);
     for (Index i = 0; i < n; i++) {
         hess_f += temp2(i) * ddtheta(i);
     }
 
-    hess_f /= b.size();
+    hess_f /= bweighted.size();
 
     return true;
 }
@@ -274,10 +288,10 @@ void EndEffectorParametersIdentification::finalize_solution(
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
-    VecXd diff = A * phi - b;
+    VecXd diff = Aweighted * phi - bweighted;
 
-    MatXd temp1 = A.rightCols(10) * dtheta;
-    MatXd temp2 = diff.transpose() * A;
+    MatXd temp1 = Aweighted.rightCols(10) * dtheta;
+    MatXd temp2 = diff.transpose() * Aweighted;
     Mat10d temp3 = temp1.transpose() * temp1;
     Mat10d temp4;
     temp4.setZero();
@@ -289,7 +303,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     Mat10d p_z_p_eta_inv;
     if (ldlt.info() == Eigen::Success) {
         p_z_p_eta_inv = ldlt.solve(Mat10d::Identity());
-        std::cout << p_z_p_eta_inv << std::endl;
+        std::cout << dtheta * p_z_p_eta_inv << std::endl;
     }
     else {
         std::cerr << p_z_p_eta << std::endl;
@@ -311,7 +325,7 @@ void EndEffectorParametersIdentification::finalize_solution(
             double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
             for (Index k = 0; k < modelPtr_->nv; k++) {
                 // p_b_p_x = dt;
-                p_z_p_x = -dt * temp1.row(s * modelPtr_->nv + k);
+                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
                 p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                 p_theta_p_x = dtheta * p_eta_p_x;
                 double torque_error = 0.0;
@@ -336,98 +350,75 @@ void EndEffectorParametersIdentification::finalize_solution(
             for (Index k = 0; k < modelPtr_->nv; k++) {
                 // friction
                 // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
-                p_z_p_x = -dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
+                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
                 p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                 p_theta_p_x = dtheta * p_eta_p_x;
-                double friction_parameter_error = std::abs(0.05 * modelPtr_->friction(k));
+                double friction_parameter_error = std::abs(0.10 * modelPtr_->friction(k));
                 theta_uncertainty += p_theta_p_x.cwiseAbs() * friction_parameter_error;
 
                 // damping
                 // p_b_p_x = dt * trajPtr_->q_d(j)(k);
-                p_z_p_x = -dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
+                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
                 p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                 p_theta_p_x = dtheta * p_eta_p_x;
-                double damping_parameter_error = std::abs(0.05 * modelPtr_->damping(k));
+                double damping_parameter_error = std::abs(0.10 * modelPtr_->damping(k));
                 theta_uncertainty += p_theta_p_x.cwiseAbs() * damping_parameter_error;
 
                 // offset
                 // p_b_p_x = dt;
-                p_z_p_x = -dt * temp1.row(s * modelPtr_->nv + k);
+                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
                 p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                 p_theta_p_x = dtheta * p_eta_p_x;
-                double offset_error = std::abs(0.05 * offset(k));
+                double offset_error = std::abs(0.10 * offset(k));
                 theta_uncertainty += p_theta_p_x.cwiseAbs() * offset_error;
             }
         }
     }
 
     // (3) other link inertial parameters: 10 * (modelPtr_->nv - 1)
-    MatXd p_b_p_x = -A.leftCols(10 * (modelPtr_->nv - 1));
+    MatXd p_b_p_x = -Aweighted.leftCols(10 * (modelPtr_->nv - 1));
     MatXd p_z_p_x_2 = -p_b_p_x.transpose() * temp1;
     MatXd p_eta_p_x_2 = -p_z_p_eta_inv * p_z_p_x_2.transpose();
     MatXd p_theta_p_x_2 = dtheta * p_eta_p_x_2;
     theta_uncertainty += p_theta_p_x_2.cwiseAbs() * phi_original.head(10 * (modelPtr_->nv - 1)).cwiseAbs() * 0.05;
 
     std::cout << "Uncertainty on the estimated end-effector inertial parameters: " << theta_uncertainty.transpose() << std::endl;
+
+    // update weights based on resdiuals
+    const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
+    const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
+    const double sigma = std::sqrt(sigma_square);
+
+    std::cout << "Mean of the residuals: " << mu << std::endl;
+    std::cout << "Variance of the residuals: " << sigma << std::endl;
+
+    // const double sigma_square = sigma * sigma;
+    nonzero_weights = 0;
+    
+    for (Index i = 0; i < b.size(); i++) {
+        double residual = diff(i);
+        if (weights(i) == 0.0) {
+            continue;
+        }
+        if (std::abs(diff(i)) > 2 * sigma) {
+            weights(i) = 0.0;
+        }
+        else {
+            weights(i) = 1.0;
+            nonzero_weights++;
+        }
+
+        Aweighted.row(i) = A.row(i) * weights(i);
+        bweighted(i) = b(i) * weights(i);
+    }
+
+    // Utils::writeEigenMatrixToFile(weights, "weights.txt");
+
+    std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {
-    // log-Cholesky parameterization
-    // const double d1 = z[0];
-    // const double d2 = z[1];
-    // const double d3 = z[2];
-    // const double d4 = z[3];
-    // const double s12 = z[4];
-    // const double s23 = z[5];
-    // const double s13 = z[6];
-    // const double t1 = z[7];
-    // const double t2 = z[8];
-    // const double t3 = z[9];
-
-    // // This is the direct way to compute theta by definition of Log Cheloysky decomposition
-    // Mat4d U;
-    // U << std::exp(d1), s12,          s13,          t1,
-    //      0.0,          std::exp(d2), s23,          t2,
-    //      0.0,          0.0,          std::exp(d3), t3,
-    //      0.0,          0.0,          0.0,          std::exp(d4);
-
-    // // Compute LMI = U' * U
-    // Mat4d LMI = U.transpose() * U;
-
-    // // End-effector z
-    // VecXd theta = VecXd::Zero(10);
-    // theta(0) = LMI(3, 3);                        
-    // theta.segment<3>(1) = LMI.block<3, 1>(0, 3); 
-    // theta(4) = LMI(1, 1) + LMI(2, 2);            // IXX
-    // theta(5) = -LMI(0, 1);                       // IXY
-    // theta(6) = LMI(0, 0) + LMI(2, 2);            // IYY
-    // theta(7) = -LMI(0, 2);                       // IXZ
-    // theta(8) = -LMI(1, 2);                       // IYZ
-    // theta(9) = LMI(0, 0) + LMI(1, 1);            // IZZ
-
     Vec10d theta;
-    // double t5 = std::exp(d1);
-    // double t6 = std::exp(d2);
-    // double t7 = d1*2.0;
-    // double t8 = d2*2.0;
-    // double t9 = d3*2.0;
-    // double t10 = s12*s12;
-    // double t11 = s13*s13;
-    // double t12 = s23*s23;
-    // double t13 = std::exp(t7);
-    // double t14 = std::exp(t8);
-    // double t15 = std::exp(t9);
-    // theta(0) = std::exp(d4*2.0)+t1*t1+t2*t2+t3*t3;
-    // theta(1) = t1*t5;
-    // theta(2) = s12*t1+t2*t6;
-    // theta(3) = s13*t1+s23*t2+t3*std::exp(d3);
-    // theta(4) = t10+t11+t12+t14+t15;
-    // theta(5) = -s12*t5;
-    // theta(6) = t11+t12+t13+t15;
-    // theta(7) = -s13*t5;
-    // theta(8) = -s12*s13-s23*t6;
-    // theta(9) = t10+t13+t14;
-    
     const double alpha = z[0];
     const double d1 = z[1];
     const double d2 = z[2];
@@ -453,103 +444,12 @@ Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const 
     theta[9] = std::pow(s12, 2) + std::pow(s13, 2) + std::pow(s23, 2) + std::pow(t1, 2) + std::pow(t2, 2) + std::pow(exp_d1, 2) + std::pow(exp_d2, 2);
     const double exp_2_alpha = std::exp(2 * alpha);
     theta *= exp_2_alpha;
-
     return theta;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::d_z_to_theta(
     const VecXd& z,
     Mat10d& dtheta) {
-    // log-Cholesky parameterization
-    // const double d1 = z[0];
-    // const double d2 = z[1];
-    // const double d3 = z[2];
-    // const double d4 = z[3];
-    // const double s12 = z[4];
-    // const double s23 = z[5];
-    // const double s13 = z[6];
-    // const double t1 = z[7];
-    // const double t2 = z[8];
-    // const double t3 = z[9];
-
-    // Vec10d theta;
-    // double t5 = std::exp(d1);
-    // double t6 = std::exp(d2);
-    // double t7 = d1*2.0;
-    // double t8 = d2*2.0;
-    // double t9 = d3*2.0;
-    // double t10 = s12*s12;
-    // double t11 = s13*s13;
-    // double t12 = s23*s23;
-    // double t13 = std::exp(t7);
-    // double t14 = std::exp(t8);
-    // double t15 = std::exp(t9);
-    // theta(0) = std::exp(d4*2.0)+t1*t1+t2*t2+t3*t3;
-    // theta(1) = t1*t5;
-    // theta(2) = s12*t1+t2*t6;
-    // theta(3) = s13*t1+s23*t2+t3*std::exp(d3);
-    // theta(4) = t10+t11+t12+t14+t15;
-    // theta(5) = -s12*t5;
-    // theta(6) = t11+t12+t13+t15;
-    // theta(7) = -s13*t5;
-    // theta(8) = -s12*s13-s23*t6;
-    // theta(9) = t10+t13+t14;
-
-    // t7 = std::exp(d3);
-    // t8 = d1*2.0;
-    // t9 = d2*2.0;
-    // t10 = d3*2.0;
-    // t11 = s12*2.0;
-    // t12 = s13*2.0;
-    // t13 = s23*2.0;
-    // t14 = std::exp(t8);
-    // t15 = std::exp(t9);
-    // double t16 = std::exp(t10);
-    // double t17 = -t5;
-    // double t18 = t14*2.0;
-    // double t19 = t15*2.0;
-    // double t20 = t16*2.0;
-
-    // dtheta.setZero();
-    // dtheta(0, 3) = std::exp(d4 * 2.0) * 2.0;
-    // dtheta(0, 7) = t1 * 2.0;
-    // dtheta(0, 8) = t2 * 2.0;
-    // dtheta(0, 9) = t3 * 2.0;
-    // dtheta(1, 0) = t1 * t5;
-    // dtheta(1, 7) = t5;
-    // dtheta(2, 1) = t2 * t6;
-    // dtheta(2, 4) = t1;
-    // dtheta(2, 7) = s12;
-    // dtheta(2, 8) = t6;
-    // dtheta(3, 2) = t3 * t7;
-    // dtheta(3, 5) = t2;
-    // dtheta(3, 6) = t1;
-    // dtheta(3, 7) = s13;
-    // dtheta(3, 8) = s23;
-    // dtheta(3, 9) = t7;
-    // dtheta(4, 1) = t19;
-    // dtheta(4, 2) = t20;
-    // dtheta(4, 4) = t11;
-    // dtheta(4, 5) = t13;
-    // dtheta(4, 6) = t12;
-    // dtheta(5, 0) = s12 * t17;
-    // dtheta(5, 4) = t17;
-    // dtheta(6, 0) = t18;
-    // dtheta(6, 2) = t20;
-    // dtheta(6, 5) = t13;
-    // dtheta(6, 6) = t12;
-    // dtheta(7, 0) = s13 * t17;
-    // dtheta(7, 6) = t17;
-    // dtheta(8, 1) = -s23 * t6;
-    // dtheta(8, 4) = -s13;
-    // dtheta(8, 5) = -t6;
-    // dtheta(8, 6) = -s12;
-    // dtheta(9, 0) = t18;
-    // dtheta(9, 1) = t19;
-    // dtheta(9, 4) = t11;
-
-    Vec10d theta;
-
     const double alpha = z[0];
     const double d1 = z[1];
     const double d2 = z[2];
@@ -569,6 +469,7 @@ Eigen::Vector<double, 10> EndEffectorParametersIdentification::d_z_to_theta(
     const double exp_d2 = std::exp(d2);
     const double exp_d3 = std::exp(d3);
 
+    Vec10d theta;
     theta[0] = 1;
     theta[1] = t1;
     theta[2] = t2;
@@ -646,151 +547,6 @@ Eigen::Vector<double, 10> EndEffectorParametersIdentification::dd_z_to_theta(
     const VecXd& z,
     Mat10d& dtheta,
     Eigen::Array<Mat10d, 1, 10>& ddtheta) {
-    // // log-Cholesky parameterization
-    // const double d1 = z[0];
-    // const double d2 = z[1];
-    // const double d3 = z[2];
-    // const double d4 = z[3];
-    // const double s12 = z[4];
-    // const double s23 = z[5];
-    // const double s13 = z[6];
-    // const double t1 = z[7];
-    // const double t2 = z[8];
-    // const double t3 = z[9];
-
-    // Vec10d theta;
-    // double t5 = std::exp(d1);
-    // double t6 = std::exp(d2);
-    // double t7 = d1*2.0;
-    // double t8 = d2*2.0;
-    // double t9 = d3*2.0;
-    // double t10 = s12*s12;
-    // double t11 = s13*s13;
-    // double t12 = s23*s23;
-    // double t13 = std::exp(t7);
-    // double t14 = std::exp(t8);
-    // double t15 = std::exp(t9);
-    // theta(0) = std::exp(d4*2.0)+t1*t1+t2*t2+t3*t3;
-    // theta(1) = t1*t5;
-    // theta(2) = s12*t1+t2*t6;
-    // theta(3) = s13*t1+s23*t2+t3*std::exp(d3);
-    // theta(4) = t10+t11+t12+t14+t15;
-    // theta(5) = -s12*t5;
-    // theta(6) = t11+t12+t13+t15;
-    // theta(7) = -s13*t5;
-    // theta(8) = -s12*s13-s23*t6;
-    // theta(9) = t10+t13+t14;
-
-    // t7 = std::exp(d3);
-    // t8 = d1*2.0;
-    // t9 = d2*2.0;
-    // t10 = d3*2.0;
-    // t11 = s12*2.0;
-    // t12 = s13*2.0;
-    // t13 = s23*2.0;
-    // t14 = std::exp(t8);
-    // t15 = std::exp(t9);
-    // double t16 = std::exp(t10);
-    // double t17 = -t5;
-    // double t18 = t14*2.0;
-    // double t19 = t15*2.0;
-    // double t20 = t16*2.0;
-
-    // dtheta.setZero();
-    // dtheta(0, 3) = std::exp(d4 * 2.0) * 2.0;
-    // dtheta(0, 7) = t1 * 2.0;
-    // dtheta(0, 8) = t2 * 2.0;
-    // dtheta(0, 9) = t3 * 2.0;
-    // dtheta(1, 0) = t1 * t5;
-    // dtheta(1, 7) = t5;
-    // dtheta(2, 1) = t2 * t6;
-    // dtheta(2, 4) = t1;
-    // dtheta(2, 7) = s12;
-    // dtheta(2, 8) = t6;
-    // dtheta(3, 2) = t3 * t7;
-    // dtheta(3, 5) = t2;
-    // dtheta(3, 6) = t1;
-    // dtheta(3, 7) = s13;
-    // dtheta(3, 8) = s23;
-    // dtheta(3, 9) = t7;
-    // dtheta(4, 1) = t19;
-    // dtheta(4, 2) = t20;
-    // dtheta(4, 4) = t11;
-    // dtheta(4, 5) = t13;
-    // dtheta(4, 6) = t12;
-    // dtheta(5, 0) = s12 * t17;
-    // dtheta(5, 4) = t17;
-    // dtheta(6, 0) = t18;
-    // dtheta(6, 2) = t20;
-    // dtheta(6, 5) = t13;
-    // dtheta(6, 6) = t12;
-    // dtheta(7, 0) = s13 * t17;
-    // dtheta(7, 6) = t17;
-    // dtheta(8, 1) = -s23 * t6;
-    // dtheta(8, 4) = -s13;
-    // dtheta(8, 5) = -t6;
-    // dtheta(8, 6) = -s12;
-    // dtheta(9, 0) = t18;
-    // dtheta(9, 1) = t19;
-    // dtheta(9, 4) = t11;
-
-    // for (Index i = 0; i < 10; i++) {
-    //     ddtheta(i).setZero();
-    // }
-
-    // t11 = exp(t8);
-    // t12 = exp(t9);
-    // t13 = exp(t10);
-    // t14 = -t5;
-    // t15 = -t6;
-    // t16 = t11*4.0;
-    // t17 = t12*4.0;
-    // t18 = t13*4.0;
-    // ddtheta(0)(3, 3) = exp(d4*2.0)*4.0;
-    // ddtheta(0)(7, 7) = 2.0;
-    // ddtheta(0)(8, 8) = 2.0;
-    // ddtheta(0)(9, 9) = 2.0;
-    // ddtheta(1)(0, 0) = t1*t5;
-    // ddtheta(1)(0, 7) = t5;
-    // ddtheta(1)(7, 0) = t5;
-    // ddtheta(2)(1, 1) = t2*t6;
-    // ddtheta(2)(1, 8) = t6;
-    // ddtheta(2)(4, 7) = 1.0;
-    // ddtheta(2)(7, 4) = 1.0;
-    // ddtheta(2)(8, 1) = t6;
-    // ddtheta(3)(2, 2) = t3*t7;
-    // ddtheta(3)(2, 9) = t7;
-    // ddtheta(3)(5, 8) = 1.0;
-    // ddtheta(3)(6, 7) = 1.0;
-    // ddtheta(3)(7, 6) = 1.0;
-    // ddtheta(3)(8, 5) = 1.0;
-    // ddtheta(3)(9, 2) = t7;
-    // ddtheta(4)(1, 1) = t17;
-    // ddtheta(4)(2, 2) = t18;
-    // ddtheta(4)(4, 4) = 2.0;
-    // ddtheta(4)(5, 5) = 2.0;
-    // ddtheta(4)(6, 6) = 2.0;
-    // ddtheta(5)(0, 0) = s12*t14;
-    // ddtheta(5)(0, 4) = t14;
-    // ddtheta(5)(4, 0) = t14;
-    // ddtheta(6)(0, 0) = t16;
-    // ddtheta(6)(2, 2) = t18;
-    // ddtheta(6)(5, 5) = 2.0;
-    // ddtheta(6)(6, 6) = 2.0;
-    // ddtheta(7)(0, 0) = s13*t14;
-    // ddtheta(7)(0, 6) = t14;
-    // ddtheta(7)(6, 0) = t14;
-    // ddtheta(8)(1, 1) = s23*t15;
-    // ddtheta(8)(1, 5) = t15;
-    // ddtheta(8)(4, 6) = -1.0;
-    // ddtheta(8)(5, 1) = t15;
-    // ddtheta(8)(6, 4) = -1.0;
-    // ddtheta(9)(0, 0) = t16;
-    // ddtheta(9)(1, 1) = t17;
-    // ddtheta(9)(4, 4) = 2.0;
-
-    Vec10d theta;
-
     const double alpha = z[0];
     const double d1 = z[1];
     const double d2 = z[2];
@@ -810,6 +566,7 @@ Eigen::Vector<double, 10> EndEffectorParametersIdentification::dd_z_to_theta(
     const double exp_d2 = std::exp(d2);
     const double exp_d3 = std::exp(d3);
 
+    Vec10d theta;
     theta[0] = 1;
     theta[1] = t1;
     theta[2] = t2;

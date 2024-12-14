@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
     // load the data
     std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
     // std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
+    // std::string trajectory_filename = "torque_output.txt";
 
     // load friction parameters
     const std::string friction_parameters_filename = folder_name + "friction_params.csv";
@@ -81,7 +82,10 @@ int main(int argc, char* argv[]) {
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
+
+    double setup_time = 0;
     try {
+        auto start = std::chrono::high_resolution_clock::now();
 	    mynlp->set_parameters(model, 
                               trajectory_filename,
                               sensor_noise,
@@ -89,6 +93,9 @@ int main(int argc, char* argv[]) {
                               TimeFormat::Second,
                               downsample_rate,
                               offset);
+        auto end = std::chrono::high_resolution_clock::now();
+        setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Setup time: " << setup_time << " milliseconds.\n";
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -98,10 +105,10 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-8);
-	app->Options()->SetNumericValue("max_wall_time", 100);
-	app->Options()->SetIntegerValue("print_level", 5);
+	app->Options()->SetNumericValue("max_wall_time", 10.0);
+	app->Options()->SetIntegerValue("print_level", 0);
     app->Options()->SetIntegerValue("max_iter", 100);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
@@ -127,21 +134,28 @@ int main(int argc, char* argv[]) {
 
     // Run ipopt to solve the optimization problem
     double solve_time = 0;
-    try {
-        auto start = std::chrono::high_resolution_clock::now();
-        // Ask Ipopt to solve the problem
-        status = app->OptimizeTNLP(mynlp);
+    for (int iter = 0; iter < 5; iter++) {
+        try {
+            auto start = std::chrono::high_resolution_clock::now();
+            // Ask Ipopt to solve the problem
+            status = app->OptimizeTNLP(mynlp);
 
-        auto end = std::chrono::high_resolution_clock::now();
-        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-    }
-    catch (std::exception& e) {
-        throw std::runtime_error("Error solving optimization problem! Check previous error message!");
-    }
+            auto end = std::chrono::high_resolution_clock::now();
+            solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
+        }
+        catch (std::exception& e) {
+            throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+        }
 
-    std::cout << "solution: " << mynlp->solution.transpose()<< std::endl;
-    std::cout << "parameter solution: " << mynlp->z_to_theta(mynlp->solution).transpose() << std::endl;
+        std::cout << "solution: " << mynlp->solution.transpose()<< std::endl;
+        std::cout << "parameter solution: " << mynlp->z_to_theta(mynlp->solution).transpose() << std::endl;
+
+        if (mynlp->obj_value_copy < 1e-4 || 
+            mynlp->nonzero_weights < 0.5 * mynlp->b.size()) {
+            break;
+        }
+    }
     
     return 0;
 }

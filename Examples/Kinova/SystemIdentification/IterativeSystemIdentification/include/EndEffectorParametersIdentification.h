@@ -135,6 +135,8 @@ public:
     // std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
     // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
 
+    VecXd weights; // weights for the nonlinear least square problem
+
         // forward integration horizon
     int H = 10;
     int num_segment = 0;
@@ -146,6 +148,11 @@ public:
         // regression data
     MatXd A;
     VecXd b;
+
+    MatXd Aweighted;
+    VecXd bweighted;
+
+    Index nonzero_weights = 0;
 
         // results
     Vec10d theta_solution;

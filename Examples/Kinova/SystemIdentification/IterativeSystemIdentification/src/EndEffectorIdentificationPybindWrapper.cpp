@@ -129,18 +129,25 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
 
     // Run ipopt to solve the optimization problem
     double solve_time = 0;
-    try {
-        auto start = std::chrono::high_resolution_clock::now();
+    for (int iter = 0; iter < 5; iter++) {
+        try {
+            auto start = std::chrono::high_resolution_clock::now();
 
-        // Ask Ipopt to solve the problem
-        status = app->OptimizeTNLP(mynlp);
+            // Ask Ipopt to solve the problem
+            status = app->OptimizeTNLP(mynlp);
 
-        auto end = std::chrono::high_resolution_clock::now();
-        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-    }
-    catch (std::exception& e) {
-        throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+            auto end = std::chrono::high_resolution_clock::now();
+            solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            std::cout << "Iteration " << iter << " solve time: " << solve_time << " milliseconds.\n";
+        }
+        catch (std::exception& e) {
+            throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+        }
+
+        if (mynlp->obj_value_copy < 1e-4 || 
+            mynlp->nonzero_weights < 0.5 * mynlp->b.size()) {
+            break;
+        }
     }
 
     const size_t shape_ptr[] = {10};

@@ -818,7 +818,9 @@ void Optimizer::summarize_constraints(
         }
     }
 
-    if (display_info && verbose) std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    if (display_info && verbose && constraintsPtrVec_.size() > 0) {
+        std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    }
 }
 // [TNLP_summarize_constraints]
 
