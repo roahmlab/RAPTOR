@@ -15,7 +15,7 @@ KinovaWithSuctionCup:
     M_min: 8.29938
     Kr: 5.0
   suction_force: 50.0 # N
-  mu: 0.5
+  mu: 0.7
   contact_surface_radius: 0.05 # m
   collision_spheres:
     joint_2:

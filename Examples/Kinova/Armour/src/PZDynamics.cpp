@@ -157,14 +157,16 @@ void PZDynamics::compute() {
             // PZs for friction cone constraints
             for (int i = 0; i < FRICTION_CONE_LINEARIZED_SIZE; i++) {
                 auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
-                friction_PZs(i, t_ind) = force(0) * S(i)(0) + force(1) * S(i)(1) + force(2) * S(i)(2);
+                // force(2) = robotInfoPtr_->suction_force - force(2); This somehow doesn't work; will increase the PZ size greatly
+                friction_PZs(i, t_ind) = force(0) * S(i)(0) + force(1) * S(i)(1) + robotInfoPtr_->suction_force * S(i)(2) - force(2) * S(i)(2);
                 friction_PZs(i, t_ind).reduce();
             }
 
             // PZs for ZMP constraints
             for (int i = 0; i < ZMP_LINEARIZED_SIZE; i++) {
-                const auto& force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
+                auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
                 const auto& moment = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular();
+                force(2) = robotInfoPtr_->suction_force - force(2);
                 // n dot force really is just force(2)
                 const auto& n_dot_force = force(2);
                 // n cross moment - n dot force * A

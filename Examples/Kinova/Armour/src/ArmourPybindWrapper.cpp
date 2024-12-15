@@ -301,14 +301,14 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
                 dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
                     .slice(mynlp->solution);
             separation_force_center(i) = getCenter(supportForceRange);
-            separation_force_radius(i) = supportForceRange.upper();
+            separation_force_radius(i) = getRadius(supportForceRange);
 
             // (2) friction cone constraints
             for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
                 const Interval frictionConstraintRange = 
                     dynPtr_->friction_PZs(j, i).slice(mynlp->solution);
                 friction_cone_center(j, i) = getCenter(frictionConstraintRange);
-                friction_cone_radius(j, i) = frictionConstraintRange.upper();
+                friction_cone_radius(j, i) = getRadius(frictionConstraintRange);
             }      
 
             // (3) ZMP constraints
@@ -316,7 +316,7 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
                 const Interval zmpConstraintRange = 
                     dynPtr_->zmp_PZs(j, i).slice(mynlp->solution);
                 zmp_center(j, i) = getCenter(zmpConstraintRange);
-                zmp_radius(j, i) = zmpConstraintRange.upper();
+                zmp_radius(j, i) = getRadius(zmpConstraintRange);
             }
         }
     }

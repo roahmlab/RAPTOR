@@ -435,7 +435,8 @@ bool ArmourOptimizer::eval_jac_g(
                 #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
                 for (i = 0; i < num_time_steps; i++) {
                     // separation
-                    const auto& PZseparation = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2);
+                    auto PZseparation = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2);
+                    PZseparation = robotInfoPtr_->suction_force - PZseparation;
                     PZseparation.slice(values + (i * NUM_CONTACT_CONSTRAINTS) * NUM_FACTORS + offset, x);
 
                     // friction cone
