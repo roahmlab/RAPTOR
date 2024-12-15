@@ -195,9 +195,10 @@ bool EndEffectorParametersIdentification::eval_f(
     phi.tail(10) = z_to_theta(z);
 
     // Compute the ojective function
-    VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = Aweighted * phi - bweighted;
+    const double diffSquared = diff.dot(diff);
 
-    obj_value = 0.5 * diff.dot(diff) / bweighted.size();
+    obj_value = std::sqrt(diffSquared);
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -220,10 +221,12 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     
     Mat10d dtheta;
     phi.tail(10) = d_z_to_theta(z, dtheta);
-    VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = Aweighted * phi - bweighted;
+    const double diffSquared = diff.dot(diff);
+    const double diffNorm = std::sqrt(diffSquared);
 
     // Compute the gradient
-    grad_f_vec = (diff.transpose() * Aweighted.rightCols(10) * dtheta) / bweighted.size();
+    grad_f_vec = (diff.transpose() * Aweighted.rightCols(10) * dtheta) / diffNorm;
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -248,18 +251,21 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(z, dtheta, ddtheta);
-    VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = Aweighted * phi - bweighted;
+    const double diffSquared = diff.dot(diff);
+    const double diffNorm = std::sqrt(diffSquared);
 
     // Compute the Hessian
     MatX temp1 = Aweighted.rightCols(10) * dtheta;
-    hess_f = temp1.transpose() * temp1;
+    hess_f = temp1.transpose() * temp1 / diffNorm;
 
     MatX temp2 = diff.transpose() * Aweighted.rightCols(10);
     for (Index i = 0; i < n; i++) {
-        hess_f += temp2(i) * ddtheta(i);
+        hess_f += temp2(i) * ddtheta(i) / diffNorm;
     }
 
-    hess_f /= bweighted.size();
+    MatX pdiffSquare_pz = temp2 * dtheta;
+    hess_f -= pdiffSquare_pz.transpose() * pdiffSquare_pz / std::pow(diffNorm, 3);
 
     return true;
 }
@@ -303,7 +309,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     Mat10d p_z_p_eta_inv;
     if (ldlt.info() == Eigen::Success) {
         p_z_p_eta_inv = ldlt.solve(Mat10d::Identity());
-        std::cout << dtheta * p_z_p_eta_inv << std::endl;
+        // std::cout << dtheta * p_z_p_eta_inv << std::endl;
     }
     else {
         std::cerr << p_z_p_eta << std::endl;
@@ -400,7 +406,7 @@ void EndEffectorParametersIdentification::finalize_solution(
         if (weights(i) == 0.0) {
             continue;
         }
-        if (std::abs(diff(i)) > 2 * sigma) {
+        if (std::abs(diff(i)) > 3 * sigma) {
             weights(i) = 0.0;
         }
         else {
