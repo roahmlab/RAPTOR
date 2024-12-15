@@ -1,12 +1,4 @@
-# RAPTOR: RAPid and Robust Trajectory Optimization for Robots (Single Precision Branch)
-
-## Quick Introduction Before Introduction
-
-This branch contains a single precision (double) version of RAPTOR to appreciate the real time deployment of certain applications, where speed matters more than precision.
-As we do not plan to create a template to accomodate different floating number precisions, this branch might not be updated immediately from the latest progress in the main branch.
-
-To use HSL linear solvers combined with Ipopt, make sure you have downloaded the corresponding single precision HSL libraries and put them in the zip file (according to the instructions in our installation [README](Installation/README.md)).
-Otherwise, Ipopt will not be able to find the linear sovlers.
+# RAPTOR: RAPid and Robust Trajectory Optimization for Robots
 
 ## Introduction
 
@@ -44,7 +36,7 @@ We recommend users to install the requirements through docker.
 
 ## Overview
  - Trajectories/ : This folder contains implementation of multiple primitives of smooth trajectories.
- - PZDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
+ - KinematicsDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
  - Constraints/ : This folder contains implementation of multiple constriants that could be useful for trajectory optimization,
                   such as torque limits or collision avoidance.
  - Optimization/ : This folder contains a base class that provides interfaces to ipopt.  

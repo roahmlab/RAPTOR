@@ -155,6 +155,44 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     }
 }
 
+void RobotInfo::change_endeffector_inertial_parameters(const double mass,
+                                                       const Vec3& com,
+                                                       const Vec6& inertia,
+                                                       const double mass_eps,
+                                                       const double com_eps,
+                                                       const double inertia_eps) {
+    Mat3 inertia_matrix;
+    inertia_matrix << inertia(0), inertia(1), inertia(3),
+                      inertia(1), inertia(2), inertia(4),
+                      inertia(3), inertia(4), inertia(5);
+    model.inertias[model.nv - 1] = pinocchio::Inertia(mass, com, inertia_matrix);
+
+    if (mass_eps < 0 ||
+        com_eps < 0 ||
+        inertia_eps < 0) {
+        throw std::invalid_argument("Uncertainty values cannot be negative.");
+    }
+
+    mass_uncertainty(model.nv - 1) = mass_eps;
+    com_uncertainty(model.nv - 1)= com_eps;
+    inertia_uncertainty(model.nv - 1) = inertia_eps;
+}
+
+void RobotInfo::change_endeffector_inertial_parameters(const Vec10& inertial_parameters,
+                                                       const Vec10& inertial_parameters_eps) {
+    model.inertias[model.nv - 1] = pinocchio::Inertia::FromDynamicParameters(inertial_parameters);
+
+    if (inertial_parameters_eps.minCoeff() < 0) {
+        throw std::invalid_argument("Uncertainty values cannot be negative.");
+    }
+
+    mass_uncertainty(model.nv - 1) = inertial_parameters_eps(0);
+
+    // for com and inertia, we only consider the maximum uncertainty value
+    com_uncertainty(model.nv - 1) = inertial_parameters_eps.segment(1, 3).maxCoeff();
+    inertia_uncertainty(model.nv - 1) = inertial_parameters_eps.tail(6).maxCoeff();
+}
+
 void RobotInfo::print() const {
     std::cout << "Model: " << model.name << std::endl;
     std::cout << "Number of joints: " << num_joints << std::endl;

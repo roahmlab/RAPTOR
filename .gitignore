@@ -57,3 +57,6 @@ backup/
 
 *.png
 *.txt
+*.lic
+*.tar
+*.tar.bz2

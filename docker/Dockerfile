@@ -8,15 +8,6 @@ SHELL ["/bin/bash", "-c"]
 
 # Copy the HSL source code folder into the Docker image
 COPY docker/HSL.zip /app
-# COPY docker/hsl_ma57.zip /app
-# COPY docker/hsl_ma86.zip /app
-
-# # Copy the pardiso libraries into the Docker image
-# COPY docker/pardiso/include/pardiso.h /usr/local/include/pardiso.h
-# COPY docker/pardiso/lib/libpardiso.so /usr/local/lib/libpardiso.so
-# COPY docker/pardiso/lib/libpardiso_no_deps.so /usr/local/lib/libpardiso_no_deps.so
-# COPY docker/pardiso/panua.lic /app/panua.lic
-# ENV  PARDISO_LIC_PATH /app
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
@@ -48,8 +39,6 @@ RUN apt-get update && apt-get install -y \
     xvfb
 
 #     # install python packages
-# RUN pip install --upgrade pip && \
-#     pip install scipy matplotlib pyyaml torch pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 RUN pip install --upgrade pip && \
     pip install scipy matplotlib pyyaml pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 
@@ -73,11 +62,11 @@ RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=bind,source=docker/scripts/install-ompl.sh,target=/tmp/install-ompl.sh \
     bash /tmp/install-ompl.sh
 
-ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin
+ENV PATH /opt/openrobots/bin:/usr/local/bin:/usr/bin:$PATH
 ENV PKG_CONFIG_PATH /opt/openrobots/lib/pkgconfig
-ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib:/usr/local/share
+ENV LD_LIBRARY_PATH /usr/lib:/usr/lib/x86_64-linux-gnu:/opt/openrobots/lib:/usr/local/lib:/usr/local/share:$LD_LIBRARY_PATH
 ENV PYTHONPATH /opt/openrobots/lib/python3.10/site-packages
-ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local:/usr/local/include/ompl-1.6
+ENV CMAKE_PREFIX_PATH /usr:/opt/openrobots:/usr/local:/usr/local/include/ompl-1.6:$CMAKE_PREFIX_PATH 
 
 # Set the entry point to VSCode's default command
 CMD ["/bin/bash"]

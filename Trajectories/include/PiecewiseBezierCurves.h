@@ -26,7 +26,7 @@ public:
     // class methods:
     virtual void compute(const VecX& z, 
                          bool compute_derivatives = true,
-                         bool compute_hessian = false);
+                         bool compute_hessian = false) final override;
 
     // class members:
     MatX coefficients;

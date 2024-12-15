@@ -6,7 +6,7 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
-#include <pinocchio/algorithm/regressor.hpp>
+#include "pinocchio/algorithm/regressor.hpp"
 
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
@@ -33,8 +33,9 @@ public:
     using MatX = Eigen::MatrixXd;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
-    using Vec6 = Vector6d;
-    using Mat6 = Matrix6d;
+    using Vec6 = Eigen::Vector<double, 6>;
+    using Mat6 = Eigen::Matrix<double, 6, 6>;
+    using MatRegressor = Eigen::Matrix<double, 6, 10>;
 
     // Constructor
     RegressorInverseDynamics() = default;
@@ -56,7 +57,6 @@ public:
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
     Vec6 a_grav;
     
     VecX phi;

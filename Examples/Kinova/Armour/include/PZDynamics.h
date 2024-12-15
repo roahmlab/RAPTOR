@@ -30,6 +30,8 @@ public:
 
 	~PZDynamics() = default;
 
+	void reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr_input);
+
 	void reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
 
 	void compute();
