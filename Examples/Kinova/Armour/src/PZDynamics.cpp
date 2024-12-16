@@ -70,6 +70,37 @@ void PZDynamics::compute() {
     const size_t num_joints = robotInfoPtr_->num_joints;
     const size_t num_motors = robotInfoPtr_->num_motors;
 
+    // Defining constraint matrix
+    // Friction cone constraints
+    // Using an Eigen::Array of size FRICTION_CONE_LINEARIZED_SIZE, with Eigen::Vector3d elements
+    // Value is PZSparse
+    Eigen::Vector3d S_1, S_2;
+    for (int i = 0; i < FRICTION_CONE_LINEARIZED_SIZE; i++) {
+        S_1(0) = robotInfoPtr_->mu * std::cos(2 * M_PI * i / FRICTION_CONE_LINEARIZED_SIZE);
+        S_1(1) = robotInfoPtr_->mu * std::sin(2 * M_PI * i / FRICTION_CONE_LINEARIZED_SIZE);
+        S_1(2) = 1;
+
+        S_2(0) = robotInfoPtr_->mu * std::cos(2 * M_PI * (i+1) / FRICTION_CONE_LINEARIZED_SIZE);
+        S_2(1) = robotInfoPtr_->mu * std::sin(2 * M_PI * (i+1) / FRICTION_CONE_LINEARIZED_SIZE);
+        S_2(2) = 1;
+        
+        S(i) = S_1.cross(S_2);
+    }
+
+    // ZMP constraints
+    // for c and A, use an Eigen::Array of size ZMP_LINEARIZED_SIZE, with Eigen::Vector3d elements
+    for (int i = 0; i < ZMP_LINEARIZED_SIZE; i++) {
+        c(i)(0) = robotInfoPtr_->contact_surface_radius * 
+            (std::cos(2 * M_PI * (i+1) / ZMP_LINEARIZED_SIZE) - std::cos(2 * M_PI * i / ZMP_LINEARIZED_SIZE));
+        c(i)(1) = robotInfoPtr_->contact_surface_radius * 
+            (std::sin(2 * M_PI * (i+1) / ZMP_LINEARIZED_SIZE) - std::sin(2 * M_PI * i / ZMP_LINEARIZED_SIZE));
+        c(i)(2) = 0;
+
+        A(i)(0) = robotInfoPtr_->contact_surface_radius * std::cos(2 * M_PI * i / ZMP_LINEARIZED_SIZE);
+        A(i)(1) = robotInfoPtr_->contact_surface_radius * std::sin(2 * M_PI * i / ZMP_LINEARIZED_SIZE);
+        A(i)(2) = 0;
+    }
+
     // generate joint trajectory reachable sets
     try {
         #pragma omp parallel for shared(trajPtr_) private(t_ind) schedule(static, trajPtr_->num_time_steps / NUM_THREADS)
@@ -129,25 +160,28 @@ void PZDynamics::compute() {
                 data_sparses_interval[t_ind].tau(i).reduce();
             }
 
+            // PZs for friction cone constraints
             for (int i = 0; i < FRICTION_CONE_LINEARIZED_SIZE; i++) {
-                // TODO: compute friction PZs
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
-                //       using robotInfoPtr_->mu, which is a scalar, representing the friction coefficient of the contact surface
-                // friction_PZs(i, t_ind) = ?;
-
-                // call reduce() everytime you finish something
-                // friction_PZs(i, t_ind).reduce();
+                auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
+                // force(2) = robotInfoPtr_->suction_force - force(2); This somehow doesn't work; will increase the PZ size greatly
+                friction_PZs(i, t_ind) = force(0) * S(i)(0) + force(1) * S(i)(1) + robotInfoPtr_->suction_force * S(i)(2) - force(2) * S(i)(2);
+                friction_PZs(i, t_ind).reduce();
             }
 
+            // PZs for ZMP constraints
             for (int i = 0; i < ZMP_LINEARIZED_SIZE; i++) {
-                // TODO: compute ZMP PZs
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].linear(), which is a 3 dim vector
-                //       using data_sparses[t_ind].f[model_sparses[t_ind].nv].angular(), which is a 3 dim vector
-                //       using robotInfoPtr_->contact_surface_radius, which is a scalar, representing the radius of the contact surface
-                // zmp_PZs(i, t_ind) = ?;
-
-                // call reduce() everytime you finish something
-                // zmp_PZs(i, t_ind).reduce();
+                auto force = data_sparses[t_ind].f[model_sparses[t_ind].nv].linear();
+                const auto& moment = data_sparses[t_ind].f[model_sparses[t_ind].nv].angular();
+                force(2) = robotInfoPtr_->suction_force - force(2);
+                // n dot force really is just force(2)
+                const auto& n_dot_force = force(2);
+                // n cross moment - n dot force * A
+                PZSparse ZMP_1 = -moment(1) - n_dot_force * A(i)(0);
+                PZSparse ZMP_2 = moment(0) - n_dot_force * A(i)(1);
+                // We won't need ZMP_3, plus it's zero
+                // c cross zmp. We are only interested in z components.
+                zmp_PZs(i, t_ind) = c(i)(0) * ZMP_2 - c(i)(1) * ZMP_1;
+                zmp_PZs(i, t_ind).reduce();
             }
         }
     }
