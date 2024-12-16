@@ -297,7 +297,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     VecXd diff = Aweighted * phi - bweighted;
 
     MatXd temp1 = Aweighted.rightCols(10) * dtheta;
-    MatXd temp2 = diff.transpose() * Aweighted;
+    MatXd temp2 = diff.transpose() * Aweighted.rightCols(10);
     Mat10d temp3 = temp1.transpose() * temp1;
     Mat10d temp4;
     temp4.setZero();
@@ -390,37 +390,55 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Uncertainty on the estimated end-effector inertial parameters: " << theta_uncertainty.transpose() << std::endl;
 
-    // update weights based on resdiuals
-    const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
-    const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
-    const double sigma = std::sqrt(sigma_square);
+    // // update weights based on resdiuals
+    // // const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
+    // // const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
+    // // const double sigma = std::sqrt(sigma_square);
+    // double mu = 0;
+    // for (Index i = 0; i < b.size(); i++) {
+    //     if (weights(i) == 0.0) {
+    //         continue;
+    //     }
+    //     mu += diff(i);
+    // }
+    // mu /= nonzero_weights;
 
-    std::cout << "Mean of the residuals: " << mu << std::endl;
-    std::cout << "Variance of the residuals: " << sigma << std::endl;
+    // double sigma_square = 0;
+    // for (Index i = 0; i < b.size(); i++) {
+    //     if (weights(i) == 0.0) {
+    //         continue;
+    //     }
+    //     sigma_square += std::pow(diff(i) - mu, 2);
+    // }
+    // sigma_square /= nonzero_weights;
+    // const double sigma = std::sqrt(sigma_square);
 
-    // const double sigma_square = sigma * sigma;
-    nonzero_weights = 0;
+    // std::cout << "Mean of the residuals: " << mu << std::endl;
+    // std::cout << "Variance of the residuals: " << sigma << std::endl;
+
+    // // const double sigma_square = sigma * sigma;
+    // nonzero_weights = 0;
     
-    for (Index i = 0; i < b.size(); i++) {
-        double residual = diff(i);
-        if (weights(i) == 0.0) {
-            continue;
-        }
-        if (std::abs(diff(i)) > 3 * sigma) {
-            weights(i) = 0.0;
-        }
-        else {
-            weights(i) = 1.0;
-            nonzero_weights++;
-        }
+    // for (Index i = 0; i < b.size(); i++) {
+    //     double residual = diff(i);
+    //     if (weights(i) == 0.0) {
+    //         continue;
+    //     }
+    //     if (std::abs(diff(i)) > 3 * sigma) {
+    //         weights(i) = 0.0;
+    //     }
+    //     else {
+    //         weights(i) = 1.0;
+    //         nonzero_weights++;
+    //     }
 
-        Aweighted.row(i) = A.row(i) * weights(i);
-        bweighted(i) = b(i) * weights(i);
-    }
+    //     Aweighted.row(i) = A.row(i) * weights(i);
+    //     bweighted(i) = b(i) * weights(i);
+    // }
 
-    // Utils::writeEigenMatrixToFile(weights, "weights.txt");
+    // // Utils::writeEigenMatrixToFile(weights, "weights.txt");
 
-    std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
+    // std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {

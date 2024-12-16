@@ -52,7 +52,8 @@ public:
     TrajectoryData(const std::string& filename_input,
                    const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
                    const TimeFormat time_format = TimeFormat::Second,
-                   const int downsample_rate = 1);
+                   const int downsample_rate = 1,
+                   const bool add_sensor_noise = false);
 
     TrajectoryData(double T_input,
                    int N_input, 

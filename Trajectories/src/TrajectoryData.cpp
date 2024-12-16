@@ -5,7 +5,8 @@ namespace RAPTOR {
 TrajectoryData::TrajectoryData(const std::string& filename_input,
                                const SensorNoiseInfo sensor_noise_input,
                                const TimeFormat time_format,
-                               const int downsample_rate) :
+                               const int downsample_rate,
+                               const bool add_sensor_noise) :
     sensor_noise(sensor_noise_input) {
     // parse file
     MatX traj_data = Utils::initializeEigenMatrixFromFile(filename_input);
@@ -92,6 +93,46 @@ TrajectoryData::TrajectoryData(const std::string& filename_input,
         sensor_noise.velocity_error.size() != Nact ||
         sensor_noise.acceleration_error.size() != Nact) {
         throw std::invalid_argument("Invalid sensor noise format");
+    }
+
+    // add sensor noise
+    if (add_sensor_noise) {
+        if (sensor_noise.position_error_type == SensorNoiseInfo::SensorNoiseType::Constant) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(sensor_noise.position_error);
+                q(i) += noise;
+            }
+        }
+        else if (sensor_noise.position_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(q(i).cwiseProduct(sensor_noise.position_error));
+                q(i) += q(i).cwiseProduct(sensor_noise.position_error);
+            }
+        }
+        if (sensor_noise.velocity_error_type == SensorNoiseInfo::SensorNoiseType::Constant) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(sensor_noise.velocity_error);
+                q_d(i) += noise;
+            }
+        }
+        else if (sensor_noise.velocity_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(q_d(i).cwiseProduct(sensor_noise.velocity_error));
+                q_d(i) += q_d(i).cwiseProduct(sensor_noise.velocity_error);
+            }
+        }
+        if (sensor_noise.acceleration_error_type == SensorNoiseInfo::SensorNoiseType::Constant) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(sensor_noise.acceleration_error);
+                q_dd(i) += noise;
+            }
+        }
+        else if (sensor_noise.acceleration_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
+            for (int i = 0; i < N; i++) {
+                VecX noise = VecX::Random(Nact).cwiseProduct(q_dd(i).cwiseProduct(sensor_noise.acceleration_error));
+                q_dd(i) += q_dd(i).cwiseProduct(sensor_noise.acceleration_error);
+            }
+        }
     }
 }
 

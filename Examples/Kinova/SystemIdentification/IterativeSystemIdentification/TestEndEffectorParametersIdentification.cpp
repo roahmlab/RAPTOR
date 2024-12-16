@@ -104,9 +104,9 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-8);
+    app->Options()->SetNumericValue("tol", 1e-10);
 	app->Options()->SetNumericValue("max_wall_time", 10.0);
-	app->Options()->SetIntegerValue("print_level", 0);
+	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 
     // Run ipopt to solve the optimization problem
     double solve_time = 0;
-    for (int iter = 0; iter < 5; iter++) {
+    for (int iter = 0; iter < 1; iter++) {
         try {
             auto start = std::chrono::high_resolution_clock::now();
             // Ask Ipopt to solve the problem
@@ -157,5 +157,7 @@ int main(int argc, char* argv[]) {
         }
     }
     
+    std::cout << "groundtruth: " << mynlp->phi_original.tail(10).transpose() << std::endl;
+
     return 0;
 }
