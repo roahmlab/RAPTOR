@@ -29,24 +29,16 @@ int main(int argc, char* argv[]) {
     }
 
     // Load the robot model
-    const std::string urdf_filename  = "/workspaces/RAPTOR/Robots/kinova-gen3/kinova.urdf";
+    const std::string urdf_filename  = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
 
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::Data data(model);
-
-    Eigen::VectorXd phi = Eigen::VectorXd::Zero(10 * model.nv);
-    for (int i = 0; i < model.nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        phi.segment<10>(10 * i) =
-            model.inertias[pinocchio_joint_id]
-                .toDynamicParameters();
-    }
-
+    
     // load the data
-    std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
+    // std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
     // std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
-    // std::string trajectory_filename = "torque_output.txt";
+    std::string trajectory_filename = "../torque_output.txt";
 
     // load friction parameters
     const std::string friction_parameters_filename = folder_name + "friction_params.csv";
@@ -78,7 +70,7 @@ int main(int argc, char* argv[]) {
     sensor_noise.position_error.setZero();
     sensor_noise.velocity_error.setZero();
     sensor_noise.acceleration_error_type = SensorNoiseInfo::SensorNoiseType::Ratio;
-    sensor_noise.acceleration_error.setConstant(0.05);
+    sensor_noise.acceleration_error.setConstant(0.10);
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
@@ -90,7 +82,7 @@ int main(int argc, char* argv[]) {
                               trajectory_filename,
                               sensor_noise,
                               H,
-                              TimeFormat::Second,
+                              TimeFormat::Nanosecond,
                               downsample_rate,
                               offset);
         auto end = std::chrono::high_resolution_clock::now();
@@ -158,6 +150,9 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "groundtruth: " << mynlp->phi_original.tail(10).transpose() << std::endl;
+
+    Utils::writeEigenMatrixToFile(mynlp->z_to_theta(mynlp->solution).transpose(), "solution-" + std::string(argv[1]) + ".txt");
+    Utils::writeEigenMatrixToFile(mynlp->theta_uncertainty.transpose(), "uncertainties-" + std::string(argv[1]) + ".txt");
 
     return 0;
 }

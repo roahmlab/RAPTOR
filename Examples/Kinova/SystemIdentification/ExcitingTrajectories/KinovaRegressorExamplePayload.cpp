@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 
     // Define trajectory parameters
     const double T = 10.0;
-    const int N = 64;
+    const int N = 128;
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
     // Define obstacles
     std::vector<Eigen::Vector3d> boxCenters = {
-        Eigen::Vector3d(0.0, 0.0, 0.15),
+        Eigen::Vector3d(0.0, 0.0, 0.18), // floor
         Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
         Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
         Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
@@ -61,10 +61,10 @@ int main(int argc, char* argv[]) {
     std::vector<Eigen::Vector3d> boxSizes = {
         Eigen::Vector3d(5.0, 5.0, 0.01),
         Eigen::Vector3d(5.0, 0.05, 1.12),
-        Eigen::Vector3d( 0.05, 0.05, 1.12),
-        Eigen::Vector3d( 0.05, 1.28, 1.28),
-        Eigen::Vector3d( 5, 5, 0.05),
-        Eigen::Vector3d( 0.15, 0.15, 0.15)
+        Eigen::Vector3d(0.05, 0.05, 1.12),
+        Eigen::Vector3d(0.05, 1.28, 1.28),
+        Eigen::Vector3d(5, 5, 0.05),
+        Eigen::Vector3d(0.15, 0.15, 0.15)
     };
 
     // Define limits buffer

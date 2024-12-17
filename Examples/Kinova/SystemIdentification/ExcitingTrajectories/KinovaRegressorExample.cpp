@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
     // Define trajectory parameters
     const double T = 10.0;
-    const int N = 64;
+    const int N = 128;
     const int degree = 5;
     const double base_frequency = 2.0 * M_PI / T;
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 
     // Define obstacles
     std::vector<Eigen::Vector3d> boxCenters = {
-        Eigen::Vector3d(0.0, 0.0, 0.15),
+        Eigen::Vector3d(0.0, 0.0, 0.18), // floor
         Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
         Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
         Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-	app->Options()->SetNumericValue("max_wall_time", 200.0);
+	app->Options()->SetNumericValue("max_wall_time", 60.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
@@ -197,9 +197,17 @@ int main(int argc, char* argv[]) {
             std::ofstream solution("exciting-solution.csv");
             std::ofstream trajectory("exciting-trajectory.csv");
 
+            solution << std::setprecision(16);
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
             }
+            for (int i = 0; i < 7; ++i){
+                solution << q0(i) << std::endl;
+            }
+            for (int i = 0; i < 7; ++i){
+                solution << q_d0(i) << std::endl;
+            }
+            solution << base_frequency << std::endl;
 
             for (int i = 0; i < traj->N; i++) {
                 trajectory << traj->q(i).transpose() << ' ';

@@ -51,7 +51,7 @@ bool ExcitingTrajectoryGenerator::set_parameters(
 
     ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
                                                          trajPtr_,
-                                                         true,
+                                                         false,
                                                          jtype_input);
 
     // read joint limits from KinovaConstants.h
