@@ -6,7 +6,7 @@ using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
     // Define robot model
-    const std::string urdf_filename = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -194,6 +194,7 @@ int main(int argc, char* argv[]) {
             }
 
             for (int i = 0; i < traj->N; i++) {
+                trajectory << traj->tspan(i) << ' ';
                 trajectory << traj->q(i).transpose() << ' ';
                 trajectory << traj->q_d(i).transpose() << ' ';
                 trajectory << rid->tau(i).transpose() << std::endl;

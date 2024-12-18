@@ -210,6 +210,7 @@ int main(int argc, char* argv[]) {
             solution << base_frequency << std::endl;
 
             for (int i = 0; i < traj->N; i++) {
+                trajectory << traj->tspan(i) << ' ';
                 trajectory << traj->q(i).transpose() << ' ';
                 trajectory << traj->q_d(i).transpose() << ' ';
                 trajectory << rid->tau(i).transpose() << std::endl;

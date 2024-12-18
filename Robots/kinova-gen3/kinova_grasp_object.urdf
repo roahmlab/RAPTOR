@@ -246,22 +246,6 @@
     <limit effort="9" velocity="1.2218"/>
   </joint>
 
-<!--
-  <link name="end_effector_link"/>
--->
-<!--
-  <joint name="end_effector" type="fixed">
-    <origin rpy="3.14159265358979 1.09937075168372E-32 0" xyz="0 0 -0.0615250000000001"/>
-    <parent link="bracelet_link"/>
-    <child link="end_effector_link"/>
-    <child link="gripper_base"/>
-    <axis xyz="0 0 0"/>
-  </joint>
--->
-
-  <!-- gripper code -->
-
-
   <joint name="gripper_base_joint" type="fixed">
     <parent link="bracelet_link"/>
     <child link="gripper_base"/>
@@ -290,8 +274,6 @@
       </geometry>
     </collision>
   </link>
-
-
 
   <link name="gripper_right_spring_link">
     <inertial>
@@ -602,32 +584,33 @@
   </joint>
 
   <joint name="contact_joint" type="fixed">
-     <origin rpy="0 0 0" xyz="0 0 -0.171525" />
+     <origin rpy="0 1.5708 0" xyz="0 -0.16 0" />
      <parent link="gripper_base" />
      <child link="object_link" />
      <axis xyz="0 0 1"/>
     <limit effort="100" velocity="100"/>
-  </joint>
+  </joint> 
 
+  <!-- 2lb dumbbell -->
   <link name="object_link">
     <inertial>
-      <origin rpy="0 0 0" xyz="0.1 -0.2 0.8" />
-      <mass value="2.0" />
-      <inertia ixx="0.04" ixy="-0.02" ixz="0.01" iyy="0.02" iyz="0.01" izz="0.03" />
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.9072"/>
+      <inertia ixx="0.000251741322" ixy="0" ixz="0" iyy="0.00238495614" iyz="0" izz="0.00238495614"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/suction_plate_v2.obj" />
+        <mesh filename="meshes/dumbbell_2lb.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="">
-      <color rgba="1 1 1 1" />
+        <color rgba="0.89804 0.91765 0.92941 0.25"/>
       </material>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/suction_plate_v2.obj" />
+        <mesh filename="meshes/dumbbell_2lb.STL" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>

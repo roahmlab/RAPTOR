@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Load the robot model
-    const std::string urdf_filename  = "../Robots/kinova-gen3/kinova_grasp_fixed.urdf";
+    const std::string urdf_filename  = "../Robots/kinova-gen3/gen3_2f85_fixed_object.urdf";
 
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -150,9 +150,6 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "groundtruth: " << mynlp->phi_original.tail(10).transpose() << std::endl;
-
-    Utils::writeEigenMatrixToFile(mynlp->z_to_theta(mynlp->solution).transpose(), "solution-" + std::string(argv[1]) + ".txt");
-    Utils::writeEigenMatrixToFile(mynlp->theta_uncertainty.transpose(), "uncertainties-" + std::string(argv[1]) + ".txt");
 
     return 0;
 }
