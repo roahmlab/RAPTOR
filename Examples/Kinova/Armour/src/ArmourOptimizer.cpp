@@ -134,9 +134,9 @@ bool ArmourOptimizer::get_bounds_info(
     }
     offset += num_time_steps * num_spheres;
 
-    // self collsion constraints
+    // self collision constraints
     for( Index i = offset; i < offset + num_time_steps * num_capsule_collisions; i++ ) {
-        g_l[i] = 0.2;
+        g_l[i] = 0.15;
         g_u[i] = 1e19;
     }
     offset += num_time_steps * num_capsule_collisions;
