@@ -51,6 +51,13 @@ public:
 
 	// the radius of the sphere reachable sets
 	Eigen::MatrixXd sphere_radii;
+
+	// hyperplanes for friction cone constraints
+	Eigen::Array<Eigen::Vector3d, FRICTION_CONE_LINEARIZED_SIZE, 1> S;
+
+	// hyperplanes for ZMP constraints
+	Eigen::Array<Eigen::Vector3d, ZMP_LINEARIZED_SIZE, 1> c;
+	Eigen::Array<Eigen::Vector3d, ZMP_LINEARIZED_SIZE, 1> A;
 };
 
 }; // namespace Armour
