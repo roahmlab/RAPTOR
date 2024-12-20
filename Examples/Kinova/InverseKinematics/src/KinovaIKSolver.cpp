@@ -226,7 +226,7 @@ bool KinovaIKSolver::eval_grad_f(
     const VecX& q = trajPtr_->q(0);
     const MatX& pq_pz = trajPtr_->pq_pz(0);
 
-    VecX grad = (start- q).transpose() * pq_pz;
+    VecX grad = -(start- q).transpose() * pq_pz;
     for(Index i = 0; i < n; i++){
         grad_f[i] = grad(i);
     }

@@ -14,7 +14,9 @@ KinovaIKMotionPybindWrapper::KinovaIKMotionPybindWrapper(const std::string urdf_
     app = IpoptApplicationFactory();
     app->Options()->SetStringValue("hessian_approximation", "exact");
 
-    endT = Transform(Vec3(M_PI, 0, 0), Vec3(0, 0, -0.061525));
+    Transform endT1(Eigen::Vector3d(M_PI, 0, 0), Eigen::Vector3d(0, 0, -0.061525)); // end effector -> gripper base
+    Transform endT2(Eigen::Vector3d(0, 0, M_PI_2), Eigen::Vector3d(0, 0, 0.12)); // gripper base -> contact joint
+    endT = endT1 * endT2;
 }
 
 void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d_double& desired_endeffector_transforms_inp) {
