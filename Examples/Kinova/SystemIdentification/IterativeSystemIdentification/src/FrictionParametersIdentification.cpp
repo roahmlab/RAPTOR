@@ -54,7 +54,7 @@ bool FrictionParametersIdentification::set_parameters(
     } 
 
     // Random intialized the start point
-    x0 = 40* Eigen::VectorXd::Random(Nact * (include_offset ? 4 : 3));
+    x0 = 10 * Eigen::VectorXd::Random(Nact * (include_offset ? 4 : 3)).array() + 10;
 
     return true;
 }
@@ -102,7 +102,7 @@ bool FrictionParametersIdentification::get_bounds_info(
     // static friction >= 0
     for (Index i = 0; i < Nact; i++) {
         x_l[i] = 0.0;
-        x_u[i] = 5.0;
+        x_u[i] = 50.0;
     }
 
     // damping >= 0

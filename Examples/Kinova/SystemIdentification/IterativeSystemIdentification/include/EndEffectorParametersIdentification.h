@@ -39,6 +39,24 @@ public:
         const VecXd offset_input = VecXd::Zero(0)
     );
 
+    // [set_parameters]
+    bool set_parameters(
+        const Model& model_input,
+        const std::vector<std::string>& filenames_input,
+        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+        const int H_input = 10,
+        const TimeFormat time_format = TimeFormat::Second,
+        const int downsample_rate = 1,
+        const VecXd offset_input = VecXd::Zero(0)
+    );
+
+    // [initialize_regressors]
+    void initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
+                               const std::shared_ptr<TrajectoryData>& trajPtr2_,
+                               const int H_input = 10);
+
+    void reset() final override;
+
     /**@name Overloaded from TNLP */
     //@{
     /** Method to return some info about the NLP */
@@ -126,8 +144,8 @@ public:
     VecXd phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
     VecXd phi_original; // dynamic parameters read from the original robot model
    
-    std::shared_ptr<TrajectoryData> trajPtr_;
-    std::shared_ptr<TrajectoryData> trajPtr2_;
+    std::vector<std::shared_ptr<TrajectoryData>> trajPtrs_;
+    std::vector<std::shared_ptr<TrajectoryData>> trajPtrs2_;
 
     std::shared_ptr<MomentumRegressor> mrPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
@@ -139,15 +157,18 @@ public:
 
         // forward integration horizon
     int H = 10;
-    int num_segment = 0;
+    std::vector<int> num_segments;
 
         // offset in friction parameters
     bool include_offset = false;
     VecXd offset;
 
         // regression data
-    MatXd A;
-    VecXd b;
+    std::vector<MatXd> Aseg; // regression matrix for each trajectory
+    std::vector<VecXd> bseg; // regression vector for each trajectory
+
+    MatXd A; // regression matrix for all trajectories
+    VecXd b; // regression vector for all trajectories
 
     MatXd Aweighted;
     VecXd bweighted;

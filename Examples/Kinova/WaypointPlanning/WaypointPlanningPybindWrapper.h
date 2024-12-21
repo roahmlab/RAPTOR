@@ -112,6 +112,18 @@ public:
             throw std::invalid_argument("Start and goal must be of size NUM_JOINTS");
         }
 
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            if (start_inp(i) < JOINT_LIMITS_LOWER[i] || start_inp(i) > JOINT_LIMITS_UPPER[i]) {
+                std::cerr << i << ' ' << start_inp(i) << " [" << JOINT_LIMITS_LOWER[i] << ' ' << JOINT_LIMITS_UPPER[i] << "]\n"; 
+                throw std::invalid_argument("Start state is out of joint limits");
+            }
+
+            if (goal_inp(i) < JOINT_LIMITS_LOWER[i] || goal_inp(i) > JOINT_LIMITS_UPPER[i]) {
+                std::cerr << i << ' ' << goal_inp(i) << " [" << JOINT_LIMITS_LOWER[i] << ' ' << JOINT_LIMITS_UPPER[i] << "]\n";
+                throw std::invalid_argument("Goal state is out of joint limits");
+            }
+        }
+
         // Define the start and goal states
         ob::ScopedState<> start(space);
         ob::ScopedState<> goal(space);
@@ -135,7 +147,7 @@ public:
 
         std::shared_ptr<Trajectories> trajPtr_ = 
             std::make_shared<Plain>(NUM_JOINTS);
-        std::shared_ptr<Constraints> collisionCheckerPtr_ =
+        std::shared_ptr<KinovaCustomizedConstraints> collisionCheckerPtr_ =
             std::make_shared<KinovaCustomizedConstraints>(
                 trajPtr_,
                 model,

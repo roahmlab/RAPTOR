@@ -4,13 +4,11 @@ namespace RAPTOR {
 namespace Kinova {
 
 EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
-                                                                               const std::string trajectory_filename,
                                                                                const nb_1d_float friction_parameters_input,
                                                                                const int H_input,
                                                                                const std::string time_format_string,
                                                                                const bool display_info):
-    H(H_input),
-    trajectory_filename(trajectory_filename) {
+    H(H_input) {
     // define robot model
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
@@ -93,15 +91,18 @@ void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double t
     set_ipopt_parameters_check = true;
 }
 
-nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
+nb::tuple EndEffectorIdentificationPybindWrapper::optimize(const std::vector<std::string>& trajectory_filenames) {
     if (!set_ipopt_parameters_check ) {
         throw std::runtime_error("parameters not set properly!");
     }
     // Initialize optimizer
+    double setup_time = 0;
     try {
+        auto start = std::chrono::high_resolution_clock::now();
+
         mynlp->reset();
         mynlp->set_parameters(model, 
-                              trajectory_filename,
+                              trajectory_filenames,
                               sensor_noise,
                               H,
                               time_format,
@@ -114,6 +115,10 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
         else {
             app->Options()->SetStringValue("hessian_approximation", "limited-memory");
         }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "System identification setup time: " << setup_time << " milliseconds.\n";
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -129,7 +134,7 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
 
     // Run ipopt to solve the optimization problem
     double solve_time = 0;
-    for (int iter = 0; iter < 5; iter++) {
+    for (int iter = 0; iter < 1; iter++) {
         try {
             auto start = std::chrono::high_resolution_clock::now();
 
@@ -138,11 +143,15 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
 
             auto end = std::chrono::high_resolution_clock::now();
             solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            std::cout << "Iteration " << iter << " solve time: " << solve_time << " milliseconds.\n";
+            std::cout << "Iteration " << iter << " system identification solve time: " << solve_time << " milliseconds.\n";
         }
         catch (std::exception& e) {
             throw std::runtime_error("Error solving optimization problem! Check previous error message!");
         }
+
+        std::cout << "Iteration " << iter << std::endl;
+        std::cout << "    theta solution: " << mynlp->theta_solution.transpose() << std::endl;
+        std::cout << "    theta uncertainties: " << mynlp->theta_uncertainty.transpose() << std::endl;
 
         if (mynlp->obj_value_copy < 1e-4 || 
             mynlp->nonzero_weights < 0.5 * mynlp->b.size()) {

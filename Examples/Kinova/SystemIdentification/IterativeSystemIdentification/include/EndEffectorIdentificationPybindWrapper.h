@@ -31,7 +31,6 @@ public:
     EndEffectorIdentificationPybindWrapper() = default;
 
     EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
-                                           const std::string trajectory_filename,
                                            const nb_1d_float friction_parameters_input,
                                            const int H_input,
                                            const std::string time_format_string,
@@ -49,7 +48,7 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    nb::tuple optimize();
+    nb::tuple optimize(const std::vector<std::string>& trajectory_filenames);
 
     // class members
         // robot model
@@ -57,7 +56,6 @@ public:
     VecX offset;
 
         // trajectory information
-    std::string trajectory_filename;
     TimeFormat time_format;
 
         // system identification settings

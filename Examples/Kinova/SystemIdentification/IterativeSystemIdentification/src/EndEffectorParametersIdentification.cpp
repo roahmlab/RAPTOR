@@ -44,90 +44,60 @@ bool EndEffectorParametersIdentification::set_parameters(
     }
     phi_original = phi;
 
+    std::cout << "End effector estimation from URDF file: " << phi_original.tail(10).transpose() << std::endl;
+
     offset = offset_input;
     if (offset.size() != modelPtr_->nv) { // offset is disabled
         offset = VecXd::Zero(modelPtr_->nv);
     }
 
     // this trajectory is to compute momentum regressors
-    trajPtr_ = std::make_shared<TrajectoryData>(filename_input, 
-                                                sensor_noise_input,
-                                                time_format,
-                                                downsample_rate);
+    trajPtrs_.push_back(std::make_shared<TrajectoryData>(filename_input, 
+                                                         sensor_noise_input,
+                                                         time_format,
+                                                         downsample_rate));
 
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
-    trajPtr2_ = std::make_shared<TrajectoryData>(filename_input, 
-                                                 sensor_noise_input,
-                                                 time_format,
-                                                 downsample_rate);
-    for (Index i = 0; i < trajPtr2_->N; i++) {
-        trajPtr2_->q_d(i).setZero();
-        trajPtr2_->q_dd(i).setZero();
+    trajPtrs2_.push_back(std::make_shared<TrajectoryData>(trajPtrs_.back()->T, 
+                                                          trajPtrs_.back()->N, 
+                                                          trajPtrs_.back()->Nact, 
+                                                          false, 
+                                                          sensor_noise_input));
+
+    for (Index i = 0; i < trajPtrs_.back()->N; i++) {
+        trajPtrs2_.back()->tspan(i) = trajPtrs_.back()->tspan(i);
+        trajPtrs2_.back()->q(i) = trajPtrs_.back()->q(i);
     }
 
-    // create regressor compute object
-    mrPtr_ = std::make_shared<MomentumRegressor>(*modelPtr_, trajPtr_);
-    ridPtr_ = std::make_shared<RegressorInverseDynamics>(*modelPtr_, trajPtr2_, false);
+    initialize_regressors(trajPtrs_.back(),
+                          trajPtrs2_.back(),
+                          H_input);
 
-    // forward integration horizon
-    H = H_input;
-    num_segment = trajPtr_->N / H;
-
-    if (num_segment <= 0) {
-        THROW_EXCEPTION(IpoptException, "0 segments");
+    // combine all the regressors
+    int total_num_segments = 0;
+    for (const auto& Aseg_i : Aseg) {
+        num_segments.push_back(Aseg_i.rows() / modelPtr_->nv);
+        total_num_segments += num_segments.back();
     }
-
-    // trajectoryData does not require any decision variable, 
-    // so simply put an empty Eigen vector as placeholder here
-    mrPtr_->compute(VecXd::Zero(1), false);
-    ridPtr_->compute(VecXd::Zero(1), false);
-
-    // now compute regression elements A and b
-    // which are essentially combination of different dynamic regressors
-    A.resize(modelPtr_->nv * num_segment, 10 * modelPtr_->nv);
-    b.resize(modelPtr_->nv * num_segment);
-
-    // initialize weights for the nonlinear least square problem
-    weights = VecXd::Ones(modelPtr_->nv * num_segment);
-    nonzero_weights = weights.size();
-
-    Index i = 0;
-    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A, b) private(i) schedule(dynamic, 1)
-    for (i = 0; i < trajPtr_->N - H - 1; i += H) {
-        int seg_start = i;
-        int seg_end = seg_start + H;
-
-        const MatXd& Y_Hqd_1 = mrPtr_->Y.middleRows(seg_start * modelPtr_->nv, modelPtr_->nv);
-        const MatXd& Y_Hqd_2 = mrPtr_->Y.middleRows(seg_end * modelPtr_->nv, modelPtr_->nv);
-
-        MatXd int_Y_CTqd_g = MatXd::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
-        VecXd int_ctrl = VecXd::Zero(modelPtr_->nv);
-
-        for (int j = seg_start; j < seg_end; j++) {
-            double dt = trajPtr_->tspan(j+1) - trajPtr_->tspan(j);
-
-            MatXd Y_CTqd_i = mrPtr_->Y_CTv.middleRows(j * modelPtr_->nv, modelPtr_->nv);
-            MatXd Yg_i = ridPtr_->Y.middleRows(j * modelPtr_->nv, modelPtr_->nv);
-
-            int_Y_CTqd_g += (Y_CTqd_i - Yg_i) * dt;
-
-            // Note that here trajPtr_->q_dd stores the applied torque
-            int_ctrl += (trajPtr_->q_dd(j) -
-                         modelPtr_->friction.cwiseProduct(trajPtr_->q_d(j).cwiseSign()) -
-                         modelPtr_->damping.cwiseProduct(trajPtr_->q_d(j)) -
-                         offset) * dt;
-        }
-        
-        int s = i / H;
-        A.middleRows(s * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
-        b.segment(s * modelPtr_->nv, modelPtr_->nv) = int_ctrl - modelPtr_->armature.cwiseProduct(trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
+    A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
+    b.resize(modelPtr_->nv * total_num_segments);
+    Index row_start = 0;
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const auto& Aseg_i = Aseg[i];
+        const auto& bseg_i = bseg[i];
+        A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
+        b.segment(row_start, bseg_i.size()) = bseg_i;
     }
 
     // assign weights to A and b
+    weights = VecXd::Ones(modelPtr_->nv * total_num_segments);
+    nonzero_weights = weights.size();
+
     Aweighted.resize(A.rows(), A.cols());
     bweighted.resize(b.size());
 
+    Index i = 0;
     #pragma omp parallel for shared(weights, A, b) private(i) schedule(dynamic, 1)
     for (i = 0; i < b.size(); i++) {
         Aweighted.row(i) = A.row(i) * weights(i);
@@ -151,6 +121,194 @@ bool EndEffectorParametersIdentification::set_parameters(
     }
 
     return true;
+}
+
+bool EndEffectorParametersIdentification::set_parameters(
+    const Model& model_input,
+    const std::vector<std::string>& filenames_input,
+    const SensorNoiseInfo sensor_noise_input,
+    const int H_input,
+    const TimeFormat time_format,
+    const int downsample_rate,
+    const VecXd offset_input
+)
+{ 
+    // macro NUM_THREADS should be define in cmake
+    #ifdef NUM_THREADS
+        omp_set_num_threads(NUM_THREADS);
+    #else
+        THROW_EXCEPTION(IpoptException, "macro NUM_THREADS is not defined!");
+    #endif
+
+    enable_hessian = true;
+
+    // parse the robot model
+    modelPtr_ = std::make_shared<Model>(model_input);
+    dataPtr_ = std::make_shared<Data>(*modelPtr_);
+
+    phi = VecXd::Zero(10 * modelPtr_->nv);
+    for (Index i = 0; i < modelPtr_->nv; i++) {
+        const int pinocchio_joint_id = i + 1;
+        phi.segment<10>(10 * i) =
+            modelPtr_->inertias[pinocchio_joint_id]
+                .toDynamicParameters();
+    }
+    phi_original = phi;
+
+    std::cout << "End effector estimation from URDF file: " << phi_original.tail(10).transpose() << std::endl;
+
+    offset = offset_input;
+    if (offset.size() != modelPtr_->nv) { // offset is disabled
+        offset = VecXd::Zero(modelPtr_->nv);
+    }
+
+    for (const auto& filename : filenames_input) {
+        // this trajectory is to compute momentum regressors
+        trajPtrs_.push_back(std::make_shared<TrajectoryData>(filename, 
+                                                             sensor_noise_input,
+                                                             time_format,
+                                                             downsample_rate));
+
+        // this trajectory is to compute gravity regressors,
+        // so set velocity to 0 while acceleration is already 0 in TrajectoryData
+        trajPtrs2_.push_back(std::make_shared<TrajectoryData>(trajPtrs_.back()->T, 
+                                                              trajPtrs_.back()->N, 
+                                                              trajPtrs_.back()->Nact, 
+                                                              false, 
+                                                              sensor_noise_input));
+        for (Index i = 0; i < trajPtrs_.back()->N; i++) {
+            trajPtrs2_.back()->tspan(i) = trajPtrs_.back()->tspan(i);
+            trajPtrs2_.back()->q(i) = trajPtrs_.back()->q(i);
+        }
+
+        initialize_regressors(trajPtrs_.back(),
+                              trajPtrs2_.back(),
+                              H_input);
+    }
+
+    // combine all the regressors
+    int total_num_segments = 0;
+    for (const auto& Aseg_i : Aseg) {
+        num_segments.push_back(Aseg_i.rows() / modelPtr_->nv);
+        total_num_segments += num_segments.back();
+    }
+    A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
+    b.resize(modelPtr_->nv * total_num_segments);
+    Index row_start = 0;
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const auto& Aseg_i = Aseg[i];
+        const auto& bseg_i = bseg[i];
+        A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
+        b.segment(row_start, bseg_i.size()) = bseg_i;
+        row_start += Aseg_i.rows();
+    }
+
+    std::cout << "Forward integration horizon: " << H << std::endl;
+    std::cout << "Total number of segments: " << total_num_segments << std::endl;
+
+    // assign weights to A and b
+    weights = VecXd::Ones(modelPtr_->nv * total_num_segments);
+    nonzero_weights = weights.size();
+
+    Aweighted.resize(A.rows(), A.cols());
+    bweighted.resize(b.size());
+
+    Index i = 0;
+    #pragma omp parallel for shared(weights, A, b) private(i) schedule(dynamic, 1)
+    for (i = 0; i < b.size(); i++) {
+        Aweighted.row(i) = A.row(i) * weights(i);
+        bweighted(i) = b(i) * weights(i);
+    }
+
+    // simply give 0 as initial guess
+    x0 = VecXd::Zero(10); 
+
+    // parse sensor noise
+    if (sensor_noise_input.position_error.norm() == 0.0 &&
+        sensor_noise_input.velocity_error.norm() == 0.0 &&
+        sensor_noise_input.acceleration_error.norm() == 0.0) {
+        std::cout << "No sensor noise is added" << std::endl;
+    }
+    else {
+        std::cout << "Sensor noise is added" << std::endl;
+        
+        // mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
+        // ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
+    }
+
+    return true;
+}
+
+void EndEffectorParametersIdentification::initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
+                                                                const std::shared_ptr<TrajectoryData>& trajPtr2_,
+                                                                const int H_input) {
+    // create regressor compute object
+    mrPtr_ = std::make_shared<MomentumRegressor>(*modelPtr_, trajPtr_);
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(*modelPtr_, trajPtr2_, false);
+
+    // forward integration horizon
+    H = H_input;
+    int num_segment = trajPtr_->N / H - 1;
+
+    if (num_segment <= 0) {
+        THROW_EXCEPTION(IpoptException, "0 segments");
+    }
+
+    // trajectoryData does not require any decision variable, 
+    // so simply put an empty Eigen vector as placeholder here
+    mrPtr_->compute(VecXd::Zero(1), false);
+    ridPtr_->compute(VecXd::Zero(1), false);
+
+    // now compute regression elements A and b
+    // which are essentially combination of different dynamic regressors
+    Aseg.push_back(MatXd::Zero(modelPtr_->nv * num_segment, 10 * modelPtr_->nv));
+    bseg.push_back(VecXd::Zero(modelPtr_->nv * num_segment));
+
+    Index i = 0;
+    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A, b) private(i) schedule(dynamic, 1)
+    for (i = 0; i < num_segment; i++) {
+        const int seg_start = i * H;
+        const int seg_end = seg_start + H;
+
+        const MatXd& Y_Hqd_1 = mrPtr_->Y.middleRows(seg_start * modelPtr_->nv, modelPtr_->nv);
+        const MatXd& Y_Hqd_2 = mrPtr_->Y.middleRows(seg_end * modelPtr_->nv, modelPtr_->nv);
+
+        MatXd int_Y_CTqd_g = MatXd::Zero(modelPtr_->nv, 10 * modelPtr_->nv);
+        VecXd int_ctrl = VecXd::Zero(modelPtr_->nv);
+
+        for (int j = seg_start; j < seg_end; j++) {
+            const double dt = trajPtr_->tspan(j+1) - trajPtr_->tspan(j);
+
+            MatXd Y_CTqd_i = mrPtr_->Y_CTv.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+            MatXd Yg_i = ridPtr_->Y.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+
+            int_Y_CTqd_g += (Y_CTqd_i - Yg_i) * dt;
+
+            // Note that here trajPtr_->q_dd stores the applied torque
+            int_ctrl += (trajPtr_->q_dd(j) -
+                         modelPtr_->friction.cwiseProduct(trajPtr_->q_d(j).cwiseSign()) -
+                         modelPtr_->damping.cwiseProduct(trajPtr_->q_d(j)) -
+                         offset) * dt;
+        }
+
+        Aseg.back().middleRows(i * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
+        bseg.back().segment(i * modelPtr_->nv, modelPtr_->nv) = int_ctrl - 
+                                                                modelPtr_->armature.cwiseProduct(
+                                                                    trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
+    }
+}
+
+void EndEffectorParametersIdentification::reset() {
+    Optimizer::reset();
+
+    // clear all the vectors
+    trajPtrs_.clear();
+    trajPtrs2_.clear();
+
+    Aseg.clear();
+    bseg.clear();
+
+    num_segments.clear();
 }
 
 bool EndEffectorParametersIdentification::get_nlp_info(
@@ -289,7 +447,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Performing error analysis" << std::endl;
 
-    const auto& sensor_noise = trajPtr_->sensor_noise;
+    const auto& sensor_noise = trajPtrs_.back()->sensor_noise;
 
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
@@ -323,60 +481,66 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     // compute p_b_p_x for each of the x
     // (1) applied torque data: num_segment * H * modelPtr_->nv
-    for (Index i = 0; i < trajPtr_->N - H - 1; i += H) {
-        int seg_start = i;
-        int seg_end = seg_start + H;
-        int s = i / H;
-        for (int j = seg_start; j < seg_end; j++) {
-            double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
-            for (Index k = 0; k < modelPtr_->nv; k++) {
-                // p_b_p_x = dt;
-                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
-                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
-                p_theta_p_x = dtheta * p_eta_p_x;
-                double torque_error = 0.0;
-                if (sensor_noise.acceleration_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
-                    torque_error = std::abs(trajPtr_->q_dd(j)(k) * sensor_noise.acceleration_error(k));
+    for (Index tid = 0; tid < trajPtrs_.size(); tid++) {
+        const int num_segment = num_segments[tid];
+        const auto& trajPtr_ = trajPtrs_[tid];
+        for (Index s = 0; s < num_segment; s++) {
+            int seg_start = s * H;
+            int seg_end = seg_start + H;
+            for (int j = seg_start; j < seg_end; j++) {
+                double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
+                for (Index k = 0; k < modelPtr_->nv; k++) {
+                    // p_b_p_x = dt;
+                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
+                    p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                    p_theta_p_x = dtheta * p_eta_p_x;
+                    double torque_error = 0.0;
+                    if (sensor_noise.acceleration_error_type == SensorNoiseInfo::SensorNoiseType::Ratio) {
+                        torque_error = std::abs(trajPtr_->q_dd(j)(k) * sensor_noise.acceleration_error(k));
+                    }
+                    else {
+                        torque_error = sensor_noise.acceleration_error(k);
+                    }
+                    theta_uncertainty += p_theta_p_x.cwiseAbs() * torque_error;
                 }
-                else {
-                    torque_error = sensor_noise.acceleration_error(k);
-                }
-                theta_uncertainty += p_theta_p_x.cwiseAbs() * torque_error;
             }
         }
     }
 
     // (2) friction parameters: 4 * modelPtr_->nv
-    for (Index i = 0; i < trajPtr_->N - H - 1; i += H) {
-        int seg_start = i;
-        int seg_end = seg_start + H;
-        int s = i / H;
-        for (int j = seg_start; j < seg_end; j++) {
-            double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
-            for (Index k = 0; k < modelPtr_->nv; k++) {
-                // friction
-                // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
-                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
-                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
-                p_theta_p_x = dtheta * p_eta_p_x;
-                double friction_parameter_error = std::abs(0.10 * modelPtr_->friction(k));
-                theta_uncertainty += p_theta_p_x.cwiseAbs() * friction_parameter_error;
+    for (Index tid = 0; tid < trajPtrs_.size(); tid++) {
+        const int num_segment = num_segments[tid];
+        const auto& trajPtr_ = trajPtrs_[tid];
+        for (Index s = 0; s < num_segment; s++) {
+            int seg_start = s * H;
+            int seg_end = seg_start + H;
+            for (int j = seg_start; j < seg_end; j++) {
+                double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
+                for (Index k = 0; k < modelPtr_->nv; k++) {
+                    // friction
+                    // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
+                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
+                    p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                    p_theta_p_x = dtheta * p_eta_p_x;
+                    double friction_parameter_error = std::abs(0.05 * modelPtr_->friction(k));
+                    theta_uncertainty += p_theta_p_x.cwiseAbs() * friction_parameter_error;
 
-                // damping
-                // p_b_p_x = dt * trajPtr_->q_d(j)(k);
-                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
-                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
-                p_theta_p_x = dtheta * p_eta_p_x;
-                double damping_parameter_error = std::abs(0.10 * modelPtr_->damping(k));
-                theta_uncertainty += p_theta_p_x.cwiseAbs() * damping_parameter_error;
+                    // damping
+                    // p_b_p_x = dt * trajPtr_->q_d(j)(k);
+                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
+                    p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                    p_theta_p_x = dtheta * p_eta_p_x;
+                    double damping_parameter_error = std::abs(0.05 * modelPtr_->damping(k));
+                    theta_uncertainty += p_theta_p_x.cwiseAbs() * damping_parameter_error;
 
-                // offset
-                // p_b_p_x = dt;
-                p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
-                p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
-                p_theta_p_x = dtheta * p_eta_p_x;
-                double offset_error = std::abs(0.10 * offset(k));
-                theta_uncertainty += p_theta_p_x.cwiseAbs() * offset_error;
+                    // offset
+                    // p_b_p_x = dt;
+                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
+                    p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
+                    p_theta_p_x = dtheta * p_eta_p_x;
+                    double offset_error = std::abs(0.05 * offset(k));
+                    theta_uncertainty += p_theta_p_x.cwiseAbs() * offset_error;
+                }
             }
         }
     }

@@ -12,7 +12,6 @@ NB_MODULE(end_effector_sysid_nanobind , m) {
 
     nb::class_<EndEffectorIdentificationPybindWrapper>(m, "EndEffectorIdentificationPybindWrapper")
         .def(nb::init<const std::string, 
-                      const std::string, 
                       const nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>, 
                       const int, 
                       const std::string, 

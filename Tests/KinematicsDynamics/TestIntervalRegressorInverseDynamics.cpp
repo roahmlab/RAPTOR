@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(ComputeTestWithNoise) {
     int N = 128;  // number of time steps
     double T = 10.0;  // total time
     std::shared_ptr<TrajectoryData> trajPtr_ = 
-        std::make_shared<TrajectoryData>(T, N, model.nv, sensor_noise);
+        std::make_shared<TrajectoryData>(T, N, model.nv, true, sensor_noise);
 
     // Initialize IntervalRegressorInverseDynamics
     

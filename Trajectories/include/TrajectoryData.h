@@ -55,9 +55,16 @@ public:
                    const int downsample_rate = 1,
                    const bool add_sensor_noise = false);
 
+    TrajectoryData(const std::vector<std::string>& filenames_input,
+                   const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+                   const TimeFormat time_format = TimeFormat::Second,
+                   const int downsample_rate = 1,
+                   const bool add_sensor_noise = false);
+
     TrajectoryData(double T_input,
                    int N_input, 
                    int Nact_input,
+                   const bool random_or_not = true,
                    const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo());
 
     // Destructor
