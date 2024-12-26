@@ -169,14 +169,73 @@ BOOST_AUTO_TEST_CASE(CollisionCase9){
     BOOST_CHECK_SMALL(distance-(1.4900), 1e-4);
 }
 
+BOOST_AUTO_TEST_CASE(Gradient1){
+    const double r11 = 5;
+    const double r12 = 5;
+    const double r21 = 5;
+    const double r22 = 1.5;
+
+    Eigen::Vector3d p11 = Eigen::Vector3d(18.0468, 0.818676, 3.0252);
+    Eigen::Vector3d p12 = Eigen::Vector3d(7.77307, -10.1865, -11.7099);
+    Eigen::Vector3d p21 = Eigen::Vector3d(-4.65372, -15.719, 15.9062);
+    Eigen::Vector3d p22 = Eigen::Vector3d(-19.1427, -10.4034, 16.3251);
+    Eigen::Matrix<double,3,7> p11_pz = Eigen::Matrix<double,3,7>::Zero();
+    p11_pz << -0.126321, 0.65271, -0.0556281, 0.183175, 0.641131, 0.147514, 0.00194568,
+              0.976548, -0.118322, 0.618181, 0.576176, 0.91117, 0.448417, 0.350759,
+              -0.767976, 0.465231, 0.563645, -0.780877, 0.821034, 0.670805, -0.288261;
+    Eigen::Matrix<double,3,7> p12_pz = Eigen::Matrix<double,3,7>::Zero();
+    p12_pz << -0.846795, -0.43229, -0.636982, -0.820726, -0.588701, 0.87653, 0.440175,
+              -0.260587, 0.506727, 0.549592, -0.576729, -0.924018, 0.0203535, -0.796471,
+              0.202415, 0.416466, 0.896296, 0.872844, -0.245479, -0.627297, 0.948879;
+    Eigen::Matrix<double,3,7> p21_pz = Eigen::Matrix<double,3,7>::Zero();
+    p21_pz << 0.659298, 0.480332, 0.151137, 0.862875, 0.0652908, -0.518243, -0.621947,
+              0.84466, -0.00782614, 0.99412, -0.852675, -0.284965, 0.0780534, 0.257328,
+              0.860049, 0.308466, -0.340775, 0.398638, -0.0946358, -0.545044, -0.121772;
+    Eigen::Matrix<double,3,7> p22_pz = Eigen::Matrix<double,3,7>::Zero();
+    p22_pz << -0.749104, 0.00541776, 0.37812, 0.326999, 0.187048, -0.504486, 0.154739,
+              0.668627, 0.545157, -0.0146684, -0.355371, -0.875039, 0.276098, 0.138973,
+              -0.0457907, 0.974563, -0.821908, -0.977249, 0.014925, 0.00904458, 0.15637;
+
+    TaperedCapsuleCollision<7> collider;
+    Eigen::Vector<double,7> analytic_grad;
+    double distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11, r12, r21, r22, analytic_grad);
+    
+    Eigen::Vector<double,7> numerical_grad;
+    float epsilon = 1e-10;
+    for(int j = 0; j<7; j++){
+        Eigen::Vector<double,7> z = Eigen::Vector<double,7>::Zero();
+        z(j) = epsilon;
+
+        double distance_p = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11, r12, r21, r22);
+        double distance_n = collider.computeDistance(p11-p11_pz*z, p12-p12_pz*z, p21-p21_pz*z, p22-p22_pz*z,r11, r12, r21, r22);
+
+        numerical_grad(j) = (distance_p-distance_n)/(2*epsilon);
+
+        if(std::abs(numerical_grad(j)-analytic_grad(j)) > 1e-4){
+            std::cout << "Distance_p: " << distance_p << std::endl;
+            std::cout << "Distance_n: " << distance_n << std::endl;
+        }
+    }
+
+    BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-4);
+}
+
 BOOST_AUTO_TEST_CASE(GeneralGradient){
     std::srand(time(NULL));
-    const double r11[5] = {0.5, 1, 1.5, 2, 5};
-    const double r12[5] = {0.5, 1, 1.5, 2, 5};
-    const double r21[5] = {0.5, 1, 1.5, 2, 5};
-    const double r22[5] = {0.5, 1, 1.5, 2, 5};
-    for(int r = 0; r<5; r++){
-        for(int i = 0; i<5; i++){
+    const int radius_count = 20;
+
+    double r11[radius_count];
+    double r12[radius_count];
+    double r21[radius_count];
+    double r22[radius_count];
+
+    for(int r = 0; r<radius_count; r++){
+        r11[r] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
+        r12[r] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
+        r21[r] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
+        r22[r] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
+
+        for(int i = 0; i<100; i++){
             Eigen::Vector3d p11 = Eigen::Vector3d::Random()*20;
             Eigen::Vector3d p12 = Eigen::Vector3d::Random()*20;
             Eigen::Vector3d p21 = Eigen::Vector3d::Random()*20;
@@ -188,17 +247,33 @@ BOOST_AUTO_TEST_CASE(GeneralGradient){
             Eigen::Matrix<double,3,7> p22_pz = Eigen::Matrix<double,3,7>::Random();
 
             TaperedCapsuleCollision<7> collider;
-            Eigen::Vector<double,7> dist_grad;
-            double distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11[r], r12[r], r21[r], r22[r], dist_grad);
+            Eigen::Vector<double,7> analytic_grad;
+            double distance = collider.computeDistance(p11, p12, p21, p22, p11_pz, p12_pz, p21_pz, p22_pz, r11[r], r12[r], r21[r], r22[r], analytic_grad);
             
-            Eigen::Vector<double,7> z(7);
-            z << 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
-            double distance_delta = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11[r], r12[r], r21[r], r22[r]);
-            auto analytic_grad = (dist_grad.transpose()*z);
-            Eigen::MatrixXd numerical_grad(1,1);
-            numerical_grad << distance_delta-distance;
+            Eigen::Vector<double,7> numerical_grad;
+            float epsilon = 1e-10;
+            for(int j = 0; j<7; j++){
+                Eigen::Vector<double,7> z = Eigen::Vector<double,7>::Zero();
+                z(j) = epsilon;
 
-            BOOST_CHECK_SMALL((numerical_grad-analytic_grad).norm() , 1e-8);
+                double distance_p = collider.computeDistance(p11+p11_pz*z, p12+p12_pz*z, p21+p21_pz*z, p22+p22_pz*z,r11[r], r12[r], r21[r], r22[r]);
+                double distance_n = collider.computeDistance(p11-p11_pz*z, p12-p12_pz*z, p21-p21_pz*z, p22-p22_pz*z,r11[r], r12[r], r21[r], r22[r]);
+
+                numerical_grad(j) = (distance_p-distance_n)/(2*epsilon);
+
+                if(distance > -1){
+                    BOOST_CHECK_SMALL(numerical_grad(j)-analytic_grad(j), 1e-4);
+                    if(abs(numerical_grad(j)-analytic_grad(j)) > 1e-4){
+                        std::cout << "Numerical Gradient: " << numerical_grad.transpose() << std::endl;
+                        std::cout << "Analytic Gradient: " << analytic_grad.transpose() << std::endl;
+                        std::cout << "Distance: " << distance << std::endl;
+                        std::cout << "R11 = [" << r11[r] << "];" << std::endl;
+                        std::cout << "R12 = [" << r12[r] << "];" << std::endl;
+                        std::cout << "R21 = [" << r21[r] << "];" << std::endl;
+                        std::cout << "R22 = [" << r22[r] << "];" << std::endl;
+                    }
+                }
+            }
         }
     }
 }
@@ -341,7 +416,6 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
                     BOOST_CHECK(distance < 0);
                 }
                 
-                std::cout << "Index1:" << arm_1_index << " Index2:" << arm_2_index << " Distance: " << distance << std::endl;
             }
         }
     }

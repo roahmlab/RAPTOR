@@ -9,14 +9,11 @@ inline void solve_quadratic(const double a,
                             const double c,
                             double* sol1,
                             double* sol2) {
-    double discriminant = b * b - 4 * a * c;
-    if (discriminant < -1e-4) {
+    double discriminant = (b * b) - (4 * a * c);
+    if (discriminant < 0) {
         *sol1 = -1.0;
         *sol2 = -1.0;
         return;
-    }
-    else if (discriminant < 0) {
-        discriminant = 0;
     }
     double sqrt_discriminant = std::sqrt(discriminant);
     double twoa = 2 * a;
@@ -80,8 +77,16 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
 
     // end point to edge checks
         // case 1-2
-    solve_quadratic(e*(e-r2*r2), 2*f*(e-r2*r2), f*f-r2*r2*g, &u_test[0], &u_test[1]);
-    solve_quadratic(e*(e-r2*r2), 2*(f-b)*(e-r2*r2), (f-b)*(f-b)-r2*r2*(g-2*c+a), &u_test[2], &u_test[3]);    
+    if(std::abs(r2) > 1e-10){
+        solve_quadratic(e*(e-r2*r2), 2*f*(e-r2*r2), f*f-r2*r2*g, &u_test[0], &u_test[1]);
+        solve_quadratic(e*(e-r2*r2), 2*(f-b)*(e-r2*r2), (f-b)*(f-b)-r2*r2*(g-2*c+a), &u_test[2], &u_test[3]);    
+    }
+    else{
+        u_test[0] = -f*(e-r2*r2)/(e*(e-r2*r2));
+        u_test[1] = -1;
+        u_test[2] = -(f-b)*(e-r2*r2)/(e*(e-r2*r2));
+        u_test[3] = -1;
+    }
 
     t_test[0] = 0;
     t_test[1] = 0;
@@ -92,13 +97,25 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
     u_test[5] = 0;
     u_test[6] = 1;
     u_test[7] = 1;
-    solve_quadratic(a*(a-pow(r1,2)), -2*c*(a-pow(r1,2)), pow(c,2)-pow(r1,2)*g, &t_test[4], &t_test[5]);
-    solve_quadratic(a*(a-pow(r1,2)), -2*(b+c)*(a-pow(r1,2)), pow((b+c),2)-pow(r1,2)*(e+2*f+g), &t_test[6], &t_test[7]);
+
+        // case 3-4
+    if(std::abs(r1) > 1e-10){
+        solve_quadratic(a*(a-pow(r1,2)), -2*c*(a-pow(r1,2)), pow(c,2)-pow(r1,2)*g, &t_test[4], &t_test[5]);
+        solve_quadratic(a*(a-pow(r1,2)), -2*(b+c)*(a-pow(r1,2)), pow((b+c),2)-pow(r1,2)*(e+2*f+g), &t_test[6], &t_test[7]);
+    }
+    else{
+        t_test[4] = c*(a-pow(r1,2))/(a*(a-pow(r1,2)));
+        t_test[5] = -1;
+        t_test[6] = (b+c)*(a-pow(r1,2))/(a*(a-pow(r1,2)));
+        t_test[7] = -1;
+    }
+
+    
     
     // edge to edge check
         // case 5
     double radicand = (g*b*b - 2*b*c*f + e*c*c + a*f*f - a*e*g)*(b*b + 2*b*r1*r2 + e*r1*r1 + a*r2*r2 - a*e);
-    if(radicand < -1e5) {
+    if(radicand < 0) {
         t_test[8] = -1.0;
         t_test[9] = -1.0;
         u_test[8] = -1.0;
@@ -135,6 +152,7 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
             ind = i;
         }
     }
+
     double finalDistance = distances[ind] - tc1_radius_1 - tc2_radius_1;
     double uStar = u_test[ind];
     double tStar = t_test[ind];
