@@ -312,19 +312,27 @@ bool ArmourOptimizer::eval_g(
                     const Interval supportForceRange = 
                         dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
                             .slice(x);
-                    g[i * NUM_CONTACT_CONSTRAINTS + offset] = robotInfoPtr_->suction_force - supportForceRange.lower();
+                    g[i * NUM_CONTACT_CONSTRAINTS + offset] = supportForceRange.lower();
 
                     // (2) friction cone constraints
+                    // auto start = std::chrono::high_resolution_clock::now();
                     for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
                         const Interval frictionConstraintRange = dynPtr_->friction_PZs(j, i).slice(x);
                         g[i * NUM_CONTACT_CONSTRAINTS + 1 + j + offset] = frictionConstraintRange.lower();
                     }      
+                    // auto end = std::chrono::high_resolution_clock::now();
+                    // std::chrono::duration<double> elapsed_seconds = end - start;
+                    // std::cout << "Time taken for friction cone: " << elapsed_seconds.count() << "s\n";
 
                     // (3) ZMP constraints
+                    // start = std::chrono::high_resolution_clock::now();
                     for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
                         const Interval zmpConstraintRange = dynPtr_->zmp_PZs(j, i).slice(x);
                         g[i * NUM_CONTACT_CONSTRAINTS + 1 + FRICTION_CONE_LINEARIZED_SIZE + j + offset] = zmpConstraintRange.lower();
                     }
+                    // end = std::chrono::high_resolution_clock::now();
+                    // elapsed_seconds = end - start;
+                    // std::cout << "Time taken for ZMP: " << elapsed_seconds.count() << "s\n";
                 }
             }
             catch (const std::exception& e) {
@@ -435,7 +443,7 @@ bool ArmourOptimizer::eval_jac_g(
                 #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
                 for (i = 0; i < num_time_steps; i++) {
                     // separation
-                    auto PZseparation = -dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2);
+                    auto PZseparation = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2);
                     PZseparation.slice(values + (i * NUM_CONTACT_CONSTRAINTS) * NUM_FACTORS + offset, x);
 
                     // friction cone

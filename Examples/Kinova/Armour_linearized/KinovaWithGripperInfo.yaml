@@ -1,22 +1,19 @@
-KinovaWithSuctionCup:
+KinovaWithoutGripper:
   num_motors: 7
-  num_joints: 8
+  num_joints: 7
   gravity: [0.0, 0.0, -9.81]
   friction: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   damping: [10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934]
   transmissionInertia: [8.03, 11.9962024615303644, 9.0025427861751517, 11.5806439316706360, 8.4665040917914123, 8.8537069373742430, 8.8587303664685315]
-  mass_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.10]
-  com_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.10]
-  inertia_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.10]
+  mass_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+  com_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+  inertia_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
   ultimate_bound:
     alpha: 10.0
-    V_m: 0.02
+    V_m: 0.01
     M_max: 15.79635774
     M_min: 8.29938
     Kr: 5.0
-  suction_force: 50.0 # N
-  mu: 0.5
-  contact_surface_radius: 0.05 # m
   collision_spheres:
     joint_2:
     - "offset": [0.0, -0.05, -0.01]
@@ -50,11 +47,16 @@ KinovaWithSuctionCup:
     - "offset": [0.0, -0.14, 0.0]
       "radius": 0.05
     joint_7:
-    - "offset": [-0.03, -0.06, -0.055]
+    - "offset": [-0.03, -0.06, -0.055] # camera
       "radius": 0.02
     - "offset": [0.0, -0.06, -0.055]
       "radius": 0.02
     - "offset": [0.03, -0.06, -0.055]
       "radius": 0.02
-
+    - "offset": [0.0, 0.0, -0.10] # gripper
+      "radius": 0.05
+    - "offset": [0.0, 0.0, -0.15]
+      "radius": 0.05
+    - "offset": [0.0, 0.0, -0.20]
+      "radius": 0.05
     
