@@ -36,7 +36,10 @@ Eigen::VectorXd map_to_vector(const YAML::Node& node, int size);
 class RobotInfo {
 public:
     using Vec3 = Eigen::Vector3d;
+    using Vec6 = Eigen::Vector<double, 6>;
+    using Vec10 = Eigen::Vector<double, 10>;
     using VecX = Eigen::VectorXd;
+    using Mat3 = Eigen::Matrix3d;
 
     int num_motors = 0;
     int num_joints = 0;
@@ -69,6 +72,16 @@ public:
               const std::string& yaml_filename);
 
     ~RobotInfo() = default;
+
+    void change_endeffector_inertial_parameters(const double mass,
+                                                const Vec3& com,
+                                                const Vec6& inertia,
+                                                const double mass_eps,
+                                                const double com_eps,
+                                                const double inertia_eps);
+
+    void change_endeffector_inertial_parameters(const Vec10& inertial_parameters,
+                                                const Vec10& inertial_parameters_eps);
 
     void print() const;
 };

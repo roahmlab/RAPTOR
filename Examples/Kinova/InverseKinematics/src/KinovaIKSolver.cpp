@@ -25,6 +25,7 @@ bool KinovaIKSolver::set_parameters(
 {
     enable_hessian = true;
     x0 = x0_input;
+    start = x0_input;
 
     trajPtr_ = std::make_shared<Plain>(model_input.nq);
     
@@ -195,8 +196,9 @@ bool KinovaIKSolver::eval_f(
     trajPtr_->compute(z, false);
 
     const VecX& q = trajPtr_->q(0);
-
-    obj_value = 0.5 * q.dot(q);
+    // std::cout << "q: " << q.transpose() << std::endl;
+    // std::cout << "desiredTransform.p: " << desiredTransform.p.transpose() << std::endl;
+    obj_value = 0.5 * (start- q).dot((start- q));
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -224,7 +226,7 @@ bool KinovaIKSolver::eval_grad_f(
     const VecX& q = trajPtr_->q(0);
     const MatX& pq_pz = trajPtr_->pq_pz(0);
 
-    VecX grad = q.transpose() * pq_pz;
+    VecX grad = -(start- q).transpose() * pq_pz;
     for(Index i = 0; i < n; i++){
         grad_f[i] = grad(i);
     }

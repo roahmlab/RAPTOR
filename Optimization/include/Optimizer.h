@@ -45,7 +45,7 @@ public:
     virtual ~Optimizer() = default;
 
     /** Method to reset the optimizer */
-    void reset();
+    virtual void reset();
 
     /**@name Overloaded from TNLP */
     //@{

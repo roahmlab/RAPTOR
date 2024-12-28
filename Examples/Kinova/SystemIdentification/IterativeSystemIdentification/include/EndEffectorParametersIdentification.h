@@ -1,11 +1,12 @@
-#ifndef ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
-#define ENDEFFECTOR_PARAMETERS_IDENTIFICATION_H
-
-#include "Optimizer.h"
-// #include "QRDecompositionSolver.h"
-#include "LMIConstraints.h"
+#ifndef ENDEFFECTOR_IDENTIFICATION_H
+#define ENDEFFECTOR_IDENTIFICATION_H
 
 #include "pinocchio/algorithm/regressor.hpp"
+
+#include "Optimizer.h"
+#include "MomentumRegressor.h"
+#include "IntervalMomentumRegressor.h"
+#include "TrajectoryData.h"
 
 namespace RAPTOR {
 
@@ -13,10 +14,13 @@ class EndEffectorParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
-    using Vec3 = Eigen::Vector3d;
-    using VecX = Eigen::VectorXd;
-    using MatX = Eigen::MatrixXd;
-    using Mat3 = Eigen::Matrix3d;
+    using VecXd = Eigen::VectorXd;
+    using Vec10d = Eigen::Vector<double, 10>;
+    using MatXd = Eigen::MatrixXd;
+    using Mat4d = Eigen::Matrix4d;
+    using Mat10d = Eigen::Matrix<double, 10, 10>;
+    using VecXInt = Eigen::Vector<Interval, Eigen::Dynamic>;
+    using MatXInt = Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic>;
 
     /** Default constructor */
     EndEffectorParametersIdentification() = default;
@@ -27,13 +31,31 @@ public:
     // [set_parameters]
     bool set_parameters(
         const Model& model_input,
-        const std::shared_ptr<MatX>& posPtr_input,
-        const std::shared_ptr<MatX>& velPtr_input,
-        const std::shared_ptr<MatX>& accPtr_input,
-        const std::shared_ptr<MatX>& torquePtr_input,
-        const std::shared_ptr<VecX>& full_parametersPtr_input, 
-        const bool include_offset_input = false
+        const std::string filename_input,
+        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+        const int H_input = 10,
+        const TimeFormat time_format = TimeFormat::Second,
+        const int downsample_rate = 1,
+        const VecXd offset_input = VecXd::Zero(0)
     );
+
+    // [set_parameters]
+    bool set_parameters(
+        const Model& model_input,
+        const std::vector<std::string>& filenames_input,
+        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
+        const int H_input = 10,
+        const TimeFormat time_format = TimeFormat::Second,
+        const int downsample_rate = 1,
+        const VecXd offset_input = VecXd::Zero(0)
+    );
+
+    // [initialize_regressors]
+    void initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
+                               const std::shared_ptr<TrajectoryData>& trajPtr2_,
+                               const int H_input = 10);
+
+    void reset() final override;
 
     /**@name Overloaded from TNLP */
     //@{
@@ -46,15 +68,17 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the bounds for my problem */
-    bool get_bounds_info(
-        Index   n,
-        Number* x_l,
-        Number* x_u,
-        Index   m,
-        Number* g_l,
-        Number* g_u
-    ) final override;
+    /** convert the decision variable to the dynamic parameters of the end effector */
+    Vec10d z_to_theta(const VecXd& z);
+
+    Vec10d d_z_to_theta(
+        const VecXd& z,
+        Mat10d& dtheta);
+
+    Vec10d dd_z_to_theta(
+        const VecXd& z,
+        Mat10d& dtheta,
+        Eigen::Array<Mat10d, 1, 10>& ddtheta);
 
     /** Method to return the objective value */
     bool eval_f(
@@ -79,6 +103,20 @@ public:
         bool          new_x,
         MatX&         hess_f
     ) final override;
+
+    void finalize_solution(
+        SolverReturn               status,
+        Index                      n,
+        const Number*              x,
+        const Number*              z_L,
+        const Number*              z_U,
+        Index                      m,
+        const Number*              g,
+        const Number*              lambda,
+        Number                     obj_value,
+        const IpoptData*           ip_data,
+        IpoptCalculatedQuantities* ip_cq
+    ) final override;
     
     /**@name Methods to block default compiler methods.
     *
@@ -99,31 +137,47 @@ public:
        const EndEffectorParametersIdentification&
     );
 
-    const double default_maximum_uncertainty = 0.3; // default maximum uncertainty
-
+    // class members:
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
 
-    MatX FullObservationMatrix; // full observation matrix
-    MatX EndeffectorObservation; // Endeffector observation matrix
-    
-    VecX friction;
-    VecX damping;
-    VecX armature;
-    VecX offset;
+    VecXd phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
+    VecXd phi_original; // dynamic parameters read from the original robot model
+   
+    std::vector<std::shared_ptr<TrajectoryData>> trajPtrs_;
+    std::vector<std::shared_ptr<TrajectoryData>> trajPtrs2_;
 
-    // shared pointers to data
-    std::shared_ptr<MatX> posPtr_;
-    std::shared_ptr<MatX> velPtr_;
-    std::shared_ptr<MatX> accPtr_;
-    std::shared_ptr<MatX> torquePtr_;
-    std::shared_ptr<VecX> fullparametersPtr_; 
+    std::shared_ptr<MomentumRegressor> mrPtr_;
+    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 
-    MatX tau_inertials; // computed from the trajectory without friction
-    int Nact = 0; // number of motors
-    int N = 0; // number of samples
+    // std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
+    // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
 
+    VecXd weights; // weights for the nonlinear least square problem
+
+        // forward integration horizon
+    int H = 10;
+    std::vector<int> num_segments;
+
+        // offset in friction parameters
     bool include_offset = false;
+    VecXd offset;
+
+        // regression data
+    std::vector<MatXd> Aseg; // regression matrix for each trajectory
+    std::vector<VecXd> bseg; // regression vector for each trajectory
+
+    MatXd A; // regression matrix for all trajectories
+    VecXd b; // regression vector for all trajectories
+
+    MatXd Aweighted;
+    VecXd bweighted;
+
+    Index nonzero_weights = 0;
+
+        // results
+    Vec10d theta_solution;
+    Vec10d theta_uncertainty;
 };
 
 }; // namespace RAPTOR

@@ -66,7 +66,6 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    // app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
 	app->Options()->SetNumericValue("max_wall_time", 0.2);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 50);
@@ -104,7 +103,7 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-        std::cout << "paramer solution: " << (mynlp->solution).transpose() << std::endl;
+        std::cout << "parameter solution: " << (mynlp->solution).transpose() << std::endl;
 
         // Write the friction parameters into the file 
         const std::string outputfolder = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";

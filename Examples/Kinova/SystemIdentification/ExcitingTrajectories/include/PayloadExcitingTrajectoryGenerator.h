@@ -5,7 +5,7 @@
 
 #include "Optimizer.h"
 
-#include "MomentumRegressor.h"
+#include "RegressorInverseDynamics.h"
 #include "FixedFrequencyFourierCurves.h"
 
 #include "EndEffectorRegressorConditionNumber.h"
@@ -41,10 +41,12 @@ public:
         const VecX& q0_input,
         const VecX& q_d0_input,
         const Model& model_input, 
+        const std::vector<Vec3>& boxCenters,
+        const std::vector<Vec3>& boxOrientations,
+        const std::vector<Vec3>& boxSizes,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
-        const bool use_momentum_regressor_or_not = true,
         const bool include_gripper_or_not = true,
         const double collison_buffer_input = 0.0,
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)

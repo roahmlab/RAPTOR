@@ -100,6 +100,8 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
+    VecX start;
+
 };
 
 }; // namespace Kinova

@@ -34,6 +34,7 @@ bool ArmourOptimizer::set_parameters(
 
     dynPtr_ = dynPtr_input;
 
+    num_obstacles = boxCenters_input.size();
     bcaPtrs.resize(num_time_steps);
     for (size_t i = 0; i < num_time_steps; i++) {
         bcaPtrs[i] = std::make_shared<BoxCollisionAvoidance>(
@@ -61,11 +62,19 @@ bool ArmourOptimizer::get_nlp_info(
     n = NUM_FACTORS;
 
     // number of inequality constraint
-    numCons = NUM_FACTORS * num_time_steps + // torque limits
-              NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
-              num_time_steps * num_spheres + // obstacle avoidance constraints
-              num_time_steps * num_capsule_collisions + // bimanual constraintss
-              NUM_FACTORS * 4; // joint position, velocity limits
+    if (num_obstacles > 0) {
+        numCons = NUM_FACTORS * num_time_steps + // torque limits
+                  NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
+                  num_time_steps * num_spheres + // obstacle avoidance constraints
+                  num_time_steps * num_capsule_collisions + // bimanual constraints
+                  NUM_FACTORS * 4; // joint position, velocity limits
+    }
+    else {
+        numCons = NUM_FACTORS * num_time_steps + // torque limits
+                  NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
+                  num_time_steps * num_capsule_collisions + // bimanual constraints
+                  NUM_FACTORS * 4; // joint position, velocity limits
+    }
     m = numCons;
 
     nnz_jac_g = m * n;
@@ -127,11 +136,13 @@ bool ArmourOptimizer::get_bounds_info(
     offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
 
     // collision avoidance constraints
-    for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
-        g_l[i] = 0.0;
-        g_u[i] = 1e19;
+    if (num_obstacles > 0) {
+        for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
+            g_l[i] = 0.0;
+            g_u[i] = 1e19;
+        }
+        offset += num_time_steps * num_spheres;
     }
-    offset += num_time_steps * num_spheres;
 
     // self collision constraints
     for( Index i = offset; i < offset + num_time_steps * num_capsule_collisions; i++ ) {
@@ -347,35 +358,37 @@ bool ArmourOptimizer::eval_g(
         }
 
         // obstacle avoidance constraints
-        try {
-            #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
-            for (i = 0; i < num_time_steps; i++) {
-                for (size_t j = 0; j < num_spheres; j++) {
-                    const std::string sphere_name = "collision-" + std::to_string(j);
-                    const pinocchio::FrameIndex frame_id = 
-                        robotInfoPtr_->model.getFrameId(sphere_name);
+        if (num_obstacles > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++) {
+                    for (size_t j = 0; j < num_spheres; j++) {
+                        const std::string sphere_name = "collision-" + std::to_string(j);
+                        const pinocchio::FrameIndex frame_id = 
+                            robotInfoPtr_->model.getFrameId(sphere_name);
 
-                    const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+                        const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
 
-                    const Interval x_res = PZsphere(0).slice(x);
-                    const Interval y_res = PZsphere(1).slice(x);
-                    const Interval z_res = PZsphere(2).slice(x);
+                        const Interval x_res = PZsphere(0).slice(x);
+                        const Interval y_res = PZsphere(1).slice(x);
+                        const Interval z_res = PZsphere(2).slice(x);
 
-                    Vec3 sphere_center;
-                    sphere_center << getCenter(x_res), 
-                                     getCenter(y_res), 
-                                     getCenter(z_res);
+                        Vec3 sphere_center;
+                        sphere_center << getCenter(x_res), 
+                                        getCenter(y_res), 
+                                        getCenter(z_res);
 
-                    bcaPtrs[i]->computeDistance(sphere_center);
-                    g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - dynPtr_->sphere_radii(j, i);
+                        bcaPtrs[i]->computeDistance(sphere_center);
+                        g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - dynPtr_->sphere_radii(j, i);
+                    }
                 }
             }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+            }
+            offset += num_time_steps * num_spheres;
         }
-        catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            THROW_EXCEPTION(IpoptException, "Error in eval_g obstacle avoidance!");
-        }
-        offset += num_time_steps * num_spheres;
 
         // bimanual self collision constraints
         try {
@@ -566,47 +579,49 @@ bool ArmourOptimizer::eval_jac_g(
         }
 
         // obstacle avoidance constraints gradient
-        try {
-            #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, values) private(i) schedule(dynamic)
-            for(i = 0; i < num_time_steps; i++) {
-                for (size_t j = 0; j < num_spheres; j++) {
-                    const std::string sphere_name = "collision-" + std::to_string(j);
-                    const pinocchio::FrameIndex frame_id = 
-                        robotInfoPtr_->model.getFrameId(sphere_name);
+        if (num_obstacles > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, values) private(i) schedule(dynamic)
+                for(i = 0; i < num_time_steps; i++) {
+                    for (size_t j = 0; j < num_spheres; j++) {
+                        const std::string sphere_name = "collision-" + std::to_string(j);
+                        const pinocchio::FrameIndex frame_id = 
+                            robotInfoPtr_->model.getFrameId(sphere_name);
 
-                    const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+                        const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
 
-                    const Interval x_res = PZsphere(0).slice(x);
-                    const Interval y_res = PZsphere(1).slice(x);
-                    const Interval z_res = PZsphere(2).slice(x);
+                        const Interval x_res = PZsphere(0).slice(x);
+                        const Interval y_res = PZsphere(1).slice(x);
+                        const Interval z_res = PZsphere(2).slice(x);
 
-                    Vec3 sphere_center;
-                    sphere_center << getCenter(x_res), 
-                                     getCenter(y_res), 
-                                     getCenter(z_res);
+                        Vec3 sphere_center;
+                        sphere_center << getCenter(x_res), 
+                                        getCenter(y_res), 
+                                        getCenter(z_res);
 
-                    VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
-                    PZsphere(0).slice(dk_x_res, x);
-                    PZsphere(1).slice(dk_y_res, x);
-                    PZsphere(2).slice(dk_z_res, x);
+                        VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
+                        PZsphere(0).slice(dk_x_res, x);
+                        PZsphere(1).slice(dk_y_res, x);
+                        PZsphere(2).slice(dk_z_res, x);
 
-                    MatX dk_sphere_center(3, NUM_FACTORS);
-                    dk_sphere_center.row(0) = dk_x_res;
-                    dk_sphere_center.row(1) = dk_y_res;
-                    dk_sphere_center.row(2) = dk_z_res;
+                        MatX dk_sphere_center(3, NUM_FACTORS);
+                        dk_sphere_center.row(0) = dk_x_res;
+                        dk_sphere_center.row(1) = dk_y_res;
+                        dk_sphere_center.row(2) = dk_z_res;
 
-                    bcaPtrs[i]->computeDistance(sphere_center, dk_sphere_center);
+                        bcaPtrs[i]->computeDistance(sphere_center, dk_sphere_center);
 
-                    const VecX& dk_distances = bcaPtrs[i]->pdistances_pz.row(bcaPtrs[i]->minimumDistanceIndex);
-                    std::memcpy(values + (i * num_spheres + j) * NUM_FACTORS + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
+                        const VecX& dk_distances = bcaPtrs[i]->pdistances_pz.row(bcaPtrs[i]->minimumDistanceIndex);
+                        std::memcpy(values + (i * num_spheres + j) * NUM_FACTORS + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
+                    }
                 }
             }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
+            }
+            offset += num_time_steps * num_spheres * NUM_FACTORS;
         }
-        catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
-        }
-        offset += num_time_steps * num_spheres * NUM_FACTORS;
 
         // bimanual self collision constraints gradient
         try {
@@ -829,26 +844,28 @@ void ArmourOptimizer::summarize_constraints(
     }
 
     // obstacle avoidance constraints
-    for( Index i = 0; i < num_time_steps; i++ ) {
-        for( Index j = 0; j < num_spheres; j++ ) {
-            const Number constr_violation = -g[i * num_spheres + j + offset];
+    if (num_obstacles > 0) {
+        for( Index i = 0; i < num_time_steps; i++ ) {
+            for( Index j = 0; j < num_spheres; j++ ) {
+                const Number constr_violation = -g[i * num_spheres + j + offset];
 
-            if (constr_violation > final_constr_violation) {
-                final_constr_violation = constr_violation;
-            }
+                if (constr_violation > final_constr_violation) {
+                    final_constr_violation = constr_violation;
+                }
 
-            if (constr_violation > constr_viol_tol) {
-                ifFeasible = false;
-                
-                if (verbose) {
-                    std::cout << "ArmourOptimizer.cpp: Sphere " << j << 
-                                " at time interval " << i << " collides with obstacles!\n";
-                    std::cout << "    distance: " << g[i * num_spheres + j + offset] << "\n";
+                if (constr_violation > constr_viol_tol) {
+                    ifFeasible = false;
+                    
+                    if (verbose) {
+                        std::cout << "ArmourOptimizer.cpp: Sphere " << j << 
+                                     " at time interval " << i << " collides with obstacles!\n";
+                        std::cout << "    distance: " << g[i * num_spheres + j + offset] << "\n";
+                    }
                 }
             }
         }
+        offset += num_time_steps * num_spheres;
     }
-    offset += num_time_steps * num_spheres;
 
     // bimanual avoidance constraints
     for( Index i = 0; i < num_time_steps; i++ ) {

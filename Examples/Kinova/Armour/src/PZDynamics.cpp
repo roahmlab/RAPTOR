@@ -15,6 +15,18 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
     model_sparses_interval.resize(trajPtr_->num_time_steps);
     data_sparses_interval.resize(trajPtr_->num_time_steps);
 
+    reset_robot_info(robotInfoPtr_);
+
+    friction_PZs.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    zmp_PZs.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+
+    torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
+    sphere_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+}
+
+void PZDynamics::reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr_input) {
+    robotInfoPtr_ = robotInfoPtr_input;
+
     model_sparses[0] = robotInfoPtr_->model.cast<PZSparse>();
     data_sparses[0] = pinocchio::DataTpl<PZSparse>(model_sparses[0]);
 
@@ -42,12 +54,6 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
         model_sparses_interval[i] = model_sparses_interval[0];
         data_sparses_interval[i] = data_sparses_interval[0];
     }
-
-    friction_PZs.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
-    zmp_PZs.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
-
-    torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
-    sphere_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
 }
 
 void PZDynamics::reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input) {

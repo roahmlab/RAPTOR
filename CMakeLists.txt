@@ -115,6 +115,12 @@ link_directories(${HSL_LIBRARY_DIR})
 # link_directories(${PARDISO_LIBRARY_DIR})
 # include_directories(Utils/include)
 
+# Find MOSEK library
+# set(MOSEK_INCLUDE_DIR /opt/mosek/10.2/tools/platform/linux64x86/h)
+# set(MOSEK_LIBRARY_DIR /opt/mosek/10.2/tools/platform/linux64x86/bin)
+# include_directories(${MOSEK_INCLUDE_DIR})
+# link_directories(${MOSEK_LIBRARY_DIR})
+
 add_subdirectory(Trajectories)
 add_subdirectory(KinematicsDynamics)
 add_subdirectory(Optimization)

@@ -161,42 +161,15 @@ inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename)
         data.push_back(lineData);
     }
 
+    if (data.size() == 0) {
+        throw std::runtime_error("Empty file: " + filename);
+    }
+
     Eigen::MatrixXd res(data.size(), data[0].size());
     for (int i = 0; i < data.size(); i++) {
         for (int j = 0; j < data[0].size(); j++) {
             res(i, j) = data[i][j];
         }
-    }
-
-    return res;
-}
-
-inline Eigen::Array<Eigen::VectorXd, 1, Eigen::Dynamic> initializeEigenVectorArrayFromFile(const std::string filename, const int expectedCols){
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file " + filename);
-    }
- 
-    std::vector<Eigen::VectorXd> data;
-    std::string line;
-    int row_num = 0;
-
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        Eigen::VectorXd lineData(expectedCols);
-        double value;
-        int col = 0;
-        row_num++;
-        while (iss >> value) {
-            lineData(col++) = value;
-        }
-        data.push_back(lineData);
-    }
-
-    Eigen::Array<Eigen::VectorXd, 1,Eigen::Dynamic> res;
-    res.resize(1,row_num);
-    for (int i = 0; i < row_num; i++) {
-        res(0, i) =  data[i];
     }
 
     return res;
@@ -249,19 +222,17 @@ inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec,
     return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
-                                                   int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
-
+inline void uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
+                                        Eigen::MatrixXd& samples,
+                                        int numSamples) {
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
         mat.cols() == 0) {
-        return samples; 
+        throw std::invalid_argument("Invalid input arguments");
     }
 
     if (numSamples >= mat.rows()) {
-        samples = mat;
-        return samples;
+        throw std::invalid_argument("Number of samples should be less than the number of rows in the matrix");
     }
 
     samples.resize(numSamples, mat.cols());
@@ -275,23 +246,19 @@ inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat,
             samples.row(i) = mat.row(idx);
         }
     }
-
-    return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
-                                                   int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
-
+inline void uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
+                                        Eigen::MatrixXd& samples,
+                                        int numSamples) {
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
         mat.cols() == 0) {
-        return samples; 
+        throw std::invalid_argument("Invalid input arguments");
     }
 
     if (numSamples >= mat.cols()) {
-        samples = mat;
-        return samples;
+        throw std::invalid_argument("Number of samples should be less than the number of columns in the matrix");
     }
 
     samples.resize(mat.rows(), numSamples);
@@ -305,8 +272,6 @@ inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat,
             samples.col(i) = mat.col(idx);
         }
     }
-
-    return samples;
 }
 
 }; // namespace Utils

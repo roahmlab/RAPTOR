@@ -146,6 +146,7 @@ public:
     size_t num_time_steps = 0;
     size_t num_spheres = 0;
     size_t num_fixed_joints = 0;
+    size_t num_obstacles = 0;
 
     int num_capsule_collisions = 0;
 
