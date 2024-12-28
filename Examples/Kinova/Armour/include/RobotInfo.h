@@ -89,7 +89,8 @@ public:
                                                 const double inertia_eps);
 
     void change_endeffector_inertial_parameters(const Vec10& inertial_parameters,
-                                                const Vec10& inertial_parameters_eps);
+                                                const Vec10& inertial_parameters_lb,
+                                                const Vec10& inertial_parameters_ub);
 
     void print() const;
 };

@@ -19,14 +19,8 @@ KinovaWithoutGripper:
   end_effector_mass_ub: 4.0 # Kinova maximum payload is 3.0 kg, this is a conservative estimate (upper bound)
   end_effector_com_lb: [-0.1, -0.1, -0.4]
   end_effector_com_ub: [0.1, 0.1, -0.1]
-  end_effector_inertia_lb: [-0.01, -0.01, -0.01, -0.01, -0.01, -0.01]
-  end_effector_inertia_ub: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-  # end_effector_mass_lb: 2.63 # Kinova end effector with gripper should be about 1.2849 kg, this is a conservative estimate (lower bound)
-  # end_effector_mass_ub: 2.65 # Kinova maximum payload is 3.0 kg, this is a conservative estimate (upper bound)
-  # end_effector_com_lb: [-0.01, -0.01, -0.35]
-  # end_effector_com_ub: [0.01, 0.01, -0.33]
-  # end_effector_inertia_lb: [-0.01, -0.01, -0.01, -0.01, -0.01, -0.01]
-  # end_effector_inertia_ub: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+  end_effector_inertia_lb: [-0.02, -0.02, -0.02, -0.02, -0.02, -0.02]
+  end_effector_inertia_ub: [0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
 
   # ultimate bound for tracking error
   ultimate_bound:
