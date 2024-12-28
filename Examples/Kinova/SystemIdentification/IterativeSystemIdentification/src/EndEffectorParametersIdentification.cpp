@@ -481,6 +481,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     // compute p_b_p_x for each of the x
     // (1) applied torque data: num_segment * H * modelPtr_->nv
+    Index pivot = 0;
     for (Index tid = 0; tid < trajPtrs_.size(); tid++) {
         const int num_segment = num_segments[tid];
         const auto& trajPtr_ = trajPtrs_[tid];
@@ -491,7 +492,7 @@ void EndEffectorParametersIdentification::finalize_solution(
                 double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
                 for (Index k = 0; k < modelPtr_->nv; k++) {
                     // p_b_p_x = dt;
-                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
+                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double torque_error = 0.0;
@@ -505,9 +506,11 @@ void EndEffectorParametersIdentification::finalize_solution(
                 }
             }
         }
+        pivot += num_segment;
     }
 
     // (2) friction parameters: 4 * modelPtr_->nv
+    pivot = 0;
     for (Index tid = 0; tid < trajPtrs_.size(); tid++) {
         const int num_segment = num_segments[tid];
         const auto& trajPtr_ = trajPtrs_[tid];
@@ -519,7 +522,7 @@ void EndEffectorParametersIdentification::finalize_solution(
                 for (Index k = 0; k < modelPtr_->nv; k++) {
                     // friction
                     // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
-                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row(s * modelPtr_->nv + k);
+                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double friction_parameter_error = std::abs(0.05 * modelPtr_->friction(k));
@@ -527,7 +530,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
                     // damping
                     // p_b_p_x = dt * trajPtr_->q_d(j)(k);
-                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row(s * modelPtr_->nv + k);
+                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double damping_parameter_error = std::abs(0.05 * modelPtr_->damping(k));
@@ -535,7 +538,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
                     // offset
                     // p_b_p_x = dt;
-                    p_z_p_x = -weights(s * modelPtr_->nv + k) * dt * temp1.row(s * modelPtr_->nv + k);
+                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double offset_error = std::abs(0.05 * offset(k));
@@ -543,6 +546,7 @@ void EndEffectorParametersIdentification::finalize_solution(
                 }
             }
         }
+        pivot += num_segment;
     }
 
     // (3) other link inertial parameters: 10 * (modelPtr_->nv - 1)
@@ -554,55 +558,55 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Uncertainty on the estimated end-effector inertial parameters: " << theta_uncertainty.transpose() << std::endl;
 
-    // // update weights based on resdiuals
-    // // const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
-    // // const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
-    // // const double sigma = std::sqrt(sigma_square);
-    // double mu = 0;
-    // for (Index i = 0; i < b.size(); i++) {
-    //     if (weights(i) == 0.0) {
-    //         continue;
-    //     }
-    //     mu += diff(i);
-    // }
-    // mu /= nonzero_weights;
-
-    // double sigma_square = 0;
-    // for (Index i = 0; i < b.size(); i++) {
-    //     if (weights(i) == 0.0) {
-    //         continue;
-    //     }
-    //     sigma_square += std::pow(diff(i) - mu, 2);
-    // }
-    // sigma_square /= nonzero_weights;
+    // update weights based on resdiuals
+    // const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
+    // const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
     // const double sigma = std::sqrt(sigma_square);
+    double mu = 0;
+    for (Index i = 0; i < b.size(); i++) {
+        if (weights(i) == 0.0) {
+            continue;
+        }
+        mu += diff(i);
+    }
+    mu /= nonzero_weights;
 
-    // std::cout << "Mean of the residuals: " << mu << std::endl;
-    // std::cout << "Variance of the residuals: " << sigma << std::endl;
+    double sigma_square = 0;
+    for (Index i = 0; i < b.size(); i++) {
+        if (weights(i) == 0.0) {
+            continue;
+        }
+        sigma_square += std::pow(diff(i) - mu, 2);
+    }
+    sigma_square /= nonzero_weights;
+    const double sigma = std::sqrt(sigma_square);
 
-    // // const double sigma_square = sigma * sigma;
-    // nonzero_weights = 0;
+    std::cout << "Mean of the residuals: " << mu << std::endl;
+    std::cout << "Variance of the residuals: " << sigma << std::endl;
+
+    // const double sigma_square = sigma * sigma;
+    nonzero_weights = 0;
     
-    // for (Index i = 0; i < b.size(); i++) {
-    //     double residual = diff(i);
-    //     if (weights(i) == 0.0) {
-    //         continue;
-    //     }
-    //     if (std::abs(diff(i)) > 3 * sigma) {
-    //         weights(i) = 0.0;
-    //     }
-    //     else {
-    //         weights(i) = 1.0;
-    //         nonzero_weights++;
-    //     }
+    for (Index i = 0; i < b.size(); i++) {
+        double residual = diff(i);
+        if (weights(i) == 0.0) {
+            continue;
+        }
+        if (std::abs(diff(i)) > 3 * sigma) {
+            weights(i) = 0.0;
+        }
+        else {
+            weights(i) = 1.0;
+            nonzero_weights++;
+        }
 
-    //     Aweighted.row(i) = A.row(i) * weights(i);
-    //     bweighted(i) = b(i) * weights(i);
-    // }
+        Aweighted.row(i) = A.row(i) * weights(i);
+        bweighted(i) = b(i) * weights(i);
+    }
 
-    // // Utils::writeEigenMatrixToFile(weights, "weights.txt");
+    // Utils::writeEigenMatrixToFile(weights, "weights.txt");
 
-    // std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
+    std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {

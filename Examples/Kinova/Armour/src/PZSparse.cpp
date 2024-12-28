@@ -51,6 +51,10 @@ PZSparse::PZSparse(double center_inp, double uncertainty_percent) {
     independent = fabs(uncertainty_percent * center_inp);
 }
 
+PZSparse::PZSparse(const Interval a) {
+    center = getCenter(a);
+    independent = getRadius(a);
+}
 
 PZSparse::PZSparse(double center_inp, Interval independent_inp) {
     center = center_inp + getCenter(independent_inp);

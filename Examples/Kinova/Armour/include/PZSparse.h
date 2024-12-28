@@ -10,7 +10,7 @@ namespace Armour {
 using namespace boost::multiprecision;
 
 // make sure the number of monomials in a PZSparse is always smaller than this number
-#define PZ_ORDER 30
+#define PZ_ORDER 20
 
 // For now we only support 7 variables and the number is hardcoded unfortunately
 // The degree of the robot has to be 7.
@@ -69,6 +69,8 @@ public:
     PZSparse(double center_inp);
 
     PZSparse(double center_inp, double uncertainty_percent);
+
+    PZSparse(const Interval a);
 
     PZSparse(double center_inp, Interval independent_inp);
 
