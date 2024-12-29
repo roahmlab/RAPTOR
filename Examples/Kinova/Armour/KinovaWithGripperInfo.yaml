@@ -1,4 +1,4 @@
-KinovaWithoutGripper:
+KinovaWithGripper:
   num_motors: 7
   num_joints: 7
   gravity: [0.0, 0.0, -9.81]
