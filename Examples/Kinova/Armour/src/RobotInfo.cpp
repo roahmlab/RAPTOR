@@ -163,14 +163,15 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
                 const YAML::Node& offset_node = sphere["offset"];
                 const YAML::Node& radius_node = sphere["radius"];
 
-                std::string sphere_1 = sphere["sphere_1"].as<std::string>();
-                std::string sphere_2 = sphere["sphere_2"].as<std::string>();
+                size_t sphere_1 = sphere["sphere_1"].as<size_t>();
+                size_t sphere_2 = sphere["sphere_2"].as<size_t>();
 
                 // Currently no validation, trusts YAML to have valid collision element names
-                pinocchio::FrameIndex frame_id_1 = model.getFrameId(sphere_1);
-                pinocchio::FrameIndex frame_id_2 = model.getFrameId(sphere_2);
+                pinocchio::FrameIndex frame_id_1 = model.getFrameId("collision-" + std::to_string(sphere_1));
+                pinocchio::FrameIndex frame_id_2 = model.getFrameId("collision-" + std::to_string(sphere_2));
 
                 tc_spheres.push_back(std::make_pair(frame_id_1, frame_id_2));
+                tc_sphere_radii.push_back(std::make_pair(sphere_1, sphere_2));
 
                 num_capsules++;
             }
@@ -179,7 +180,14 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
             throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
         }
     }
-    num_capsule_collisions = ((num_capsules)*(num_capsules-3)+2)/2;
+    // Generate list of collision checks
+    num_capsule_collisions = 0;
+    for (int arm_1_index = 0; arm_1_index<num_capsules-2; arm_1_index++){
+        for (int arm_2_index = arm_1_index+2; arm_2_index<num_capsules; arm_2_index++){
+            collision_checks.push_back(std::make_pair(arm_1_index, arm_2_index));
+            num_capsule_collisions++;
+        }
+    }
 }
 
 void RobotInfo::change_endeffector_inertial_parameters(const double mass,

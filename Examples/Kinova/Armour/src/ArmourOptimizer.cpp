@@ -392,11 +392,12 @@ bool ArmourOptimizer::eval_g(
 
         // bimanual self collision constraints
         try {
-            const int capsule_num = robotInfoPtr_->num_capsules;
             #pragma omp parallel for shared(dynPtr_, tccPtr, x, g) private(i) schedule(dynamic)
-            for (i = 0; i< num_time_steps; i++){
-                int num_checks = 0;
-                for (int arm_1_index = 0; arm_1_index<capsule_num-2; arm_1_index++){
+            for (i = 0; i < num_time_steps; i++){
+                for (int collision_index = 0; collision_index < num_capsule_collisions; collision_index++){
+                    const int arm_1_index = robotInfoPtr_->collision_checks[collision_index].first;
+                    const int arm_2_index = robotInfoPtr_->collision_checks[collision_index].second;
+
                     pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
 
                     auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
@@ -421,43 +422,39 @@ bool ArmourOptimizer::eval_g(
                                         getCenter(y_res), 
                                         getCenter(z_res);
 
-                    double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
-                    double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
+                    double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].first, i);
+                    double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].second, i);
 
-                    for (int arm_2_index = arm_1_index+2; arm_2_index<capsule_num; arm_2_index++){
-                        pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
+                    pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
 
-                        auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                        Interval x_res2 = PZsphere(0).slice(x);
-                        Interval y_res2 = PZsphere(1).slice(x);
-                        Interval z_res2 = PZsphere(2).slice(x);
+                    PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
+                    Interval x_res2 = PZsphere(0).slice(x);
+                    Interval y_res2 = PZsphere(1).slice(x);
+                    Interval z_res2 = PZsphere(2).slice(x);
 
-                        Vec3 tc2_sphere_1;
-                        tc2_sphere_1 << getCenter(x_res2), 
-                                        getCenter(y_res2), 
-                                        getCenter(z_res2);
+                    Vec3 tc2_sphere_1;
+                    tc2_sphere_1 << getCenter(x_res2), 
+                                    getCenter(y_res2), 
+                                    getCenter(z_res2);
 
-                        frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
+                    frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
 
-                        PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                        x_res = PZsphere(0).slice(x);
-                        y_res = PZsphere(1).slice(x);
-                        z_res = PZsphere(2).slice(x);
+                    PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
+                    x_res = PZsphere(0).slice(x);
+                    y_res = PZsphere(1).slice(x);
+                    z_res = PZsphere(2).slice(x);
 
-                        Vec3 tc2_sphere_2;
-                        tc2_sphere_2 << getCenter(x_res), 
-                                        getCenter(y_res), 
-                                        getCenter(z_res);
+                    Vec3 tc2_sphere_2;
+                    tc2_sphere_2 << getCenter(x_res), 
+                                    getCenter(y_res), 
+                                    getCenter(z_res);
 
-                        const double tc2_sphere_1_radius = dynPtr_->sphere_radii(arm_2_index, i);
-                        const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
+                    const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].first, i);
+                    const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].second, i);
 
-                        const int index_g = i * num_capsule_collisions + num_checks + offset;
-                        g[index_g] = tccPtr[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+                    const int index_g = i * num_capsule_collisions + collision_index + offset;
+                    g[index_g] = tccPtr[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
                                                             tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
-
-                        num_checks++;
-                    }
                 }
             }
         }

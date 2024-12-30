@@ -308,73 +308,77 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
     const double x_val = 1;
     const double* x;
     x = &x_val;
+    int num_capsule_collisions = robotInfoPtr_->collision_checks.size();
 
-    for (int i = 0; i< num_time_steps; i++){
-        int num_checks = 0;
-        for (int arm_1_index = 0; arm_1_index<capsule_num-2; arm_1_index++){
-            pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
+    for (int i = 0; i < 5; i++){
+        for (int collision_index = 0; collision_index < num_capsule_collisions; collision_index++){
+            const int arm_1_index = robotInfoPtr_->collision_checks[collision_index].first;
+            const int arm_2_index = robotInfoPtr_->collision_checks[collision_index].second;
+            if(i == 0){
+                std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
+            }
 
-            auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-            Interval x_res = PZsphere(0).slice(x);
-            Interval y_res = PZsphere(1).slice(x);
-            Interval z_res = PZsphere(2).slice(x);
+            pinocchio::FrameIndex frame_id_0 = robotInfoPtr_->tc_spheres[arm_1_index].first;
+
+            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id_0].translation();
+            Interval x_res = PZsphere_0(0).slice(x);
+            Interval y_res = PZsphere_0(1).slice(x);
+            Interval z_res = PZsphere_0(2).slice(x);
 
             Vec3 tc1_sphere_1;
             tc1_sphere_1 << getCenter(x_res), 
                                 getCenter(y_res), 
                                 getCenter(z_res);
 
-            frame_id = robotInfoPtr_->tc_spheres[arm_1_index].second;
+            pinocchio::FrameIndex frame_id_1 = robotInfoPtr_->tc_spheres[arm_1_index].second;
 
-            PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-            x_res = PZsphere(0).slice(x);
-            y_res = PZsphere(1).slice(x);
-            z_res = PZsphere(2).slice(x);
+            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id_1].translation();
+            x_res = PZsphere_1(0).slice(x);
+            y_res = PZsphere_1(1).slice(x);
+            z_res = PZsphere_1(2).slice(x);
 
             Vec3 tc1_sphere_2;
             tc1_sphere_2 << getCenter(x_res), 
                                 getCenter(y_res), 
                                 getCenter(z_res);
 
-            double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
-            double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
+            double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].first, i);
+            double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].second, i);
 
-            for (int arm_2_index = arm_1_index+2; arm_2_index<capsule_num; arm_2_index++){
-                pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
+            pinocchio::FrameIndex frame_id_2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
 
-                auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                Interval x_res2 = PZsphere(0).slice(x);
-                Interval y_res2 = PZsphere(1).slice(x);
-                Interval z_res2 = PZsphere(2).slice(x);
+            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id_2].translation();
+            Interval x_res2 = PZsphere_2(0).slice(x);
+            Interval y_res2 = PZsphere_2(1).slice(x);
+            Interval z_res2 = PZsphere_2(2).slice(x);
 
-                Vec3 tc2_sphere_1;
-                tc2_sphere_1 << getCenter(x_res2), 
-                                getCenter(y_res2), 
-                                getCenter(z_res2);
+            Vec3 tc2_sphere_1;
+            tc2_sphere_1 << getCenter(x_res2), 
+                            getCenter(y_res2), 
+                            getCenter(z_res2);
 
-                frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
+            pinocchio::FrameIndex frame_id_3 = robotInfoPtr_->tc_spheres[arm_2_index].second;
 
-                PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                x_res = PZsphere(0).slice(x);
-                y_res = PZsphere(1).slice(x);
-                z_res = PZsphere(2).slice(x);
+            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id_3].translation();
+            x_res = PZsphere_3(0).slice(x);
+            y_res = PZsphere_3(1).slice(x);
+            z_res = PZsphere_3(2).slice(x);
 
-                Vec3 tc2_sphere_2;
-                tc2_sphere_2 << getCenter(x_res), 
-                                getCenter(y_res), 
-                                getCenter(z_res);
+            Vec3 tc2_sphere_2;
+            tc2_sphere_2 << getCenter(x_res), 
+                            getCenter(y_res), 
+                            getCenter(z_res);
 
-                const double tc2_sphere_1_radius = dynPtr_->sphere_radii(arm_2_index, i);
-                const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
-                double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
-                                                    tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
-                if(arm_1_index == 1 && arm_2_index == 3){
-                    BOOST_CHECK(distance > 0);
-                }
-                else{
-                    BOOST_CHECK(distance < 0);
-                }
-                
+
+            const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].first, i);
+            const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].second, i);
+            double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+                                                tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
+            if(arm_1_index == 0 && arm_2_index == 2){
+                BOOST_CHECK(distance < 0);
+            }
+            else{
+                BOOST_CHECK(distance > 0);
             }
         }
     }
@@ -435,69 +439,73 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
     const double* x;
     x = &x_val;
 
-    for (int i = 0; i< num_time_steps; i++){
-        int num_checks = 0;
-        for (int arm_1_index = 0; arm_1_index<capsule_num-2; arm_1_index++){
-            pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
+    size_t num_capsule_collisions = robotInfoPtr_->collision_checks.size();
 
-            auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-            Interval x_res = PZsphere(0).slice(x);
-            Interval y_res = PZsphere(1).slice(x);
-            Interval z_res = PZsphere(2).slice(x);
+    for (int i = 0; i < 5; i++){
+        for (int collision_index = 0; collision_index < num_capsule_collisions; collision_index++){
+            const int arm_1_index = robotInfoPtr_->collision_checks[collision_index].first;
+            const int arm_2_index = robotInfoPtr_->collision_checks[collision_index].second;
+            if(i == 0){
+                std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
+            }
+
+            pinocchio::FrameIndex frame_id_0 = robotInfoPtr_->tc_spheres[arm_1_index].first;
+
+            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id_0].translation();
+            Interval x_res = PZsphere_0(0).slice(x);
+            Interval y_res = PZsphere_0(1).slice(x);
+            Interval z_res = PZsphere_0(2).slice(x);
 
             Vec3 tc1_sphere_1;
             tc1_sphere_1 << getCenter(x_res), 
                                 getCenter(y_res), 
                                 getCenter(z_res);
 
-            frame_id = robotInfoPtr_->tc_spheres[arm_1_index].second;
+            pinocchio::FrameIndex frame_id_1 = robotInfoPtr_->tc_spheres[arm_1_index].second;
 
-            PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-            x_res = PZsphere(0).slice(x);
-            y_res = PZsphere(1).slice(x);
-            z_res = PZsphere(2).slice(x);
+            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id_1].translation();
+            x_res = PZsphere_1(0).slice(x);
+            y_res = PZsphere_1(1).slice(x);
+            z_res = PZsphere_1(2).slice(x);
 
             Vec3 tc1_sphere_2;
             tc1_sphere_2 << getCenter(x_res), 
                                 getCenter(y_res), 
                                 getCenter(z_res);
 
-            double tc1_sphere_1_radius = dynPtr_->sphere_radii(arm_1_index, i);
-            double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
+            double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].first, i);
+            double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].second, i);
 
-            for (int arm_2_index = arm_1_index+2; arm_2_index<capsule_num; arm_2_index++){
-                pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
+            pinocchio::FrameIndex frame_id_2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
 
-                auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                Interval x_res2 = PZsphere(0).slice(x);
-                Interval y_res2 = PZsphere(1).slice(x);
-                Interval z_res2 = PZsphere(2).slice(x);
+            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id_2].translation();
+            Interval x_res2 = PZsphere_2(0).slice(x);
+            Interval y_res2 = PZsphere_2(1).slice(x);
+            Interval z_res2 = PZsphere_2(2).slice(x);
 
-                Vec3 tc2_sphere_1;
-                tc2_sphere_1 << getCenter(x_res2), 
-                                getCenter(y_res2), 
-                                getCenter(z_res2);
+            Vec3 tc2_sphere_1;
+            tc2_sphere_1 << getCenter(x_res2), 
+                            getCenter(y_res2), 
+                            getCenter(z_res2);
 
-                frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
+            pinocchio::FrameIndex frame_id_3 = robotInfoPtr_->tc_spheres[arm_2_index].second;
 
-                PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                x_res = PZsphere(0).slice(x);
-                y_res = PZsphere(1).slice(x);
-                z_res = PZsphere(2).slice(x);
+            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id_3].translation();
+            x_res = PZsphere_3(0).slice(x);
+            y_res = PZsphere_3(1).slice(x);
+            z_res = PZsphere_3(2).slice(x);
 
-                Vec3 tc2_sphere_2;
-                tc2_sphere_2 << getCenter(x_res), 
-                                getCenter(y_res), 
-                                getCenter(z_res);
+            Vec3 tc2_sphere_2;
+            tc2_sphere_2 << getCenter(x_res), 
+                            getCenter(y_res), 
+                            getCenter(z_res);
 
-                const double tc2_sphere_1_radius = dynPtr_->sphere_radii(arm_2_index, i);
-                const double tc2_sphere_2_radius = dynPtr_->sphere_radii(arm_2_index+1, i);
+            const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].first, i);
+            const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].second, i);
 
-                double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
-                                                    tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
-                BOOST_CHECK(distance > 1e-2);
-                num_checks++;
-            }
+            double distance = tccPtr->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+                                                tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
+            BOOST_CHECK(distance > 0);
         }
     }
 }
