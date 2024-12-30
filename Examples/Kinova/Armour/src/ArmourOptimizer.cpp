@@ -397,9 +397,7 @@ bool ArmourOptimizer::eval_g(
             for (i = 0; i< num_time_steps; i++){
                 int num_checks = 0;
                 for (int arm_1_index = 0; arm_1_index<capsule_num-2; arm_1_index++){
-                    std::string sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2];
-                    pinocchio::FrameIndex frame_id = 
-                        robotInfoPtr_->model.getFrameId(sphere_name);
+                    pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
 
                     auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                     Interval x_res = PZsphere(0).slice(x);
@@ -410,10 +408,8 @@ bool ArmourOptimizer::eval_g(
                     tc1_sphere_1 << getCenter(x_res), 
                                         getCenter(y_res), 
                                         getCenter(z_res);
-                    // TODO: get sphere names from TC index
-                    sphere_name = robotInfoPtr_->tc_spheres[arm_1_index*2+1];
-                    frame_id = 
-                        robotInfoPtr_->model.getFrameId(sphere_name);
+
+                    frame_id = robotInfoPtr_->tc_spheres[arm_1_index].second;
 
                     PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                     x_res = PZsphere(0).slice(x);
@@ -429,9 +425,7 @@ bool ArmourOptimizer::eval_g(
                     double tc1_sphere_2_radius = dynPtr_->sphere_radii(arm_1_index+1, i);
 
                     for (int arm_2_index = arm_1_index+2; arm_2_index<capsule_num; arm_2_index++){
-                        std::string sphere_name2_1 = robotInfoPtr_->tc_spheres[arm_2_index*2];
-                        pinocchio::FrameIndex frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name2_1);
+                        pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
 
                         auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
                         Interval x_res2 = PZsphere(0).slice(x);
@@ -443,9 +437,7 @@ bool ArmourOptimizer::eval_g(
                                         getCenter(y_res2), 
                                         getCenter(z_res2);
 
-                        std::string sphere_name2_2 = robotInfoPtr_->tc_spheres[arm_2_index*2+1];
-                        frame_id2 = 
-                            robotInfoPtr_->model.getFrameId(sphere_name2_2);
+                        frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
 
                         PZsphere = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
                         x_res = PZsphere(0).slice(x);

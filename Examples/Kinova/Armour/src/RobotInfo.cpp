@@ -167,8 +167,10 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
                 std::string sphere_2 = sphere["sphere_2"].as<std::string>();
 
                 // Currently no validation, trusts YAML to have valid collision element names
-                tc_spheres.push_back(sphere_1);
-                tc_spheres.push_back(sphere_2);
+                pinocchio::FrameIndex frame_id_1 = model.getFrameId(sphere_1);
+                pinocchio::FrameIndex frame_id_2 = model.getFrameId(sphere_2);
+
+                tc_spheres.push_back(std::make_pair(frame_id_1, frame_id_2));
 
                 num_capsules++;
             }

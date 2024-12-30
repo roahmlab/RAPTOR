@@ -175,7 +175,7 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         VecF lgrey = pa_pz * tStar - pb_pz * uStar - pc_pz;
         auto dist_vec = d1 * tStar - d2 * uStar - d12;
         double purple = dist_vec.norm();
-        // To reach zero the capsules are already in collision, but this protects against underfined gradient
+        // To reach zero the capsules are already in collision, but this protects against undefined gradient
         if(purple==0) {
             purple = 1e-6;
         }

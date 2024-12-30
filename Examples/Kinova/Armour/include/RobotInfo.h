@@ -64,7 +64,7 @@ public:
     // bimanual constraints info
     int num_capsule_collisions = 0;
     int num_capsules = 0;
-    std::vector<std::string> tc_spheres;
+    std::vector<std::pair<pinocchio::FrameIndex, pinocchio::FrameIndex>> tc_spheres;
 
     RobotInfo() = default;
 
