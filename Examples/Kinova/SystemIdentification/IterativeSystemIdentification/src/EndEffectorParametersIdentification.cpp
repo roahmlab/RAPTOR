@@ -14,21 +14,9 @@ namespace RAPTOR {
 
 bool EndEffectorParametersIdentification::set_parameters(
     const Model& model_input,
-    const std::string filename_input,
-    const SensorNoiseInfo sensor_noise_input,
-    const int H_input,
-    const TimeFormat time_format,
-    const int downsample_rate,
     const VecXd offset_input
 )
 { 
-    // macro NUM_THREADS should be define in cmake
-    #ifdef NUM_THREADS
-        omp_set_num_threads(NUM_THREADS);
-    #else
-        THROW_EXCEPTION(IpoptException, "macro NUM_THREADS is not defined!");
-    #endif
-
     enable_hessian = true;
 
     // parse the robot model
@@ -51,11 +39,27 @@ bool EndEffectorParametersIdentification::set_parameters(
         offset = VecXd::Zero(modelPtr_->nv);
     }
 
+    // simply give 0 as initial guess
+    x0 = VecXd::Zero(10);
+
+    return true;
+}
+
+void EndEffectorParametersIdentification::add_trajectory_file(
+    const std::string filename_input,
+    const SensorNoiseInfo sensor_noise_input,
+    const int H_input,
+    const TimeFormat time_format,
+    const int downsample_rate) {
     // this trajectory is to compute momentum regressors
     trajPtrs_.push_back(std::make_shared<TrajectoryData>(filename_input, 
                                                          sensor_noise_input,
                                                          time_format,
                                                          downsample_rate));
+
+    if (trajPtrs_.back()->Nact != modelPtr_->nv) {
+        throw std::invalid_argument("The number of active joints in the trajectory does not match the robot model.");
+    }
 
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
@@ -75,123 +79,13 @@ bool EndEffectorParametersIdentification::set_parameters(
                           H_input);
 
     // combine all the regressors
+    num_segments.clear();
     int total_num_segments = 0;
     for (const auto& Aseg_i : Aseg) {
         num_segments.push_back(Aseg_i.rows() / modelPtr_->nv);
         total_num_segments += num_segments.back();
     }
-    A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
-    b.resize(modelPtr_->nv * total_num_segments);
-    Index row_start = 0;
-    for (Index i = 0; i < Aseg.size(); i++) {
-        const auto& Aseg_i = Aseg[i];
-        const auto& bseg_i = bseg[i];
-        A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
-        b.segment(row_start, bseg_i.size()) = bseg_i;
-    }
 
-    // assign weights to A and b
-    weights = VecXd::Ones(modelPtr_->nv * total_num_segments);
-    nonzero_weights = weights.size();
-
-    Aweighted.resize(A.rows(), A.cols());
-    bweighted.resize(b.size());
-
-    Index i = 0;
-    #pragma omp parallel for shared(weights, A, b) private(i) schedule(dynamic, 1)
-    for (i = 0; i < b.size(); i++) {
-        Aweighted.row(i) = A.row(i) * weights(i);
-        bweighted(i) = b(i) * weights(i);
-    }
-
-    // simply give 0 as initial guess
-    x0 = VecXd::Zero(10); 
-
-    // parse sensor noise
-    if (sensor_noise_input.position_error.norm() == 0.0 &&
-        sensor_noise_input.velocity_error.norm() == 0.0 &&
-        sensor_noise_input.acceleration_error.norm() == 0.0) {
-        std::cout << "No sensor noise is added" << std::endl;
-    }
-    else {
-        std::cout << "Sensor noise is added" << std::endl;
-        
-        // mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
-        // ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
-    }
-
-    return true;
-}
-
-bool EndEffectorParametersIdentification::set_parameters(
-    const Model& model_input,
-    const std::vector<std::string>& filenames_input,
-    const SensorNoiseInfo sensor_noise_input,
-    const int H_input,
-    const TimeFormat time_format,
-    const int downsample_rate,
-    const VecXd offset_input
-)
-{ 
-    // macro NUM_THREADS should be define in cmake
-    #ifdef NUM_THREADS
-        omp_set_num_threads(NUM_THREADS);
-    #else
-        THROW_EXCEPTION(IpoptException, "macro NUM_THREADS is not defined!");
-    #endif
-
-    enable_hessian = true;
-
-    // parse the robot model
-    modelPtr_ = std::make_shared<Model>(model_input);
-    dataPtr_ = std::make_shared<Data>(*modelPtr_);
-
-    phi = VecXd::Zero(10 * modelPtr_->nv);
-    for (Index i = 0; i < modelPtr_->nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        phi.segment<10>(10 * i) =
-            modelPtr_->inertias[pinocchio_joint_id]
-                .toDynamicParameters();
-    }
-    phi_original = phi;
-
-    std::cout << "End effector estimation from URDF file: " << phi_original.tail(10).transpose() << std::endl;
-
-    offset = offset_input;
-    if (offset.size() != modelPtr_->nv) { // offset is disabled
-        offset = VecXd::Zero(modelPtr_->nv);
-    }
-
-    for (const auto& filename : filenames_input) {
-        // this trajectory is to compute momentum regressors
-        trajPtrs_.push_back(std::make_shared<TrajectoryData>(filename, 
-                                                             sensor_noise_input,
-                                                             time_format,
-                                                             downsample_rate));
-
-        // this trajectory is to compute gravity regressors,
-        // so set velocity to 0 while acceleration is already 0 in TrajectoryData
-        trajPtrs2_.push_back(std::make_shared<TrajectoryData>(trajPtrs_.back()->T, 
-                                                              trajPtrs_.back()->N, 
-                                                              trajPtrs_.back()->Nact, 
-                                                              false, 
-                                                              sensor_noise_input));
-        for (Index i = 0; i < trajPtrs_.back()->N; i++) {
-            trajPtrs2_.back()->tspan(i) = trajPtrs_.back()->tspan(i);
-            trajPtrs2_.back()->q(i) = trajPtrs_.back()->q(i);
-        }
-
-        initialize_regressors(trajPtrs_.back(),
-                              trajPtrs2_.back(),
-                              H_input);
-    }
-
-    // combine all the regressors
-    int total_num_segments = 0;
-    for (const auto& Aseg_i : Aseg) {
-        num_segments.push_back(Aseg_i.rows() / modelPtr_->nv);
-        total_num_segments += num_segments.back();
-    }
     A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
     b.resize(modelPtr_->nv * total_num_segments);
     Index row_start = 0;
@@ -202,41 +96,6 @@ bool EndEffectorParametersIdentification::set_parameters(
         b.segment(row_start, bseg_i.size()) = bseg_i;
         row_start += Aseg_i.rows();
     }
-
-    std::cout << "Forward integration horizon: " << H << std::endl;
-    std::cout << "Total number of segments: " << total_num_segments << std::endl;
-
-    // assign weights to A and b
-    weights = VecXd::Ones(modelPtr_->nv * total_num_segments);
-    nonzero_weights = weights.size();
-
-    Aweighted.resize(A.rows(), A.cols());
-    bweighted.resize(b.size());
-
-    Index i = 0;
-    #pragma omp parallel for shared(weights, A, b) private(i) schedule(dynamic, 1)
-    for (i = 0; i < b.size(); i++) {
-        Aweighted.row(i) = A.row(i) * weights(i);
-        bweighted(i) = b(i) * weights(i);
-    }
-
-    // simply give 0 as initial guess
-    x0 = VecXd::Zero(10); 
-
-    // parse sensor noise
-    if (sensor_noise_input.position_error.norm() == 0.0 &&
-        sensor_noise_input.velocity_error.norm() == 0.0 &&
-        sensor_noise_input.acceleration_error.norm() == 0.0) {
-        std::cout << "No sensor noise is added" << std::endl;
-    }
-    else {
-        std::cout << "Sensor noise is added" << std::endl;
-        
-        // mrIntPtr_ = std::make_shared<IntervalMomentumRegressor>(*modelPtr_, trajPtr_);
-        // ridIntPtr_ = std::make_shared<IntervalRegressorInverseDynamics>(*modelPtr_, trajPtr2_);
-    }
-
-    return true;
 }
 
 void EndEffectorParametersIdentification::initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
@@ -265,7 +124,7 @@ void EndEffectorParametersIdentification::initialize_regressors(const std::share
     bseg.push_back(VecXd::Zero(modelPtr_->nv * num_segment));
 
     Index i = 0;
-    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A, b) private(i) schedule(dynamic, 1)
+    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, Aseg, bseg) private(i) schedule(dynamic, 1)
     for (i = 0; i < num_segment; i++) {
         const int seg_start = i * H;
         const int seg_end = seg_start + H;
@@ -301,12 +160,14 @@ void EndEffectorParametersIdentification::initialize_regressors(const std::share
 void EndEffectorParametersIdentification::reset() {
     Optimizer::reset();
 
-    // clear all the vectors
     trajPtrs_.clear();
     trajPtrs2_.clear();
 
     Aseg.clear();
     bseg.clear();
+
+    A.setZero();
+    b.setZero();
 
     num_segments.clear();
 }
@@ -353,7 +214,7 @@ bool EndEffectorParametersIdentification::eval_f(
     phi.tail(10) = z_to_theta(z);
 
     // Compute the ojective function
-    const VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = A * phi - b;
     const double diffSquared = diff.dot(diff);
 
     obj_value = std::sqrt(diffSquared);
@@ -379,12 +240,12 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     
     Mat10d dtheta;
     phi.tail(10) = d_z_to_theta(z, dtheta);
-    const VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = A * phi - b;
     const double diffSquared = diff.dot(diff);
     const double diffNorm = std::sqrt(diffSquared);
 
     // Compute the gradient
-    grad_f_vec = (diff.transpose() * Aweighted.rightCols(10) * dtheta) / diffNorm;
+    grad_f_vec = (diff.transpose() * A.rightCols(10) * dtheta) / diffNorm;
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -409,15 +270,15 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(z, dtheta, ddtheta);
-    const VecXd diff = Aweighted * phi - bweighted;
+    const VecXd diff = A * phi - b;
     const double diffSquared = diff.dot(diff);
     const double diffNorm = std::sqrt(diffSquared);
 
     // Compute the Hessian
-    MatX temp1 = Aweighted.rightCols(10) * dtheta;
+    MatX temp1 = A.rightCols(10) * dtheta;
     hess_f = temp1.transpose() * temp1 / diffNorm;
 
-    MatX temp2 = diff.transpose() * Aweighted.rightCols(10);
+    MatX temp2 = diff.transpose() * A.rightCols(10);
     for (Index i = 0; i < n; i++) {
         hess_f += temp2(i) * ddtheta(i) / diffNorm;
     }
@@ -447,15 +308,13 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Performing error analysis" << std::endl;
 
-    const auto& sensor_noise = trajPtrs_.back()->sensor_noise;
-
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
-    VecXd diff = Aweighted * phi - bweighted;
+    VecXd diff = A * phi - b;
 
-    MatXd temp1 = Aweighted.rightCols(10) * dtheta;
-    MatXd temp2 = diff.transpose() * Aweighted.rightCols(10);
+    MatXd temp1 = A.rightCols(10) * dtheta;
+    MatXd temp2 = diff.transpose() * A.rightCols(10);
     Mat10d temp3 = temp1.transpose() * temp1;
     Mat10d temp4;
     temp4.setZero();
@@ -485,6 +344,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     for (Index tid = 0; tid < trajPtrs_.size(); tid++) {
         const int num_segment = num_segments[tid];
         const auto& trajPtr_ = trajPtrs_[tid];
+        const auto& sensor_noise = trajPtr_->sensor_noise;
         for (Index s = 0; s < num_segment; s++) {
             int seg_start = s * H;
             int seg_end = seg_start + H;
@@ -492,7 +352,7 @@ void EndEffectorParametersIdentification::finalize_solution(
                 double dt = trajPtr_->tspan(j + 1) - trajPtr_->tspan(j);
                 for (Index k = 0; k < modelPtr_->nv; k++) {
                     // p_b_p_x = dt;
-                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * temp1.row((pivot + s) * modelPtr_->nv + k);
+                    p_z_p_x = -dt * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double torque_error = 0.0;
@@ -522,7 +382,7 @@ void EndEffectorParametersIdentification::finalize_solution(
                 for (Index k = 0; k < modelPtr_->nv; k++) {
                     // friction
                     // p_b_p_x = dt * Utils::sign(trajPtr_->q_d(j)(k));
-                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row((pivot + s) * modelPtr_->nv + k);
+                    p_z_p_x = -dt * Utils::sign(trajPtr_->q_d(j)(k)) * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double friction_parameter_error = std::abs(0.05 * modelPtr_->friction(k));
@@ -530,7 +390,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
                     // damping
                     // p_b_p_x = dt * trajPtr_->q_d(j)(k);
-                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * trajPtr_->q_d(j)(k) * temp1.row((pivot + s) * modelPtr_->nv + k);
+                    p_z_p_x = -dt * trajPtr_->q_d(j)(k) * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double damping_parameter_error = std::abs(0.05 * modelPtr_->damping(k));
@@ -538,7 +398,7 @@ void EndEffectorParametersIdentification::finalize_solution(
 
                     // offset
                     // p_b_p_x = dt;
-                    p_z_p_x = -weights((pivot + s) * modelPtr_->nv + k) * dt * temp1.row((pivot + s) * modelPtr_->nv + k);
+                    p_z_p_x = -dt * temp1.row((pivot + s) * modelPtr_->nv + k);
                     p_eta_p_x = -p_z_p_eta_inv * p_z_p_x;
                     p_theta_p_x = dtheta * p_eta_p_x;
                     double offset_error = std::abs(0.05 * offset(k));
@@ -550,63 +410,13 @@ void EndEffectorParametersIdentification::finalize_solution(
     }
 
     // (3) other link inertial parameters: 10 * (modelPtr_->nv - 1)
-    MatXd p_b_p_x = -Aweighted.leftCols(10 * (modelPtr_->nv - 1));
+    MatXd p_b_p_x = -A.leftCols(10 * (modelPtr_->nv - 1));
     MatXd p_z_p_x_2 = -p_b_p_x.transpose() * temp1;
     MatXd p_eta_p_x_2 = -p_z_p_eta_inv * p_z_p_x_2.transpose();
     MatXd p_theta_p_x_2 = dtheta * p_eta_p_x_2;
     theta_uncertainty += p_theta_p_x_2.cwiseAbs() * phi_original.head(10 * (modelPtr_->nv - 1)).cwiseAbs() * 0.05;
 
     std::cout << "Uncertainty on the estimated end-effector inertial parameters: " << theta_uncertainty.transpose() << std::endl;
-
-    // update weights based on resdiuals
-    // const double mu = diff.sum() / diff.size(); // compute the mean of the residuals
-    // const double sigma_square = (diff.array() - mu).square().sum() / diff.size(); // compute the variance of the residuals
-    // const double sigma = std::sqrt(sigma_square);
-    double mu = 0;
-    for (Index i = 0; i < b.size(); i++) {
-        if (weights(i) == 0.0) {
-            continue;
-        }
-        mu += diff(i);
-    }
-    mu /= nonzero_weights;
-
-    double sigma_square = 0;
-    for (Index i = 0; i < b.size(); i++) {
-        if (weights(i) == 0.0) {
-            continue;
-        }
-        sigma_square += std::pow(diff(i) - mu, 2);
-    }
-    sigma_square /= nonzero_weights;
-    const double sigma = std::sqrt(sigma_square);
-
-    std::cout << "Mean of the residuals: " << mu << std::endl;
-    std::cout << "Variance of the residuals: " << sigma << std::endl;
-
-    // const double sigma_square = sigma * sigma;
-    nonzero_weights = 0;
-    
-    for (Index i = 0; i < b.size(); i++) {
-        double residual = diff(i);
-        if (weights(i) == 0.0) {
-            continue;
-        }
-        if (std::abs(diff(i)) > 3 * sigma) {
-            weights(i) = 0.0;
-        }
-        else {
-            weights(i) = 1.0;
-            nonzero_weights++;
-        }
-
-        Aweighted.row(i) = A.row(i) * weights(i);
-        bweighted(i) = b(i) * weights(i);
-    }
-
-    // Utils::writeEigenMatrixToFile(weights, "weights.txt");
-
-    std::cout << "Number of nonzero weights has been updated to: " << nonzero_weights << std::endl;
 }
 
 Eigen::Vector<double, 10> EndEffectorParametersIdentification::z_to_theta(const VecXd& z) {
