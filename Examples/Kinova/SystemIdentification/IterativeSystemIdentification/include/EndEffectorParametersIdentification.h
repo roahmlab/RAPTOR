@@ -137,6 +137,7 @@ public:
    
     std::vector<std::shared_ptr<TrajectoryData>> trajPtrs_;
     std::vector<std::shared_ptr<TrajectoryData>> trajPtrs2_;
+    std::vector<std::string> trajectoryFilenames_;
 
     std::shared_ptr<MomentumRegressor> mrPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;

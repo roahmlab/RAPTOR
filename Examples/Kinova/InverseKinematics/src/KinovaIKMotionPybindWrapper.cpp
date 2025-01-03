@@ -110,6 +110,7 @@ nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) 
     }
 
     int pid = 0;
+    has_optimized = true;
     for (const auto& desiredTransform: desiredTransforms) {
         try {
             mynlp->reset();

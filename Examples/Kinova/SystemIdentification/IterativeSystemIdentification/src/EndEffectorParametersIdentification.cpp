@@ -61,6 +61,8 @@ void EndEffectorParametersIdentification::add_trajectory_file(
         throw std::invalid_argument("The number of active joints in the trajectory does not match the robot model.");
     }
 
+    trajectoryFilenames_.push_back(filename_input);
+
     // this trajectory is to compute gravity regressors,
     // so set velocity to 0 while acceleration is already 0 in TrajectoryData
     trajPtrs2_.push_back(std::make_shared<TrajectoryData>(trajPtrs_.back()->T, 
@@ -88,6 +90,8 @@ void EndEffectorParametersIdentification::add_trajectory_file(
 
     A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
     b.resize(modelPtr_->nv * total_num_segments);
+    A.setZero();
+    b.setZero();
     Index row_start = 0;
     for (Index i = 0; i < Aseg.size(); i++) {
         const auto& Aseg_i = Aseg[i];
@@ -95,6 +99,23 @@ void EndEffectorParametersIdentification::add_trajectory_file(
         A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
         b.segment(row_start, bseg_i.size()) = bseg_i;
         row_start += Aseg_i.rows();
+    }
+
+    if (row_start != A.rows()) {
+        throw std::runtime_error("Error in combining regression matrices!");
+    }
+
+    for (Index i = 0; i < A.rows(); i++) {
+        for (Index j = 0; j < A.cols(); j++) {
+            if (std::abs(A(i, j)) > 1e6) {
+                A(i, j) = 0;
+                std::cerr << "Warning: large value in regression matrix A at (" << i << ", " << j << ")" << std::endl;
+            }
+            else if (std::isnan(A(i, j))) {
+                A(i, j) = 0;
+                std::cerr << "Warning: NaN value in regression matrix A at (" << i << ", " << j << ")" << std::endl;
+            }
+        }
     }
 }
 
@@ -162,6 +183,7 @@ void EndEffectorParametersIdentification::reset() {
 
     trajPtrs_.clear();
     trajPtrs2_.clear();
+    trajectoryFilenames_.clear();
 
     Aseg.clear();
     bseg.clear();
@@ -170,6 +192,8 @@ void EndEffectorParametersIdentification::reset() {
     b.setZero();
 
     num_segments.clear();
+
+    std::cout << "End effector identification reset, all trajectory data removed." << std::endl;
 }
 
 bool EndEffectorParametersIdentification::get_nlp_info(

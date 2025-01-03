@@ -116,6 +116,11 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
         throw std::runtime_error("Trajectory data not added yet!");
     }
 
+    std::cout << "The following trajectory data files are considered:\n";
+    for (const auto& filename: mynlp->trajectoryFilenames_) {
+        std::cout << "    Trajectory file: " << filename << std::endl;
+    }
+
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
     status = app->Initialize();
