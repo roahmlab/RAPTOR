@@ -1,4 +1,4 @@
-#include "ArmourOptimizer.h"
+#include "DualArmourOptimizer.h"
 
 using namespace RAPTOR;
 using namespace Kinova;
@@ -13,42 +13,63 @@ int main() {
         throw std::runtime_error("macro NUM_THREADS is not defined!");
     #endif
 
-// INITIALIZATION
+// FIRST ROBOT INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
-    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
-    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
-    const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
-        std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
+    const std::string robot_model_file1 = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string robot_info_file1 = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::shared_ptr<RobotInfo> robotInfoPtr1_ = 
+        std::make_shared<RobotInfo>(robot_model_file1, robot_info_file1);
 
     // create a trajectory instance (compute trajectory on continuous time intervals)
-        // initial conditions of the trajectory
-    // const Eigen::VectorXd q0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    // const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    // const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
-    // q0(1) = -M_PI_2;
-    const Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
-    const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
+    Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
+    q0(1) = -M_PI_2;
+    Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
+    Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXd k_center = q0;
-    const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
+    Eigen::VectorXd k_center = q0;
+    Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr1_->num_motors);
 
         // trajectory duration
     const double duration = 3.0;
 
-    std::shared_ptr<BezierCurveInterval> trajPtr_ = 
+    std::shared_ptr<BezierCurveInterval> trajPtr1_ = 
         std::make_shared<BezierCurveInterval>(
             q0, q_d0, q_dd0, 
             k_center, k_range, 
             duration, 
-            robotInfoPtr_);
+            robotInfoPtr1_);
     
     // create a PZDynamics instance to compute link PZs and torque PZs
-    std::shared_ptr<PZDynamics> dynPtr_ = 
-        std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
+    std::shared_ptr<PZDynamics> dynPtr1_ = 
+        std::make_shared<PZDynamics>(robotInfoPtr1_, trajPtr1_);
+
+// SECOND ROBOT INITIALIZATION
+    // read robot model and info
+    const std::string robot_model_file2 = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string robot_info_file2 = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::shared_ptr<RobotInfo> robotInfoPtr2_ = 
+        std::make_shared<RobotInfo>(robot_model_file2, robot_info_file2);
+
+    // create a trajectory instance (compute trajectory on continuous time intervals)
+    q0 = Eigen::VectorXd::Ones(robotInfoPtr2_->num_motors);
+    q_d0 = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
+    q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
+
+        // trajectory parameters and their ranges
+    k_center = q0;
+    k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr2_->num_motors);
+
+    std::shared_ptr<BezierCurveInterval> trajPtr2_ =
+        std::make_shared<BezierCurveInterval>(
+            q0, q_d0, q_dd0, 
+            k_center, k_range, 
+            duration, 
+            robotInfoPtr2_);
+
+    // create a PZDynamics instance to compute link PZs and torque PZs
+    std::shared_ptr<PZDynamics> dynPtr2_ = 
+        std::make_shared<PZDynamics>(robotInfoPtr2_, trajPtr2_);
 
     // define obstacles
     const int num_obstacles = 5;
@@ -67,26 +88,31 @@ int main() {
     }
 
     // targets
-    Eigen::VectorXd q_des = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    Eigen::VectorXd q_des = Eigen::VectorXd::Random(
+        robotInfoPtr1_->num_motors + robotInfoPtr2_->num_motors);
     double t_plan = 0.5 * duration;
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
     auto start1 = std::chrono::high_resolution_clock::now();
-    dynPtr_->compute();
+    dynPtr1_->compute();
+    dynPtr2_->compute();
     auto end1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to generate reachable sets: " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() 
               << " ms" << std::endl;
 
 // OPTIMIZATION
-    SmartPtr<ArmourOptimizer> mynlp = new ArmourOptimizer();
+    SmartPtr<DualArmourOptimizer> mynlp = new DualArmourOptimizer();
     try {
 	    mynlp->set_parameters(q_des, 
                               t_plan, 
-                              robotInfoPtr_, 
-                              trajPtr_, 
-                              dynPtr_, 
+                              robotInfoPtr1_, 
+                              trajPtr1_, 
+                              dynPtr1_, 
+                              robotInfoPtr2_,
+                              trajPtr2_,
+                              dynPtr2_,
                               boxCenters,
                               boxOrientation,
                               boxSize);
@@ -109,7 +135,7 @@ int main() {
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("derivative_test", "first-order");
     app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-2);
+    app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

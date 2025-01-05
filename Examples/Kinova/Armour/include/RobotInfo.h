@@ -75,12 +75,12 @@ public:
     std::vector<double> sphere_radii;
 
     // bimanual constraints info
-    int num_capsule_collisions = 0;
+    int num_self_collisions = 0;
     int num_capsules = 0;
     std::vector<std::pair<pinocchio::FrameIndex, pinocchio::FrameIndex>> tc_spheres;
     std::vector<std::pair<size_t, size_t>> tc_sphere_radii;
 
-    std::vector<std::pair<size_t, size_t>> collision_checks;
+    std::vector<std::pair<size_t, size_t>> self_collision_checks;
 
 
     RobotInfo() = default;

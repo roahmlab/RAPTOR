@@ -24,6 +24,13 @@ int main() {
 
     // turn off friction for validation
     robotInfoPtr_->model.friction.setZero();
+
+    // turn off tracking error for validation
+    robotInfoPtr_->ultimate_bound_info.eps = 0;
+    robotInfoPtr_->ultimate_bound_info.qe = 0;
+    robotInfoPtr_->ultimate_bound_info.qde = 0;
+    robotInfoPtr_->ultimate_bound_info.qdae = 0;
+    robotInfoPtr_->ultimate_bound_info.qddae = 0;
     
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
@@ -37,21 +44,16 @@ int main() {
 
         // trajectory duration
     const double duration = 2.0;
+    const size_t num_time_steps = 256;
 
     std::shared_ptr<BezierCurveInterval> trajPtr_ = 
         std::make_shared<BezierCurveInterval>(
             q0, q_d0, q_dd0, 
             k_center, k_range, 
             duration, 
-            robotInfoPtr_);
+            robotInfoPtr_,
+            num_time_steps);
 
-    // turn off tracking error for validation
-    robotInfoPtr_->ultimate_bound_info.eps = 0;
-    robotInfoPtr_->ultimate_bound_info.qe = 0;
-    robotInfoPtr_->ultimate_bound_info.qde = 0;
-    robotInfoPtr_->ultimate_bound_info.qdae = 0;
-    robotInfoPtr_->ultimate_bound_info.qddae = 0;
-    
     // create a PZDynamics instance to compute link PZs and torque PZs
     std::shared_ptr<PZDynamics> dynPtr_ = 
         std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);

@@ -308,12 +308,12 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
     const double x_val = 1;
     const double* x;
     x = &x_val;
-    int num_capsule_collisions = robotInfoPtr_->collision_checks.size();
+    int num_self_collisions = robotInfoPtr_->self_collision_checks.size();
 
     for (int i = 0; i < 5; i++){
-        for (int collision_index = 0; collision_index < num_capsule_collisions; collision_index++){
-            const int arm_1_index = robotInfoPtr_->collision_checks[collision_index].first;
-            const int arm_2_index = robotInfoPtr_->collision_checks[collision_index].second;
+        for (int collision_index = 0; collision_index < num_self_collisions; collision_index++){
+            const int arm_1_index = robotInfoPtr_->self_collision_checks[collision_index].first;
+            const int arm_2_index = robotInfoPtr_->self_collision_checks[collision_index].second;
             if(i == 0){
                 std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
             }
@@ -439,12 +439,12 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
     const double* x;
     x = &x_val;
 
-    size_t num_capsule_collisions = robotInfoPtr_->collision_checks.size();
+    size_t num_self_collisions = robotInfoPtr_->self_collision_checks.size();
 
     for (int i = 0; i < 5; i++){
-        for (int collision_index = 0; collision_index < num_capsule_collisions; collision_index++){
-            const int arm_1_index = robotInfoPtr_->collision_checks[collision_index].first;
-            const int arm_2_index = robotInfoPtr_->collision_checks[collision_index].second;
+        for (int collision_index = 0; collision_index < num_self_collisions; collision_index++){
+            const int arm_1_index = robotInfoPtr_->self_collision_checks[collision_index].first;
+            const int arm_2_index = robotInfoPtr_->self_collision_checks[collision_index].second;
             if(i == 0){
                 std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
             }

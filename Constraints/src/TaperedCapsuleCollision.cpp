@@ -22,8 +22,9 @@ inline void solve_quadratic(const double a,
 }
 
 // explicit instantiation for cases currently used
-template class TaperedCapsuleCollision<2>;
-template class TaperedCapsuleCollision<7>;
+template class TaperedCapsuleCollision<2>; // used in tests
+template class TaperedCapsuleCollision<7>; // used in Armour
+template class TaperedCapsuleCollision<14>; // used in DualArmour
 
 template<int factors>
 inline Eigen::Vector<double,factors> TaperedCapsuleCollision<factors>::batchDot(
