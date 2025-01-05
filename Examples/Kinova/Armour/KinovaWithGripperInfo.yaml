@@ -1,21 +1,29 @@
-KinovaWithoutGripper:
+KinovaWithGripper:
   num_motors: 7
   num_joints: 7
   gravity: [0.0, 0.0, -9.81]
+
+  # motor friction model: friction * sign(velocity) + damping * velocity + transmissionInertia * acceleration
   friction: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   damping: [10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934]
   transmissionInertia: [8.03, 11.9962024615303644, 9.0025427861751517, 11.5806439316706360, 8.4665040917914123, 8.8537069373742430, 8.8587303664685315]
+
+  # model uncertainty represented as ratios
   mass_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
   com_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
   inertia_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
+  
+  # ultimate bound for tracking error
   ultimate_bound:
-    alpha: 20.0
-    V_m: 0.02
-    M_max: 15.79635774
-    M_min: 8.29938
-    Kr: 5.0
+    alpha: 20.0 # robust controller parameter
+    V_m: 0.02 # robust controller parameter
+    M_max: 15.79635774 # maximum eigenvalue of the inertia mass matrix
+    M_min: 8.29938 # minimum eigenvalue of the inertia mass matrix
+    Kr: 5.0 # robust controller parameter
+
+  # collision sphere representation for each link
   collision_spheres:
-    joint_2:
+    joint_2: # the following spheres start from joint_2
     - "offset": [0.0, -0.05, -0.01]
       "radius": 0.06
     - "offset": [0.0, -0.11, -0.01]

@@ -20,6 +20,7 @@ class SafePayloadExcitingPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
+    using Vec10 = Eigen::Vector<double, 10>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -54,6 +55,10 @@ public:
                                    const nb_1d_float k_center_inp,
                                    const nb_1d_float k_range_inp,
                                    const double duration_inp);
+
+    void set_endeffector_inertial_parameters(const nb_1d_float inertial_parameters,
+                                             const nb_1d_float inertial_parameters_lb,
+                                             const nb_1d_float inertial_parameters_ub);
 
     nb::tuple optimize();
 

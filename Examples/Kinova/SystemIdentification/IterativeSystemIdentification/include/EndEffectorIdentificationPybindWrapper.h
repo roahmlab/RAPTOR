@@ -48,7 +48,11 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    nb::tuple optimize(const std::vector<std::string>& trajectory_filenames);
+    void add_trajectory_file(const std::string filename_input);
+
+    nb::tuple optimize();
+
+    void reset();
 
     // class members
         // robot model

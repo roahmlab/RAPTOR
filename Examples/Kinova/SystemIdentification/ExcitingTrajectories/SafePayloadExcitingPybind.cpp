@@ -16,6 +16,7 @@ NB_MODULE(safe_payload_exciting_nanobind, m) {
         .def("set_obstacles", &SafePayloadExcitingPybindWrapper::set_obstacles)
         .def("set_ipopt_parameters", &SafePayloadExcitingPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &SafePayloadExcitingPybindWrapper::set_trajectory_parameters)
+        .def("set_endeffector_inertial_parameters", &SafePayloadExcitingPybindWrapper::set_endeffector_inertial_parameters)
         .def("optimize", &SafePayloadExcitingPybindWrapper::optimize)
         .def("analyze_solution", &SafePayloadExcitingPybindWrapper::analyze_solution);
 }

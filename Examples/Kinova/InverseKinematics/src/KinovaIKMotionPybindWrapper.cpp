@@ -14,6 +14,9 @@ KinovaIKMotionPybindWrapper::KinovaIKMotionPybindWrapper(const std::string urdf_
     app = IpoptApplicationFactory();
     app->Options()->SetStringValue("hessian_approximation", "exact");
 
+    // Note that this is the transformation matrix from the last joint to the contact point of the gripper
+    // This is hardcoded for Kinova-gen3
+    // Refer to the urdf (the last two fixed joints) for more information
     Transform endT1(Eigen::Vector3d(M_PI, 0, 0), Eigen::Vector3d(0, 0, -0.061525)); // end effector -> gripper base
     Transform endT2(Eigen::Vector3d(0, 0, M_PI_2), Eigen::Vector3d(0, 0, 0.12)); // gripper base -> contact joint
     endT = endT1 * endT2;
@@ -107,6 +110,7 @@ nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) 
     }
 
     int pid = 0;
+    has_optimized = true;
     for (const auto& desiredTransform: desiredTransforms) {
         try {
             mynlp->reset();

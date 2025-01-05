@@ -69,7 +69,7 @@ TrajectoryData::TrajectoryData(const std::string& filename_input,
         }
     }
 
-    T = tspan(N - 1);
+    T = tspan(N - 1) - tspan(0);
 
     // output information
     std::cout << "TrajectoryData: " << N << " data points loaded from " << filename_input << std::endl;
@@ -246,7 +246,7 @@ TrajectoryData::TrajectoryData(const std::vector<std::string>& filenames_input,
         }
     }
 
-    T = tspan(N - 1);
+    T = tspan(N - 1) - tspan(0);
 
     // output information
     std::cout << "TrajectoryData: " << N << " data points loaded from a sequence of files" << std::endl;
