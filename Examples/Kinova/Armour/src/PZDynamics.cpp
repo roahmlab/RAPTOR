@@ -176,12 +176,12 @@ void PZDynamics::compute() {
 
             pinocchio::forwardKinematics(model_sparses[t_ind], data_sparses[t_ind], q);
             pinocchio::updateFramePlacements(model_sparses[t_ind], data_sparses[t_ind]);
-            pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
+            // pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
             // pinocchio::rnea(model_sparses_interval[t_ind], data_sparses_interval[t_ind], q, qd, qdd);
             pinocchio::computeJointTorqueRegressor(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
 
             for (int i = 0; i < num_joints; i++) {
-                data_sparses[t_ind].tau(i) = 0;
+                data_sparses[t_ind].tau(i) = 0.0;
                 data_sparses_interval[t_ind].tau(i) = 0.0;
                 for (int j = 0; j < 10 * num_joints; j++) {
                     data_sparses[t_ind].tau(i) += data_sparses[t_ind].jointTorqueRegressor(i, j) * phi(j);
