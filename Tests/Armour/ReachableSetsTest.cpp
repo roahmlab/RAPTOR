@@ -12,10 +12,13 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
+        // Note that you need to comment line 166 for the following robot test
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+
+        // Note that you need to uncomment line 165 for the following robot test
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
@@ -158,7 +161,10 @@ int main() {
 
     // validate the torque PZs
     Eigen::VectorXi jtype = convertPinocchioJointType(robotInfoPtr_->model);
-    jtype(jtype.size() - 1) = 0;
+
+    // Note: uncomment the following line if using KinovaSuctionCup.yaml
+    // jtype(jtype.size() - 1) = 0;
+
     std::shared_ptr<CustomizedInverseDynamics> cidPtr_ = 
         std::make_shared<CustomizedInverseDynamics>(robotInfoPtr_->model, trajDiscretePtr_, jtype);
     cidPtr_->compute(k, false);
@@ -180,26 +186,28 @@ int main() {
     }
 
     // validate the contact force PZs
-    for (int i = 0; i < cidPtr_->N; i++) {
-        const Eigen::Vector<double, 6>& actualLambda = cidPtr_->lambda(i);
-        for (int j = 0; j < 3; j++) {
-            const Interval forceRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j).slice(factor);
-            const Interval momentRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j).slice(factor);            
-            if (actualLambda(j + 3) < forceRange.lower() || 
-                actualLambda(j + 3) > forceRange.upper()) {
-                std::cerr << "Validation failed for contact force at time step " << i 
-                          << " for direction " << j << ": "
-                          << actualLambda(j+3) << " not in [ " 
-                          << forceRange.lower() << ", " 
-                          << forceRange.upper() << " ]" << std::endl;
-            }
-            if (actualLambda(j) < momentRange.lower() || 
-                actualLambda(j) > momentRange.upper()) {
-                std::cerr << "Validation failed for contact moment at time step " << i 
-                          << " for direction " << j << ": "
-                          << actualLambda(j) << " not in [ " 
-                          << momentRange.lower() << ", " 
-                          << momentRange.upper() << " ]" << std::endl;
+    if (robotInfoPtr_->num_joints > robotInfoPtr_->num_motors) {
+        for (int i = 0; i < cidPtr_->N; i++) {
+            const Eigen::Vector<double, 6>& actualLambda = cidPtr_->lambda(i);
+            for (int j = 0; j < 3; j++) {
+                const Interval forceRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(j).slice(factor);
+                const Interval momentRange = dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].angular()(j).slice(factor);            
+                if (actualLambda(j + 3) < forceRange.lower() || 
+                    actualLambda(j + 3) > forceRange.upper()) {
+                    std::cerr << "Validation failed for contact force at time step " << i 
+                            << " for direction " << j << ": "
+                            << actualLambda(j+3) << " not in [ " 
+                            << forceRange.lower() << ", " 
+                            << forceRange.upper() << " ]" << std::endl;
+                }
+                if (actualLambda(j) < momentRange.lower() || 
+                    actualLambda(j) > momentRange.upper()) {
+                    std::cerr << "Validation failed for contact moment at time step " << i 
+                            << " for direction " << j << ": "
+                            << actualLambda(j) << " not in [ " 
+                            << momentRange.lower() << ", " 
+                            << momentRange.upper() << " ]" << std::endl;
+                }
             }
         }
     }

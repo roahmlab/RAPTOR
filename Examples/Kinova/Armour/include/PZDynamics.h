@@ -3,6 +3,7 @@
 
 #include "pinocchio/algorithm/model.hpp"
 #include "pinocchio/algorithm/rnea.hpp"
+#include "pinocchio/algorithm/regressor.hpp"
 #include "pinocchio/algorithm/kinematics.hpp"
 #include "pinocchio/algorithm/frames.hpp"
 
@@ -38,6 +39,9 @@ public:
 
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 	std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
+
+	VecX phi;
+	Eigen::Vector<Interval, Eigen::Dynamic> phi_interval;
 
 	std::vector<pinocchio::ModelTpl<PZSparse>> model_sparses;
 	std::vector<pinocchio::DataTpl<PZSparse>> data_sparses;

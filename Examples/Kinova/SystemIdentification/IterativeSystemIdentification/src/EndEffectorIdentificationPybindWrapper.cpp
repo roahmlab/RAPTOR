@@ -61,6 +61,8 @@ EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(c
     // set up the Ipopt problem
     mynlp = new EndEffectorParametersIdentification();
     mynlp->display_info = display_info;
+    mynlp->set_parameters(model,
+                          offset);
 
     app = IpoptApplicationFactory();
 }
@@ -91,38 +93,32 @@ void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double t
     set_ipopt_parameters_check = true;
 }
 
-nb::tuple EndEffectorIdentificationPybindWrapper::optimize(const std::vector<std::string>& trajectory_filenames) {
-    if (!set_ipopt_parameters_check ) {
-        throw std::runtime_error("parameters not set properly!");
-    }
-    // Initialize optimizer
-    double setup_time = 0;
+void EndEffectorIdentificationPybindWrapper::add_trajectory_file(const std::string filename_input) {
     try {
-        auto start = std::chrono::high_resolution_clock::now();
-
-        mynlp->reset();
-        mynlp->set_parameters(model, 
-                              trajectory_filenames,
-                              sensor_noise,
-                              H,
-                              time_format,
-                              downsample_rate,
-                              offset);
-
-        if (mynlp->enable_hessian) {
-            app->Options()->SetStringValue("hessian_approximation", "exact");
-        }
-        else {
-            app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-        }
-
-        auto end = std::chrono::high_resolution_clock::now();
-        setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "System identification setup time: " << setup_time << " milliseconds.\n";
+        mynlp->add_trajectory_file(filename_input,
+                                   sensor_noise,
+                                   H,
+                                   time_format,
+                                   downsample_rate);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
-        throw std::runtime_error("Error initializing Ipopt class! Check previous error message!");
+        throw std::runtime_error("Error adding trajectory file! Check previous error message!");
+    }
+}
+
+nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
+    if (!set_ipopt_parameters_check) {
+        throw std::runtime_error("parameters not set properly!");
+    }
+
+    if (mynlp->A.rows() == 0) {
+        throw std::runtime_error("Trajectory data not added yet!");
+    }
+
+    std::cout << "The following trajectory data files are considered:\n";
+    for (const auto& filename: mynlp->trajectoryFilenames_) {
+        std::cout << "    Trajectory file: " << filename << std::endl;
     }
 
     // Initialize the IpoptApplication and process the options
@@ -134,30 +130,22 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize(const std::vector<std
 
     // Run ipopt to solve the optimization problem
     double solve_time = 0;
-    for (int iter = 0; iter < 1; iter++) {
-        try {
-            auto start = std::chrono::high_resolution_clock::now();
+    try {
+        auto start = std::chrono::high_resolution_clock::now();
 
-            // Ask Ipopt to solve the problem
-            status = app->OptimizeTNLP(mynlp);
+        // Ask Ipopt to solve the problem
+        status = app->OptimizeTNLP(mynlp);
 
-            auto end = std::chrono::high_resolution_clock::now();
-            solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            std::cout << "Iteration " << iter << " system identification solve time: " << solve_time << " milliseconds.\n";
-        }
-        catch (std::exception& e) {
-            throw std::runtime_error("Error solving optimization problem! Check previous error message!");
-        }
-
-        std::cout << "Iteration " << iter << std::endl;
-        std::cout << "    theta solution: " << mynlp->theta_solution.transpose() << std::endl;
-        std::cout << "    theta uncertainties: " << mynlp->theta_uncertainty.transpose() << std::endl;
-
-        if (mynlp->obj_value_copy < 1e-4 || 
-            mynlp->nonzero_weights < 0.5 * mynlp->b.size()) {
-            break;
-        }
+        auto end = std::chrono::high_resolution_clock::now();
+        solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "System identification solve time: " << solve_time << " milliseconds.\n";
     }
+    catch (std::exception& e) {
+        throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+    }
+
+    std::cout << "    theta solution: " << mynlp->theta_solution.transpose() << std::endl;
+    std::cout << "    theta uncertainties: " << mynlp->theta_uncertainty.transpose() << std::endl;
 
     const size_t shape_ptr[] = {10};
     auto result1 = nb::ndarray<nb::numpy, const double>(mynlp->theta_solution.data(),
@@ -171,6 +159,10 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize(const std::vector<std
                                                         nb::handle()); 
 
     return nb::make_tuple(result1, result2);
+}
+
+void EndEffectorIdentificationPybindWrapper::reset() {
+    mynlp->reset();
 }
     
 }; // namespace Kinova

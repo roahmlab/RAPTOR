@@ -31,24 +31,15 @@ public:
     // [set_parameters]
     bool set_parameters(
         const Model& model_input,
+        const VecXd offset_input = VecXd::Zero(0)
+    );
+
+    void add_trajectory_file(
         const std::string filename_input,
         const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
         const int H_input = 10,
         const TimeFormat time_format = TimeFormat::Second,
-        const int downsample_rate = 1,
-        const VecXd offset_input = VecXd::Zero(0)
-    );
-
-    // [set_parameters]
-    bool set_parameters(
-        const Model& model_input,
-        const std::vector<std::string>& filenames_input,
-        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
-        const int H_input = 10,
-        const TimeFormat time_format = TimeFormat::Second,
-        const int downsample_rate = 1,
-        const VecXd offset_input = VecXd::Zero(0)
-    );
+        const int downsample_rate = 1);
 
     // [initialize_regressors]
     void initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
@@ -146,14 +137,13 @@ public:
    
     std::vector<std::shared_ptr<TrajectoryData>> trajPtrs_;
     std::vector<std::shared_ptr<TrajectoryData>> trajPtrs2_;
+    std::vector<std::string> trajectoryFilenames_;
 
     std::shared_ptr<MomentumRegressor> mrPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
 
     // std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
     // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
-
-    VecXd weights; // weights for the nonlinear least square problem
 
         // forward integration horizon
     int H = 10;
@@ -169,9 +159,6 @@ public:
 
     MatXd A; // regression matrix for all trajectories
     VecXd b; // regression vector for all trajectories
-
-    MatXd Aweighted;
-    VecXd bweighted;
 
     Index nonzero_weights = 0;
 

@@ -1,4 +1,4 @@
-KinovaWithGripper:
+KinovaWithGripperConservativePayloadInfo:
   num_motors: 7
   num_joints: 7
   gravity: [0.0, 0.0, -9.81]
@@ -12,7 +12,16 @@ KinovaWithGripper:
   mass_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
   com_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
   inertia_uncertainty: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.20]
-  
+
+  # this is specifically for end effector system identification,
+  # when the model uncertainty can not be represented as ratios
+  end_effector_mass_lb: 1.2 # Kinova end effector with gripper should be about 1.2849 kg, this is a conservative estimate (lower bound)
+  end_effector_mass_ub: 5.0 # Kinova maximum payload is 3.0 kg, this is a conservative estimate (upper bound)
+  end_effector_com_lb: [-0.1, -0.1, -0.8]
+  end_effector_com_ub: [0.1, 0.1, -0.1]
+  end_effector_inertia_lb: [-0.15, -0.15, -0.15, -0.15, -0.15, -0.15]
+  end_effector_inertia_ub: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
+
   # ultimate bound for tracking error
   ultimate_bound:
     alpha: 20.0 # robust controller parameter

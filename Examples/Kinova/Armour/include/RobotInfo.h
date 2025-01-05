@@ -46,9 +46,22 @@ public:
 
     pinocchio::Model model;
 
+    // model uncertainty
     VecX mass_uncertainty;
     VecX com_uncertainty;
     VecX inertia_uncertainty;
+
+    // the following are specifically for the end effector
+    // if defined, these will overwrite the previous model uncertainty 
+    // (for example, the last element of the mass_uncertainty vector is the end effector mass uncertainty,
+    // but will be ignored if end_effector_mass_lb and end_effector_mass_ub are defined)
+    bool if_end_effector_info_exist = false;
+    double end_effector_mass_lb = 0;
+    double end_effector_mass_ub = 0;
+    Vec3 end_effector_com_lb;
+    Vec3 end_effector_com_ub;
+    Vec6 end_effector_inertia_lb;
+    Vec6 end_effector_inertia_ub;
 
     ultimate_bound ultimate_bound_info;
 
@@ -76,7 +89,8 @@ public:
                                                 const double inertia_eps);
 
     void change_endeffector_inertial_parameters(const Vec10& inertial_parameters,
-                                                const Vec10& inertial_parameters_eps);
+                                                const Vec10& inertial_parameters_lb,
+                                                const Vec10& inertial_parameters_ub);
 
     void print() const;
 };

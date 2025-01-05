@@ -78,13 +78,13 @@ int main(int argc, char* argv[]) {
     double setup_time = 0;
     try {
         auto start = std::chrono::high_resolution_clock::now();
-	    mynlp->set_parameters(model, 
-                              trajectory_filename,
-                              sensor_noise,
-                              H,
-                              TimeFormat::Nanosecond,
-                              downsample_rate,
+	    mynlp->set_parameters(model,
                               offset);
+        mynlp->add_trajectory_file(trajectory_filename,
+                                   sensor_noise,
+                                   H,
+                                   TimeFormat::Nanosecond,
+                                   downsample_rate);
         auto end = std::chrono::high_resolution_clock::now();
         setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Setup time: " << setup_time << " milliseconds.\n";

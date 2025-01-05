@@ -43,13 +43,13 @@ void SafePayloadExcitingPybindWrapper::set_obstacles(const nb_2d_float obstacles
 }
 
 void SafePayloadExcitingPybindWrapper::set_ipopt_parameters(const double tol,
-                                               const double constr_viol_tol,
-                                               const double obj_scaling_factor,
-                                               const double max_wall_time, 
-                                               const int print_level,
-                                               const std::string mu_strategy,
-                                               const std::string linear_solver,
-                                               const bool gradient_check) {
+                                                            const double constr_viol_tol,
+                                                            const double obj_scaling_factor,
+                                                            const double max_wall_time, 
+                                                            const int print_level,
+                                                            const std::string mu_strategy,
+                                                            const std::string linear_solver,
+                                                            const bool gradient_check) {
     app->Options()->SetNumericValue("tol", tol);
     app->Options()->SetNumericValue("constr_viol_tol", constr_viol_tol);
     mynlp->constr_viol_tol = constr_viol_tol;
@@ -129,6 +129,41 @@ void SafePayloadExcitingPybindWrapper::set_trajectory_parameters(const nb_1d_flo
 
     set_trajectory_parameters_check = true;        
     has_optimized = false;                     
+}
+
+void SafePayloadExcitingPybindWrapper::set_endeffector_inertial_parameters(const nb_1d_float inertial_parameters,
+                                                                           const nb_1d_float inertial_parameters_lb,
+                                                                           const nb_1d_float inertial_parameters_ub) {
+    if (inertial_parameters.shape(0) != 10 || 
+        inertial_parameters_lb.shape(0) != 10 ||
+        inertial_parameters_ub.shape(0) != 10) {
+        throw std::invalid_argument("Inertial parameters must be of size 10");
+    }
+
+    Vec10 inertial_parameters_vec;
+    Vec10 inertial_parameters_lb_vec;
+    Vec10 inertial_parameters_ub_vec;
+    for (size_t i = 0; i < 10; i++) {
+        inertial_parameters_vec(i) = inertial_parameters(i);
+        inertial_parameters_lb_vec(i) = inertial_parameters_lb(i);
+        inertial_parameters_ub_vec(i) = inertial_parameters_ub(i);
+    }
+
+    robotInfoPtr_->change_endeffector_inertial_parameters(inertial_parameters_vec, 
+                                                          inertial_parameters_lb_vec,
+                                                          inertial_parameters_ub_vec);
+
+    if (trajPtr_ != nullptr) {
+        if (dynPtr_ == nullptr) {
+            dynPtr_ = std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
+        }
+        else {
+            dynPtr_->reset_robot_info(robotInfoPtr_);
+        }
+    }
+    else {
+        throw std::runtime_error("Trajectory parameters not set yet!");
+    }
 }
 
 nb::tuple SafePayloadExcitingPybindWrapper::optimize() {

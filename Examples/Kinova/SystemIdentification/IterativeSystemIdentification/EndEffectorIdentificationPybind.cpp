@@ -17,5 +17,7 @@ NB_MODULE(end_effector_sysid_nanobind , m) {
                       const std::string, 
                       const bool>())
         .def("set_ipopt_parameters", &EndEffectorIdentificationPybindWrapper::set_ipopt_parameters)
-        .def("optimize", &EndEffectorIdentificationPybindWrapper::optimize);
+        .def("add_trajectory_file", &EndEffectorIdentificationPybindWrapper::add_trajectory_file)
+        .def("optimize", &EndEffectorIdentificationPybindWrapper::optimize)
+        .def("reset", &EndEffectorIdentificationPybindWrapper::reset);
 }
