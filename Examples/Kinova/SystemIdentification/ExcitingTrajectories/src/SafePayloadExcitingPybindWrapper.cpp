@@ -221,6 +221,10 @@ nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
+    if( status == Invalid_Problem_Definition ) {
+        throw std::runtime_error("Invalid problem definition!");
+    }
+
     set_trajectory_parameters_check = false;
     has_optimized = mynlp->ifFeasible;
 
