@@ -241,6 +241,30 @@ bool DualArmourOptimizer::eval_g(
 
     // TODO: update g for arm-arm collision constraints, note that sphere locations have been computed in eval_g above
     // start location: g + armourOptPtr1->numCons + armourOptPtr2->numCons
+    try {
+        // #pragma omp parallel for shared(dynPtr_, tccPtrs, x, g) private(i) schedule(dynamic)
+        // for(int i = 0; i < armourOptPtr1->num_time_steps; i++){
+        //     for(int arm_1_index = 0; arm_1_index < armourOptPtr1->num_capsules; arm_1_index++){
+        //         Vec3 tc1_sphere_1 = armourOptPtr1->sphere_locations[i][arm_1_index].first;
+        //         Vec3 tc1_sphere_2 = armourOptPtr1->sphere_locations[i][arm_1_index].second;
+        //         double tc1_sphere_1_radius = armourOptPtr1->sphere_radii[i][arm_1_index].first;
+        //         double tc1_sphere_2_radius = armourOptPtr1->sphere_radii[i][arm_1_index].second;
+        //         for(int arm_2_index = 0; arm_2_index < armourOptPtr2->num_capsules; arm_2_index++){
+        //             Vec3 tc2_sphere_1 = armourOptPtr2->sphere_locations[i][arm_2_index].first;
+        //             Vec3 tc2_sphere_2 = armourOptPtr2->sphere_locations[i][arm_2_index].second;
+        //             double tc2_sphere_1_radius = armourOptPtr2->sphere_radii[i][arm_2_index].first;
+        //             double tc2_sphere_2_radius = armourOptPtr2->sphere_radii[i][arm_2_index].second;
+
+        //             g[armourOptPtr1->numCons + armourOptPtr2->numCons + arm_1_index * armourOptPtr2->num_capsules + arm_2_index] = armourOptPtr1->tccPtrs[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
+        //                                                         tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
+        //         }
+        //     }
+        // }
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        THROW_EXCEPTION(IpoptException, "Error in eval_g of the arm-arm collision constraints!");
+    }
 
     return true;
 }

@@ -149,6 +149,9 @@ public:
     size_t num_obstacles = 0;
 
     int num_self_collisions = 0;
+    int num_capsules = 0;
+    std::array<std::array<std::pair<size_t, size_t>, 1>, 1> sphere_locations;
+    std::array<std::pair<size_t, size_t>, 0> sphere_radii;
 
     VecX q_des;
     Number t_plan = 0;
