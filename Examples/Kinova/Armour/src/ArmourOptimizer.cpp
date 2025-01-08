@@ -382,12 +382,16 @@ bool ArmourOptimizer::eval_g(
             offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
         }
 
-        // obstacle avoidance constraints
-        if (num_obstacles > 0) {
-            try {
+        // precompute sphere centers and radii
+        if (num_spheres > 0){
+            try{
+                sphere_locations.resize(num_time_steps);
+                sphere_radii.resize(num_time_steps);
                 #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    for (size_t j = 0; j < num_spheres; j++) {
+                for (i = 0; i < num_time_steps; i++){
+                    sphere_locations[i].resize(num_spheres);
+                    sphere_radii[i].resize(num_spheres);
+                    for (size_t j = 0; j < num_spheres; j++){
                         const std::string sphere_name = "collision-" + std::to_string(j);
                         const pinocchio::FrameIndex frame_id = 
                             robotInfoPtr_->model.getFrameId(sphere_name);
@@ -395,11 +399,28 @@ bool ArmourOptimizer::eval_g(
                         const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                         Vec3 sphere_center;
                         sphere_center << getCenter(PZsphere(0).slice(x)), 
-                                         getCenter(PZsphere(1).slice(x)), 
-                                         getCenter(PZsphere(2).slice(x));
+                                        getCenter(PZsphere(1).slice(x)), 
+                                        getCenter(PZsphere(2).slice(x));
 
-                        bcaPtrs[i]->computeDistance(sphere_center);
-                        g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - dynPtr_->sphere_radii(j, i);
+                        sphere_locations[i][j] = sphere_center;
+                        sphere_radii[i][j] = dynPtr_->sphere_radii(j, i);
+                    }
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error Slicing Spheres!");
+            }
+        }
+
+        // obstacle avoidance constraints
+        if (num_obstacles > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++) {
+                    for (size_t j = 0; j < num_spheres; j++) {
+                        bcaPtrs[i]->computeDistance(sphere_locations[i][j]);
+                        g[i * num_spheres + j + offset] = bcaPtrs[i]->minimumDistance - sphere_radii[i][j];
                     }
                 }
             }
@@ -412,60 +433,23 @@ bool ArmourOptimizer::eval_g(
 
         // self-collision constraints
         try {
-            // sphere_locations.resize(num_time_steps);
-            // sphere_radii.resize(num_time_steps);
-            // #pragma omp parallel for shared(dynPtr_, tccPtrs, x, g) private(i) schedule(dynamic)
+            #pragma omp parallel for shared(dynPtr_, tccPtrs, x, g) private(i) schedule(dynamic)
             for (i = 0; i < num_time_steps; i++){
-                // sphere_locations[i].resize(num_capsules);
-                // sphere_radii[i].resize(num_capsules);
-                // for (size_t j = 0; j < num_capsules; j++){
-                //     pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[j].first;
-                //     auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-                //     Vec3 tc1_sphere_1;
-                //     tc1_sphere_1 << getCenter(PZsphere(0).slice(x)),
-                //                     getCenter(PZsphere(1).slice(x)),
-                //                     getCenter(PZsphere(2).slice(x));
-                    
-                //     sphere_locations[i][j].first = tc1_sphere_1;
-                // }
-
                 for (size_t j = 0; j < num_self_collisions; j++){
                     const size_t arm_1_index = robotInfoPtr_->self_collision_checks[j].first;
                     const size_t arm_2_index = robotInfoPtr_->self_collision_checks[j].second;
 
-                    pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
-                    auto& PZsphere_1_1 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-                    Vec3 tc1_sphere_1;
-                    tc1_sphere_1 << getCenter(PZsphere_1_1(0).slice(x)),
-                                    getCenter(PZsphere_1_1(1).slice(x)),
-                                    getCenter(PZsphere_1_1(2).slice(x));
+                    const Vec3 tc1_sphere_1 = sphere_locations[i][robotInfoPtr_->tc_sphere_radii[arm_1_index].first];
+                    const Vec3 tc1_sphere_2 = sphere_locations[i][robotInfoPtr_->tc_sphere_radii[arm_1_index].second];
 
-                    frame_id = robotInfoPtr_->tc_spheres[arm_1_index].second;
-                    auto& PZsphere_1_2 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-                    Vec3 tc1_sphere_2;
-                    tc1_sphere_2 << getCenter(PZsphere_1_2(0).slice(x)),
-                                    getCenter(PZsphere_1_2(1).slice(x)),
-                                    getCenter(PZsphere_1_2(2).slice(x));
+                    const Vec3 tc2_sphere_1 = sphere_locations[i][robotInfoPtr_->tc_sphere_radii[arm_2_index].first];
+                    const Vec3 tc2_sphere_2 = sphere_locations[i][robotInfoPtr_->tc_sphere_radii[arm_2_index].second];
 
-                    const double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].first, i);
-                    const double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].second, i);
+                    const double tc1_sphere_1_radius = sphere_radii[i][robotInfoPtr_->tc_sphere_radii[arm_1_index].first];
+                    const double tc1_sphere_2_radius = sphere_radii[i][robotInfoPtr_->tc_sphere_radii[arm_1_index].second];
 
-                    pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
-                    auto& PZsphere_2_1 = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                    Vec3 tc2_sphere_1;
-                    tc2_sphere_1 << getCenter(PZsphere_2_1(0).slice(x)),
-                                    getCenter(PZsphere_2_1(1).slice(x)),
-                                    getCenter(PZsphere_2_1(2).slice(x));
-
-                    frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
-                    auto& PZsphere_2_2 = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                    Vec3 tc2_sphere_2;
-                    tc2_sphere_2 << getCenter(PZsphere_2_2(0).slice(x)),
-                                    getCenter(PZsphere_2_2(1).slice(x)),
-                                    getCenter(PZsphere_2_2(2).slice(x));
-
-                    const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].first, i);
-                    const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].second, i);
+                    const double tc2_sphere_1_radius = sphere_radii[i][robotInfoPtr_->tc_sphere_radii[arm_2_index].first];
+                    const double tc2_sphere_2_radius = sphere_radii[i][robotInfoPtr_->tc_sphere_radii[arm_2_index].second];
 
                     const int index_g = i * num_self_collisions + j + offset;
                     g[index_g] = tccPtrs[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
@@ -581,12 +565,19 @@ bool ArmourOptimizer::eval_jac_g(
             offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps * NUM_FACTORS;
         }
 
-        // obstacle avoidance constraints gradient
-        if (num_obstacles > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, values) private(i) schedule(dynamic)
-                for(i = 0; i < num_time_steps; i++) {
-                    for (size_t j = 0; j < num_spheres; j++) {
+        // precompute sphere centers and radii
+        if (num_spheres > 0){
+            try{
+                sphere_locations.resize(num_time_steps);
+                sphere_radii.resize(num_time_steps);
+                sphere_gradient.resize(num_time_steps);
+                #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
+                for (i = 0; i < num_time_steps; i++){
+                    sphere_locations[i].resize(num_spheres);
+                    sphere_radii[i].resize(num_spheres);
+                    sphere_gradient[i].resize(num_spheres);
+
+                    for (size_t j = 0; j < num_spheres; j++){
                         const std::string sphere_name = "collision-" + std::to_string(j);
                         const pinocchio::FrameIndex frame_id = 
                             robotInfoPtr_->model.getFrameId(sphere_name);
@@ -594,8 +585,8 @@ bool ArmourOptimizer::eval_jac_g(
                         const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
                         Vec3 sphere_center;
                         sphere_center << getCenter(PZsphere(0).slice(x)), 
-                                         getCenter(PZsphere(1).slice(x)), 
-                                         getCenter(PZsphere(2).slice(x));
+                                        getCenter(PZsphere(1).slice(x)), 
+                                        getCenter(PZsphere(2).slice(x));
 
                         VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
                         PZsphere(0).slice(dk_x_res, x);
@@ -607,7 +598,25 @@ bool ArmourOptimizer::eval_jac_g(
                         dk_sphere_center.row(1) = dk_y_res;
                         dk_sphere_center.row(2) = dk_z_res;
 
-                        bcaPtrs[i]->computeDistance(sphere_center, dk_sphere_center);
+                        sphere_locations[i][j] = sphere_center;
+                        sphere_radii[i][j] = dynPtr_->sphere_radii(j, i);
+                        sphere_gradient[i][j] = dk_sphere_center;
+                    }
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                THROW_EXCEPTION(IpoptException, "Error Slicing Spheres!");
+            }
+        }
+
+        // obstacle avoidance constraints gradient
+        if (num_obstacles > 0) {
+            try {
+                #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, values) private(i) schedule(dynamic)
+                for(i = 0; i < num_time_steps; i++) {
+                    for (size_t j = 0; j < num_spheres; j++) {
+                        bcaPtrs[i]->computeDistance(sphere_locations[i][j], sphere_gradient[i][j]);
 
                         const VecX& dk_distances = bcaPtrs[i]->pdistances_pz.row(bcaPtrs[i]->minimumDistanceIndex);
                         std::memcpy(values + (i * num_spheres + j) * NUM_FACTORS + offset, dk_distances.data(), NUM_FACTORS * sizeof(Number));
@@ -625,90 +634,33 @@ bool ArmourOptimizer::eval_jac_g(
         if (num_self_collisions > 0) {
             try {
                 const int num_capsules = robotInfoPtr_->num_capsules;
-                // #pragma omp parallel for shared(robotInfoPtr_, dynPtr_, tccPtrs, x, values) private(i) schedule(dynamic)
+                #pragma omp parallel for shared(robotInfoPtr_, dynPtr_, tccPtrs, x, values) private(i) schedule(dynamic)
                 for (i = 0; i < num_time_steps; i++){
                     for (size_t j = 0; j < num_self_collisions; j++){
                         const size_t arm_1_index = robotInfoPtr_->self_collision_checks[j].first;
                         const size_t arm_2_index = robotInfoPtr_->self_collision_checks[j].second;
 
-                        pinocchio::FrameIndex frame_id = robotInfoPtr_->tc_spheres[arm_1_index].first;
-                        auto& PZsphere_1_1 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-                        Vec3 tc1_sphere_1;
-                        tc1_sphere_1 << getCenter(PZsphere_1_1(0).slice(x)),
-                                        getCenter(PZsphere_1_1(1).slice(x)),
-                                        getCenter(PZsphere_1_1(2).slice(x));
+                        const size_t index_1_1 = robotInfoPtr_->tc_sphere_radii[arm_1_index].first;
+                        const size_t index_1_2 = robotInfoPtr_->tc_sphere_radii[arm_1_index].second;
+                        const size_t index_2_1 = robotInfoPtr_->tc_sphere_radii[arm_2_index].first;
+                        const size_t index_2_2 = robotInfoPtr_->tc_sphere_radii[arm_2_index].second;
 
-                        frame_id = robotInfoPtr_->tc_spheres[arm_1_index].second;
-                        auto& PZsphere_1_2 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
-                        Vec3 tc1_sphere_2;
-                        tc1_sphere_2 << getCenter(PZsphere_1_2(0).slice(x)),
-                                        getCenter(PZsphere_1_2(1).slice(x)),
-                                        getCenter(PZsphere_1_2(2).slice(x));
+                        Vec3 tc1_sphere_1 = sphere_locations[i][index_1_1];
+                        Vec3 tc1_sphere_2 = sphere_locations[i][index_1_2];
+                        Vec3 tc2_sphere_1 = sphere_locations[i][index_2_1];
+                        Vec3 tc2_sphere_2 = sphere_locations[i][index_2_2];
+                        
+                        const double tc1_sphere_1_radius = sphere_radii[i][index_1_1];
+                        const double tc1_sphere_2_radius = sphere_radii[i][index_1_2];
 
-                        const double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].first, i);
-                        const double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_1_index].second, i);
+                        const double tc2_sphere_1_radius = sphere_radii[i][index_2_1];
+                        const double tc2_sphere_2_radius = sphere_radii[i][index_2_2];
 
-                        pinocchio::FrameIndex frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
-                        auto& PZsphere_2_1 = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                        Vec3 tc2_sphere_1;
-                        tc2_sphere_1 << getCenter(PZsphere_2_1(0).slice(x)),
-                                        getCenter(PZsphere_2_1(1).slice(x)),
-                                        getCenter(PZsphere_2_1(2).slice(x));
+                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_1_fixed(sphere_gradient[i][index_1_1]);
+                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_2_fixed(sphere_gradient[i][index_1_2]);
 
-                        frame_id2 = robotInfoPtr_->tc_spheres[arm_2_index].second;
-                        auto& PZsphere_2_2 = dynPtr_->data_sparses[i].oMf[frame_id2].translation();
-                        Vec3 tc2_sphere_2;
-                        tc2_sphere_2 << getCenter(PZsphere_2_2(0).slice(x)),
-                                        getCenter(PZsphere_2_2(1).slice(x)),
-                                        getCenter(PZsphere_2_2(2).slice(x));
-
-                        const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].first, i);
-                        const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_sphere_radii[arm_2_index].second, i);
-
-                        // Gradient of arm 1 spheres
-                        VecX dk_x_res(NUM_FACTORS), dk_y_res(NUM_FACTORS), dk_z_res(NUM_FACTORS);
-                        PZsphere_1_1(0).slice(dk_x_res, x);
-                        PZsphere_1_1(1).slice(dk_y_res, x);
-                        PZsphere_1_1(2).slice(dk_z_res, x);
-
-                        MatX dk_tc1_sphere_1(3, NUM_FACTORS);
-                        dk_tc1_sphere_1.row(0) = dk_x_res;
-                        dk_tc1_sphere_1.row(1) = dk_y_res;
-                        dk_tc1_sphere_1.row(2) = dk_z_res;
-
-                        PZsphere_1_2(0).slice(dk_x_res, x);
-                        PZsphere_1_2(1).slice(dk_y_res, x);
-                        PZsphere_1_2(2).slice(dk_z_res, x);
-
-                        MatX dk_tc1_sphere_2(3, NUM_FACTORS);
-                        dk_tc1_sphere_2.row(0) = dk_x_res;
-                        dk_tc1_sphere_2.row(1) = dk_y_res;
-                        dk_tc1_sphere_2.row(2) = dk_z_res;
-
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_1_fixed(dk_tc1_sphere_1);
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_2_fixed(dk_tc1_sphere_2);
-
-                        // Gradient of arm 2 spheres
-                        PZsphere_2_1(0).slice(dk_x_res, x);
-                        PZsphere_2_1(1).slice(dk_y_res, x);
-                        PZsphere_2_1(2).slice(dk_z_res, x);
-
-                        MatX dk_tc2_sphere_1(3, NUM_FACTORS);
-                        dk_tc2_sphere_1.row(0) = dk_x_res;
-                        dk_tc2_sphere_1.row(1) = dk_y_res;
-                        dk_tc2_sphere_1.row(2) = dk_z_res;
-
-                        PZsphere_2_2(0).slice(dk_x_res, x);
-                        PZsphere_2_2(1).slice(dk_y_res, x);
-                        PZsphere_2_2(2).slice(dk_z_res, x);
-
-                        MatX dk_tc2_sphere_2(3, NUM_FACTORS);
-                        dk_tc2_sphere_2.row(0) = dk_x_res;
-                        dk_tc2_sphere_2.row(1) = dk_y_res;
-                        dk_tc2_sphere_2.row(2) = dk_z_res;
-
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_1_fixed(dk_tc2_sphere_1);
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_2_fixed(dk_tc2_sphere_2);
+                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_1_fixed(sphere_gradient[i][index_2_1]);
+                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_2_fixed(sphere_gradient[i][index_2_2]);
 
                         Eigen::Vector<double, NUM_FACTORS> dk_distances(NUM_FACTORS);
                         

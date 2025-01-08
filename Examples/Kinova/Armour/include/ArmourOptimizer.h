@@ -150,8 +150,9 @@ public:
 
     int num_self_collisions = 0;
     int num_capsules = 0;
-    std::array<std::array<std::pair<size_t, size_t>, 1>, 1> sphere_locations;
-    std::array<std::pair<size_t, size_t>, 0> sphere_radii;
+    std::vector<std::vector<Vec3>> sphere_locations;
+    std::vector<std::vector<double>> sphere_radii;
+    std::vector<std::vector<MatX>> sphere_gradient;
 
     VecX q_des;
     Number t_plan = 0;
