@@ -67,17 +67,14 @@ KinovaWithSuctionCup:
     - "offset": [0.03, -0.06, -0.055] # camera, collision-16
       "radius": 0.02
   tapered_capsules:
-    joint_2:
+    link_2:
       - "sphere_1": 0
         "sphere_2": 6
-    joint_4:
+    link_4:
       - "sphere_1": 7
         "sphere_2": 11
-    joint_6:
+    end_effector:
       - "sphere_1": 12
-        "sphere_2": 13
-    joint_7:
-      - "sphere_1": 14
         "sphere_2": 16
     
 

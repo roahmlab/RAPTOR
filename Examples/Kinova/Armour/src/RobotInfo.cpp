@@ -194,23 +194,11 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     for (const auto& entry : RobotConfig["tapered_capsules"]){
         std::string link_name = entry.first.as<std::string>();
         const YAML::Node& spheres = entry.second;
-        if (model.existJointName(link_name)) {
-            for (const auto& sphere : spheres) {
-                const size_t sphere_1 = sphere["sphere_1"].as<size_t>();
-                const size_t sphere_2 = sphere["sphere_2"].as<size_t>();
-
-                // Currently no validation, trusts YAML to have valid collision element names
-                pinocchio::FrameIndex frame_id_1 = model.getFrameId("collision-" + std::to_string(sphere_1));
-                pinocchio::FrameIndex frame_id_2 = model.getFrameId("collision-" + std::to_string(sphere_2));
-
-                tc_spheres.push_back(std::make_pair(frame_id_1, frame_id_2));
-                tc_begin_and_end.push_back(std::make_pair(sphere_1, sphere_2));
-
-                num_capsules++;
-            }
-        }
-        else {
-            throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
+        for (const auto& sphere : spheres) {
+            const size_t sphere_1 = sphere["sphere_1"].as<size_t>();
+            const size_t sphere_2 = sphere["sphere_2"].as<size_t>();
+            tc_begin_and_end.push_back(std::make_pair(sphere_1, sphere_2));
+            num_capsules++;
         }
     }
 

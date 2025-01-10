@@ -314,40 +314,40 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
         for (int collision_index = 0; collision_index < num_self_collisions; collision_index++){
             const int arm_1_index = robotInfoPtr_->self_collision_checks[collision_index].first;
             const int arm_2_index = robotInfoPtr_->self_collision_checks[collision_index].second;
-            if(i == 0){
-                std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
-            }
 
-            pinocchio::FrameIndex frame_id_0 = robotInfoPtr_->tc_spheres[arm_1_index].first;
+            std::string sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_1_index].first);
+            pinocchio::FrameIndex frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id_0].translation();
+            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             Interval x_res = PZsphere_0(0).slice(x);
             Interval y_res = PZsphere_0(1).slice(x);
             Interval z_res = PZsphere_0(2).slice(x);
 
             Vec3 tc1_sphere_1;
             tc1_sphere_1 << getCenter(x_res), 
-                                getCenter(y_res), 
-                                getCenter(z_res);
+                            getCenter(y_res), 
+                            getCenter(z_res);
 
-            pinocchio::FrameIndex frame_id_1 = robotInfoPtr_->tc_spheres[arm_1_index].second;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_1_index].second);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id_1].translation();
+            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             x_res = PZsphere_1(0).slice(x);
             y_res = PZsphere_1(1).slice(x);
             z_res = PZsphere_1(2).slice(x);
 
             Vec3 tc1_sphere_2;
             tc1_sphere_2 << getCenter(x_res), 
-                                getCenter(y_res), 
-                                getCenter(z_res);
+                            getCenter(y_res), 
+                            getCenter(z_res);
 
             double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].first, i);
             double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].second, i);
 
-            pinocchio::FrameIndex frame_id_2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_2_index].first);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id_2].translation();
+            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             Interval x_res2 = PZsphere_2(0).slice(x);
             Interval y_res2 = PZsphere_2(1).slice(x);
             Interval z_res2 = PZsphere_2(2).slice(x);
@@ -357,9 +357,10 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheck){
                             getCenter(y_res2), 
                             getCenter(z_res2);
 
-            pinocchio::FrameIndex frame_id_3 = robotInfoPtr_->tc_spheres[arm_2_index].second;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_2_index].second);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id_3].translation();
+            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             x_res = PZsphere_3(0).slice(x);
             y_res = PZsphere_3(1).slice(x);
             z_res = PZsphere_3(2).slice(x);
@@ -449,9 +450,10 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
                 std::cout << "Arm 1: " << arm_1_index << " Arm 2: " << arm_2_index << std::endl;
             }
 
-            pinocchio::FrameIndex frame_id_0 = robotInfoPtr_->tc_spheres[arm_1_index].first;
+            std::string sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_1_index].first);
+            pinocchio::FrameIndex frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id_0].translation();
+            auto& PZsphere_0 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             Interval x_res = PZsphere_0(0).slice(x);
             Interval y_res = PZsphere_0(1).slice(x);
             Interval z_res = PZsphere_0(2).slice(x);
@@ -461,9 +463,10 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
                                 getCenter(y_res), 
                                 getCenter(z_res);
 
-            pinocchio::FrameIndex frame_id_1 = robotInfoPtr_->tc_spheres[arm_1_index].second;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_1_index].second);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id_1].translation();
+            auto& PZsphere_1 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             x_res = PZsphere_1(0).slice(x);
             y_res = PZsphere_1(1).slice(x);
             z_res = PZsphere_1(2).slice(x);
@@ -476,9 +479,10 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
             double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].first, i);
             double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].second, i);
 
-            pinocchio::FrameIndex frame_id_2 = robotInfoPtr_->tc_spheres[arm_2_index].first;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_2_index].first);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id_2].translation();
+            auto& PZsphere_2 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             Interval x_res2 = PZsphere_2(0).slice(x);
             Interval y_res2 = PZsphere_2(1).slice(x);
             Interval z_res2 = PZsphere_2(2).slice(x);
@@ -488,9 +492,10 @@ BOOST_AUTO_TEST_CASE(KinovaCollisionCheckZeroAngle){
                             getCenter(y_res2), 
                             getCenter(z_res2);
 
-            pinocchio::FrameIndex frame_id_3 = robotInfoPtr_->tc_spheres[arm_2_index].second;
+            sphere_name = "collision-" + std::to_string(robotInfoPtr_->tc_begin_and_end[arm_2_index].second);
+            frame_id = robotInfoPtr_->model.getFrameId(sphere_name);
 
-            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id_3].translation();
+            auto& PZsphere_3 = dynPtr_->data_sparses[i].oMf[frame_id].translation();
             x_res = PZsphere_3(0).slice(x);
             y_res = PZsphere_3(1).slice(x);
             z_res = PZsphere_3(2).slice(x);

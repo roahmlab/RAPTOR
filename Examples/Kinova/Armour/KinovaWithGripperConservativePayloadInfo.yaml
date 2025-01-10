@@ -76,4 +76,14 @@ KinovaWithGripperConservativePayloadInfo:
       "radius": 0.05
     - "offset": [0.0, 0.0, -0.20]
       "radius": 0.05
+  tapered_capsules:
+    link_2:
+      - "sphere_1": 0
+        "sphere_2": 6
+    link_4:
+      - "sphere_1": 7
+        "sphere_2": 11
+    end_effector:
+      - "sphere_1": 12
+        "sphere_2": 16
     

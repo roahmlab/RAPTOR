@@ -139,8 +139,8 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
         throw std::invalid_argument("q_des must be of size robotInfoPtr_->num_motors");
     }
 
-    if (t_plan_inp <= 0.0 || t_plan_inp > duration) {
-        throw std::invalid_argument("t_plan must be positive and less than duration");
+    if (t_plan_inp <= 0.0 || t_plan_inp > 1.0) {
+        throw std::invalid_argument("t_plan must be positive and less than 1.0");
     }
 
     q0.resize(robotInfoPtr_->num_motors);
