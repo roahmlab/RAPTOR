@@ -24,14 +24,14 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
    
     // Constructor
     EndEffectorIdentificationPybindWrapper() = default;
 
     EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
-                                           const nb_1d_float friction_parameters_input,
+                                           const nb_1d_double friction_parameters_input,
                                            const int H_input,
                                            const std::string time_format_string,
                                            const bool display_info);

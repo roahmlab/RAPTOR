@@ -21,7 +21,7 @@ SafePayloadExcitingPybindWrapper::SafePayloadExcitingPybindWrapper(const std::st
     }
 }
 
-void SafePayloadExcitingPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
+void SafePayloadExcitingPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -71,11 +71,11 @@ void SafePayloadExcitingPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void SafePayloadExcitingPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                                 const nb_1d_float q_d0_inp,
-                                                                 const nb_1d_float q_dd0_inp,
-                                                                 const nb_1d_float k_center_inp,
-                                                                 const nb_1d_float k_range_inp,
+void SafePayloadExcitingPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                                 const nb_1d_double q_d0_inp,
+                                                                 const nb_1d_double q_dd0_inp,
+                                                                 const nb_1d_double k_center_inp,
+                                                                 const nb_1d_double k_range_inp,
                                                                  const double duration_inp) {
     if (q0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_d0_inp.shape(0) != robotInfoPtr_->num_motors || 
@@ -131,9 +131,9 @@ void SafePayloadExcitingPybindWrapper::set_trajectory_parameters(const nb_1d_flo
     has_optimized = false;                     
 }
 
-void SafePayloadExcitingPybindWrapper::set_endeffector_inertial_parameters(const nb_1d_float inertial_parameters,
-                                                                           const nb_1d_float inertial_parameters_lb,
-                                                                           const nb_1d_float inertial_parameters_ub) {
+void SafePayloadExcitingPybindWrapper::set_endeffector_inertial_parameters(const nb_1d_double inertial_parameters,
+                                                                           const nb_1d_double inertial_parameters_lb,
+                                                                           const nb_1d_double inertial_parameters_ub) {
     if (inertial_parameters.shape(0) != 10 || 
         inertial_parameters_lb.shape(0) != 10 ||
         inertial_parameters_ub.shape(0) != 10) {
@@ -219,6 +219,10 @@ nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+    }
+
+    if( status == Invalid_Problem_Definition ) {
+        throw std::runtime_error("Invalid problem definition!");
     }
 
     set_trajectory_parameters_check = false;

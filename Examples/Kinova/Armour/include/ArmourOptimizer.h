@@ -155,6 +155,9 @@ public:
 
     VecX q_des;
     Number t_plan = 0;
+
+    VecX g_lb_copy;
+    VecX g_ub_copy;
 };
 
 }; // namespace Armour

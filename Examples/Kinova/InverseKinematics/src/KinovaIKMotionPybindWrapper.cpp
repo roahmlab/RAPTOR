@@ -55,6 +55,28 @@ void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d
     has_optimized = false;
 }
 
+void KinovaIKMotionPybindWrapper::set_obstacles(const nb_2d_double& obstacles_inp,
+                                                const double collision_buffer_inp) {
+    if (obstacles_inp.shape(1) != 9) {
+        throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
+    }
+
+    num_obstacles = obstacles_inp.shape(0);
+    collision_buffer = collision_buffer_inp;
+
+    boxCenters.resize(num_obstacles);
+    boxOrientation.resize(num_obstacles);
+    boxSize.resize(num_obstacles);
+
+    for (int i = 0; i < num_obstacles; i++) {
+        boxCenters[i] << obstacles_inp(i, 0), obstacles_inp(i, 1), obstacles_inp(i, 2);
+        boxOrientation[i] << obstacles_inp(i, 3), obstacles_inp(i, 4), obstacles_inp(i, 5);
+        boxSize[i] << obstacles_inp(i, 6), obstacles_inp(i, 7), obstacles_inp(i, 8);
+    }
+
+    has_optimized = false;
+}
+
 void KinovaIKMotionPybindWrapper::set_ipopt_parameters(const double tol,
                                                        const double constr_viol_tol,
                                                        const double obj_scaling_factor,
@@ -117,6 +139,9 @@ nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) 
             mynlp->set_parameters(z,
                                   model,
                                   desiredTransform,
+                                  boxCenters,
+                                  boxOrientation,
+                                  boxSize,
                                   endT);
         }
         catch (std::exception& e) {

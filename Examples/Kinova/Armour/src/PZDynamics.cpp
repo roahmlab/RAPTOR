@@ -85,6 +85,9 @@ void PZDynamics::reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr
             phi_interval(10 * (end_effector_index - 1) + j) = 
                 Interval(robotInfoPtr_->end_effector_inertia_lb(j - 4), robotInfoPtr_->end_effector_inertia_ub(j - 4));
         }
+        for (size_t j = 0; j < 10; j++) {
+            phi(10 * (end_effector_index - 1) + j) = getCenter(phi_interval(10 * (end_effector_index - 1) + j));
+        }
     }
     data_sparses_interval[0] = pinocchio::DataTpl<PZSparse>(model_sparses_interval[0]);
 

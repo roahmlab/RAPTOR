@@ -37,6 +37,9 @@ public:
     // Class methods
     void set_desired_endeffector_transforms(const nb_2d_double& desired_endeffector_transforms_inp);
 
+    void set_obstacles(const nb_2d_double& obstacles_inp,
+                       const double collision_buffer_inp);
+
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
                               const double obj_scaling_factor,
@@ -54,6 +57,13 @@ public:
 
     // end effector transform
     Transform endT;
+
+    // obstacle information
+    int num_obstacles = 0;
+    std::vector<Vec3> boxCenters;
+    std::vector<Vec3> boxOrientation;
+    std::vector<Vec3> boxSize;
+    double collision_buffer = 0;
     
     SmartPtr<KinovaIKSolver> mynlp;
     SmartPtr<IpoptApplication> app;

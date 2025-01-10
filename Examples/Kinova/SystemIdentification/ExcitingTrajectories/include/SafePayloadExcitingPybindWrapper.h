@@ -24,8 +24,8 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     SafePayloadExcitingPybindWrapper() = default;
@@ -38,7 +38,7 @@ public:
     ~SafePayloadExcitingPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_float obstacles_inp);
+    void set_obstacles(const nb_2d_double obstacles_inp);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -49,16 +49,16 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const nb_1d_float q0_inp,
-                                   const nb_1d_float q_d0_inp,
-                                   const nb_1d_float q_dd0_inp,
-                                   const nb_1d_float k_center_inp,
-                                   const nb_1d_float k_range_inp,
+    void set_trajectory_parameters(const nb_1d_double q0_inp,
+                                   const nb_1d_double q_d0_inp,
+                                   const nb_1d_double q_dd0_inp,
+                                   const nb_1d_double k_center_inp,
+                                   const nb_1d_double k_range_inp,
                                    const double duration_inp);
 
-    void set_endeffector_inertial_parameters(const nb_1d_float inertial_parameters,
-                                             const nb_1d_float inertial_parameters_lb,
-                                             const nb_1d_float inertial_parameters_ub);
+    void set_endeffector_inertial_parameters(const nb_1d_double inertial_parameters,
+                                             const nb_1d_double inertial_parameters_lb,
+                                             const nb_1d_double inertial_parameters_ub);
 
     nb::tuple optimize();
 

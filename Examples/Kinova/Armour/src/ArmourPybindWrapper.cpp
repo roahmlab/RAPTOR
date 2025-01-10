@@ -23,10 +23,11 @@ ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
     }
 }
 
-void ArmourPybindWrapper::set_object_properties(const nb_1d_float object_inertia,
-                               const nb_1d_float object_com,
-                               const double object_mass) {
-    if (object_inertia.shape(0) != 9 || object_com.shape(0) != 3) {
+void ArmourPybindWrapper::set_endeffector_inertial_parameters(const double object_mass,
+                                                              const nb_1d_double object_com,
+                                                              const nb_1d_double object_inertia) {
+    if (object_inertia.shape(0) != 9 || 
+        object_com.shape(0) != 3) {
         throw std::invalid_argument("Object inertia must have 9 elements and object com must have 3 elements");
     }
     
@@ -35,12 +36,27 @@ void ArmourPybindWrapper::set_object_properties(const nb_1d_float object_inertia
                           object_inertia(3), object_inertia(4), object_inertia(5),
                           object_inertia(6), object_inertia(7), object_inertia(8);
 
-    robotInfoPtr_->model.inertias[robotInfoPtr_->model.nbodies - 1] = pinocchio::Inertia(object_mass, 
-                                                           Vec3(object_com(0), object_com(1), object_com(2)),
-                                                           object_inertia_mat);
+    robotInfoPtr_->model.inertias[robotInfoPtr_->model.nbodies - 1] = pinocchio::Inertia(
+        object_mass, 
+        Vec3(object_com(0), 
+             object_com(1), 
+             object_com(2)),
+        object_inertia_mat);
+    
+    if (trajPtr_ != nullptr) {
+        if (dynPtr_ == nullptr) {
+            dynPtr_ = std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
+        }
+        else {
+            dynPtr_->reset_robot_info(robotInfoPtr_);
+        }
+    }
+    else {
+        throw std::runtime_error("Trajectory parameters not set yet!");
+    }
 }
 
-void ArmourPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
+void ArmourPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -90,13 +106,14 @@ void ArmourPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float q_d0_inp,
-                                                    const nb_1d_float q_dd0_inp,
-                                                    const nb_1d_float k_center_inp,
-                                                    const nb_1d_float k_range_inp,
+void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                    const nb_1d_double q_d0_inp,
+                                                    const nb_1d_double q_dd0_inp,
+                                                    const nb_1d_double k_center_inp,
+                                                    const nb_1d_double k_range_inp,
                                                     const double duration_inp,
-                                                    const nb_1d_float q_des_inp) {
+                                                    const nb_1d_double q_des_inp,
+                                                    const double t_plan_inp) {
     if (q0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_d0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_dd0_inp.shape(0) != robotInfoPtr_->num_motors) {
@@ -122,6 +139,10 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
         throw std::invalid_argument("q_des must be of size robotInfoPtr_->num_motors");
     }
 
+    if (t_plan_inp <= 0.0 || t_plan_inp > duration) {
+        throw std::invalid_argument("t_plan must be positive and less than duration");
+    }
+
     q0.resize(robotInfoPtr_->num_motors);
     q_d0.resize(robotInfoPtr_->num_motors);
     q_dd0.resize(robotInfoPtr_->num_motors);
@@ -144,6 +165,8 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
     for (size_t i = 0; i < robotInfoPtr_->num_motors; i++) {
         q_des(i) = q_des_inp(i);
     }
+
+    t_plan = t_plan_inp;
 
     trajPtr_ = std::make_shared<BezierCurveInterval>(
         q0, q_d0, q_dd0, 
@@ -176,8 +199,6 @@ nb::tuple ArmourPybindWrapper::optimize() {
     std::cout << "    ArmourPybindWrapper: Time taken to generate reachable sets: " 
               << std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count() / 1000.0
               << " ms" << std::endl;
-
-    double t_plan = 1.0 * duration;
 
     // Initialize Kinova optimizer
     try {

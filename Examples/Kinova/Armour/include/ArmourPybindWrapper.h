@@ -24,8 +24,8 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     ArmourPybindWrapper() = default;
@@ -38,11 +38,11 @@ public:
     ~ArmourPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_float obstacles_inp);
+    void set_obstacles(const nb_2d_double obstacles_inp);
 
-    void set_object_properties(const nb_1d_float object_inertia,
-                               const nb_1d_float object_com,
-                               const double object_mass);
+    void set_endeffector_inertial_parameters(const double object_mass,
+                                             const nb_1d_double object_com,
+                                             const nb_1d_double object_inertia);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -53,13 +53,14 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const nb_1d_float q0_inp,
-                                   const nb_1d_float q_d0_inp,
-                                   const nb_1d_float q_dd0_inp,
-                                   const nb_1d_float k_center_inp,
-                                   const nb_1d_float k_range_inp,
+    void set_trajectory_parameters(const nb_1d_double q0_inp,
+                                   const nb_1d_double q_d0_inp,
+                                   const nb_1d_double q_dd0_inp,
+                                   const nb_1d_double k_center_inp,
+                                   const nb_1d_double k_range_inp,
                                    const double duration_inp,
-                                   const nb_1d_float q_des_inp);
+                                   const nb_1d_double q_des_inp,
+                                   const double t_plan_inp);
 
     nb::tuple optimize();
 
@@ -83,8 +84,9 @@ public:
     VecX q_dd0;
     VecX k_center;
     VecX k_range;
-    double duration;
+    double duration = 3.0;
     VecX q_des;
+    double t_plan = 0.0;
     
     SmartPtr<ArmourOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;

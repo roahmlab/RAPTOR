@@ -22,6 +22,13 @@ int main() {
     fkSolver.compute(0, model.nq, q);
     const Transform desiredTransform = fkSolver.getTransform();
 
+    // Obstacle information (no obstacle in this example)
+    int num_obstacles = 0;
+    std::vector<Eigen::Vector3d> boxCenters;
+    std::vector<Eigen::Vector3d> boxOrientation;
+    std::vector<Eigen::Vector3d> boxSize;
+    double collision_buffer = 0;
+
     // Define initial guess
     Eigen::VectorXd z = Eigen::VectorXd::Random(model.nq);
 
@@ -30,7 +37,10 @@ int main() {
     try {
 	    mynlp->set_parameters(z,
                               model,
-                              desiredTransform);
+                              desiredTransform,
+                              boxCenters,
+                              boxOrientation,
+                              boxSize);
         mynlp->constr_viol_tol = 1e-8;
     }
     catch (std::exception& e) {

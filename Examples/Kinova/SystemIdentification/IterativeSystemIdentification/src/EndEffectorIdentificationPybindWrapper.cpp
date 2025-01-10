@@ -4,7 +4,7 @@ namespace RAPTOR {
 namespace Kinova {
 
 EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
-                                                                               const nb_1d_float friction_parameters_input,
+                                                                               const nb_1d_double friction_parameters_input,
                                                                                const int H_input,
                                                                                const std::string time_format_string,
                                                                                const bool display_info):
