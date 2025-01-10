@@ -22,8 +22,8 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     KinovaPybindWrapper() = default;
@@ -35,7 +35,7 @@ public:
     ~KinovaPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_float obstacles_inp,
+    void set_obstacles(const nb_2d_double obstacles_inp,
                        const double collision_buffer_inp);
 
     void set_ipopt_parameters(const double tol,
@@ -47,16 +47,16 @@ public:
                               const std::string linear_solver,
                               const bool gradient_check);
 
-    void set_trajectory_parameters(const nb_1d_float q0_inp,
-                                   const nb_1d_float q_d0_inp,
-                                   const nb_1d_float q_dd0_inp,
+    void set_trajectory_parameters(const nb_1d_double q0_inp,
+                                   const nb_1d_double q_d0_inp,
+                                   const nb_1d_double q_dd0_inp,
                                    const double duration_inp);
 
-    void set_buffer(const nb_1d_float joint_limits_buffer_inp,
-                    const nb_1d_float velocity_limits_buffer_inp,
-                    const nb_1d_float torque_limits_buffer_inp);
+    void set_buffer(const nb_1d_double joint_limits_buffer_inp,
+                    const nb_1d_double velocity_limits_buffer_inp,
+                    const nb_1d_double torque_limits_buffer_inp);
 
-    void set_target(const nb_1d_float q_des_inp,
+    void set_target(const nb_1d_double q_des_inp,
                     const double tplan_inp);
 
     nb::tuple optimize();

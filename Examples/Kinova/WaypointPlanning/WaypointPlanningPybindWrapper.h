@@ -34,8 +34,8 @@ public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
-    using nb_1d_float = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
-    using nb_2d_float = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+    using nb_1d_double = nb::ndarray<double, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+    using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
     WaypointPlanningPybindWrapper() = default;
@@ -79,7 +79,7 @@ public:
     ~WaypointPlanningPybindWrapper() = default;
 
     // Class methods
-    void set_obstacles(const nb_2d_float obstacles_inp,
+    void set_obstacles(const nb_2d_double obstacles_inp,
                        const double buffer_inp) {
         if (obstacles_inp.shape(1) != 9) {
             throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
@@ -106,8 +106,8 @@ public:
         set_obstacles_check = true;
     };
 
-    void set_start_goal(const nb_1d_float start_inp, 
-                        const nb_1d_float goal_inp) {
+    void set_start_goal(const nb_1d_double start_inp, 
+                        const nb_1d_double goal_inp) {
         if (start_inp.shape(0) != NUM_JOINTS || goal_inp.shape(0) != NUM_JOINTS) {
             throw std::invalid_argument("Start and goal must be of size NUM_JOINTS");
         }

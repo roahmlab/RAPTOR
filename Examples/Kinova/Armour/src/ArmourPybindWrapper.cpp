@@ -23,8 +23,8 @@ ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
     }
 }
 
-void ArmourPybindWrapper::set_object_properties(const nb_1d_float object_inertia,
-                               const nb_1d_float object_com,
+void ArmourPybindWrapper::set_object_properties(const nb_1d_double object_inertia,
+                               const nb_1d_double object_com,
                                const double object_mass) {
     if (object_inertia.shape(0) != 9 || object_com.shape(0) != 3) {
         throw std::invalid_argument("Object inertia must have 9 elements and object com must have 3 elements");
@@ -40,7 +40,7 @@ void ArmourPybindWrapper::set_object_properties(const nb_1d_float object_inertia
                                                            object_inertia_mat);
 }
 
-void ArmourPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
+void ArmourPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -90,13 +90,13 @@ void ArmourPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float q_d0_inp,
-                                                    const nb_1d_float q_dd0_inp,
-                                                    const nb_1d_float k_center_inp,
-                                                    const nb_1d_float k_range_inp,
+void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                    const nb_1d_double q_d0_inp,
+                                                    const nb_1d_double q_dd0_inp,
+                                                    const nb_1d_double k_center_inp,
+                                                    const nb_1d_double k_range_inp,
                                                     const double duration_inp,
-                                                    const nb_1d_float q_des_inp) {
+                                                    const nb_1d_double q_des_inp) {
     if (q0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_d0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_dd0_inp.shape(0) != robotInfoPtr_->num_motors) {
