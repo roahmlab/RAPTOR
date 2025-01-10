@@ -15,10 +15,10 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
@@ -28,7 +28,6 @@ int main() {
     // const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
     // const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
     Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
-    q0(1) = -M_PI_2;
     const Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
     const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
 

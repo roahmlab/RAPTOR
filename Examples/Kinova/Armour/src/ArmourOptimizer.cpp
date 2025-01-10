@@ -165,6 +165,9 @@ bool ArmourOptimizer::get_bounds_info(
         g_u[i] = Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qde;
     }
 
+    g_lb_copy = Utils::initializeEigenVectorFromArray(g_l, m);
+    g_ub_copy = Utils::initializeEigenVectorFromArray(g_u, m);
+
     return true;
 }
 // [TNLP_get_bounds_info]
@@ -385,6 +388,54 @@ bool ArmourOptimizer::eval_g(
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+    }
+
+    // update status of the current solution 
+    // originally computed in Optimizer.cpp but we have overwitten eval_g, so have to manually update it here
+    ifFeasibleCurrIter = true;
+    for (Index i = 0; i < m; i++) {
+        // test if constraints are feasible
+        if (g[i] - g_lb_copy[i] < -constr_viol_tol || 
+            g_ub_copy[i] - g[i] < -constr_viol_tol) {
+            ifFeasibleCurrIter = false;
+            break;
+        }
+    }
+
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
     }
 
     return true;
