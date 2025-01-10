@@ -20,8 +20,8 @@ PZDynamics::PZDynamics(const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
     friction_PZs.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
     zmp_PZs.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
 
-    torque_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
-    sphere_radii = Eigen::MatrixXd::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+    torque_radii = MatX::Zero(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
+    sphere_radii = MatX::Zero(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
 }
 
 void PZDynamics::reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr_input) {

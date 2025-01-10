@@ -78,10 +78,8 @@ public:
     int num_self_collisions = 0;
     int num_capsules = 0;
     std::vector<std::pair<pinocchio::FrameIndex, pinocchio::FrameIndex>> tc_spheres;
-    std::vector<std::pair<size_t, size_t>> tc_sphere_radii;
-
+    std::vector<std::pair<size_t, size_t>> tc_begin_and_end; // index of the two spheres that consist a tapered capsule
     std::vector<std::pair<size_t, size_t>> self_collision_checks;
-
 
     RobotInfo() = default;
 

@@ -16,7 +16,7 @@ int main() {
 // INITIALIZATION
     // read robot model and info
     const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
     // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
     // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
@@ -28,7 +28,6 @@ int main() {
     // const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
     // const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
     Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
-    // q0(1) = -M_PI_2;
     const Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
     const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
 
@@ -105,11 +104,11 @@ int main() {
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-    app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
+    // // For gradient checking
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

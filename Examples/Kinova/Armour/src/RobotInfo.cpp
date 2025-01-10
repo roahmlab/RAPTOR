@@ -204,7 +204,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
                 pinocchio::FrameIndex frame_id_2 = model.getFrameId("collision-" + std::to_string(sphere_2));
 
                 tc_spheres.push_back(std::make_pair(frame_id_1, frame_id_2));
-                tc_sphere_radii.push_back(std::make_pair(sphere_1, sphere_2));
+                tc_begin_and_end.push_back(std::make_pair(sphere_1, sphere_2));
 
                 num_capsules++;
             }
