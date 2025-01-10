@@ -152,6 +152,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     }
 
     num_spheres = 0;
+    num_capsules = 0;
     sphere_radii.clear();
     for (const auto& entry : RobotConfig["collision_spheres"]) {
         std::string link_name = entry.first.as<std::string>();
@@ -186,6 +187,39 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         }
         else {
             throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
+        }
+    }
+
+    // Import tapered capsules
+    for (const auto& entry : RobotConfig["tapered_capsules"]){
+        std::string link_name = entry.first.as<std::string>();
+        const YAML::Node& spheres = entry.second;
+        if (model.existJointName(link_name)) {
+            for (const auto& sphere : spheres) {
+                const size_t sphere_1 = sphere["sphere_1"].as<size_t>();
+                const size_t sphere_2 = sphere["sphere_2"].as<size_t>();
+
+                // Currently no validation, trusts YAML to have valid collision element names
+                pinocchio::FrameIndex frame_id_1 = model.getFrameId("collision-" + std::to_string(sphere_1));
+                pinocchio::FrameIndex frame_id_2 = model.getFrameId("collision-" + std::to_string(sphere_2));
+
+                tc_spheres.push_back(std::make_pair(frame_id_1, frame_id_2));
+                tc_begin_and_end.push_back(std::make_pair(sphere_1, sphere_2));
+
+                num_capsules++;
+            }
+        }
+        else {
+            throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
+        }
+    }
+
+    // Generate list of self-collision checks
+    num_self_collisions = 0;
+    for (int arm_1_index = 0; arm_1_index < num_capsules - 2; arm_1_index++){
+        for (int arm_2_index = arm_1_index + 2; arm_2_index < num_capsules; arm_2_index++){
+            self_collision_checks.push_back(std::make_pair(arm_1_index, arm_2_index));
+            num_self_collisions++;
         }
     }
 }

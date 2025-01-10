@@ -53,10 +53,10 @@ public:
 	Eigen::Matrix<PZSparse, Eigen::Dynamic, Eigen::Dynamic> zmp_PZs;
 
 	// the radius of the torque PZs
-	Eigen::MatrixXd torque_radii;
+	MatX torque_radii;
 
 	// the radius of the sphere reachable sets
-	Eigen::MatrixXd sphere_radii;
+	MatX sphere_radii;
 
 	// hyperplanes for friction cone constraints
 	Eigen::Array<Eigen::Vector3d, FRICTION_CONE_LINEARIZED_SIZE, 1> S;

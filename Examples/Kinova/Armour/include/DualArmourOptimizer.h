@@ -1,16 +1,13 @@
-#ifndef ARMOUR_OPTIMIZER_H
-#define ARMOUR_OPTIMIZER_H
+#ifndef DUAL_ARMOUR_OPTIMIZER_H
+#define DUAL_ARMOUR_OPTIMIZER_H
 
-#include "PZDynamics.h"
-#include "BoxCollisionAvoidance.h"
-#include "TaperedCapsuleCollision.h"
-#include "Optimizer.h"
+#include "ArmourOptimizer.h"
 
 namespace RAPTOR {
 namespace Kinova {
 namespace Armour {
 
-class ArmourOptimizer : public Optimizer {
+class DualArmourOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
@@ -18,18 +15,21 @@ public:
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    ArmourOptimizer() = default;
+    DualArmourOptimizer() = default;
 
     /** Default destructor */
-    ~ArmourOptimizer() = default;
+    ~DualArmourOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
         const VecX& q_des_input,
         Number t_plan_input,
-        const std::shared_ptr<RobotInfo>& robotInfoPtr_input,
-        const std::shared_ptr<BezierCurveInterval>& trajPtr_input,
-        const std::shared_ptr<PZDynamics>& dynPtr_input,
+        const std::shared_ptr<RobotInfo>& robotInfoPtr1_input,
+        const std::shared_ptr<BezierCurveInterval>& trajPtr1_input,
+        const std::shared_ptr<PZDynamics>& dynPtr1_input,
+        const std::shared_ptr<RobotInfo>& robotInfoPtr2_input,
+        const std::shared_ptr<BezierCurveInterval>& trajPtr2_input,
+        const std::shared_ptr<PZDynamics>& dynPtr2_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input
@@ -128,40 +128,20 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    ArmourOptimizer(
-       const ArmourOptimizer&
+    DualArmourOptimizer(
+       const DualArmourOptimizer&
     );
 
-    ArmourOptimizer& operator=(
-       const ArmourOptimizer&
+    DualArmourOptimizer& operator=(
+       const DualArmourOptimizer&
     );
 
-    std::shared_ptr<RobotInfo> robotInfoPtr_;
-    std::shared_ptr<BezierCurveInterval> trajPtr_;
-    std::shared_ptr<PZDynamics> dynPtr_;
-    
-    std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
-    std::vector<std::shared_ptr<TaperedCapsuleCollision<NUM_FACTORS>>> tccPtrs;
-
-    size_t num_time_steps = 0;
-    size_t num_spheres = 0;
-    size_t num_fixed_joints = 0;
-    size_t num_obstacles = 0;
-
-    int num_self_collisions = 0;
-    int num_capsules = 0;
-    Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> sphere_locations;
-    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> sphere_gradient;
-
-    VecX q_des;
-    Number t_plan = 0;
-
-    VecX g_lb_copy;
-    VecX g_ub_copy;
+    std::shared_ptr<ArmourOptimizer> armourOptPtr1 = nullptr;
+    std::shared_ptr<ArmourOptimizer> armourOptPtr2 = nullptr;
 };
 
 }; // namespace Armour
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // ARMOUR_OPTIMIZER_H
+#endif // DUAL_ARMOUR_OPTIMIZER_H

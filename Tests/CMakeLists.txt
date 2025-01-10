@@ -37,18 +37,19 @@ target_link_libraries(ForwardKinematicsGradient_test PUBLIC
 target_compile_options(ForwardKinematicsGradient_test PUBLIC
     ${PINOCCHIO_FLAGS})
 
-add_executable(MinimizeTorque_test 
-    Costs/TestMinimizeTorqueCosts.cpp)
+add_executable(TaperedCapsuleCollision_test 
+    Constraints/TestTaperedCapsuleCollisionAvoidance.cpp)
 
-target_link_libraries(MinimizeTorque_test PUBLIC
-    trajlib
-    IDlib
-    Costslib
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
+target_link_libraries(TaperedCapsuleCollision_test PUBLIC
+    Armourlib
+    ${BOOST_LIBRARIES})
 
-target_compile_options(MinimizeTorque_test PUBLIC
-    ${PINOCCHIO_FLAGS})
+add_executable(TaperedCapsuleCollision_speed 
+    Constraints/TestTaperedCapsuleCollisionAvoidanceSpeed.cpp)
+
+target_link_libraries(TaperedCapsuleCollision_speed PUBLIC
+    Armourlib
+    ${BOOST_LIBRARIES})
 
 add_executable(BoxCollisionAvoidance_test 
     Constraints/TestBoxCollisionAvoidance.cpp)

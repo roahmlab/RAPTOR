@@ -44,6 +44,7 @@ add_library(Armourlib SHARED
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
     Armour/src/ArmourOptimizer.cpp
+    Armour/src/DualArmourOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingTrajectoryGenerator.cpp
 )
 
@@ -263,6 +264,24 @@ target_compile_options(Armour_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
+add_executable(DualArmour_example 
+    Armour/DualArmourExample.cpp)
+target_include_directories(DualArmour_example PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include)
+target_link_libraries(DualArmour_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Armourlib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(DualArmour_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
     NB_SHARED LTO
@@ -311,16 +330,16 @@ nanobind_add_module(armour_nanobind
 target_include_directories(armour_nanobind PUBLIC
     Armour/include)
 target_link_libraries(armour_nanobind PUBLIC
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
+    # trajlib 
+    # IDlib
+    # Conslib
+    # Optlib
     Kinovalib
     Armourlib
-    ipopt
-    coinhsl
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio
+    # ipopt
+    # coinhsl
+    # ${BOOST_LIBRARIES} 
+    # pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
 nanobind_compile_options(armour_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})

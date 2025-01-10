@@ -11,6 +11,7 @@ add_library(Conslib SHARED
     src/BoxCollisionAvoidance.cpp
     src/LMIConstraints.cpp
     src/RegroupedLMIConstraints.cpp
+    src/TaperedCapsuleCollision.cpp
 )
 
 target_include_directories(Conslib PUBLIC

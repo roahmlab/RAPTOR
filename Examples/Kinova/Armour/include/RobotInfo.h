@@ -74,6 +74,13 @@ public:
     int num_spheres = 0;
     std::vector<double> sphere_radii;
 
+    // bimanual constraints info
+    int num_self_collisions = 0;
+    int num_capsules = 0;
+    std::vector<std::pair<pinocchio::FrameIndex, pinocchio::FrameIndex>> tc_spheres;
+    std::vector<std::pair<size_t, size_t>> tc_begin_and_end; // index of the two spheres that consist a tapered capsule
+    std::vector<std::pair<size_t, size_t>> self_collision_checks;
+
     RobotInfo() = default;
 
     RobotInfo(const std::string& urdf_filename,
