@@ -1,11 +1,11 @@
-#ifndef ARMOUR_PYBIND_WRAPPER_H
-#define ARMOUR_PYBIND_WRAPPER_H
+#ifndef DUAL_ARMOUR_PYBIND_WRAPPER_H
+#define DUAL_ARMOUR_PYBIND_WRAPPER_H
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 
-#include "ArmourOptimizer.h"
+#include "DualArmourOptimizer.h"
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
@@ -16,7 +16,7 @@ namespace Armour {
 
 namespace nb = nanobind;
 
-class ArmourPybindWrapper {
+class DualArmourPybindWrapper {
 public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
@@ -28,21 +28,27 @@ public:
     using nb_2d_double = nb::ndarray<double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
 
     // Constructor
-    ArmourPybindWrapper() = default;
+    DualArmourPybindWrapper() = default;
 
-    ArmourPybindWrapper(const std::string urdf_filename,
-                        const std::string config_filename,
-                        const bool display_info = false);
+    DualArmourPybindWrapper(const std::string urdf_filename1,
+                            const std::string config_filename1,
+                            const std::string urdf_filename2,
+                            const std::string config_filename2,
+                            const bool display_info = false);
 
     // Destructor
-    ~ArmourPybindWrapper() = default;
+    ~DualArmourPybindWrapper() = default;
 
     // Class methods
     void set_obstacles(const nb_2d_double obstacles_inp);
 
-    void set_endeffector_inertial_parameters(const double object_mass,
-                                             const nb_1d_double object_com,
-                                             const nb_1d_double object_inertia);
+    void set_endeffector_inertial_parameters_robot1(const double object_mass,
+                                                    const nb_1d_double object_com,
+                                                    const nb_1d_double object_inertia);
+
+    void set_endeffector_inertial_parameters_robot2(const double object_mass,
+                                                    const nb_1d_double object_com,
+                                                    const nb_1d_double object_inertia);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,
@@ -64,13 +70,17 @@ public:
 
     nb::tuple optimize();
 
-    nb::tuple analyze_solution();
+    // nb::tuple analyze_solution();
 
     // Class members
-    std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
+    std::shared_ptr<RobotInfo> robotInfoPtr1_ = nullptr;
+    std::shared_ptr<RobotInfo> robotInfoPtr2_ = nullptr;
 
-    std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
-    std::shared_ptr<PZDynamics> dynPtr_ = nullptr;
+    std::shared_ptr<BezierCurveInterval> trajPtr1_ = nullptr;
+    std::shared_ptr<BezierCurveInterval> trajPtr2_ = nullptr;
+
+    std::shared_ptr<PZDynamics> dynPtr1_ = nullptr;
+    std::shared_ptr<PZDynamics> dynPtr2_ = nullptr;
 
     // obstacle information
     int num_obstacles = 0;
@@ -79,16 +89,21 @@ public:
     std::vector<Vec3> boxSize;
 
     // trajectory parameters
-    VecX q0;
-    VecX q_d0;
-    VecX q_dd0;
-    VecX k_center;
-    VecX k_range;
+    VecX q0_robot1;
+    VecX q_d0_robot1;
+    VecX q_dd0_robot1;
+    VecX k_center_robot1;
+    VecX k_range_robot1;
+    VecX q0_robot2;
+    VecX q_d0_robot2;
+    VecX q_dd0_robot2;
+    VecX k_center_robot2;
+    VecX k_range_robot2;
     double duration = 3.0;
     VecX q_des;
     double t_plan = 0.0;
     
-    SmartPtr<ArmourOptimizer> mynlp;
+    SmartPtr<DualArmourOptimizer> mynlp;
     SmartPtr<IpoptApplication> app;
 
     // detailed information of the solution trajectory and the corresponding reachable sets
@@ -117,4 +132,4 @@ public:
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // ARMOUR_PYBIND_WRAPPER_H
+#endif // DUAL_ARMOUR_PYBIND_WRAPPER_H

@@ -143,6 +143,9 @@ public:
     std::shared_ptr<RobotInfo> robotInfoPtr2_ = nullptr;
 
     std::vector<std::shared_ptr<TaperedCapsuleCollision<2 * NUM_FACTORS>>> tccPtrs;
+
+    VecX g_lb_copy;
+    VecX g_ub_copy;
 };
 
 }; // namespace Armour

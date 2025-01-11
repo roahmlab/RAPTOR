@@ -346,6 +346,29 @@ nanobind_compile_options(armour_nanobind PUBLIC
 set_property(TARGET armour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
+nanobind_add_module(dualarmour_nanobind 
+    NB_SHARED LTO
+    Armour/DualArmourPybind.cpp
+    Armour/src/DualArmourPybindWrapper.cpp)
+target_include_directories(dualarmour_nanobind PUBLIC
+    Armour/include)
+target_link_libraries(dualarmour_nanobind PUBLIC
+    # trajlib 
+    # IDlib
+    # Conslib
+    # Optlib
+    Kinovalib
+    Armourlib
+    # ipopt
+    # coinhsl
+    # ${BOOST_LIBRARIES} 
+    # pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(dualarmour_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET dualarmour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
 nanobind_add_module(oracle_nanobind 
     NB_SHARED LTO
     ArmourDiscrete/KinovaPybind.cpp

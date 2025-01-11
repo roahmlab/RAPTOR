@@ -140,6 +140,9 @@ bool DualArmourOptimizer::get_bounds_info(
         g_u[offset + i] = 1e19;
     }
 
+    g_lb_copy = Utils::initializeEigenVectorFromArray(g_l, m);
+    g_ub_copy = Utils::initializeEigenVectorFromArray(g_u, m);
+
     return true;
 }
 // [TNLP_get_bounds_info]
@@ -302,6 +305,59 @@ bool DualArmourOptimizer::eval_g(
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         THROW_EXCEPTION(IpoptException, "Error in eval_g of the arm-arm collision constraints!");
+    }
+
+    // update status of the current solution 
+    // originally computed in Optimizer.cpp but we have overwitten eval_g, so have to manually update it here
+    ifFeasibleCurrIter = true;
+    for (Index i = 0; i < m; i++) {
+        if (std::isnan(g[i])) {
+            std::cerr << "g[" << i << "] is nan!" << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_g!");
+        }
+        
+        // test if constraints are feasible
+        if (g[i] - g_lb_copy[i] < -constr_viol_tol || 
+            g_ub_copy[i] - g[i] < -constr_viol_tol) {
+            ifFeasibleCurrIter = false;
+            break;
+        }
+    }
+
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
     }
 
     return true;
@@ -478,7 +534,7 @@ void DualArmourOptimizer::summarize_constraints(
     final_constr_violation = std::max(final_constr_violation, armourOptPtr2_->final_constr_violation);
 
     // arm-arm collision constraints
-    const Index offset = (armourOptPtr1_->numCons + armourOptPtr2_->numCons) * NUM_FACTORS;
+    const Index offset = armourOptPtr1_->numCons + armourOptPtr2_->numCons;
     const size_t num_arm_arm_collision = robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
 
     for(Index i = 0; i < armourOptPtr1_->num_time_steps; i++){
@@ -489,7 +545,8 @@ void DualArmourOptimizer::summarize_constraints(
                     std::cout << "DualArmourOptimizer.cpp: "
                               << " TC " << j1 << " on arm 1"
                               << " and TC " << j2 << " on arm 2"
-                              << " collides at " << i << "th time step!\n";
+                              << " collides at " << i << "th time step"
+                              << " with distance " << g[i * num_arm_arm_collision + j + offset] << "!\n";
                     final_constr_violation = std::max(final_constr_violation, -g[i * num_arm_arm_collision + j + offset]);
                 }
                 j++;

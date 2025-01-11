@@ -25,6 +25,8 @@ int main() {
     Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
     Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
 
+    q0 << 0.59164682,  1.05519398,  2.46569617, -1.02732907,  0.60523465,  1.11747659, -1.55976632;
+
         // trajectory parameters and their ranges
     Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
     Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr1_->num_motors);
@@ -54,6 +56,8 @@ int main() {
     q0 = Eigen::VectorXd::Ones(robotInfoPtr2_->num_motors);
     q_d0 = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
     q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
+
+    q0 << 0.59164682,  1.05519398,  2.46569617, -1.02732907,  0.60523465,  1.11747659, -1.55976632;
 
         // trajectory parameters and their ranges
     k_center = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
@@ -89,6 +93,10 @@ int main() {
     // targets
     Eigen::VectorXd q_des = Eigen::VectorXd::Random(
         robotInfoPtr1_->num_motors + robotInfoPtr2_->num_motors);
+
+    q_des.head(robotInfoPtr1_->num_motors) << 0.05490901,  1.18798053,  2.03709998, -1.01553996, -1.45212933,  0.94367354, 0.46641401;
+    q_des.tail(robotInfoPtr2_->num_motors) << 0.05490901,  1.18798053,  2.03709998, -1.01553996, -1.45212933,  0.94367354, 0.46641401;
+
     double t_plan = 0.5;
 
 // COMPUTATION IN ARMOUR 
