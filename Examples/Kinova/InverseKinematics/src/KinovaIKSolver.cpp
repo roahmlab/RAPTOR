@@ -218,9 +218,17 @@ bool KinovaIKSolver::eval_f(
     trajPtr_->compute(z, false);
 
     const VecX& q = trajPtr_->q(0);
-    // std::cout << "q: " << q.transpose() << std::endl;
-    // std::cout << "desiredTransform.p: " << desiredTransform.p.transpose() << std::endl;
-    obj_value = 0.5 * (x0 - q).dot(x0 - q);
+
+    // minimize the distance to a given initial configuration
+    // kinova has 4 continuous joints
+    obj_value = pow(Utils::wrapToPi(q(0) - x0(0)), 2) + // These are continuous joints
+                pow(Utils::wrapToPi(q(2) - x0(2)), 2) + 
+                pow(Utils::wrapToPi(q(4) - x0(4)), 2) + 
+                pow(Utils::wrapToPi(q(6) - x0(6)), 2) + 
+                pow(q(1) - x0(1), 2) +                  // These are not continuous joints
+                pow(q(3) - x0(3), 2) + 
+                pow(q(5) - x0(5), 2);
+    obj_value = 0.5 * obj_value;
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -248,9 +256,14 @@ bool KinovaIKSolver::eval_grad_f(
     const VecX& q = trajPtr_->q(0);
     const MatX& pq_pz = trajPtr_->pq_pz(0);
 
-    VecX grad = -(x0- q).transpose() * pq_pz;
-    for(Index i = 0; i < n; i++){
-        grad_f[i] = grad(i);
+    for (Index i = 0; i < n; i++) {
+        // kinova has 4 continuous joints
+        if (i % 2 == 0) {
+            grad_f[i] = Utils::wrapToPi(q(i) - x0(i)) * pq_pz(i, i);
+        }
+        else {
+            grad_f[i] = (q(i) - x0(i)) * pq_pz(i, i);
+        }
     }
 
     return true;

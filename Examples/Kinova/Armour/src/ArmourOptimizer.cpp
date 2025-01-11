@@ -272,12 +272,12 @@ bool ArmourOptimizer::eval_f(
             k_actual, t_plan);
     }
 
-    // kinova has 4 infinite rotation joints
+    // kinova has 4 continuous joints
     obj_value = pow(Utils::wrapToPi(q_plan[0] - q_des[0]), 2) + // These are continuous joints
                 pow(Utils::wrapToPi(q_plan[2] - q_des[2]), 2) + 
                 pow(Utils::wrapToPi(q_plan[4] - q_des[4]), 2) + 
                 pow(Utils::wrapToPi(q_plan[6] - q_des[6]), 2) + 
-                pow(q_plan[1] - q_des[1], 2) +           // These are not continuous joints
+                pow(q_plan[1] - q_des[1], 2) +                  // These are not continuous joints
                 pow(q_plan[3] - q_des[3], 2) + 
                 pow(q_plan[5] - q_des[5], 2);
 
@@ -307,7 +307,7 @@ bool ArmourOptimizer::eval_grad_f(
             k_actual, t_plan);
         Number dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10) * trajPtr_->k_range[i];
 
-        // kinova has 4 infinite rotation joints
+        // kinova has 4 continuous joints
         if (i % 2 == 0) {
             grad_f[i] = (2 * Utils::wrapToPi(q_plan - q_des[i]) * dk_q_plan);
         }

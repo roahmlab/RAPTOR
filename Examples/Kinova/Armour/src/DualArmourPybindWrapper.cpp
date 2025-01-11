@@ -328,196 +328,225 @@ nb::tuple DualArmourPybindWrapper::optimize() {
     return nb::make_tuple(result1, result2, mynlp->ifFeasible);
 }
 
-// nb::tuple DualArmourPybindWrapper::analyze_solution() {
-//     if (!has_optimized) {
-//         // throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
-//         std::cerr << "DualArmourPybindWrapper::Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
-//     }
+nb::tuple DualArmourPybindWrapper::analyze_solution() {
+    if (!has_optimized) {
+        // throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        std::cerr << "DualArmourPybindWrapper::Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
+    }
     
-//     // recover trajectory information
-//     trajInfo.resize(3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps);
-//     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-//         VecX q(robotInfoPtr_->num_motors);
-//         VecX qd(robotInfoPtr_->num_motors);
-//         VecX qdd(robotInfoPtr_->num_motors);
-//         const double t = duration * (i + 0.5) / trajPtr_->num_time_steps;
-//         trajPtr_->computeTrajectories(mynlp->solution, t, q, qd, qdd);
-//         trajInfo.col(i).head(robotInfoPtr_->num_motors) = q;
-//         trajInfo.col(i).segment(robotInfoPtr_->num_motors, robotInfoPtr_->num_motors) = qd;
-//         trajInfo.col(i).segment(robotInfoPtr_->num_motors * 2, robotInfoPtr_->num_motors) = qdd;
-//         trajInfo(robotInfoPtr_->num_motors * 3, i) = t;
-//     }
+    // recover trajectory information
+    VecX q(robotInfoPtr1_->num_motors);
+    VecX qd(robotInfoPtr1_->num_motors);
+    VecX qdd(robotInfoPtr1_->num_motors);
 
-//     // recover sphere occupancy information for collision checking
-//     spheres_x.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
-//     spheres_y.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
-//     spheres_z.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
-//     spheres_radius.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
-//     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-//         for (size_t j = 0; j < robotInfoPtr_->num_spheres; j++) {
-//             const std::string sphere_name = "collision-" + std::to_string(j);
-//             const pinocchio::FrameIndex frame_id = 
-//                 robotInfoPtr_->model.getFrameId(sphere_name);
+    trajInfo_robot1.resize(3 * robotInfoPtr1_->num_motors + 1, trajPtr1_->num_time_steps);
+    for (size_t i = 0; i < trajPtr1_->num_time_steps; i++) {
+        const double t = duration * (i + 0.5) / trajPtr1_->num_time_steps;
+        trajPtr1_->computeTrajectories(mynlp->solution.head(robotInfoPtr1_->num_motors), t, q, qd, qdd);
+        trajInfo_robot1.col(i).head(robotInfoPtr1_->num_motors) = q;
+        trajInfo_robot1.col(i).segment(robotInfoPtr1_->num_motors, robotInfoPtr1_->num_motors) = qd;
+        trajInfo_robot1.col(i).segment(robotInfoPtr1_->num_motors * 2, robotInfoPtr1_->num_motors) = qdd;
+        trajInfo_robot1(robotInfoPtr1_->num_motors * 3, i) = t;
+    }
 
-//             const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+    trajInfo_robot2.resize(3 * robotInfoPtr2_->num_motors + 1, trajPtr2_->num_time_steps);
+    for (size_t i = 0; i < trajPtr2_->num_time_steps; i++) {
+        const double t = duration * (i + 0.5) / trajPtr2_->num_time_steps;
+        trajPtr2_->computeTrajectories(mynlp->solution.tail(robotInfoPtr2_->num_motors), t, q, qd, qdd);
+        trajInfo_robot2.col(i).head(robotInfoPtr2_->num_motors) = q;
+        trajInfo_robot2.col(i).segment(robotInfoPtr2_->num_motors, robotInfoPtr2_->num_motors) = qd;
+        trajInfo_robot2.col(i).segment(robotInfoPtr2_->num_motors * 2, robotInfoPtr2_->num_motors) = qdd;
+        trajInfo_robot2(robotInfoPtr2_->num_motors * 3, i) = t;
+    }
 
-//             const Interval x_res = PZsphere(0).slice(mynlp->solution);
-//             const Interval y_res = PZsphere(1).slice(mynlp->solution);
-//             const Interval z_res = PZsphere(2).slice(mynlp->solution);
+    // // recover sphere occupancy information for collision checking
+    // spheres_x.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+    // spheres_y.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+    // spheres_z.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+    // spheres_radius.resize(robotInfoPtr_->num_spheres, trajPtr_->num_time_steps);
+    // for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
+    //     for (size_t j = 0; j < robotInfoPtr_->num_spheres; j++) {
+    //         const std::string sphere_name = "collision-" + std::to_string(j);
+    //         const pinocchio::FrameIndex frame_id = 
+    //             robotInfoPtr_->model.getFrameId(sphere_name);
+
+    //         const auto& PZsphere = dynPtr_->data_sparses[i].oMf[frame_id].translation();
+
+    //         const Interval x_res = PZsphere(0).slice(mynlp->solution);
+    //         const Interval y_res = PZsphere(1).slice(mynlp->solution);
+    //         const Interval z_res = PZsphere(2).slice(mynlp->solution);
             
-//             spheres_x(j, i) = getCenter(x_res);
-//             spheres_y(j, i) = getCenter(y_res);
-//             spheres_z(j, i) = getCenter(z_res);
-//             spheres_radius(j, i) = dynPtr_->sphere_radii(j, i);
-//         }
-//     }
+    //         spheres_x(j, i) = getCenter(x_res);
+    //         spheres_y(j, i) = getCenter(y_res);
+    //         spheres_z(j, i) = getCenter(z_res);
+    //         spheres_radius(j, i) = dynPtr_->sphere_radii(j, i);
+    //     }
+    // }
 
-//     // recover torque reachable set information
-//     torque_center.resize(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
-//     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-//         for (size_t j = 0; j < robotInfoPtr_->num_motors; j++) {
-//             const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
-//             const Interval res = PZtorque.slice(mynlp->solution);
-//             torque_center(j, i) = getCenter(res);
-//         }
-//     }
+    // // recover torque reachable set information
+    // torque_center.resize(robotInfoPtr_->num_motors, trajPtr_->num_time_steps);
+    // for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
+    //     for (size_t j = 0; j < robotInfoPtr_->num_motors; j++) {
+    //         const PZSparse& PZtorque = dynPtr_->data_sparses[i].tau(j);
+    //         const Interval res = PZtorque.slice(mynlp->solution);
+    //         torque_center(j, i) = getCenter(res);
+    //     }
+    // }
 
-//     torque_radius = dynPtr_->torque_radii;
+    // torque_radius = dynPtr_->torque_radii;
 
-//     // recover contact constraints (reachable sets) here
-//     if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
-//         separation_force_center.resize(trajPtr_->num_time_steps);
-//         separation_force_radius.resize(trajPtr_->num_time_steps);
-//         friction_cone_center.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
-//         friction_cone_radius.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
-//         zmp_center.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
-//         zmp_radius.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    // // recover contact constraints (reachable sets) here
+    // if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+    //     separation_force_center.resize(trajPtr_->num_time_steps);
+    //     separation_force_radius.resize(trajPtr_->num_time_steps);
+    //     friction_cone_center.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    //     friction_cone_radius.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    //     zmp_center.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+    //     zmp_radius.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
 
-//         for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-//             // (1) support force larger than 0
-//             const Interval supportForceRange = 
-//                 dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
-//                     .slice(mynlp->solution);
-//             separation_force_center(i) = getCenter(supportForceRange);
-//             separation_force_radius(i) = getRadius(supportForceRange);
+    //     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
+    //         // (1) support force larger than 0
+    //         const Interval supportForceRange = 
+    //             dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
+    //                 .slice(mynlp->solution);
+    //         separation_force_center(i) = getCenter(supportForceRange);
+    //         separation_force_radius(i) = getRadius(supportForceRange);
 
-//             // (2) friction cone constraints
-//             for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
-//                 const Interval frictionConstraintRange = 
-//                     dynPtr_->friction_PZs(j, i).slice(mynlp->solution);
-//                 friction_cone_center(j, i) = getCenter(frictionConstraintRange);
-//                 friction_cone_radius(j, i) = getRadius(frictionConstraintRange);
-//             }      
+    //         // (2) friction cone constraints
+    //         for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
+    //             const Interval frictionConstraintRange = 
+    //                 dynPtr_->friction_PZs(j, i).slice(mynlp->solution);
+    //             friction_cone_center(j, i) = getCenter(frictionConstraintRange);
+    //             friction_cone_radius(j, i) = getRadius(frictionConstraintRange);
+    //         }      
 
-//             // (3) ZMP constraints
-//             for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
-//                 const Interval zmpConstraintRange = 
-//                     dynPtr_->zmp_PZs(j, i).slice(mynlp->solution);
-//                 zmp_center(j, i) = getCenter(zmpConstraintRange);
-//                 zmp_radius(j, i) = getRadius(zmpConstraintRange);
-//             }
-//         }
-//     }
+    //         // (3) ZMP constraints
+    //         for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
+    //             const Interval zmpConstraintRange = 
+    //                 dynPtr_->zmp_PZs(j, i).slice(mynlp->solution);
+    //             zmp_center(j, i) = getCenter(zmpConstraintRange);
+    //             zmp_radius(j, i) = getRadius(zmpConstraintRange);
+    //         }
+    //     }
+    // }
 
-//     // export to outputs
-//     const size_t shape_ptr1[] = {3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps};
-//     auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         trajInfo.data(),
-//         2,
-//         shape_ptr1,
-//         nb::handle()
-//     );
+    // export to outputs
+    const size_t shape_ptr1[] = {3 * robotInfoPtr1_->num_motors + 1, trajPtr1_->num_time_steps};
+    auto traj_robot1 = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        trajInfo_robot1.data(),
+        2,
+        shape_ptr1,
+        nb::handle()
+    );
 
-//     const size_t shape_ptr2[] = {robotInfoPtr_->num_spheres, trajPtr_->num_time_steps};
-//     auto sphere_xs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         spheres_x.data(),
-//         2,
-//         shape_ptr2,
-//         nb::handle()
-//     );
-//     auto sphere_ys = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         spheres_y.data(),
-//         2,
-//         shape_ptr2,
-//         nb::handle()
-//     );
-//     auto sphere_zs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         spheres_z.data(),
-//         2,
-//         shape_ptr2,
-//         nb::handle()
-//     );
-//     auto sphere_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         spheres_radius.data(),
-//         2,
-//         shape_ptr2,
-//         nb::handle()
-//     );
+    const size_t shape_ptr2[] = {3 * robotInfoPtr2_->num_motors + 1, trajPtr2_->num_time_steps};
+    auto traj_robot2 = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        trajInfo_robot2.data(),
+        2,
+        shape_ptr2,
+        nb::handle()
+    );
 
-//     const size_t shape_ptr3[] = {robotInfoPtr_->num_motors, trajPtr_->num_time_steps};
-//     auto torque_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         torque_center.data(),
-//         2,
-//         shape_ptr3,
-//         nb::handle()
-//     );
-//     auto torque_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         torque_radius.data(),
-//         2,
-//         shape_ptr3,
-//         nb::handle()
-//     );
+    return nb::make_tuple(traj_robot1, traj_robot2);
 
-//     const size_t shape_ptr4[] = {trajPtr_->num_time_steps};
-//     auto separation_force_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         separation_force_center.data(),
-//         1,
-//         shape_ptr4,
-//         nb::handle()
-//     );
-//     auto separation_force_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         separation_force_radius.data(),
-//         1,
-//         shape_ptr4,
-//         nb::handle()
-//     );
+    // const size_t shape_ptr1[] = {3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps};
+    // auto traj = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     trajInfo_robot1.data(),
+    //     2,
+    //     shape_ptr1,
+    //     nb::handle()
+    // );
 
-//     const size_t shape_ptr5[] = {FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps};
-//     auto friction_cone_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         friction_cone_center.data(),
-//         2,
-//         shape_ptr5,
-//         nb::handle()
-//     );
-//     auto friction_cone_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         friction_cone_radius.data(),
-//         2,
-//         shape_ptr5,
-//         nb::handle()
-//     );
+    // const size_t shape_ptr2[] = {robotInfoPtr_->num_spheres, trajPtr_->num_time_steps};
+    // auto sphere_xs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     spheres_x.data(),
+    //     2,
+    //     shape_ptr2,
+    //     nb::handle()
+    // );
+    // auto sphere_ys = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     spheres_y.data(),
+    //     2,
+    //     shape_ptr2,
+    //     nb::handle()
+    // );
+    // auto sphere_zs = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     spheres_z.data(),
+    //     2,
+    //     shape_ptr2,
+    //     nb::handle()
+    // );
+    // auto sphere_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     spheres_radius.data(),
+    //     2,
+    //     shape_ptr2,
+    //     nb::handle()
+    // );
 
-//     const size_t shape_ptr6[] = {ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps};
-//     auto zmp_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         zmp_center.data(),
-//         2,
-//         shape_ptr6,
-//         nb::handle()
-//     );
-//     auto zmp_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
-//         zmp_radius.data(),
-//         2,
-//         shape_ptr6,
-//         nb::handle()
-//     );
+    // const size_t shape_ptr3[] = {robotInfoPtr_->num_motors, trajPtr_->num_time_steps};
+    // auto torque_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     torque_center.data(),
+    //     2,
+    //     shape_ptr3,
+    //     nb::handle()
+    // );
+    // auto torque_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     torque_radius.data(),
+    //     2,
+    //     shape_ptr3,
+    //     nb::handle()
+    // );
 
-//     if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
-//         return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii, 
-//                               separation_force_centers, separation_force_radii, 
-//                               friction_cone_centers, friction_cone_radii, 
-//                               zmp_centers, zmp_radii);
-//     }
-//     return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii);
-// }
+    // const size_t shape_ptr4[] = {trajPtr_->num_time_steps};
+    // auto separation_force_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     separation_force_center.data(),
+    //     1,
+    //     shape_ptr4,
+    //     nb::handle()
+    // );
+    // auto separation_force_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     separation_force_radius.data(),
+    //     1,
+    //     shape_ptr4,
+    //     nb::handle()
+    // );
+
+    // const size_t shape_ptr5[] = {FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    // auto friction_cone_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     friction_cone_center.data(),
+    //     2,
+    //     shape_ptr5,
+    //     nb::handle()
+    // );
+    // auto friction_cone_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     friction_cone_radius.data(),
+    //     2,
+    //     shape_ptr5,
+    //     nb::handle()
+    // );
+
+    // const size_t shape_ptr6[] = {ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    // auto zmp_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     zmp_center.data(),
+    //     2,
+    //     shape_ptr6,
+    //     nb::handle()
+    // );
+    // auto zmp_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+    //     zmp_radius.data(),
+    //     2,
+    //     shape_ptr6,
+    //     nb::handle()
+    // );
+
+    // if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+    //     return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii, 
+    //                           separation_force_centers, separation_force_radii, 
+    //                           friction_cone_centers, friction_cone_radii, 
+    //                           zmp_centers, zmp_radii);
+    // }
+    // return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii);
+}
 
 }; // namespace Armour
 }; // namespace Kinova

@@ -18,6 +18,6 @@ NB_MODULE(dualarmour_nanobind, m) {
         .def("set_endeffector_inertial_parameters_robot2", &DualArmourPybindWrapper::set_endeffector_inertial_parameters_robot2)
         .def("set_ipopt_parameters", &DualArmourPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &DualArmourPybindWrapper::set_trajectory_parameters)
-        .def("optimize", &DualArmourPybindWrapper::optimize);
-        // .def("analyze_solution", &DualArmourPybindWrapper::analyze_solution);
+        .def("optimize", &DualArmourPybindWrapper::optimize)
+        .def("analyze_solution", &DualArmourPybindWrapper::analyze_solution);
 }
