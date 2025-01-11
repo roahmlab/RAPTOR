@@ -136,8 +136,13 @@ public:
        const DualArmourOptimizer&
     );
 
-    std::shared_ptr<ArmourOptimizer> armourOptPtr1 = nullptr;
-    std::shared_ptr<ArmourOptimizer> armourOptPtr2 = nullptr;
+    std::shared_ptr<ArmourOptimizer> armourOptPtr1_ = nullptr;
+    std::shared_ptr<ArmourOptimizer> armourOptPtr2_ = nullptr;
+
+    std::shared_ptr<RobotInfo> robotInfoPtr1_ = nullptr;
+    std::shared_ptr<RobotInfo> robotInfoPtr2_ = nullptr;
+
+    std::vector<std::shared_ptr<TaperedCapsuleCollision<2 * NUM_FACTORS>>> tccPtrs;
 };
 
 }; // namespace Armour

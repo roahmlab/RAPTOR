@@ -15,7 +15,7 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string robot_model_file = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
     const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
     // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
     // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
@@ -32,7 +32,7 @@ int main() {
     const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXd k_center = q0;
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
     const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
@@ -67,7 +67,7 @@ int main() {
 
     // targets
     Eigen::VectorXd q_des = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    double t_plan = 0.5 * duration;
+    double t_plan = 0.5;
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets

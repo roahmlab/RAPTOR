@@ -80,29 +80,29 @@ bool ArmourOptimizer::get_nlp_info(
     }
     m = numCons;
 
-    std::cout << "Dimension of each constraints and their locations: \n";
-    Index iter = 0;
-    std::cout << "Torque limits: " << iter << " to " << iter + NUM_FACTORS * num_time_steps << std::endl;
-    iter += NUM_FACTORS * num_time_steps;
-    if (num_fixed_joints > 0) {
-        std::cout << "Contact constraints: " << iter << " to " << iter + NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps << std::endl;
-        iter += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
-    }
-    if (num_obstacles > 0) {
-        std::cout << "Obstacle avoidance constraints: " << iter << " to " << iter + num_time_steps * num_spheres << std::endl;
-        iter += num_time_steps * num_spheres;
-    }
-    if (num_self_collisions > 0) {
-        std::cout << "Self-collision constraints: " << iter << " to " << iter + num_time_steps * num_self_collisions << std::endl;
-        iter += num_time_steps * num_self_collisions;
-    }
-    std::cout << "Joint position lower bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
-    iter += NUM_FACTORS;
-    std::cout << "Joint position upper bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
-    iter += NUM_FACTORS;
-    std::cout << "Joint velocity lower bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
-    iter += NUM_FACTORS;
-    std::cout << "Joint velocity upper bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
+    // std::cout << "Dimension of each constraints and their locations: \n";
+    // Index iter = 0;
+    // std::cout << "Torque limits: " << iter << " to " << iter + NUM_FACTORS * num_time_steps << std::endl;
+    // iter += NUM_FACTORS * num_time_steps;
+    // if (num_fixed_joints > 0) {
+    //     std::cout << "Contact constraints: " << iter << " to " << iter + NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps << std::endl;
+    //     iter += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
+    // }
+    // if (num_obstacles > 0) {
+    //     std::cout << "Obstacle avoidance constraints: " << iter << " to " << iter + num_time_steps * num_spheres << std::endl;
+    //     iter += num_time_steps * num_spheres;
+    // }
+    // if (num_self_collisions > 0) {
+    //     std::cout << "Self-collision constraints: " << iter << " to " << iter + num_time_steps * num_self_collisions << std::endl;
+    //     iter += num_time_steps * num_self_collisions;
+    // }
+    // std::cout << "Joint position lower bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
+    // iter += NUM_FACTORS;
+    // std::cout << "Joint position upper bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
+    // iter += NUM_FACTORS;
+    // std::cout << "Joint velocity lower bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
+    // iter += NUM_FACTORS;
+    // std::cout << "Joint velocity upper bounds: " << iter << " to " << iter + NUM_FACTORS << std::endl;
 
     nnz_jac_g = m * n;
     nnz_h_lag = n * n;
@@ -442,13 +442,11 @@ bool ArmourOptimizer::eval_g(
 
                     const Vec3& tc1_sphere_1 = sphere_locations(i, robotInfoPtr_->tc_begin_and_end[arm_1_index].first);
                     const Vec3& tc1_sphere_2 = sphere_locations(i, robotInfoPtr_->tc_begin_and_end[arm_1_index].second);
-
                     const Vec3& tc2_sphere_1 = sphere_locations(i, robotInfoPtr_->tc_begin_and_end[arm_2_index].first);
                     const Vec3& tc2_sphere_2 = sphere_locations(i, robotInfoPtr_->tc_begin_and_end[arm_2_index].second);
 
                     const double tc1_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].first, i);
                     const double tc1_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_1_index].second, i);
-
                     const double tc2_sphere_1_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_2_index].first, i);
                     const double tc2_sphere_2_radius = dynPtr_->sphere_radii(robotInfoPtr_->tc_begin_and_end[arm_2_index].second, i);
 
@@ -679,35 +677,27 @@ bool ArmourOptimizer::eval_jac_g(
                         const size_t arm_1_index = robotInfoPtr_->self_collision_checks[j].first;
                         const size_t arm_2_index = robotInfoPtr_->self_collision_checks[j].second;
 
-                        const size_t index_1_1 = robotInfoPtr_->tc_begin_and_end[arm_1_index].first;
-                        const size_t index_1_2 = robotInfoPtr_->tc_begin_and_end[arm_1_index].second;
-                        const size_t index_2_1 = robotInfoPtr_->tc_begin_and_end[arm_2_index].first;
-                        const size_t index_2_2 = robotInfoPtr_->tc_begin_and_end[arm_2_index].second;
+                        const size_t tc1_begin_index = robotInfoPtr_->tc_begin_and_end[arm_1_index].first;
+                        const size_t tc1_end_index = robotInfoPtr_->tc_begin_and_end[arm_1_index].second;
+                        const size_t tc2_begin_index = robotInfoPtr_->tc_begin_and_end[arm_2_index].first;
+                        const size_t tc2_end_index = robotInfoPtr_->tc_begin_and_end[arm_2_index].second;
 
-                        const Vec3& tc1_sphere_1 = sphere_locations(i, index_1_1);
-                        const Vec3& tc1_sphere_2 = sphere_locations(i, index_1_2);
-                        const Vec3& tc2_sphere_1 = sphere_locations(i, index_2_1);
-                        const Vec3& tc2_sphere_2 = sphere_locations(i, index_2_2);
+                        const Vec3& tc1_sphere_1 = sphere_locations(i, tc1_begin_index);
+                        const Vec3& tc1_sphere_2 = sphere_locations(i, tc1_end_index);
+                        const Vec3& tc2_sphere_1 = sphere_locations(i, tc2_begin_index);
+                        const Vec3& tc2_sphere_2 = sphere_locations(i, tc2_end_index);
                         
-                        const double tc1_sphere_1_radius = dynPtr_->sphere_radii(index_1_1, i);
-                        const double tc1_sphere_2_radius = dynPtr_->sphere_radii(index_1_2, i);
-
-                        const double tc2_sphere_1_radius = dynPtr_->sphere_radii(index_2_1, i);
-                        const double tc2_sphere_2_radius = dynPtr_->sphere_radii(index_2_2, i);
-
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_1_fixed(sphere_gradient(i, index_1_1));
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc1_sphere_2_fixed(sphere_gradient(i, index_1_2));
-
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_1_fixed(sphere_gradient(i, index_2_1));
-                        Eigen::Ref<Eigen::Matrix<double, 3, NUM_FACTORS>> dk_tc2_sphere_2_fixed(sphere_gradient(i, index_2_2));
+                        const double tc1_sphere_1_radius = dynPtr_->sphere_radii(tc1_begin_index, i);
+                        const double tc1_sphere_2_radius = dynPtr_->sphere_radii(tc1_end_index, i);
+                        const double tc2_sphere_1_radius = dynPtr_->sphere_radii(tc2_begin_index, i);
+                        const double tc2_sphere_2_radius = dynPtr_->sphere_radii(tc2_end_index, i);
 
                         Eigen::Vector<double, NUM_FACTORS> dk_distances;
-                        
                         const double distance = tccPtrs[i]->computeDistance(
                             tc1_sphere_1, tc1_sphere_2, 
                             tc2_sphere_1, tc2_sphere_2,
-                            dk_tc1_sphere_1_fixed, dk_tc1_sphere_2_fixed, 
-                            dk_tc2_sphere_1_fixed, dk_tc2_sphere_2_fixed,
+                            sphere_gradient(i, tc1_begin_index), sphere_gradient(i, tc1_end_index), 
+                            sphere_gradient(i, tc2_begin_index), sphere_gradient(i, tc2_end_index),
                             tc1_sphere_1_radius, tc1_sphere_2_radius, 
                             tc2_sphere_1_radius, tc2_sphere_2_radius,
                             dk_distances);

@@ -75,7 +75,7 @@ KinovaWithSuctionCup:
         "sphere_2": 11
     end_effector:
       - "sphere_1": 12
-        "sphere_2": 16
+        "sphere_2": 13
     
 
     

@@ -24,25 +24,37 @@ bool DualArmourOptimizer::set_parameters(
         throw std::invalid_argument("q_des_input.size() != 2 * NUM_FACTORS");
     }
 
-    armourOptPtr1 = std::make_shared<ArmourOptimizer>();
-    armourOptPtr2 = std::make_shared<ArmourOptimizer>();
+    robotInfoPtr1_ = robotInfoPtr1_input;
+    robotInfoPtr2_ = robotInfoPtr2_input;
 
-    armourOptPtr1->set_parameters(q_des_input.head(NUM_FACTORS), 
-                                  t_plan_input, 
-                                  robotInfoPtr1_input, 
-                                  trajPtr1_input, 
-                                  dynPtr1_input, 
-                                  boxCenters_input, 
-                                  boxOrientation_input, 
-                                  boxSize_input);
-    armourOptPtr2->set_parameters(q_des_input.tail(NUM_FACTORS),
-                                  t_plan_input,
-                                  robotInfoPtr2_input,
-                                  trajPtr2_input,
-                                  dynPtr2_input,
-                                  boxCenters_input,
-                                  boxOrientation_input,
-                                  boxSize_input);
+    armourOptPtr1_ = std::make_shared<ArmourOptimizer>();
+    armourOptPtr2_ = std::make_shared<ArmourOptimizer>();
+
+    armourOptPtr1_->set_parameters(q_des_input.head(NUM_FACTORS), 
+                                   t_plan_input, 
+                                   robotInfoPtr1_input, 
+                                   trajPtr1_input, 
+                                   dynPtr1_input, 
+                                   boxCenters_input, 
+                                   boxOrientation_input, 
+                                   boxSize_input);
+    armourOptPtr2_->set_parameters(q_des_input.tail(NUM_FACTORS),
+                                   t_plan_input,
+                                   robotInfoPtr2_input,
+                                   trajPtr2_input,
+                                   dynPtr2_input,
+                                   boxCenters_input,
+                                   boxOrientation_input,
+                                   boxSize_input);
+
+    if (armourOptPtr1_->num_time_steps != armourOptPtr2_->num_time_steps) {
+        throw std::invalid_argument("armourOptPtr1_->num_time_steps != armourOptPtr2_->num_time_steps");
+    }
+
+    tccPtrs.resize(armourOptPtr1_->num_time_steps);
+    for (size_t i = 0; i < armourOptPtr1_->num_time_steps; i++) {
+        tccPtrs[i] = std::make_shared<TaperedCapsuleCollision<2 * NUM_FACTORS>>();
+    }
 
     return true;
 }
@@ -58,14 +70,16 @@ bool DualArmourOptimizer::get_nlp_info(
     numCons = 0;
 
     Index m1 = 0;
-    armourOptPtr1->get_nlp_info(n, m1, nnz_jac_g, nnz_h_lag, index_style);
+    armourOptPtr1_->get_nlp_info(n, m1, nnz_jac_g, nnz_h_lag, index_style);
     numCons += m1;
 
     Index m2 = 0;
-    armourOptPtr2->get_nlp_info(n, m2, nnz_jac_g, nnz_h_lag, index_style);
+    armourOptPtr2_->get_nlp_info(n, m2, nnz_jac_g, nnz_h_lag, index_style);
     numCons += m2;
 
-    // TODO: numCons += arm-arm collision constraints?
+    // arm-arm collision constraints
+    const Index m_arm_arm = armourOptPtr1_->num_time_steps * robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
+    numCons += m_arm_arm;
     
     m = numCons;
 
@@ -74,7 +88,9 @@ bool DualArmourOptimizer::get_nlp_info(
     n = 2 * NUM_FACTORS;
 
     // the nonzero structure of the Jacobian is the same for both arms, so they are stored separately
-    nnz_jac_g = 2 * m * NUM_FACTORS; // TODO: + nnz for arm-arm collision constraint jacobians?
+    nnz_jac_g = 
+        (armourOptPtr1_->numCons + armourOptPtr2_->numCons) * NUM_FACTORS + 
+        m_arm_arm * 2 * NUM_FACTORS;
 
     nnz_h_lag = n * n;
 
@@ -105,18 +121,24 @@ bool DualArmourOptimizer::get_bounds_info(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in get_bounds_info!");
     }
 
-    armourOptPtr1->get_bounds_info(NUM_FACTORS, 
-                                   x_l, 
-                                   x_u, 
-                                   armourOptPtr1->numCons, 
-                                   g_l, 
-                                   g_u);
-    armourOptPtr2->get_bounds_info(NUM_FACTORS, 
-                                   x_l + NUM_FACTORS, 
-                                   x_u + NUM_FACTORS, 
-                                   armourOptPtr2->numCons, 
-                                   g_l + armourOptPtr1->numCons, 
-                                   g_u + armourOptPtr1->numCons);
+    armourOptPtr1_->get_bounds_info(NUM_FACTORS, 
+                                    x_l, 
+                                    x_u, 
+                                    armourOptPtr1_->numCons, 
+                                    g_l, 
+                                    g_u);
+    armourOptPtr2_->get_bounds_info(NUM_FACTORS, 
+                                    x_l + NUM_FACTORS, 
+                                    x_u + NUM_FACTORS, 
+                                    armourOptPtr2_->numCons, 
+                                    g_l + armourOptPtr1_->numCons, 
+                                    g_u + armourOptPtr1_->numCons);
+
+    const Index offset = armourOptPtr1_->numCons + armourOptPtr2_->numCons;
+    for (Index i = 0; i < armourOptPtr1_->num_time_steps * robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size(); i++) {
+        g_l[offset + i] = 0.0;
+        g_u[offset + i] = 1e19;
+    }
 
     return true;
 }
@@ -173,10 +195,10 @@ bool DualArmourOptimizer::eval_f(
     }
 
     Number obj_value1 = 0.0;
-    armourOptPtr1->eval_f(NUM_FACTORS, x, new_x, obj_value1);
+    armourOptPtr1_->eval_f(NUM_FACTORS, x, new_x, obj_value1);
 
     Number obj_value2 = 0.0;
-    armourOptPtr2->eval_f(NUM_FACTORS, x + NUM_FACTORS, new_x, obj_value2);
+    armourOptPtr2_->eval_f(NUM_FACTORS, x + NUM_FACTORS, new_x, obj_value2);
 
     obj_value = obj_value1 + obj_value2;
 
@@ -199,8 +221,8 @@ bool DualArmourOptimizer::eval_grad_f(
         THROW_EXCEPTION(IpoptException, "Error wrong value of n in eval_grad_f!");
     }
 
-    armourOptPtr1->eval_grad_f(NUM_FACTORS, x, new_x, grad_f);
-    armourOptPtr2->eval_grad_f(NUM_FACTORS, x + NUM_FACTORS, new_x, grad_f + NUM_FACTORS);
+    armourOptPtr1_->eval_grad_f(NUM_FACTORS, x, new_x, grad_f);
+    armourOptPtr2_->eval_grad_f(NUM_FACTORS, x + NUM_FACTORS, new_x, grad_f + NUM_FACTORS);
 
     return true;
 }
@@ -224,7 +246,7 @@ bool DualArmourOptimizer::eval_g(
     }
 
     try {
-        armourOptPtr1->eval_g(NUM_FACTORS, x, new_x, armourOptPtr1->numCons, g);
+        armourOptPtr1_->eval_g(NUM_FACTORS, x, new_x, armourOptPtr1_->numCons, g);
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -232,34 +254,50 @@ bool DualArmourOptimizer::eval_g(
     }
 
     try {
-        armourOptPtr2->eval_g(NUM_FACTORS, x + NUM_FACTORS, new_x, armourOptPtr2->numCons, g + armourOptPtr1->numCons);
+        armourOptPtr2_->eval_g(NUM_FACTORS, x + NUM_FACTORS, new_x, armourOptPtr2_->numCons, g + armourOptPtr1_->numCons);
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         THROW_EXCEPTION(IpoptException, "Error in eval_g of the second robot!");
     }
 
-    // TODO: update g for arm-arm collision constraints, note that sphere locations have been computed in eval_g above
-    // start location: g + armourOptPtr1->numCons + armourOptPtr2->numCons
-    try {
-        // #pragma omp parallel for shared(dynPtr_, tccPtrs, x, g) private(i) schedule(dynamic)
-        // for(int i = 0; i < armourOptPtr1->num_time_steps; i++){
-        //     for(int arm_1_index = 0; arm_1_index < armourOptPtr1->num_capsules; arm_1_index++){
-        //         Vec3 tc1_sphere_1 = armourOptPtr1->sphere_locations[i][arm_1_index].first;
-        //         Vec3 tc1_sphere_2 = armourOptPtr1->sphere_locations[i][arm_1_index].second;
-        //         double tc1_sphere_1_radius = armourOptPtr1->sphere_radii[i][arm_1_index].first;
-        //         double tc1_sphere_2_radius = armourOptPtr1->sphere_radii[i][arm_1_index].second;
-        //         for(int arm_2_index = 0; arm_2_index < armourOptPtr2->num_capsules; arm_2_index++){
-        //             Vec3 tc2_sphere_1 = armourOptPtr2->sphere_locations[i][arm_2_index].first;
-        //             Vec3 tc2_sphere_2 = armourOptPtr2->sphere_locations[i][arm_2_index].second;
-        //             double tc2_sphere_1_radius = armourOptPtr2->sphere_radii[i][arm_2_index].first;
-        //             double tc2_sphere_2_radius = armourOptPtr2->sphere_radii[i][arm_2_index].second;
+    // arm-arm collision constraints
+    const Index offset = armourOptPtr1_->numCons + armourOptPtr2_->numCons;
+    const auto& dynPtr1_ = armourOptPtr1_->dynPtr_;
+    const auto& dynPtr2_ = armourOptPtr2_->dynPtr_;
+    const size_t num_arm_arm_collision = robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
 
-        //             g[armourOptPtr1->numCons + armourOptPtr2->numCons + arm_1_index * armourOptPtr2->num_capsules + arm_2_index] = armourOptPtr1->tccPtrs[i]->computeDistance(tc1_sphere_1, tc1_sphere_2, tc2_sphere_1, tc2_sphere_2,
-        //                                                         tc1_sphere_1_radius, tc1_sphere_2_radius, tc2_sphere_1_radius, tc2_sphere_2_radius);
-        //         }
-        //     }
-        // }
+    try {
+        Index i = 0;
+        #pragma omp parallel for shared(armourOptPtr1_, armourOptPtr2_, robotInfoPtr1_, robotInfoPtr2_, x, g) private(i) schedule(dynamic)
+        for(i = 0; i < armourOptPtr1_->num_time_steps; i++){
+            Index j = 0;
+            for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
+                for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
+                    const size_t tc1_begin_index = robotInfoPtr1_->tc_begin_and_end[j1].first;
+                    const size_t tc1_end_index = robotInfoPtr1_->tc_begin_and_end[j1].second;
+                    const size_t tc2_begin_index = robotInfoPtr2_->tc_begin_and_end[j2].first;
+                    const size_t tc2_end_index = robotInfoPtr2_->tc_begin_and_end[j2].second;
+
+                    const Vec3& tc1_sphere_1 = armourOptPtr1_->sphere_locations(i, tc1_begin_index);
+                    const Vec3& tc1_sphere_2 = armourOptPtr1_->sphere_locations(i, tc1_end_index);
+                    const Vec3& tc2_sphere_1 = armourOptPtr2_->sphere_locations(i, tc2_begin_index);
+                    const Vec3& tc2_sphere_2 = armourOptPtr2_->sphere_locations(i, tc2_end_index);
+
+                    const double tc1_sphere_1_radius = dynPtr1_->sphere_radii(tc1_begin_index, i);
+                    const double tc1_sphere_2_radius = dynPtr1_->sphere_radii(tc1_end_index, i);
+                    const double tc2_sphere_1_radius = dynPtr2_->sphere_radii(tc2_begin_index, i);
+                    const double tc2_sphere_2_radius = dynPtr2_->sphere_radii(tc2_end_index, i);
+
+                    g[i * num_arm_arm_collision + j + offset] = tccPtrs[i]->computeDistance(
+                        tc1_sphere_1, tc1_sphere_2, 
+                        tc2_sphere_1, tc2_sphere_2,
+                        tc1_sphere_1_radius, tc1_sphere_2_radius, 
+                        tc2_sphere_1_radius, tc2_sphere_2_radius);
+                    j++;
+                }
+            }
+        }
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -298,7 +336,7 @@ bool DualArmourOptimizer::eval_jac_g(
         Index idx = 0;
 
         // first robot
-        for(Index i = 0; i < armourOptPtr1->numCons; i++){
+        for(Index i = 0; i < armourOptPtr1_->numCons; i++){
             for(Index j = 0; j < NUM_FACTORS; j++){
                 iRow[idx] = i;
                 jCol[idx] = j;
@@ -307,19 +345,34 @@ bool DualArmourOptimizer::eval_jac_g(
         }
 
         // second robot
-        for (Index i = 0; i < armourOptPtr2->numCons; i++) {
+        for (Index i = 0; i < armourOptPtr2_->numCons; i++) {
             for (Index j = 0; j < NUM_FACTORS; j++) {
-                iRow[idx] = i + armourOptPtr1->numCons;
+                iRow[idx] = i + armourOptPtr1_->numCons;
                 jCol[idx] = j + NUM_FACTORS;
                 idx++;
             }
         }
 
-        // TODO: update iRow and jCol for arm-arm collision constraints
+        // update iRow and jCol for arm-arm collision constraints
+        Index offset = armourOptPtr1_->numCons + armourOptPtr2_->numCons;
+        const size_t num_arm_arm_collision = robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
+        for (Index i = 0; i < armourOptPtr1_->num_time_steps; i++) {
+            Index j = 0;
+            for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
+                for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
+                    for (Index k = 0; k < 2 * NUM_FACTORS; k++) {
+                        iRow[idx] = i * num_arm_arm_collision + j + offset;
+                        jCol[idx] = k;
+                        idx++;
+                    }
+                    j++;
+                }
+            }
+        }
     }
     else {
         try {
-            armourOptPtr1->eval_jac_g(NUM_FACTORS, x, new_x, armourOptPtr1->numCons, nele_jac, iRow, jCol, values);
+            armourOptPtr1_->eval_jac_g(NUM_FACTORS, x, new_x, armourOptPtr1_->numCons, nele_jac, iRow, jCol, values);
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -327,14 +380,76 @@ bool DualArmourOptimizer::eval_jac_g(
         }
 
         try {
-            armourOptPtr2->eval_jac_g(NUM_FACTORS, x + NUM_FACTORS, new_x, armourOptPtr2->numCons, nele_jac, iRow, jCol, values + armourOptPtr1->numCons * NUM_FACTORS);
+            armourOptPtr2_->eval_jac_g(NUM_FACTORS, x + NUM_FACTORS, new_x, armourOptPtr2_->numCons, nele_jac, iRow, jCol, values + armourOptPtr1_->numCons * NUM_FACTORS);
         }
         catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "Error in eval_jac_g of the second robot!");
         }
 
-        // TODO: update values for arm-arm collision constraints jacobians
+        // arm-arm collision constraints
+        const Index offset = (armourOptPtr1_->numCons + armourOptPtr2_->numCons) * NUM_FACTORS;
+        const auto& dynPtr1_ = armourOptPtr1_->dynPtr_;
+        const auto& dynPtr2_ = armourOptPtr2_->dynPtr_;
+        const size_t num_arm_arm_collision = robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
+
+        try {
+            Index i = 0;
+            #pragma omp parallel for shared(armourOptPtr1_, armourOptPtr2_, robotInfoPtr1_, robotInfoPtr2_, x, values) private(i) schedule(dynamic)
+            for(i = 0; i < armourOptPtr1_->num_time_steps; i++){
+                Index j = 0;
+                for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
+                    for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
+                        const size_t tc1_begin_index = robotInfoPtr1_->tc_begin_and_end[j1].first;
+                        const size_t tc1_end_index = robotInfoPtr1_->tc_begin_and_end[j1].second;
+                        const size_t tc2_begin_index = robotInfoPtr2_->tc_begin_and_end[j2].first;
+                        const size_t tc2_end_index = robotInfoPtr2_->tc_begin_and_end[j2].second;
+
+                        const Vec3& tc1_sphere_1 = armourOptPtr1_->sphere_locations(i, tc1_begin_index);
+                        const Vec3& tc1_sphere_2 = armourOptPtr1_->sphere_locations(i, tc1_end_index);
+                        const Vec3& tc2_sphere_1 = armourOptPtr2_->sphere_locations(i, tc2_begin_index);
+                        const Vec3& tc2_sphere_2 = armourOptPtr2_->sphere_locations(i, tc2_end_index);
+
+                        const double tc1_sphere_1_radius = dynPtr1_->sphere_radii(tc1_begin_index, i);
+                        const double tc1_sphere_2_radius = dynPtr1_->sphere_radii(tc1_end_index, i);
+                        const double tc2_sphere_1_radius = dynPtr2_->sphere_radii(tc2_begin_index, i);
+                        const double tc2_sphere_2_radius = dynPtr2_->sphere_radii(tc2_end_index, i);
+
+                        Eigen::Matrix<double, 3, 2 * NUM_FACTORS> dk_tc1_sphere_1;
+                        Eigen::Matrix<double, 3, 2 * NUM_FACTORS> dk_tc1_sphere_2;
+                        Eigen::Matrix<double, 3, 2 * NUM_FACTORS> dk_tc2_sphere_1;
+                        Eigen::Matrix<double, 3, 2 * NUM_FACTORS> dk_tc2_sphere_2;
+                        dk_tc1_sphere_1.setZero();
+                        dk_tc1_sphere_2.setZero();
+                        dk_tc2_sphere_1.setZero();
+                        dk_tc2_sphere_2.setZero();
+
+                        dk_tc1_sphere_1.leftCols(NUM_FACTORS) = armourOptPtr1_->sphere_gradient(i, tc1_begin_index);
+                        dk_tc1_sphere_2.leftCols(NUM_FACTORS) = armourOptPtr1_->sphere_gradient(i, tc1_end_index);
+                        dk_tc2_sphere_1.rightCols(NUM_FACTORS) = armourOptPtr2_->sphere_gradient(i, tc2_begin_index);
+                        dk_tc2_sphere_2.rightCols(NUM_FACTORS) = armourOptPtr2_->sphere_gradient(i, tc2_end_index);
+
+                        Eigen::Vector<double, 2 * NUM_FACTORS> dk_distances;
+                        const double distance = tccPtrs[i]->computeDistance(
+                            tc1_sphere_1, tc1_sphere_2, 
+                            tc2_sphere_1, tc2_sphere_2,
+                            dk_tc1_sphere_1, dk_tc1_sphere_2, 
+                            dk_tc2_sphere_1, dk_tc2_sphere_2,
+                            tc1_sphere_1_radius, tc1_sphere_2_radius, 
+                            tc2_sphere_1_radius, tc2_sphere_2_radius,
+                            dk_distances);
+
+                        std::memcpy(values + (i * num_arm_arm_collision + j) * 2 * NUM_FACTORS + offset, dk_distances.data(), 2 * NUM_FACTORS * sizeof(Number));
+
+                        j++;
+                    }
+                }
+            }
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            THROW_EXCEPTION(IpoptException, "Error in eval_jac_g of the arm-arm collision constraints!");
+        }
     }
 
     return true;
@@ -351,18 +466,36 @@ void DualArmourOptimizer::summarize_constraints(
     final_constr_violation = 0;
 
     // first robot
-    armourOptPtr1->summarize_constraints(armourOptPtr1->numCons, g, verbose);
+    armourOptPtr1_->summarize_constraints(armourOptPtr1_->numCons, g, verbose);
 
-    ifFeasible &= armourOptPtr1->ifFeasible;
-    final_constr_violation = std::max(final_constr_violation, armourOptPtr1->final_constr_violation);
+    ifFeasible &= armourOptPtr1_->ifFeasible;
+    final_constr_violation = std::max(final_constr_violation, armourOptPtr1_->final_constr_violation);
 
     // second robot
-    armourOptPtr2->summarize_constraints(armourOptPtr2->numCons, g + armourOptPtr1->numCons, verbose);
+    armourOptPtr2_->summarize_constraints(armourOptPtr2_->numCons, g + armourOptPtr1_->numCons, verbose);
 
-    ifFeasible &= armourOptPtr2->ifFeasible;
-    final_constr_violation = std::max(final_constr_violation, armourOptPtr2->final_constr_violation);
+    ifFeasible &= armourOptPtr2_->ifFeasible;
+    final_constr_violation = std::max(final_constr_violation, armourOptPtr2_->final_constr_violation);
 
-    // TODO: update ifFeasible and final_constr_violation for arm-arm collision constraints
+    // arm-arm collision constraints
+    const Index offset = (armourOptPtr1_->numCons + armourOptPtr2_->numCons) * NUM_FACTORS;
+    const size_t num_arm_arm_collision = robotInfoPtr1_->tc_begin_and_end.size() * robotInfoPtr2_->tc_begin_and_end.size();
+
+    for(Index i = 0; i < armourOptPtr1_->num_time_steps; i++){
+        Index j = 0;
+        for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
+            for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
+                if (g[i * num_arm_arm_collision + j + offset] < -constr_viol_tol) {
+                    std::cout << "DualArmourOptimizer.cpp: "
+                              << " TC " << j1 << " on arm 1"
+                              << " and TC " << j2 << " on arm 2"
+                              << " collides at " << i << "th time step!\n";
+                    final_constr_violation = std::max(final_constr_violation, -g[i * num_arm_arm_collision + j + offset]);
+                }
+                j++;
+            }
+        }
+    }
 }
 
 }; // namespace Armour

@@ -15,19 +15,18 @@ int main() {
 
 // FIRST ROBOT INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file1 = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file1 = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file1 = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
+    const std::string robot_info_file1 = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr1_ = 
         std::make_shared<RobotInfo>(robot_model_file1, robot_info_file1);
 
     // create a trajectory instance (compute trajectory on continuous time intervals)
     Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
-    q0(1) = -M_PI_2;
     Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
     Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
 
         // trajectory parameters and their ranges
-    Eigen::VectorXd k_center = q0;
+    Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr1_->num_motors);
     Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr1_->num_motors);
 
         // trajectory duration
@@ -46,8 +45,8 @@ int main() {
 
 // SECOND ROBOT INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file2 = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file2 = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file2 = "../Robots/kinova-gen3/gen3_2f85_fixed_the_other_side.urdf";
+    const std::string robot_info_file2 = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr2_ = 
         std::make_shared<RobotInfo>(robot_model_file2, robot_info_file2);
 
@@ -57,7 +56,7 @@ int main() {
     q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
 
         // trajectory parameters and their ranges
-    k_center = q0;
+    k_center = Eigen::VectorXd::Zero(robotInfoPtr2_->num_motors);
     k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr2_->num_motors);
 
     std::shared_ptr<BezierCurveInterval> trajPtr2_ =
@@ -90,7 +89,7 @@ int main() {
     // targets
     Eigen::VectorXd q_des = Eigen::VectorXd::Random(
         robotInfoPtr1_->num_motors + robotInfoPtr2_->num_motors);
-    double t_plan = 0.5 * duration;
+    double t_plan = 0.5;
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
@@ -124,18 +123,18 @@ int main() {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-5);
-	app->Options()->SetNumericValue("max_wall_time", 1.0);
+	app->Options()->SetNumericValue("max_wall_time", 10.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-    app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
+    // // For gradient checking
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
