@@ -32,11 +32,18 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
         sphere_radius[i] = SPHERE_RADIUS[i];
     }
 
+    // initialize tapered capsules
+    tapered_capsules.reserve(NUM_TAPERED_CAPSULES);
+    for (int i = 0; i < NUM_TAPERED_CAPSULES; i++) {
+        tapered_capsules.push_back(TAPERED_CAPSULES[i]);
+    }
+
     // 3 spheres for gripper
     if (include_gripper_or_not) {
-        add_collision_sphere(7, Vec3(0.0, 0.0, -0.10), 0.05);
-        add_collision_sphere(7, Vec3(0.0, 0.0, -0.15), 0.05);
-        add_collision_sphere(7, Vec3(0.0, 0.0, -0.20), 0.05);
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.10), 0.05); // sphere # 17
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.15), 0.05); // sphere # 18
+        add_collision_sphere(7, Vec3(0.0, 0.0, -0.20), 0.05); // sphere # 19
+        tapered_capsules.back().second = 19; // the last tapered capsule is now extended to the gripper
     }
 
     // m = trajPtr_->N * NUM_SPHERES * collisionAvoidancePtr_->numObstacles;
@@ -46,6 +53,7 @@ KinovaCustomizedConstraints::KinovaCustomizedConstraints(std::shared_ptr<Traject
 
     jointTJ = MatX::Zero(3, trajPtr_->Nact);
     sphere_centers_copy.resize(num_spheres, trajPtr_->N);
+    sphere_centers_gradient_copy.resize(num_spheres, trajPtr_->N);
 
     initialize_memory(m, trajPtr_->varLength);
 }
@@ -102,6 +110,8 @@ void KinovaCustomizedConstraints::compute(const VecX& z,
 
             if (compute_derivatives) {
                 psphereCenter_pz = fkPtr_->getTranslationJacobian() * pq_pz;
+
+                sphere_centers_gradient_copy(j, i) = psphereCenter_pz;
             }
 
             if (compute_hessian) {

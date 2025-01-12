@@ -69,12 +69,12 @@ void VelocityLimits::print_violation_info() {
                 std::cout << "        VelocityLimits.cpp: Joint " 
                           << j 
                           << " at time instance "
-                           << i 
-                           << " is above upper limit: " 
-                           << g(i * trajPtr_->Nact + j) 
-                           << " > " 
-                           << upperLimits(j) 
-                           << std::endl;
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * trajPtr_->Nact + j) 
+                          << " > " 
+                          << upperLimits(j) 
+                          << std::endl;
             }
         }
     }

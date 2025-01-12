@@ -201,7 +201,7 @@ bool DigitSystemIdentification::get_nlp_info(
     n = 4 * nontrivialLinkIds.size() + (NUM_DEPENDENT_JOINTS + 6) * N;
     numVars= n;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;

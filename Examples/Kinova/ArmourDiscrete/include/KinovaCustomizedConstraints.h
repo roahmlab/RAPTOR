@@ -51,7 +51,16 @@ const double SPHERE_OFFSET[NUM_SPHERES][3] = {
 const double SPHERE_RADIUS[NUM_SPHERES] = {0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.07, // spheres on link 2
                                            0.07, 0.06, 0.06, 0.06, 0.06,             // spheres on link 4
                                            0.05, 0.05,                               // spheres on link 6
-                                           0.02, 0.02, 0.02};                        // spheres on camera    
+                                           0.02, 0.02, 0.02};                        // spheres on camera   
+
+// indices of the beginning and ending spheres of the tapered capsules for self-collision avoidance
+// note that the last tapered capsule will be changed if gripper is considered (include_gripper_or_not = true)
+const int NUM_TAPERED_CAPSULES = 3;
+const std::pair<size_t, size_t> TAPERED_CAPSULES[NUM_TAPERED_CAPSULES] = {
+    {0, 6},
+    {7, 11},
+    {12, 13}
+}; 
 
 class KinovaCustomizedConstraints : public Constraints {
 public:
@@ -110,7 +119,11 @@ public:
     std::vector<Vec3> sphere_offset;
     std::vector<double> sphere_radius;
 
+        // tapered capsule info
+    std::vector<std::pair<size_t, size_t>> tapered_capsules;
+
     Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> sphere_centers_copy;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> sphere_centers_gradient_copy;
 
         // the transform matrix at the beginning and at the end
     Transform startT;

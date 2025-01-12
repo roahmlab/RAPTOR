@@ -208,7 +208,7 @@ bool EndEffectorParametersIdentification::get_nlp_info(
     n = 10;       // End-effector parameters 
     numVars = n;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     m = numCons;
 

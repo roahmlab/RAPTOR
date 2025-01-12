@@ -85,7 +85,7 @@ bool DualArmourOptimizer::get_nlp_info(
 
     // The problem described 2 * NUM_FACTORS variables, since there are two arms
     numVars = 2 * NUM_FACTORS;
-    n = 2 * NUM_FACTORS;
+    n = numVars;
 
     // the nonzero structure of the Jacobian is the same for both arms, so they are stored separately
     nnz_jac_g = 
@@ -278,9 +278,9 @@ bool DualArmourOptimizer::eval_g(
             for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
                 for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
                     const size_t tc1_begin_index = robotInfoPtr1_->tc_begin_and_end[j1].first;
-                    const size_t tc1_end_index = robotInfoPtr1_->tc_begin_and_end[j1].second;
+                    const size_t tc1_end_index   = robotInfoPtr1_->tc_begin_and_end[j1].second;
                     const size_t tc2_begin_index = robotInfoPtr2_->tc_begin_and_end[j2].first;
-                    const size_t tc2_end_index = robotInfoPtr2_->tc_begin_and_end[j2].second;
+                    const size_t tc2_end_index   = robotInfoPtr2_->tc_begin_and_end[j2].second;
 
                     const Vec3& tc1_sphere_1 = armourOptPtr1_->sphere_locations(i, tc1_begin_index);
                     const Vec3& tc1_sphere_2 = armourOptPtr1_->sphere_locations(i, tc1_end_index);
@@ -363,7 +363,6 @@ bool DualArmourOptimizer::eval_g(
     return true;
 }
 // [TNLP_eval_g]
-
 
 // [TNLP_eval_jac_g]
 // return the structure or values of the Jacobian
@@ -542,11 +541,13 @@ void DualArmourOptimizer::summarize_constraints(
         for (Index j1 = 0; j1 < robotInfoPtr1_->tc_begin_and_end.size(); j1++) {
             for (Index j2 = 0; j2 < robotInfoPtr2_->tc_begin_and_end.size(); j2++) {
                 if (g[i * num_arm_arm_collision + j + offset] < -constr_viol_tol) {
-                    std::cout << "DualArmourOptimizer.cpp: "
-                              << " TC " << j1 << " on arm 1"
-                              << " and TC " << j2 << " on arm 2"
-                              << " collides at " << i << "th time step"
-                              << " with distance " << g[i * num_arm_arm_collision + j + offset] << "!\n";
+                    if (verbose) {
+                        std::cout << "DualArmourOptimizer.cpp: "
+                                  << " TC " << j1 << " on arm 1"
+                                  << " and TC " << j2 << " on arm 2"
+                                  << " collides at " << i << "th time step"
+                                  << " with distance " << g[i * num_arm_arm_collision + j + offset] << "!\n";
+                    }
                     final_constr_violation = std::max(final_constr_violation, -g[i * num_arm_arm_collision + j + offset]);
                 }
                 j++;

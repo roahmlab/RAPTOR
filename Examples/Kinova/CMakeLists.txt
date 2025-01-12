@@ -3,6 +3,8 @@ add_library(Kinovalib SHARED
     InverseKinematics/src/KinovaIKSolver.cpp
     ArmourDiscrete/src/KinovaOptimizer.cpp
     ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
+    ArmourDiscrete/src/KinovaLongerHorizonOptimizer.cpp
+    ArmourDiscrete/src/DualKinovaOptimizer.cpp
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ExcitingTrajectoryGenerator.cpp
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
@@ -202,6 +204,25 @@ target_link_libraries(KinovaPayloadExciting_example PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
 target_compile_options(KinovaPayloadExciting_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+###
+add_executable(DualKinova_example 
+    ArmourDiscrete/DualKinovaExample.cpp)
+target_include_directories(DualKinova_example PUBLIC
+    ArmourDiscrete/include)
+target_link_libraries(DualKinova_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(DualKinova_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
