@@ -46,15 +46,15 @@ int main() {
     Eigen::VectorXd q0 = Eigen::VectorXd::Zero(model1.nv + model2.nv);
     Eigen::VectorXd qT = Eigen::VectorXd::Zero(model1.nv + model2.nv);
 
-    q0 << 0.59164682,  1.05519398,  2.46569617, -1.02732907,  0.60523465,  1.11747659, -1.55976632,
-          0.59164682,  1.05519398,  2.46569617, -1.02732907,  0.60523465,  1.11747659, -1.55976632;
+    q0 << 0.6873863,   1.16653997,  2.11789636, -1.02120659,  0.8033111,   0.99861891, -1.39448917,
+          0.6873863,   1.16653997,  2.11789636, -1.02120659,  0.8033111,   0.99861891, -1.39448917;
 
     qT << 0.05490901,  1.18798053,  2.03709998, -1.01553996, -1.45212933,  0.94367354, 0.46641401,
           0.05490901,  1.18798053,  2.03709998, -1.01553996, -1.45212933,  0.94367354, 0.46641401;
 
-    const double T = 5.0;
+    const double T = 2.0;
     const int N = 60;
-    const int degree = 3;
+    const int degree = 1;
 
     // Define initial guess
     Eigen::VectorXd z = Eigen::VectorXd::Zero(model1.nv * degree * 3 * 2);
@@ -100,11 +100,11 @@ int main() {
     app->Options()->SetNumericValue("tol", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
     // app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 40.0);
+	app->Options()->SetNumericValue("max_wall_time", 10.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 200);
-    app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetIntegerValue("max_iter", 50);
+    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetStringValue("linear_solver", "ma86");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
@@ -119,7 +119,7 @@ int main() {
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-4);
 
-    // Initialize the IpoptApplication and process the options
+// Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
     status = app->Initialize();
     if( status != Solve_Succeeded ) {
@@ -155,15 +155,21 @@ int main() {
         trajectory << std::setprecision(20);
         for (int i = 0; i < N; i++) {
             trajectory << mynlp->kinovaOptPtr1_->trajPtr_->q(i).transpose() << ' ';
-            trajectory << mynlp->kinovaOptPtr2_->trajPtr_->q(i).transpose() << std::endl;
+            trajectory << mynlp->kinovaOptPtr2_->trajPtr_->q(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr1_->trajPtr_->q_d(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr2_->trajPtr_->q_d(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr1_->trajPtr_->q_dd(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr2_->trajPtr_->q_dd(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr1_->idPtr_->tau(i).transpose() << ' ';
+            trajectory << mynlp->kinovaOptPtr2_->idPtr_->tau(i).transpose() << std::endl;
         }
         trajectory.close();
 
         std::ofstream tapered_capsules("tapered-capsules.txt");
         const KinovaCustomizedConstraints* kccPtr1_ = dynamic_cast<
-            const KinovaCustomizedConstraints*>(mynlp->kinovaOptPtr1_->constraintsPtrVec_.back().get());
+            KinovaCustomizedConstraints*>(mynlp->kinovaOptPtr1_->constraintsPtrVec_.back().get());
         const KinovaCustomizedConstraints* kccPtr2_ = dynamic_cast<
-            const KinovaCustomizedConstraints*>(mynlp->kinovaOptPtr2_->constraintsPtrVec_.back().get());
+            KinovaCustomizedConstraints*>(mynlp->kinovaOptPtr2_->constraintsPtrVec_.back().get());
         const auto& tapered_capsules1 = kccPtr1_->tapered_capsules;
         const auto& tapered_capsules2 = kccPtr2_->tapered_capsules;
         for(Index i = 0; i < N; i++){
@@ -180,31 +186,6 @@ int main() {
             tapered_capsules << tc1_sphere_1.transpose() << ' ' << tc1_sphere_2.transpose() << ' ' << tc2_sphere_1.transpose() << ' ' << tc2_sphere_2.transpose() << std::endl;
         }
         tapered_capsules.close();
-
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->trajPtr_->q(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->trajPtr_->q_d(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->trajPtr_->q_dd(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->idPtr_->tau(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
     }
 
     return 0;

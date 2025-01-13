@@ -106,11 +106,14 @@ bool KinovaLongerHorizonOptimizer::set_parameters(
                                                                                collision_buffer_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");
 
-    // Cost function to minimize torque
-    costsPtrVec_.push_back(std::make_unique<MinimizeTorque>(trajPtr_, 
-                                                            idPtr_));
+    // Cost function
+    // costsPtrVec_.push_back(std::make_unique<MinimizeTorque>(trajPtr_, 
+    //                                                         idPtr_));
+    // costsWeightVec_.push_back(1.0);
+    // costsNameVec_.push_back("minimize torque");
+    costsPtrVec_.push_back(std::make_unique<MinimizePathLength>(trajPtr_));
     costsWeightVec_.push_back(1.0);
-    costsNameVec_.push_back("minimize torque");
+    costsNameVec_.push_back("minimize path length");
 
     return true;
 }

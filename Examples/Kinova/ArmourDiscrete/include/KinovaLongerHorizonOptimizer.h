@@ -14,6 +14,7 @@
 #include "KinovaCustomizedConstraints.h"
 
 #include "MinimizeTorque.h"
+#include "MinimizePathLength.h"
 
 namespace RAPTOR {
 namespace Kinova {
