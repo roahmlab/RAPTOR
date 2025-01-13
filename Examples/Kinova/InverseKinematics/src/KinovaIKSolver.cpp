@@ -102,7 +102,7 @@ bool KinovaIKSolver::get_nlp_info(
     numVars = trajPtr_->varLength;
     n = numVars;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;

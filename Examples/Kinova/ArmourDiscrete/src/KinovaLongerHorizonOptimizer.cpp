@@ -1,62 +1,51 @@
-#include "PayloadExcitingTrajectoryGenerator.h"
+#include "KinovaLongerHorizonOptimizer.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
 // // constructor
-// PayloadExcitingTrajectoryGenerator::PayloadExcitingTrajectoryGenerator()
+// KinovaLongerHorizonOptimizer::KinovaLongerHorizonOptimizer()
 // {
 // }
 
 
 // // destructor
-// PayloadExcitingTrajectoryGenerator::~PayloadExcitingTrajectoryGenerator()
+// KinovaLongerHorizonOptimizer::~KinovaLongerHorizonOptimizer()
 // {
 // }
 
-bool PayloadExcitingTrajectoryGenerator::set_parameters(
+// [TNLP_set_parameters]
+bool KinovaLongerHorizonOptimizer::set_parameters(
     const VecX& x0_input,
-    const Number T_input,
+    const double T_input,
     const int N_input,
     const int degree_input,
-    const double base_frequency_input,
-    const VecX& q0_input,
-    const VecX& q_d0_input,
     const Model& model_input, 
-    const std::vector<Vec3>& boxCenters,
-    const std::vector<Vec3>& boxOrientations,
-    const std::vector<Vec3>& boxSizes,
+    const VecX& q0_input,
+    const VecX& qT_input,
+    const std::vector<Vec3>& boxCenters_input,
+    const std::vector<Vec3>& boxOrientation_input,
+    const std::vector<Vec3>& boxSize_input,
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
     const bool include_gripper_or_not,
-    const double collison_buffer_input,
-    Eigen::VectorXi jtype_input
-) {
-    enable_hessian = false;
+    const double collision_buffer_input
+ ) 
+{
+    enable_hessian = true;
+    x0 = x0_input;
 
-    // fixed frequency fourier curves
-    trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
-                                                             N_input, 
-                                                             model_input.nv, 
-                                                             TimeDiscretization::Uniform, 
-                                                             degree_input,
-                                                             base_frequency_input,
-                                                             q0_input,
-                                                             q_d0_input);
+    trajPtr_ = std::make_shared<PiecewiseBezierCurves>(T_input, 
+                                                       N_input, 
+                                                       model_input.nq, 
+                                                       degree_input, 
+                                                       q0_input,
+                                                       qT_input);
 
-    // momentum regressor or torque (inverse dynamics) regressor
-    ridPtr_ = std::make_shared<RegressorInverseDynamics>(model_input, 
-                                                         trajPtr_,
-                                                         true,
-                                                         jtype_input);
-
-    // add end effector regressor condition number into cost
-    costsPtrVec_.push_back(std::make_unique<EndEffectorRegressorConditionNumber>(trajPtr_, 
-                                                                                 ridPtr_));
-    costsWeightVec_.push_back(1.0);                                                                             
-    costsNameVec_.push_back("end effector regressor condition number");
-
+    idPtr_ = std::make_shared<InverseDynamics>(model_input,
+                                               trajPtr_);
+    
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = 
         Utils::deg2rad(
@@ -102,36 +91,44 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-                                                                ridPtr_,
+                                                                idPtr_,
                                                                 TORQUE_LIMITS_LOWER_VEC, 
                                                                 TORQUE_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("torque limits"); 
+    constraintsNameVec_.push_back("torque limits");                                                            
 
     // Customized constraints (collision avoidance with obstacles)
-    if (boxCenters.size() > 0) {
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
-                                                                               boxCenters,
-                                                                               boxOrientations,
-                                                                               boxSizes,
+                                                                               boxCenters_input,
+                                                                               boxOrientation_input,
+                                                                               boxSize_input,
                                                                                include_gripper_or_not,
-                                                                               collison_buffer_input,
-                                                                               jtype_input));  
-    constraintsNameVec_.push_back("obstacle avoidance constraints"); 
-    }
+                                                                               collision_buffer_input));   
+    constraintsNameVec_.push_back("obstacle avoidance constraints");
 
-    x0 = x0_input.head(trajPtr_->varLength);
+    // Cost function
+    // costsPtrVec_.push_back(std::make_unique<MinimizeTorque>(trajPtr_, 
+    //                                                         idPtr_));
+    // costsWeightVec_.push_back(1.0);
+    // costsNameVec_.push_back("minimize torque");
+    costsPtrVec_.push_back(std::make_unique<MinimizePathLength>(trajPtr_));
+    costsWeightVec_.push_back(1.0);
+    costsNameVec_.push_back("minimize path length");
 
     return true;
 }
+// [TNLP_set_parameters]
 
-bool PayloadExcitingTrajectoryGenerator::get_nlp_info(
-    Index&          n,
-    Index&          m,
-    Index&          nnz_jac_g,
-    Index&          nnz_h_lag,
-    IndexStyleEnum& index_style
-) {
+// [TNLP_get_nlp_info]
+// returns some info about the nlp
+bool KinovaLongerHorizonOptimizer::get_nlp_info(
+   Index&          n,
+   Index&          m,
+   Index&          nnz_jac_g,
+   Index&          nnz_h_lag,
+   IndexStyleEnum& index_style
+)
+{
     // number of decision variables
     numVars = trajPtr_->varLength;
     n = numVars;
@@ -151,6 +148,7 @@ bool PayloadExcitingTrajectoryGenerator::get_nlp_info(
 
     return true;
 }
+// [TNLP_get_nlp_info]
 
 }; // namespace Kinova
 }; // namespace RAPTOR

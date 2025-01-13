@@ -70,7 +70,7 @@ bool SafePayloadExcitingTrajectoryGenerator::get_nlp_info(
     numVars = NUM_FACTORS;
     n = NUM_FACTORS;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = NUM_FACTORS * num_time_steps + // torque limits
               num_time_steps * num_spheres + // obstacle avoidance constraints
               NUM_FACTORS * 4; // joint position, velocity limits

@@ -1,11 +1,11 @@
-#ifndef KINOVA_OPTIMIZER_H
-#define KINOVA_OPTIMIZER_H
+#ifndef KINOVA_LONGER_HORIZON_OPTIMIZER_H
+#define KINOVA_LONGER_HORIZON_OPTIMIZER_H
 
 #include "KinovaConstants.h"
 
 #include "Optimizer.h"
 
-#include "ArmourBezierCurves.h"
+#include "PiecewiseBezierCurves.h"
 
 #include "InverseDynamics.h"
 #include "JointLimits.h"
@@ -13,10 +13,13 @@
 #include "TorqueLimits.h"
 #include "KinovaCustomizedConstraints.h"
 
+#include "MinimizeTorque.h"
+#include "MinimizePathLength.h"
+
 namespace RAPTOR {
 namespace Kinova {
 
-class KinovaOptimizer : public Optimizer {
+class KinovaLongerHorizonOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
@@ -24,10 +27,10 @@ public:
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    KinovaOptimizer() = default;
+    KinovaLongerHorizonOptimizer() = default;
 
     /** Default destructor */
-    ~KinovaOptimizer() = default;
+    ~KinovaLongerHorizonOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
@@ -35,13 +38,12 @@ public:
         const double T_input,
         const int N_input,
         const int degree_input,
-        const Model& model_input, 
-        const ArmourTrajectoryParameters& atp_input,
+        const Model& model_input,
+        const VecX& q0_input,
+        const VecX& qT_input,
         const std::vector<Vec3>& boxCenters_input,
         const std::vector<Vec3>& boxOrientation_input,
         const std::vector<Vec3>& boxSize_input,
-        const VecX& q_des_input,
-        const int tplan_n_input,
         const VecX& joint_limits_buffer_input,
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
@@ -60,30 +62,6 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the objective value */
-    bool eval_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number&       obj_value
-    ) final override;
-
-    /** Method to return the gradient of the objective */
-    bool eval_grad_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number*       grad_f
-    ) final override;
-
-    /** Method to return the hessian of the objective */
-    bool eval_hess_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        MatX&         hess_f
-    ) final override;
-
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -95,12 +73,12 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    KinovaOptimizer(
-       const KinovaOptimizer&
+    KinovaLongerHorizonOptimizer(
+       const KinovaLongerHorizonOptimizer&
     );
 
-    KinovaOptimizer& operator=(
-       const KinovaOptimizer&
+    KinovaLongerHorizonOptimizer& operator=(
+       const KinovaLongerHorizonOptimizer&
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
@@ -114,4 +92,4 @@ public:
 }; // namespace Kinova
 }; // namespace RAPTOR
 
-#endif // KINOVA_OPTIMIZER_H
+#endif // KINOVA_LONGER_HORIZON_OPTIMIZER_H

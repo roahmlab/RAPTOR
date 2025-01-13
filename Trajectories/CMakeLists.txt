@@ -4,6 +4,7 @@ add_library(trajlib SHARED
     src/FixedFrequencyFourierCurves.cpp
     src/BezierCurves.cpp 
     src/ArmourBezierCurves.cpp
+    src/PiecewiseBezierCurves.cpp
     src/Polynomials.cpp 
     src/Plain.cpp
     src/TrajectoryData.cpp

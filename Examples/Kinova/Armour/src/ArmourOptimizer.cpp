@@ -64,7 +64,7 @@ bool ArmourOptimizer::get_nlp_info(
     numVars = NUM_FACTORS;
     n = NUM_FACTORS;
 
-    // number of inequality constraint
+    // number of constraints
     if (num_obstacles > 0) {
         numCons = NUM_FACTORS * num_time_steps + // torque limits
                   NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
@@ -678,9 +678,9 @@ bool ArmourOptimizer::eval_jac_g(
                         const size_t arm_2_index = robotInfoPtr_->self_collision_checks[j].second;
 
                         const size_t tc1_begin_index = robotInfoPtr_->tc_begin_and_end[arm_1_index].first;
-                        const size_t tc1_end_index = robotInfoPtr_->tc_begin_and_end[arm_1_index].second;
+                        const size_t tc1_end_index   = robotInfoPtr_->tc_begin_and_end[arm_1_index].second;
                         const size_t tc2_begin_index = robotInfoPtr_->tc_begin_and_end[arm_2_index].first;
-                        const size_t tc2_end_index = robotInfoPtr_->tc_begin_and_end[arm_2_index].second;
+                        const size_t tc2_end_index   = robotInfoPtr_->tc_begin_and_end[arm_2_index].second;
 
                         const Vec3& tc1_sphere_1 = sphere_locations(i, tc1_begin_index);
                         const Vec3& tc1_sphere_2 = sphere_locations(i, tc1_end_index);

@@ -16,7 +16,7 @@ PiecewiseBezierCurves::PiecewiseBezierCurves(double T_input,
     qT = qT_input;
 
     if (N % (degree + 1) != 0) {
-        throw std::invalid_argument("PiecewiseBezierCurves: N must be a multiple of degree");
+        throw std::invalid_argument("PiecewiseBezierCurves: N must be a multiple of (degree + 1)");
     }
     
     tspan = VecX::LinSpaced(N, 0, T);

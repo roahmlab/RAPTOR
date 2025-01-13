@@ -74,7 +74,7 @@ bool FrictionParametersIdentification::get_nlp_info(
     n = Nact * (include_offset ? 4 : 3);
     numVars= n;
 
-    // number of inequality constraint
+    // number of constraints
     m = 0;
     numCons= m;
 
