@@ -25,7 +25,7 @@ inline void solve_quadratic(const double a,
 template class TaperedCapsuleCollision<2>; // used in tests
 template class TaperedCapsuleCollision<7>; // used in Armour
 template class TaperedCapsuleCollision<14>; // used in DualArmour
-template class TaperedCapsuleCollision<7 * 4 * 3 * 2>; // used in DualKinovaExample
+template class TaperedCapsuleCollision<7 * 3 * 3 * 2>; // used in DualKinovaExample
 
 template<int factors>
 inline Eigen::Vector<double,factors> TaperedCapsuleCollision<factors>::batchDot(

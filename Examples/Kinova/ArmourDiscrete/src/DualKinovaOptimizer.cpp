@@ -184,10 +184,13 @@ bool DualKinovaOptimizer::eval_f(
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-    kinovaOptPtr1_->eval_f(kinovaOptPtr1_->numVars, x, new_x, obj_value);
-    kinovaOptPtr2_->eval_f(kinovaOptPtr2_->numVars, x + kinovaOptPtr1_->numVars, new_x, obj_value);
+    Number obj_value1 = 0;
+    kinovaOptPtr1_->eval_f(kinovaOptPtr1_->numVars, x, new_x, obj_value1);
 
-    obj_value = 0;
+    Number obj_value2 = 0;
+    kinovaOptPtr2_->eval_f(kinovaOptPtr2_->numVars, x + kinovaOptPtr1_->numVars, new_x, obj_value2);
+
+    obj_value = obj_value1 + obj_value2;
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -210,8 +213,18 @@ bool DualKinovaOptimizer::eval_grad_f(
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-    for(Index i = 0; i < n; i++){
-        grad_f[i] = 0;
+    Number grad_f1[kinovaOptPtr1_->numVars];
+    kinovaOptPtr1_->eval_grad_f(kinovaOptPtr1_->numVars, x, new_x, grad_f1);
+
+    for(Index i = 0; i < kinovaOptPtr1_->numVars; i++){
+        grad_f[i] = grad_f1[i];
+    }
+
+    Number grad_f2[kinovaOptPtr2_->numVars];
+    kinovaOptPtr2_->eval_grad_f(kinovaOptPtr2_->numVars, x + kinovaOptPtr1_->numVars, new_x, grad_f2);
+
+    for(Index i = 0; i < kinovaOptPtr2_->numVars; i++){
+        grad_f[i + kinovaOptPtr1_->numVars] = grad_f2[i];
     }
 
     return true;

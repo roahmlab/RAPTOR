@@ -129,7 +129,7 @@ public:
     std::shared_ptr<KinovaLongerHorizonOptimizer> kinovaOptPtr1_;
     std::shared_ptr<KinovaLongerHorizonOptimizer> kinovaOptPtr2_;
 
-    const static int degree_input = 4;
+    const static int degree_input = 3;
     const static int numVars_dummy = 7 * degree_input * 3 * 2;
 
     TaperedCapsuleCollision<numVars_dummy> tcc;

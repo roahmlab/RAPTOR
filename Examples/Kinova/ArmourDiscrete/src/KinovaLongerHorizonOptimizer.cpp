@@ -77,24 +77,24 @@ bool KinovaLongerHorizonOptimizer::set_parameters(
         Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
         torque_limits_buffer_input;
 
-    // // Joint limits
-    // constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
-    //                                                            JOINT_LIMITS_LOWER_VEC, 
-    //                                                            JOINT_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("joint limits");
+    // Joint limits
+    constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
+                                                               JOINT_LIMITS_LOWER_VEC, 
+                                                               JOINT_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("joint limits");
 
-    // // Velocity limits
-    // constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
-    //                                                               VELOCITY_LIMITS_LOWER_VEC, 
-    //                                                               VELOCITY_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("velocity limits");        
+    // Velocity limits
+    constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
+                                                                  VELOCITY_LIMITS_LOWER_VEC, 
+                                                                  VELOCITY_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("velocity limits");        
 
-    // // Torque limits
-    // constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-    //                                                             idPtr_,
-    //                                                             TORQUE_LIMITS_LOWER_VEC, 
-    //                                                             TORQUE_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("torque limits");                                                            
+    // Torque limits
+    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
+                                                                idPtr_,
+                                                                TORQUE_LIMITS_LOWER_VEC, 
+                                                                TORQUE_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("torque limits");                                                            
 
     // Customized constraints (collision avoidance with obstacles)
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
@@ -105,6 +105,12 @@ bool KinovaLongerHorizonOptimizer::set_parameters(
                                                                                include_gripper_or_not,
                                                                                collision_buffer_input));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");
+
+    // Cost function to minimize torque
+    costsPtrVec_.push_back(std::make_unique<MinimizeTorque>(trajPtr_, 
+                                                            idPtr_));
+    costsWeightVec_.push_back(1.0);
+    costsNameVec_.push_back("minimize torque");
 
     return true;
 }
@@ -140,79 +146,6 @@ bool KinovaLongerHorizonOptimizer::get_nlp_info(
     return true;
 }
 // [TNLP_get_nlp_info]
-
-// [TNLP_eval_f]
-// returns the value of the objective function
-bool KinovaLongerHorizonOptimizer::eval_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   Number&       obj_value
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    trajPtr_->compute(z, false);
-
-    obj_value = 0.0;
-
-    update_minimal_cost_solution(n, z, new_x, obj_value);
-
-    return true;
-}
-// [TNLP_eval_f]
-
-// [TNLP_eval_grad_f]
-// return the gradient of the objective function grad_{x} f(x)
-bool KinovaLongerHorizonOptimizer::eval_grad_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   Number*       grad_f
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    trajPtr_->compute(z, true);
-    
-    for(Index i = 0; i < n; i++){
-        grad_f[i] = 0.0;
-    }
-
-    return true;
-}
-// [TNLP_eval_grad_f]
-
-// [TNLP_eval_hess_f]
-// return the hessian of the objective function hess_{x} f(x) as a dense matrix
-bool KinovaLongerHorizonOptimizer::eval_hess_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   MatX&         hess_f
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    trajPtr_->compute(z, true, true);
-
-    hess_f = MatX::Zero(n, n);
-
-    return true;
-}
-// [TNLP_eval_hess_f]
 
 }; // namespace Kinova
 }; // namespace RAPTOR

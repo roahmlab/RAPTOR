@@ -216,6 +216,7 @@ target_link_libraries(DualKinova_example PUBLIC
     trajlib 
     IDlib
     Conslib
+    Costslib
     Optlib
     Kinovalib
     ipopt
