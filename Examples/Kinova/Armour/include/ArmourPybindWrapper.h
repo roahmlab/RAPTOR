@@ -21,6 +21,7 @@ public:
     using Model = pinocchio::Model;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
+    using Vec10 = Eigen::Matrix<double, 10, 1>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
@@ -40,9 +41,9 @@ public:
     // Class methods
     void set_obstacles(const nb_2d_double obstacles_inp);
 
-    void set_endeffector_inertial_parameters(const double object_mass,
-                                             const nb_1d_double object_com,
-                                             const nb_1d_double object_inertia);
+    void set_endeffector_inertial_parameters(const nb_1d_double inertial_parameters,
+                                             const nb_1d_double inertial_parameters_lb,
+                                             const nb_1d_double inertial_parameters_ub);
 
     void set_ipopt_parameters(const double tol,
                               const double constr_viol_tol,

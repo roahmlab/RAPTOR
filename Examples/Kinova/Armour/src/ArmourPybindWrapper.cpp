@@ -23,26 +23,28 @@ ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
     }
 }
 
-void ArmourPybindWrapper::set_endeffector_inertial_parameters(const double object_mass,
-                                                              const nb_1d_double object_com,
-                                                              const nb_1d_double object_inertia) {
-    if (object_inertia.shape(0) != 9 || 
-        object_com.shape(0) != 3) {
-        throw std::invalid_argument("Object inertia must have 9 elements and object com must have 3 elements");
+void ArmourPybindWrapper::set_endeffector_inertial_parameters(const nb_1d_double inertial_parameters,
+                                                              const nb_1d_double inertial_parameters_lb,
+                                                              const nb_1d_double inertial_parameters_ub) {
+    if (inertial_parameters.shape(0) != 10 || 
+        inertial_parameters_lb.shape(0) != 10 ||
+        inertial_parameters_ub.shape(0) != 10) {
+        throw std::invalid_argument("Inertial parameters must be of size 10");
     }
-    
-    Mat3 object_inertia_mat;
-    object_inertia_mat << object_inertia(0), object_inertia(1), object_inertia(2),
-                          object_inertia(3), object_inertia(4), object_inertia(5),
-                          object_inertia(6), object_inertia(7), object_inertia(8);
 
-    robotInfoPtr_->model.inertias[robotInfoPtr_->model.nbodies - 1] = pinocchio::Inertia(
-        object_mass, 
-        Vec3(object_com(0), 
-             object_com(1), 
-             object_com(2)),
-        object_inertia_mat);
-    
+    Vec10 inertial_parameters_vec;
+    Vec10 inertial_parameters_lb_vec;
+    Vec10 inertial_parameters_ub_vec;
+    for (size_t i = 0; i < 10; i++) {
+        inertial_parameters_vec(i) = inertial_parameters(i);
+        inertial_parameters_lb_vec(i) = inertial_parameters_lb(i);
+        inertial_parameters_ub_vec(i) = inertial_parameters_ub(i);
+    }
+
+    robotInfoPtr_->change_endeffector_inertial_parameters(inertial_parameters_vec, 
+                                                          inertial_parameters_lb_vec,
+                                                          inertial_parameters_ub_vec);
+
     if (trajPtr_ != nullptr) {
         if (dynPtr_ == nullptr) {
             dynPtr_ = std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
@@ -238,6 +240,13 @@ nb::tuple ArmourPybindWrapper::optimize() {
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
+    }
+
+    if (status == Invalid_Problem_Definition) {
+        // reachable set size too large
+        // usually is torque reachable sets, print the size out for debugging
+        Utils::writeEigenMatrixToFile(dynPtr_->torque_radii, "torque_radii_armour.txt");
+        throw std::runtime_error("Invalid problem definition!");
     }
 
     set_trajectory_parameters_check = false;

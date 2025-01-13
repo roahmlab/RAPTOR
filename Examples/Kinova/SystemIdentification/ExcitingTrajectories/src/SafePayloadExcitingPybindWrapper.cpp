@@ -221,7 +221,10 @@ nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    if( status == Invalid_Problem_Definition ) {
+    if(status == Invalid_Problem_Definition) {
+        // reachable set size too large
+        // usually is torque reachable sets, print the size out for debugging
+        Utils::writeEigenMatrixToFile(dynPtr_->torque_radii, "torque_radii_exciting.txt");
         throw std::runtime_error("Invalid problem definition!");
     }
 

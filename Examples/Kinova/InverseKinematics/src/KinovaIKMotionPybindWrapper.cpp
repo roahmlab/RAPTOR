@@ -142,7 +142,9 @@ nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) 
                                   boxCenters,
                                   boxOrientation,
                                   boxSize,
-                                  endT);
+                                  endT,
+                                  true,
+                                  collision_buffer);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;

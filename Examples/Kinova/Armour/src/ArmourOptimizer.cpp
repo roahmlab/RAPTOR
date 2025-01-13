@@ -860,7 +860,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds position limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
@@ -885,7 +885,7 @@ void ArmourOptimizer::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "ArmourOptimizer.cpp: joint " << i + 1 - offset << " exceeds velocity limit when it reaches minimum!\n";
+                std::cout << "ArmourOptimizer.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "
