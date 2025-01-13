@@ -53,7 +53,7 @@ int main() {
           0.05490901,  1.18798053,  2.03709998, -1.01553996, -1.45212933,  0.94367354, 0.46641401;
 
     const double T = 2.0;
-    const int N = 60;
+    const int N = 100;
     const int degree = 1;
 
     // Define initial guess
@@ -88,7 +88,10 @@ int main() {
                               boxSize,
                               joint_limits_buffer,
                               velocity_limits_buffer,
-                              torque_limits_buffer);
+                              torque_limits_buffer,
+                              true,
+                              0.0,
+                              0.01);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -99,10 +102,10 @@ int main() {
 
     app->Options()->SetNumericValue("tol", 1e-4);
     app->Options()->SetNumericValue("constr_viol_tol", 1e-4);
-    // app->Options()->SetNumericValue("obj_scaling_factor", 1e-3);
-	app->Options()->SetNumericValue("max_wall_time", 10.0);
+    app->Options()->SetNumericValue("obj_scaling_factor", 100.0);
+	app->Options()->SetNumericValue("max_wall_time", 100.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 50);
+    app->Options()->SetIntegerValue("max_iter", 500);
     app->Options()->SetStringValue("mu_strategy", "monotone");
     app->Options()->SetStringValue("linear_solver", "ma86");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");

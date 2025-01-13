@@ -30,11 +30,13 @@ bool DualKinovaOptimizer::set_parameters(
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
     const bool include_gripper_or_not,
-    const double collision_buffer_input
+    const double collision_buffer_input,
+    const double arm_arm_collision_buffer_input
  ) 
 {
     enable_hessian = false;
     x0 = x0_input;
+    arm_arm_collision_buffer = arm_arm_collision_buffer_input;
 
     kinovaOptPtr1_ = std::make_shared<KinovaLongerHorizonOptimizer>();
     kinovaOptPtr2_ = std::make_shared<KinovaLongerHorizonOptimizer>();
@@ -158,7 +160,7 @@ bool DualKinovaOptimizer::get_bounds_info(
 
     const Index offset = kinovaOptPtr1_->numCons + kinovaOptPtr1_->numCons;
     for (Index i = 0; i < kinovaOptPtr1_->trajPtr_->N * 2 * 2; i++) {
-        g_l[offset + i] = 0.0;
+        g_l[offset + i] = arm_arm_collision_buffer;
         g_u[offset + i] = 1e19;
     }
 

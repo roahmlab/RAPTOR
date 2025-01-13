@@ -37,7 +37,8 @@ public:
         const VecX& velocity_limits_buffer_input,
         const VecX& torque_limits_buffer_input,
         const bool include_gripper_or_not = true,
-        const double collision_buffer_input = 0.0
+        const double collision_buffer_input = 0.0,
+        const double arm_arm_collision_buffer_input = 0.0
     );
 
     /**@name Overloaded from TNLP */
@@ -133,6 +134,7 @@ public:
     const static int numVars_dummy = 7 * degree_input * 3 * 2;
 
     TaperedCapsuleCollision<numVars_dummy> tcc;
+    double arm_arm_collision_buffer = 0.0;
 
     VecX g_lb_copy;
     VecX g_ub_copy;
