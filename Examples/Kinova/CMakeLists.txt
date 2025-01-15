@@ -391,13 +391,13 @@ nanobind_compile_options(dualarmour_nanobind PUBLIC
 set_property(TARGET dualarmour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-nanobind_add_module(oracle_nanobind 
+nanobind_add_module(kinova_nanobind 
     NB_SHARED LTO
     ArmourDiscrete/KinovaPybind.cpp
     ArmourDiscrete/src/KinovaPybindWrapper.cpp)
-target_include_directories(oracle_nanobind PUBLIC
+target_include_directories(kinova_nanobind PUBLIC
     ArmourDiscrete/include)
-target_link_libraries(oracle_nanobind PUBLIC
+target_link_libraries(kinova_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -408,17 +408,39 @@ target_link_libraries(oracle_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(oracle_nanobind PUBLIC
+nanobind_compile_options(kinova_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET oracle_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET kinova_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-nanobind_add_module(oracle_waitr_nanobind SHARED
+nanobind_add_module(kinova_longer_nanobind 
+    NB_SHARED LTO
+    ArmourDiscrete/KinovaLongerHorizonPybind.cpp
+    ArmourDiscrete/src/KinovaLongerHorizonPybindWrapper.cpp)
+target_include_directories(kinova_longer_nanobind PUBLIC
+    ArmourDiscrete/include)
+target_link_libraries(kinova_longer_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(kinova_longer_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET kinova_longer_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(kinova_waitr_nanobind SHARED
     WaitrDiscrete/KinovaWaitrPybind.cpp
     WaitrDiscrete/src/KinovaWaitrPybindWrapper.cpp)
-target_include_directories(oracle_waitr_nanobind PUBLIC
+target_include_directories(kinova_waitr_nanobind PUBLIC
     WaitrDiscrete/include)
-target_link_libraries(oracle_waitr_nanobind PUBLIC
+target_link_libraries(kinova_waitr_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -429,9 +451,9 @@ target_link_libraries(oracle_waitr_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(oracle_waitr_nanobind PUBLIC
+nanobind_compile_options(kinova_waitr_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET oracle_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET kinova_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
 nanobind_add_module(safe_payload_exciting_nanobind 

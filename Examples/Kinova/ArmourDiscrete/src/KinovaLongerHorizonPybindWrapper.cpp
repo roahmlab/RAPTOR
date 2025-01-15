@@ -1,10 +1,10 @@
-#include "KinovaPybindWrapper.h"
+#include "KinovaLongerHorizonPybindWrapper.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
-KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
-                                         const bool display_info) {
+KinovaLongerHorizonPybindWrapper::KinovaLongerHorizonPybindWrapper(const std::string urdf_filename,
+                                                                   const bool display_info) {
     // Define robot model
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
@@ -12,9 +12,7 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     
     model.gravity.linear()(2) = GRAVITY;
 
-    q_des.resize(model.nv);
-
-    mynlp = new KinovaOptimizer();
+    mynlp = new KinovaLongerHorizonOptimizer();
     mynlp->display_info = display_info;
 
     app = IpoptApplicationFactory();
@@ -24,8 +22,8 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     torque_limits_buffer = VecX::Zero(model.nv);
 }
 
-void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
-                                        const double collision_buffer_inp) {
+void KinovaLongerHorizonPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
+                                                     const double collision_buffer_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -47,14 +45,14 @@ void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
     has_optimized = false;
 }
 
-void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
-                                               const double constr_viol_tol,
-                                               const double obj_scaling_factor,
-                                               const double max_wall_time, 
-                                               const int print_level,
-                                               const std::string mu_strategy,
-                                               const std::string linear_solver,
-                                               const bool gradient_check) {
+void KinovaLongerHorizonPybindWrapper::set_ipopt_parameters(const double tol,
+                                                            const double constr_viol_tol,
+                                                            const double obj_scaling_factor,
+                                                            const double max_wall_time, 
+                                                            const int print_level,
+                                                            const std::string mu_strategy,
+                                                            const std::string linear_solver,
+                                                            const bool gradient_check) {
     app->Options()->SetNumericValue("tol", tol);
     app->Options()->SetNumericValue("constr_viol_tol", constr_viol_tol);
     mynlp->constr_viol_tol = constr_viol_tol;
@@ -76,39 +74,41 @@ void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
-                                                    const nb_1d_double q_d0_inp,
-                                                    const nb_1d_double q_dd0_inp,
-                                                    const double duration_inp) {
+void KinovaLongerHorizonPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                                 const nb_1d_double qT_inp,
+                                                                 const double duration_inp,
+                                                                 const int degree_inp) {
     if (q0_inp.shape(0) != model.nv || 
-        q_d0_inp.shape(0) != model.nv || 
-        q_dd0_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("q0, q_d0, q_dd0 must be of size model.nv");
+        qT_inp.shape(0) != model.nv) {
+        throw std::invalid_argument("q0, qT must be of size model.nv");
     }
 
     T = duration_inp;
+    degree = degree_inp;
 
     if (T <= 0.0) {
         throw std::invalid_argument("Duration must be positive");
     }
 
-    atp.q0.resize(model.nv);
-    atp.q_d0.resize(model.nv);
-    atp.q_dd0.resize(model.nv);
+    if (degree < 1) {
+        throw std::invalid_argument("Degree must be at least 1");
+    }
+
+    q0.resize(model.nv);
+    qT.resize(model.nv);
 
     for (int i = 0; i < model.nv; i++) {
-        atp.q0(i) = q0_inp(i);
-        atp.q_d0(i) = q_d0_inp(i);
-        atp.q_dd0(i) = q_dd0_inp(i);
+        q0(i) = q0_inp(i);
+        qT(i) = qT_inp(i);
     }     
 
     set_trajectory_parameters_check = true;        
     has_optimized = false;                     
 }
 
-void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
-                                     const nb_1d_double velocity_limits_buffer_inp,
-                                     const nb_1d_double torque_limits_buffer_inp) {
+void KinovaLongerHorizonPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
+                                                  const nb_1d_double velocity_limits_buffer_inp,
+                                                  const nb_1d_double torque_limits_buffer_inp) {
     if (joint_limits_buffer_inp.shape(0) != model.nv || 
         velocity_limits_buffer_inp.shape(0) != model.nv || 
         torque_limits_buffer_inp.shape(0) != model.nv) {
@@ -125,43 +125,23 @@ void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
     has_optimized = false;                                                
 }
 
-void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
-                                     const double tplan_inp) {
-    tplan = tplan_inp;
-
-    if (tplan <= 0.0 || tplan > T) {
-        throw std::invalid_argument("tplan must be greater than 0.0 or smaller than duration");
-    }
-
-    if (q_des_inp.shape(0) != model.nv) {
-        throw std::invalid_argument("q_des must be of size model.nv");
-    }
-
-    for (int i = 0; i < model.nv; i++) {
-        q_des(i) = q_des_inp(i);
-    }
-
-    tplan_n = int(tplan / T * N);
-    tplan_n = fmin(fmax(0, tplan_n), N - 1);
-
-    set_target_check = true;
-    has_optimized = false;
-}
-
-nb::tuple KinovaPybindWrapper::optimize() {
+nb::tuple KinovaLongerHorizonPybindWrapper::optimize() {
     if (!set_obstacles_check || 
         !set_ipopt_parameters_check || 
         !set_trajectory_parameters_check || 
-        !set_buffer_check ||
-        !set_target_check) {
+        !set_buffer_check) {
         throw std::runtime_error("parameters not set properly!");
     }
 
-    // Define initial guess
-    // VecX z0 = 0.5 * (q_des - atp.q0);
-    VecX z0 = VecX::Zero(q_des.size());
-    // VecX z0 = q_des - atp.q0;
-    // VecX z0 = 2*(q_des - ((atp.q_dd0*T*T)/64 + (5*atp.q_d0*T)/32 + atp.q0/2)) - atp.q0;
+    // Define initial guess:
+    // a series of Bezier curves with degree + 1 control points, straight from q0 to qT
+    VecX z0 = VecX::Zero(model.nv * degree * 3);
+    VecX qdiff = (qT - q0) / (degree + 1);
+    for (int i = 0; i < degree; i++) {
+        z0.segment(i * model.nv * 3, model.nv) = q0 + qdiff * (i + 1);
+    }
+
+    N = 20 * (degree + 1); // number of time steps to check constraints
 
     // Initialize Kinova optimizer
     try {
@@ -171,12 +151,11 @@ nb::tuple KinovaPybindWrapper::optimize() {
                               N,
                               degree,
                               model,
-                              atp,
+                              q0,
+                              qT,
                               boxCenters,
                               boxOrientation,
                               boxSize,
-                              q_des,
-                              tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,
                               torque_limits_buffer,
@@ -218,7 +197,6 @@ nb::tuple KinovaPybindWrapper::optimize() {
     }
 
     set_trajectory_parameters_check = false;
-    set_target_check = false;
     has_optimized = mynlp->ifFeasible;
 
     const size_t shape_ptr[] = {mynlp->solution.size()};
@@ -229,17 +207,15 @@ nb::tuple KinovaPybindWrapper::optimize() {
     return nb::make_tuple(result, mynlp->ifFeasible);
 }
 
-nb::tuple KinovaPybindWrapper::analyze_solution() {
+nb::tuple KinovaLongerHorizonPybindWrapper::analyze_solution() {
     if (!has_optimized) {
-        throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        std::cerr << "Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
     }
 
     // re-evaluate the solution on a finer time discretization
     const int N_simulate = T * 24; // replay for 24 Hz
-    tplan_n = int(tplan / T * N_simulate);
-    tplan_n = fmin(fmax(0, tplan_n), N_simulate - 1);
     
-    SmartPtr<KinovaOptimizer> testnlp = new KinovaOptimizer();
+    SmartPtr<KinovaLongerHorizonOptimizer> testnlp = new KinovaLongerHorizonOptimizer();
     try {
         testnlp->display_info = false;
         testnlp->set_parameters(mynlp->solution,
@@ -247,12 +223,11 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
                                 N_simulate,
                                 degree,
                                 model,
-                                atp,
+                                q0,
+                                qT,
                                 boxCenters,
                                 boxOrientation,
                                 boxSize,
-                                q_des,
-                                tplan_n,
                                 joint_limits_buffer,
                                 velocity_limits_buffer,
                                 torque_limits_buffer,
