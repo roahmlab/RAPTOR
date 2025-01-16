@@ -111,9 +111,12 @@ bool KinovaLongerHorizonOptimizer::set_parameters(
     //                                                         idPtr_));
     // costsWeightVec_.push_back(1.0);
     // costsNameVec_.push_back("minimize torque");
-    costsPtrVec_.push_back(std::make_unique<MinimizePathLength>(trajPtr_));
+    // costsPtrVec_.push_back(std::make_unique<MinimizePathLength>(trajPtr_));
+    // costsWeightVec_.push_back(10.0);
+    // costsNameVec_.push_back("minimize path length");
+    costsPtrVec_.push_back(std::make_unique<MinimizeJerk>(trajPtr_));
     costsWeightVec_.push_back(10.0);
-    costsNameVec_.push_back("minimize path length");
+    costsNameVec_.push_back("minimize jerk for smoothness");
 
     return true;
 }

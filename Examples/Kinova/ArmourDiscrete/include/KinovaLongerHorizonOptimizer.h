@@ -15,6 +15,7 @@
 
 #include "MinimizeTorque.h"
 #include "MinimizePathLength.h"
+#include "MinimizeJerk.h"
 
 namespace RAPTOR {
 namespace Kinova {

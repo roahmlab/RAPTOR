@@ -140,12 +140,12 @@ void MomentumRegressor::compute(const VecX& z,
             for (int h = j; h >= 0; h = modelPtr_->parents[h + 1] - 1) {
                 // regressor for the system momentum
                 Y.block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
-                    S(j).transpose() * bodyRegressor;
+                    S(h).transpose() * bodyRegressor;
 
                 if (compute_derivatives) {
                     for (int k = 0; k < trajPtr_->varLength; k++) {
                         pY_pz(k).block(i * modelPtr_->nv + h, j * 10, 1, 10) = 
-                            S(j).transpose() * pbodyRegressor_pz(k);
+                            S(h).transpose() * pbodyRegressor_pz(k);
                     }
                 }
 
