@@ -150,6 +150,9 @@ public:
     std::shared_ptr<Trajectories> trajPtr_;
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
     std::shared_ptr<Costs> costPtr_;
+
+    VecX g_lb_copy;
+    VecX g_ub_copy;
 };
 
 }; // namespace Armour

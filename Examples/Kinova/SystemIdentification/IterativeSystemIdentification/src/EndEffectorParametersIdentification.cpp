@@ -83,8 +83,8 @@ void EndEffectorParametersIdentification::add_trajectory_file(
     // combine all the regressors
     num_segments.clear();
     int total_num_segments = 0;
-    for (const auto& Aseg_i : Aseg) {
-        num_segments.push_back(Aseg_i.rows() / modelPtr_->nv);
+    for (Index i = 0; i < Aseg.size(); i++) {
+        num_segments.push_back(Aseg[i].rows() / modelPtr_->nv);
         total_num_segments += num_segments.back();
     }
 
@@ -94,8 +94,20 @@ void EndEffectorParametersIdentification::add_trajectory_file(
     b.setZero();
     Index row_start = 0;
     for (Index i = 0; i < Aseg.size(); i++) {
-        const auto& Aseg_i = Aseg[i];
-        const auto& bseg_i = bseg[i];
+        const MatX& Aseg_i = Aseg[i];
+        const MatX& bseg_i = bseg[i];
+
+        for (Index j = 0; j < Aseg_i.rows(); j++) {
+            for (Index k = 0; k < Aseg_i.cols(); k++) {
+                if (std::abs(Aseg_i(j, k)) > 1e6) {
+                    std::cerr << "Warning: large value in regression matrix Aseg at (" << j << ", " << k << "): " << Aseg_i(j, k) << std::endl;
+                }
+                else if (std::isnan(Aseg_i(j, k))) {
+                    std::cerr << "Warning: NaN value in regression matrix Aseg at (" << j << ", " << k << ")" << std::endl;
+                }
+            }
+        }
+
         A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
         b.segment(row_start, bseg_i.size()) = bseg_i;
         row_start += Aseg_i.rows();
@@ -108,12 +120,13 @@ void EndEffectorParametersIdentification::add_trajectory_file(
     for (Index i = 0; i < A.rows(); i++) {
         for (Index j = 0; j < A.cols(); j++) {
             if (std::abs(A(i, j)) > 1e6) {
+                std::cerr << "Warning: large value in regression matrix A at (" << i << ", " << j << "): " << A(i, j) << std::endl;
                 A(i, j) = 0;
-                std::cerr << "Warning: large value in regression matrix A at (" << i << ", " << j << ")" << std::endl;
+                
             }
             else if (std::isnan(A(i, j))) {
-                A(i, j) = 0;
                 std::cerr << "Warning: NaN value in regression matrix A at (" << i << ", " << j << ")" << std::endl;
+                A(i, j) = 0;
             }
         }
     }
@@ -345,6 +358,7 @@ void EndEffectorParametersIdentification::finalize_solution(
     for (Index i = 0; i < 10; i++) {
         temp4 += temp2(i) * ddtheta(i);
     }
+    std::cout << "temp4:\n" << temp4 << std::endl;
     Mat10d p_z_p_eta = temp3 + temp4;
     Eigen::LDLT<MatXd> ldlt(p_z_p_eta);
     Mat10d p_z_p_eta_inv;
