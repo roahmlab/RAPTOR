@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <Eigen/Dense>
 
 namespace RAPTOR {
@@ -176,11 +177,14 @@ inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename)
 }
 
 inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix, 
-                                   const std::string filename) {
+                                   const std::string filename,
+                                   const size_t precision = 6) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file " + filename);
     }
+
+    file << std::setprecision(precision);
 
     for (int i = 0; i < matrix.rows(); i++) {
         for (int j = 0; j < matrix.cols(); j++) {

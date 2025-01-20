@@ -130,6 +130,12 @@ void EndEffectorParametersIdentification::add_trajectory_file(
             }
         }
     }
+
+    A_opt = A.rightCols(10);
+    b_opt = b - A.leftCols(10 * (modelPtr_->nv - 1)) * phi.head(10 * (modelPtr_->nv - 1));
+
+    // Utils::writeEigenMatrixToFile(A_opt, "A.txt", 16);
+    // Utils::writeEigenMatrixToFile(b_opt, "b.txt", 16);
 }
 
 void EndEffectorParametersIdentification::initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
@@ -247,14 +253,12 @@ bool EndEffectorParametersIdentification::eval_f(
 
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
 
-    // Update the inertial parameters
-    phi.tail(10) = z_to_theta(z);
-
     // Compute the ojective function
-    const VecXd diff = A * phi - b;
+    phi.tail(10) = z_to_theta(z);
+    const VecXd diff = A_opt * phi.tail(10) - b_opt;
     const double diffSquared = diff.dot(diff);
 
-    obj_value = std::sqrt(diffSquared);
+    obj_value = 0.5 * diffSquared;
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -275,14 +279,12 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
     VecXd grad_f_vec = VecXd::Zero(n);
     
+    // Compute the gradient
     Mat10d dtheta;
     phi.tail(10) = d_z_to_theta(z, dtheta);
-    const VecXd diff = A * phi - b;
+    const VecXd diff = A_opt * phi.tail(10) - b_opt;
     const double diffSquared = diff.dot(diff);
-    const double diffNorm = std::sqrt(diffSquared);
-
-    // Compute the gradient
-    grad_f_vec = (diff.transpose() * A.rightCols(10) * dtheta) / diffNorm;
+    grad_f_vec = diff.transpose() * A_opt * dtheta;
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -304,24 +306,19 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
     hess_f = MatX::Zero(n, n);
 
+    // Compute the Hessian
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(z, dtheta, ddtheta);
-    const VecXd diff = A * phi - b;
-    const double diffSquared = diff.dot(diff);
-    const double diffNorm = std::sqrt(diffSquared);
+    const VecXd diff = A_opt * phi.tail(10) - b_opt;
 
-    // Compute the Hessian
-    MatX temp1 = A.rightCols(10) * dtheta;
-    hess_f = temp1.transpose() * temp1 / diffNorm;
+    MatX temp1 = A_opt * dtheta;
+    hess_f = temp1.transpose() * temp1;
 
-    MatX temp2 = diff.transpose() * A.rightCols(10);
+    MatX temp2 = diff.transpose() * A_opt;
     for (Index i = 0; i < n; i++) {
-        hess_f += temp2(i) * ddtheta(i) / diffNorm;
+        hess_f += temp2(i) * ddtheta(i);
     }
-
-    MatX pdiffSquare_pz = temp2 * dtheta;
-    hess_f -= pdiffSquare_pz.transpose() * pdiffSquare_pz / std::pow(diffNorm, 3);
 
     return true;
 }
@@ -350,8 +347,8 @@ void EndEffectorParametersIdentification::finalize_solution(
     phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
     VecXd diff = A * phi - b;
 
-    MatXd temp1 = A.rightCols(10) * dtheta;
-    MatXd temp2 = diff.transpose() * A.rightCols(10);
+    MatXd temp1 = A_opt * dtheta;
+    MatXd temp2 = diff.transpose() * A_opt;
     Mat10d temp3 = temp1.transpose() * temp1;
     Mat10d temp4;
     temp4.setZero();

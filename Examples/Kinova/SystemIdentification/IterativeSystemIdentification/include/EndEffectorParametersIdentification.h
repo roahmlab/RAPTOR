@@ -160,6 +160,9 @@ public:
     MatXd A; // regression matrix for all trajectories
     VecXd b; // regression vector for all trajectories
 
+    MatXd A_opt; // regression matrix for optimization (only last 10 columns of A are used)
+    VecXd b_opt; // regression vector for optimization
+
     Index nonzero_weights = 0;
 
         // results

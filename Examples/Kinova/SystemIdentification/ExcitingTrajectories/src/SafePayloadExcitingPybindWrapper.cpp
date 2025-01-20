@@ -161,9 +161,6 @@ void SafePayloadExcitingPybindWrapper::set_endeffector_inertial_parameters(const
             dynPtr_->reset_robot_info(robotInfoPtr_);
         }
     }
-    else {
-        throw std::runtime_error("Trajectory parameters not set yet!");
-    }
 }
 
 nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
@@ -201,7 +198,7 @@ nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
     status = app->Initialize();
-    if( status != Solve_Succeeded ) {
+    if ( status != Solve_Succeeded ) {
 		throw std::runtime_error("Error during initialization of optimization!");
     }
 
@@ -221,7 +218,7 @@ nb::tuple SafePayloadExcitingPybindWrapper::optimize() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    if(status == Invalid_Problem_Definition) {
+    if (status == Invalid_Problem_Definition) {
         // reachable set size too large
         // usually is torque reachable sets, print the size out for debugging
         Utils::writeEigenMatrixToFile(dynPtr_->torque_radii, "torque_radii_exciting.txt");
