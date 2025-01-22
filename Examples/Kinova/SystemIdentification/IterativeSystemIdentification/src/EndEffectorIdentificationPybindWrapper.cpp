@@ -56,7 +56,7 @@ EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(c
     sensor_noise.position_error.setZero();
     sensor_noise.velocity_error.setZero();
     sensor_noise.acceleration_error_type = SensorNoiseInfo::SensorNoiseType::Ratio;
-    sensor_noise.acceleration_error.setConstant(0.05);
+    sensor_noise.acceleration_error.setConstant(0.025);
 
     // set up the Ipopt problem
     mynlp = new EndEffectorParametersIdentification();
@@ -112,7 +112,7 @@ nb::tuple EndEffectorIdentificationPybindWrapper::optimize() {
         throw std::runtime_error("parameters not set properly!");
     }
 
-    if (mynlp->A.rows() == 0) {
+    if (mynlp->Aseg.size() == 0) {
         throw std::runtime_error("Trajectory data not added yet!");
     }
 

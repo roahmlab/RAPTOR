@@ -16,15 +16,15 @@ KinovaWithGripperConservativePayloadInfo:
   # this is specifically for end effector system identification,
   # when the model uncertainty can not be represented as ratios
   end_effector_mass_lb: 1.2 # Kinova end effector with gripper should be about 1.2849 kg, this is a conservative estimate (lower bound)
-  end_effector_mass_ub: 5.0 # Kinova maximum payload is 3.0 kg, this is a conservative estimate (upper bound)
-  end_effector_com_lb: [-0.1, -0.1, -0.8]
-  end_effector_com_ub: [0.1, 0.1, -0.1]
-  end_effector_inertia_lb: [-0.15, -0.15, -0.15, -0.15, -0.15, -0.15]
-  end_effector_inertia_ub: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15]
+  end_effector_mass_ub: 5.2 # Kinova maximum payload is 3.0 kg, this is a conservative estimate (upper bound)
+  end_effector_com_lb: [-0.4, -0.4, -0.8]
+  end_effector_com_ub: [0.4, 0.4, -0.1]
+  end_effector_inertia_lb: [-0.2, -0.2, -0.2, -0.2, -0.2, -0.2]
+  end_effector_inertia_ub: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
 
   # ultimate bound for tracking error
   ultimate_bound:
-    alpha: 20.0 # robust controller parameter
+    alpha: 25.0 # robust controller parameter
     V_m: 0.02 # robust controller parameter
     M_max: 15.79635774 # maximum eigenvalue of the inertia mass matrix
     M_min: 8.29938 # minimum eigenvalue of the inertia mass matrix
@@ -33,18 +33,18 @@ KinovaWithGripperConservativePayloadInfo:
   # collision sphere representation for each link
   collision_spheres:
     joint_2: # the following spheres start from joint_2
-    - "offset": [0.0, -0.05, -0.01] # collision-0
-      "radius": 0.06
-    - "offset": [0.0, -0.11, -0.01] # collision-1
-      "radius": 0.06
-    - "offset": [0.0, -0.17, -0.01] # collision-2
-      "radius": 0.06
-    - "offset": [0.0, -0.24, -0.01] # collision-3
-      "radius": 0.06
-    - "offset": [0.0, -0.30, -0.01] # collision-4
-      "radius": 0.06
-    - "offset": [0.0, -0.36, -0.01] # collision-5
-      "radius": 0.06
+    # - "offset": [0.0, -0.05, -0.01] # collision-0
+    #   "radius": 0.06
+    # - "offset": [0.0, -0.11, -0.01] # collision-1
+    #   "radius": 0.06
+    # - "offset": [0.0, -0.17, -0.01] # collision-2
+    #   "radius": 0.06
+    # - "offset": [0.0, -0.24, -0.01] # collision-3
+    #   "radius": 0.06
+    # - "offset": [0.0, -0.30, -0.01] # collision-4
+    #   "radius": 0.06
+    # - "offset": [0.0, -0.36, -0.01] # collision-5
+    #   "radius": 0.06
     - "offset": [0.0, -0.43, -0.01] # collision-6
       "radius": 0.07
     joint_4:

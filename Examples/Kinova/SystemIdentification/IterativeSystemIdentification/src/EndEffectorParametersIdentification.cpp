@@ -82,60 +82,11 @@ void EndEffectorParametersIdentification::add_trajectory_file(
 
     // combine all the regressors
     num_segments.clear();
-    int total_num_segments = 0;
+    total_num_segments = 0;
     for (Index i = 0; i < Aseg.size(); i++) {
         num_segments.push_back(Aseg[i].rows() / modelPtr_->nv);
         total_num_segments += num_segments.back();
     }
-
-    A.resize(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
-    b.resize(modelPtr_->nv * total_num_segments);
-    A.setZero();
-    b.setZero();
-    Index row_start = 0;
-    for (Index i = 0; i < Aseg.size(); i++) {
-        const MatX& Aseg_i = Aseg[i];
-        const MatX& bseg_i = bseg[i];
-
-        for (Index j = 0; j < Aseg_i.rows(); j++) {
-            for (Index k = 0; k < Aseg_i.cols(); k++) {
-                if (std::abs(Aseg_i(j, k)) > 1e6) {
-                    std::cerr << "Warning: large value in regression matrix Aseg at (" << j << ", " << k << "): " << Aseg_i(j, k) << std::endl;
-                }
-                else if (std::isnan(Aseg_i(j, k))) {
-                    std::cerr << "Warning: NaN value in regression matrix Aseg at (" << j << ", " << k << ")" << std::endl;
-                }
-            }
-        }
-
-        A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
-        b.segment(row_start, bseg_i.size()) = bseg_i;
-        row_start += Aseg_i.rows();
-    }
-
-    if (row_start != A.rows()) {
-        throw std::runtime_error("Error in combining regression matrices!");
-    }
-
-    for (Index i = 0; i < A.rows(); i++) {
-        for (Index j = 0; j < A.cols(); j++) {
-            if (std::abs(A(i, j)) > 1e6) {
-                std::cerr << "Warning: large value in regression matrix A at (" << i << ", " << j << "): " << A(i, j) << std::endl;
-                A(i, j) = 0;
-                
-            }
-            else if (std::isnan(A(i, j))) {
-                std::cerr << "Warning: NaN value in regression matrix A at (" << i << ", " << j << ")" << std::endl;
-                A(i, j) = 0;
-            }
-        }
-    }
-
-    A_opt = A.rightCols(10);
-    b_opt = b - A.leftCols(10 * (modelPtr_->nv - 1)) * phi.head(10 * (modelPtr_->nv - 1));
-
-    // Utils::writeEigenMatrixToFile(A_opt, "A.txt", 16);
-    // Utils::writeEigenMatrixToFile(b_opt, "b.txt", 16);
 }
 
 void EndEffectorParametersIdentification::initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
@@ -207,9 +158,6 @@ void EndEffectorParametersIdentification::reset() {
     Aseg.clear();
     bseg.clear();
 
-    A.setZero();
-    b.setZero();
-
     num_segments.clear();
 
     std::cout << "End effector identification reset, all trajectory data removed." << std::endl;
@@ -252,13 +200,14 @@ bool EndEffectorParametersIdentification::eval_f(
     }
 
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
+    phi.tail(10) = z_to_theta(z);
 
     // Compute the ojective function
-    phi.tail(10) = z_to_theta(z);
-    const VecXd diff = A_opt * phi.tail(10) - b_opt;
-    const double diffSquared = diff.dot(diff);
-
-    obj_value = 0.5 * diffSquared;
+    obj_value = 0;
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const VecXd diff = Aseg[i] * phi - bseg[i];
+        obj_value += 0.5 * diff.dot(diff);
+    }
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -277,14 +226,15 @@ bool EndEffectorParametersIdentification::eval_grad_f(
     }
 
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
-    VecXd grad_f_vec = VecXd::Zero(n);
-    
-    // Compute the gradient
     Mat10d dtheta;
     phi.tail(10) = d_z_to_theta(z, dtheta);
-    const VecXd diff = A_opt * phi.tail(10) - b_opt;
-    const double diffSquared = diff.dot(diff);
-    grad_f_vec = diff.transpose() * A_opt * dtheta;
+    
+    // Compute the gradient
+    VecXd grad_f_vec = VecXd::Zero(n);
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const VecXd diff = Aseg[i] * phi - bseg[i];
+        grad_f_vec += diff.transpose() * Aseg[i].rightCols(10) * dtheta;
+    }
 
     for (Index i = 0; i < n; i++) {
         grad_f[i] = grad_f_vec(i);
@@ -304,20 +254,21 @@ bool EndEffectorParametersIdentification::eval_hess_f(
     }
 
     VecXd z = Utils::initializeEigenVectorFromArray(x, n);
-    hess_f = MatX::Zero(n, n);
-
-    // Compute the Hessian
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(z, dtheta, ddtheta);
-    const VecXd diff = A_opt * phi.tail(10) - b_opt;
 
-    MatX temp1 = A_opt * dtheta;
-    hess_f = temp1.transpose() * temp1;
+    // Compute the Hessian
+    hess_f = MatX::Zero(n, n);
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const VecXd diff = Aseg[i] * phi - bseg[i];
+        MatXd temp1 = Aseg[i].rightCols(10) * dtheta;
+        hess_f += temp1.transpose() * temp1;
 
-    MatX temp2 = diff.transpose() * A_opt;
-    for (Index i = 0; i < n; i++) {
-        hess_f += temp2(i) * ddtheta(i);
+        MatX temp2 = diff.transpose() * Aseg[i].rightCols(10);
+        for (Index j = 0; j < n; j++) {
+            hess_f += temp2(j) * ddtheta(j);
+        }
     }
 
     return true;
@@ -342,6 +293,34 @@ void EndEffectorParametersIdentification::finalize_solution(
 
     std::cout << "Performing error analysis" << std::endl;
 
+    MatXd A(modelPtr_->nv * total_num_segments, 10 * modelPtr_->nv);
+    VecXd b(modelPtr_->nv * total_num_segments);
+    A.setZero();
+    b.setZero();
+    Index row_start = 0;
+    for (Index i = 0; i < Aseg.size(); i++) {
+        const MatX& Aseg_i = Aseg[i];
+        const MatX& bseg_i = bseg[i];
+
+        for (Index j = 0; j < Aseg_i.rows(); j++) {
+            for (Index k = 0; k < Aseg_i.cols(); k++) {
+                if (std::abs(Aseg_i(j, k)) > 1e6) {
+                    std::cerr << "Warning: large value in regression matrix Aseg at (" << j << ", " << k << "): " << Aseg_i(j, k) << std::endl;
+                }
+                else if (std::isnan(Aseg_i(j, k))) {
+                    std::cerr << "Warning: NaN value in regression matrix Aseg at (" << j << ", " << k << ")" << std::endl;
+                }
+            }
+        }
+
+        A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
+        b.segment(row_start, bseg_i.size()) = bseg_i;
+        row_start += Aseg_i.rows();
+    }
+
+    const MatXd& A_opt = A.rightCols(10);
+    const VecXd b_opt = b - A * phi_original;
+
     Mat10d dtheta;
     Eigen::Array<Mat10d, 1, 10> ddtheta;
     phi.tail(10) = dd_z_to_theta(solution, dtheta, ddtheta);
@@ -355,7 +334,6 @@ void EndEffectorParametersIdentification::finalize_solution(
     for (Index i = 0; i < 10; i++) {
         temp4 += temp2(i) * ddtheta(i);
     }
-    std::cout << "temp4:\n" << temp4 << std::endl;
     Mat10d p_z_p_eta = temp3 + temp4;
     Eigen::LDLT<MatXd> ldlt(p_z_p_eta);
     Mat10d p_z_p_eta_inv;

@@ -146,8 +146,11 @@ public:
     // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
 
         // forward integration horizon
-    int H = 10;
+    int H = 100;
+
+        // number of segments / trajectory data files
     std::vector<int> num_segments;
+    int total_num_segments = 0;
 
         // offset in friction parameters
     bool include_offset = false;
@@ -156,14 +159,6 @@ public:
         // regression data
     std::vector<MatXd> Aseg; // regression matrix for each trajectory
     std::vector<VecXd> bseg; // regression vector for each trajectory
-
-    MatXd A; // regression matrix for all trajectories
-    VecXd b; // regression vector for all trajectories
-
-    MatXd A_opt; // regression matrix for optimization (only last 10 columns of A are used)
-    VecXd b_opt; // regression vector for optimization
-
-    Index nonzero_weights = 0;
 
         // results
     Vec10d theta_solution;
