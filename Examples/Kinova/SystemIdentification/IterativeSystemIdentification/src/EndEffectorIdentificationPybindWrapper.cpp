@@ -95,11 +95,16 @@ void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double t
 
 void EndEffectorIdentificationPybindWrapper::add_trajectory_file(const std::string filename_input) {
     try {
+        auto start = std::chrono::high_resolution_clock::now();
+
         mynlp->add_trajectory_file(filename_input,
                                    sensor_noise,
                                    H,
                                    time_format,
                                    downsample_rate);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << "Regressor computation time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds.\n";
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

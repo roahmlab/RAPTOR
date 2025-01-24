@@ -45,9 +45,11 @@ public:
                       Eigen::VectorXi jtype_input = Eigen::VectorXi(0)) :
         RegressorInverseDynamics(model_input, trajPtr_input, false, jtype_input) {
         Y_CTv.resize(N * modelPtr_->nv, numParams);
+        Y_CTv.setZero();
         pY_CTv_pz.resize(trajPtr_->varLength);
         for (int i = 0; i < trajPtr_->varLength; i++) {
             pY_CTv_pz(i).resize(N * modelPtr_->nv, numParams);
+            pY_CTv_pz(i).setZero();
         }
     };
 

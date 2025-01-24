@@ -111,11 +111,11 @@ void EndEffectorParametersIdentification::initialize_regressors(const std::share
 
     // now compute regression elements A and b
     // which are essentially combination of different dynamic regressors
-    Aseg.push_back(MatXd::Zero(modelPtr_->nv * num_segment, 10 * modelPtr_->nv));
-    bseg.push_back(VecXd::Zero(modelPtr_->nv * num_segment));
+    MatXd A_seg_i = MatXd::Zero(modelPtr_->nv * num_segment, 10 * modelPtr_->nv);
+    VecXd b_seg_i = VecXd::Zero(modelPtr_->nv * num_segment);
 
     Index i = 0;
-    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, Aseg, bseg) private(i) schedule(dynamic, 1)
+    #pragma omp parallel for shared(modelPtr_, trajPtr_,  mrPtr_, ridPtr_, A_seg_i, b_seg_i) private(i) schedule(dynamic, 1)
     for (i = 0; i < num_segment; i++) {
         const int seg_start = i * H;
         const int seg_end = seg_start + H;
@@ -129,10 +129,10 @@ void EndEffectorParametersIdentification::initialize_regressors(const std::share
         for (int j = seg_start; j < seg_end; j++) {
             const double dt = trajPtr_->tspan(j+1) - trajPtr_->tspan(j);
 
-            MatXd Y_CTqd_i = mrPtr_->Y_CTv.middleRows(j * modelPtr_->nv, modelPtr_->nv);
-            MatXd Yg_i = ridPtr_->Y.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+            const MatXd& Y_CTv_i = mrPtr_->Y_CTv.middleRows(j * modelPtr_->nv, modelPtr_->nv);
+            const MatXd& Yg_i = ridPtr_->Y.middleRows(j * modelPtr_->nv, modelPtr_->nv);
 
-            int_Y_CTqd_g += (Y_CTqd_i - Yg_i) * dt;
+            int_Y_CTqd_g += (Y_CTv_i - Yg_i) * dt;
 
             // Note that here trajPtr_->q_dd stores the applied torque
             int_ctrl += (trajPtr_->q_dd(j) -
@@ -141,11 +141,14 @@ void EndEffectorParametersIdentification::initialize_regressors(const std::share
                          offset) * dt;
         }
 
-        Aseg.back().middleRows(i * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
-        bseg.back().segment(i * modelPtr_->nv, modelPtr_->nv) = int_ctrl - 
-                                                                modelPtr_->armature.cwiseProduct(
-                                                                    trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
+        A_seg_i.middleRows(i * modelPtr_->nv, modelPtr_->nv) = (Y_Hqd_2 - Y_Hqd_1) - int_Y_CTqd_g;
+        b_seg_i.segment(i * modelPtr_->nv, modelPtr_->nv) = int_ctrl - 
+                                                            modelPtr_->armature.cwiseProduct(
+                                                                trajPtr_->q_d(seg_end) - trajPtr_->q_d(seg_start));
     }
+
+    Aseg.push_back(A_seg_i);
+    bseg.push_back(b_seg_i);
 }
 
 void EndEffectorParametersIdentification::reset() {
@@ -301,18 +304,6 @@ void EndEffectorParametersIdentification::finalize_solution(
     for (Index i = 0; i < Aseg.size(); i++) {
         const MatX& Aseg_i = Aseg[i];
         const MatX& bseg_i = bseg[i];
-
-        for (Index j = 0; j < Aseg_i.rows(); j++) {
-            for (Index k = 0; k < Aseg_i.cols(); k++) {
-                if (std::abs(Aseg_i(j, k)) > 1e6) {
-                    std::cerr << "Warning: large value in regression matrix Aseg at (" << j << ", " << k << "): " << Aseg_i(j, k) << std::endl;
-                }
-                else if (std::isnan(Aseg_i(j, k))) {
-                    std::cerr << "Warning: NaN value in regression matrix Aseg at (" << j << ", " << k << ")" << std::endl;
-                }
-            }
-        }
-
         A.middleRows(row_start, Aseg_i.rows()) = Aseg_i;
         b.segment(row_start, bseg_i.size()) = bseg_i;
         row_start += Aseg_i.rows();
