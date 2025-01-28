@@ -9,7 +9,8 @@ add_library(Kinovalib SHARED
     SystemIdentification/ExcitingTrajectories/src/ExcitingTrajectoryGenerator.cpp
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentificationMomentum.cpp)
     
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -265,6 +266,26 @@ target_link_libraries(SysidEnd_test PUBLIC
     pinocchio::pinocchio)
 target_compile_options(SysidEnd_test PUBLIC
     ${PINOCCHIO_FLAGS})
+
+
+###
+add_executable(SysidEndMomentum_test
+    SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentificationMomentum.cpp)
+target_include_directories(SysidEndMomentum_test PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(SysidEndMomentum_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(SysidEndMomentum_test PUBLIC
+    ${PINOCCHIO_FLAGS})
     
 
 ###
@@ -485,7 +506,7 @@ nanobind_add_module(end_effector_sysid_nanobind
     NB_SHARED LTO
     SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationPybindWrapper.cpp
     SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationPybind.cpp)
-target_include_directories(armour_nanobind PUBLIC
+target_include_directories(end_effector_sysid_nanobind PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
 target_link_libraries(end_effector_sysid_nanobind PUBLIC
@@ -501,4 +522,27 @@ target_link_libraries(end_effector_sysid_nanobind PUBLIC
     ${PYTHON_LIBRARIES})
 nanobind_compile_options(end_effector_sysid_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET end_effector_sysid_nanobind  PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET end_effector_sysid_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(end_effector_sysid_momentum_nanobind 
+    NB_SHARED LTO
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationMomentumPybindWrapper.cpp
+    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationMomentumPybind.cpp)
+target_include_directories(end_effector_sysid_momentum_nanobind PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(end_effector_sysid_momentum_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(end_effector_sysid_momentum_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET end_effector_sysid_momentum_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)

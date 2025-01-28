@@ -1,71 +1,50 @@
 #include "EndEffectorParametersIdentification.h"
 
+#include "BezierCurves.h"
+
 using namespace RAPTOR;
 
-const std::string folder_name = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/end_effector_params_data/";
-
 int main(int argc, char* argv[]) {
-    // check if the file number is provided
-    if (argc < 2) {
-        throw std::invalid_argument("No arguments provided. please choose the trajectory file");
-    }
-
-    std::string file_number = std::string(argv[1]);
-    int H = 5;
-
-    if (argc > 2) {
-        H = std::stoi(argv[2]);
-    }
-
-    int downsample_rate = 1;
-
-    if (argc > 3) {
-        downsample_rate = std::stoi(argv[3]);
-    }
-
     // Load the robot model
-    const std::string urdf_filename  = "../Robots/kinova-gen3/gen3_2f85_fixed_object.urdf";
+    const std::string urdf_filename  = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
 
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::Data data(model);
-    
-    // load the data
-    // std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
-    // std::string trajectory_filename = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/exciting-trajectory-" + std::string(argv[1]) + ".csv";
-    std::string trajectory_filename = "../torque_output.txt";
 
-    // load friction parameters
-    const std::string friction_parameters_filename = folder_name + "friction_params.csv";
-    Eigen::VectorXd friction_parameters = Utils::initializeEigenMatrixFromFile(friction_parameters_filename).col(0);
-    if (friction_parameters.size() != 3 * model.nv &&
-        friction_parameters.size() != 4 * model.nv) {
-        std::cerr << "Friction_parameters size: " << friction_parameters.size() << std::endl;
-        throw std::runtime_error("Friction solution file is wrong");
-    }
-
-    model.friction = friction_parameters.head(model.nv);
-    model.damping = friction_parameters.segment(model.nv, model.nv);
-    model.armature  = friction_parameters.segment(2 * model.nv, model.nv);
+    model.friction.setConstant(1.0);
+    model.damping.setConstant(5.0);
+    model.armature.setConstant(0.0);
     Eigen::VectorXd offset = Eigen::VectorXd::Zero(model.nv);
-    if (friction_parameters.size() == 4 * model.nv) {
-        offset = friction_parameters.tail(model.nv);
-    }
 
-    // Sensor noise info
-    SensorNoiseInfo sensor_noise(model.nv);
-    // sensor_noise.position_error << Utils::deg2rad(0.02),
-    //                                Utils::deg2rad(0.02),
-    //                                Utils::deg2rad(0.02),
-    //                                Utils::deg2rad(0.02),
-    //                                Utils::deg2rad(0.011),
-    //                                Utils::deg2rad(0.011),
-    //                                Utils::deg2rad(0.011); // from Kinova official support, resolution of joint encoders
-    // sensor_noise.velocity_error = 5 * sensor_noise.position_error;
-    sensor_noise.position_error.setZero();
-    sensor_noise.velocity_error.setZero();
-    sensor_noise.acceleration_error_type = SensorNoiseInfo::SensorNoiseType::Ratio;
-    sensor_noise.acceleration_error.setConstant(0.10);
+    // Generate a random trajectory data
+    const double T = 10.0; // duration of the trajectory
+    const int N = 1000; // number of samples in the data
+
+        // to compute the acceleration and then the torque
+    std::shared_ptr<BezierCurves> test_trajectory = std::make_shared<BezierCurves>(
+        T, N, model.nv, TimeDiscretization::Uniform, 3);
+    test_trajectory->compute(Eigen::VectorXd::Random(test_trajectory->varLength), false);
+
+        // to store the position, velocity and torque data for system identification
+    std::shared_ptr<TrajectoryData> trajectory_data = std::make_shared<TrajectoryData>(
+        T, N, model.nv);
+
+        // the matrix that stores the acceleration data
+    Eigen::MatrixXd acceleration(N, model.nv);
+
+    for (int i = 0; i < N; i++) {
+        acceleration.row(i) = test_trajectory->q_dd(i);
+
+        pinocchio::rnea(model, data, test_trajectory->q(i), test_trajectory->q_d(i), test_trajectory->q_dd(i));
+
+        trajectory_data->q(i) = test_trajectory->q(i);
+        trajectory_data->q_d(i) = test_trajectory->q_d(i);
+        trajectory_data->q_dd(i) = data.tau + 
+                                   model.friction.cwiseProduct(test_trajectory->q_d(i).cwiseSign()) +
+                                   model.damping.cwiseProduct(test_trajectory->q_d(i)) +
+                                   offset;
+    }
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
@@ -75,11 +54,8 @@ int main(int argc, char* argv[]) {
         auto start = std::chrono::high_resolution_clock::now();
 	    mynlp->set_parameters(model,
                               offset);
-        mynlp->add_trajectory_file(trajectory_filename,
-                                   sensor_noise,
-                                   H,
-                                   TimeFormat::Nanosecond,
-                                   downsample_rate);
+        mynlp->add_trajectory_file(trajectory_data,
+                                  acceleration);
         auto end = std::chrono::high_resolution_clock::now();
         setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Setup time: " << setup_time << " milliseconds.\n";
@@ -92,7 +68,7 @@ int main(int argc, char* argv[]) {
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", 1e-10);
-	app->Options()->SetNumericValue("max_wall_time", 10.0);
+	app->Options()->SetNumericValue("max_wall_time", 1.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetIntegerValue("max_iter", 100);
     app->Options()->SetStringValue("mu_strategy", "adaptive");

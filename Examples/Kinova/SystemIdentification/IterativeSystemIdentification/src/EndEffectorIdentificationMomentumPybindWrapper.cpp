@@ -1,12 +1,14 @@
-#include "EndEffectorIdentificationPybindWrapper.h"
+#include "EndEffectorIdentificationMomentumPybindWrapper.h"
 
 namespace RAPTOR {
 namespace Kinova {
 
-EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(const std::string urdf_filename,
-                                                                               const nb_1d_double friction_parameters_input,
-                                                                               const std::string time_format_string,
-                                                                               const bool display_info) {
+EndEffectorIdentificationMomentumPybindWrapper::EndEffectorIdentificationMomentumPybindWrapper(const std::string urdf_filename,
+                                                                                               const nb_1d_double friction_parameters_input,
+                                                                                               const int H_input,
+                                                                                               const std::string time_format_string,
+                                                                                               const bool display_info):
+    H(H_input) {
     // define robot model
     pinocchio::Model model_double;
     pinocchio::urdf::buildModel(urdf_filename, model_double);
@@ -49,8 +51,15 @@ EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(c
         throw std::runtime_error("Invalid time format string!");
     }
 
+    // sensor noise info
+    sensor_noise = SensorNoiseInfo(model.nv);
+    sensor_noise.position_error.setZero();
+    sensor_noise.velocity_error.setZero();
+    sensor_noise.acceleration_error_type = SensorNoiseInfo::SensorNoiseType::Ratio;
+    sensor_noise.acceleration_error.setConstant(0.025);
+
     // set up the Ipopt problem
-    mynlp = new EndEffectorParametersIdentification();
+    mynlp = new EndEffectorParametersIdentificationMomentum();
     mynlp->display_info = display_info;
     mynlp->set_parameters(model,
                           offset);
@@ -58,13 +67,13 @@ EndEffectorIdentificationPybindWrapper::EndEffectorIdentificationPybindWrapper(c
     app = IpoptApplicationFactory();
 }
 
-void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double tol,
-                                                                  const double max_wall_time, 
-                                                                  const int print_level,
-                                                                  const int max_iter,
-                                                                  const std::string mu_strategy,
-                                                                  const std::string linear_solver,
-                                                                  const bool gradient_check) {
+void EndEffectorIdentificationMomentumPybindWrapper::set_ipopt_parameters(const double tol,
+                                                                          const double max_wall_time, 
+                                                                          const int print_level,
+                                                                          const int max_iter,
+                                                                          const std::string mu_strategy,
+                                                                          const std::string linear_solver,
+                                                                          const bool gradient_check) {
     app->Options()->SetNumericValue("tol", tol);
     app->Options()->SetNumericValue("max_wall_time", max_wall_time);
     app->Options()->SetIntegerValue("print_level", print_level);
@@ -84,13 +93,13 @@ void EndEffectorIdentificationPybindWrapper::set_ipopt_parameters(const double t
     set_ipopt_parameters_check = true;
 }
 
-void EndEffectorIdentificationPybindWrapper::add_trajectory_file(const std::string trajectory_filename_input,
-                                                                 const std::string acceleration_filename_input) {
+void EndEffectorIdentificationMomentumPybindWrapper::add_trajectory_file(const std::string filename_input) {
     try {
         auto start = std::chrono::high_resolution_clock::now();
 
-        mynlp->add_trajectory_file(trajectory_filename_input,
-                                   acceleration_filename_input,
+        mynlp->add_trajectory_file(filename_input,
+                                   sensor_noise,
+                                   H,
                                    time_format,
                                    downsample_rate);
 
@@ -103,7 +112,7 @@ void EndEffectorIdentificationPybindWrapper::add_trajectory_file(const std::stri
     }
 }
 
-nb::ndarray<nb::numpy, const double> EndEffectorIdentificationPybindWrapper::optimize() {
+nb::tuple EndEffectorIdentificationMomentumPybindWrapper::optimize() {
     if (!set_ipopt_parameters_check) {
         throw std::runtime_error("parameters not set properly!");
     }
@@ -141,17 +150,23 @@ nb::ndarray<nb::numpy, const double> EndEffectorIdentificationPybindWrapper::opt
     }
 
     std::cout << "    theta solution: " << mynlp->theta_solution.transpose() << std::endl;
+    std::cout << "    theta uncertainties: " << mynlp->theta_uncertainty.transpose() << std::endl;
 
     const size_t shape_ptr[] = {10};
-    auto result = nb::ndarray<nb::numpy, const double>(mynlp->theta_solution.data(),
-                                                       1,
-                                                       shape_ptr,
-                                                       nb::handle());
+    auto result1 = nb::ndarray<nb::numpy, const double>(mynlp->theta_solution.data(),
+                                                        1,
+                                                        shape_ptr,
+                                                        nb::handle());
 
-    return result;
+    auto result2 = nb::ndarray<nb::numpy, const double>(mynlp->theta_uncertainty.data(),
+                                                        1,
+                                                        shape_ptr,
+                                                        nb::handle()); 
+
+    return nb::make_tuple(result1, result2);
 }
 
-void EndEffectorIdentificationPybindWrapper::reset() {
+void EndEffectorIdentificationMomentumPybindWrapper::reset() {
     mynlp->reset();
 }
     

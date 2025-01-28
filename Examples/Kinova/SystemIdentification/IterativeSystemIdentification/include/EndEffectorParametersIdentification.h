@@ -14,13 +14,11 @@ class EndEffectorParametersIdentification : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using Data = pinocchio::Data;
-    using VecXd = Eigen::VectorXd;
-    using Vec10d = Eigen::Vector<double, 10>;
-    using MatXd = Eigen::MatrixXd;
-    using Mat4d = Eigen::Matrix4d;
-    using Mat10d = Eigen::Matrix<double, 10, 10>;
-    using VecXInt = Eigen::Vector<Interval, Eigen::Dynamic>;
-    using MatXInt = Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic>;
+    using VecX = Eigen::VectorXd;
+    using Vec10 = Eigen::Vector<double, 10>;
+    using MatX = Eigen::MatrixXd;
+    using Mat4 = Eigen::Matrix4d;
+    using Mat10 = Eigen::Matrix<double, 10, 10>;
 
     /** Default constructor */
     EndEffectorParametersIdentification() = default;
@@ -31,22 +29,25 @@ public:
     // [set_parameters]
     bool set_parameters(
         const Model& model_input,
-        const VecXd offset_input = VecXd::Zero(0)
+        const VecX offset_input = VecX::Zero(0)
     );
 
+    // [add_trajectory_file]
     void add_trajectory_file(
-        const std::string filename_input,
-        const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
-        const int H_input = 10,
+        const std::shared_ptr<TrajectoryData>& trajectory_input,
+        const MatX& acceleration_input);
+
+    void add_trajectory_file(
+        const std::string hardware_trajectory_filename_input,
+        const std::string acceleration_filename_input,
         const TimeFormat time_format = TimeFormat::Second,
         const int downsample_rate = 1);
 
     // [initialize_regressors]
     void initialize_regressors(const std::shared_ptr<TrajectoryData>& trajPtr_,
-                               const std::shared_ptr<TrajectoryData>& trajPtr2_,
-                               const int H_input = 10);
+                               const MatX& acceleration);
 
-    void reset() final override;
+    void reset() override;
 
     /**@name Overloaded from TNLP */
     //@{
@@ -60,16 +61,16 @@ public:
     ) final override;
 
     /** convert the decision variable to the dynamic parameters of the end effector */
-    Vec10d z_to_theta(const VecXd& z);
+    Vec10 z_to_theta(const VecX& z);
 
-    Vec10d d_z_to_theta(
-        const VecXd& z,
-        Mat10d& dtheta);
+    Vec10 d_z_to_theta(
+        const VecX& z,
+        Mat10& dtheta);
 
-    Vec10d dd_z_to_theta(
-        const VecXd& z,
-        Mat10d& dtheta,
-        Eigen::Array<Mat10d, 1, 10>& ddtheta);
+    Vec10 dd_z_to_theta(
+        const VecX& z,
+        Mat10& dtheta,
+        Eigen::Array<Mat10, 1, 10>& ddtheta);
 
     /** Method to return the objective value */
     bool eval_f(
@@ -107,7 +108,7 @@ public:
         Number                     obj_value,
         const IpoptData*           ip_data,
         IpoptCalculatedQuantities* ip_cq
-    ) final override;
+    ) override;
     
     /**@name Methods to block default compiler methods.
     *
@@ -132,21 +133,12 @@ public:
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
 
-    VecXd phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
-    VecXd phi_original; // dynamic parameters read from the original robot model
+    VecX phi; // dynamic parameters of the robot model, the last 10 parameters are the end-effector parameters to be indentified
+    VecX phi_original; // dynamic parameters read from the original robot model
    
     std::vector<std::shared_ptr<TrajectoryData>> trajPtrs_;
-    std::vector<std::shared_ptr<TrajectoryData>> trajPtrs2_;
+    std::vector<MatX> accelerations_;
     std::vector<std::string> trajectoryFilenames_;
-
-    std::shared_ptr<MomentumRegressor> mrPtr_;
-    std::shared_ptr<RegressorInverseDynamics> ridPtr_;
-
-    // std::shared_ptr<IntervalMomentumRegressor> mrIntPtr_ = nullptr;
-    // std::shared_ptr<IntervalRegressorInverseDynamics> ridIntPtr_ = nullptr;
-
-        // forward integration horizon
-    int H = 100;
 
         // number of segments / trajectory data files
     std::vector<int> num_segments;
@@ -154,17 +146,16 @@ public:
 
         // offset in friction parameters
     bool include_offset = false;
-    VecXd offset;
+    VecX offset;
 
         // regression data
-    std::vector<MatXd> Aseg; // regression matrix for each trajectory
-    std::vector<VecXd> bseg; // regression vector for each trajectory
+    std::vector<MatX> Aseg; // regression matrix for each trajectory
+    std::vector<VecX> bseg; // regression vector for each trajectory
 
         // results
-    Vec10d theta_solution;
-    Vec10d theta_uncertainty;
+    Vec10 theta_solution;
 };
 
 }; // namespace RAPTOR
 
-#endif // BASE_PARAMETERS_IDENTIFICATION_H
+#endif // ENDEFFECTOR_IDENTIFICATION_H
