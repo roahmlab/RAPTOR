@@ -2,6 +2,7 @@ add_library(Conslib SHARED
     src/Constraints.cpp
     src/JointLimits.cpp
     src/VelocityLimits.cpp
+    src/AccelerationLimits.cpp
     src/ConstrainedJointLimits.cpp
     src/TorqueLimits.cpp
     src/RectangleSurfaceContactConstraints.cpp
