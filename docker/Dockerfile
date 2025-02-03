@@ -1,5 +1,5 @@
 # Use an official Ubuntu runtime as a parent image
-FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+FROM ubuntu:22.04
 
 # Set the working directory in the container
 WORKDIR /app
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 #     # install python packages
 RUN pip install --upgrade pip && \
-    pip install scipy matplotlib pyyaml pybullet==3.2.5 mujoco==2.3.7 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
+    pip install scipy matplotlib pyyaml pybullet==3.2.5 glfw==2.6.2 pyopengl==3.1.7 numpy==1.25.2 nanobind pygccxml pyplusplus
 
     # Install pinochio dependencies
 RUN --mount=type=cache,target=/var/cache/apt \
