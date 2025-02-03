@@ -9,8 +9,6 @@ add_library(Conslib SHARED
     src/LieSpaceResidual.cpp
     src/KinematicsConstraints.cpp
     src/BoxCollisionAvoidance.cpp
-    src/LMIConstraints.cpp
-    src/RegroupedLMIConstraints.cpp
     src/TaperedCapsuleCollision.cpp
 )
 
