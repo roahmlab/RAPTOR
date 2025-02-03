@@ -42,8 +42,6 @@ data/
 data_safecopy/
 Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/
 
-test_oracle.py
-
 *.zip
 docker/pardiso/
 HSL/
@@ -56,7 +54,6 @@ test_nanobind_planner.py
 backup/
 
 *.png
-*.txt
 *.lic
 *.tar
 *.tar.bz2

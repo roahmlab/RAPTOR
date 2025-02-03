@@ -9,6 +9,7 @@
 
 #include "JointLimits.h"
 #include "KinematicsConstraints.h"
+#include "KinovaCustomizedConstraints.h"
 
 namespace RAPTOR {
 namespace Kinova {
@@ -31,7 +32,12 @@ public:
         const VecX& x0_input,
         const Model& model_input,
         const Transform& desiredTransform_input,
+        const std::vector<Vec3>& boxCenters_input,
+        const std::vector<Vec3>& boxOrientation_input,
+        const std::vector<Vec3>& boxSize_input,
         const Transform endT_input = Transform(),
+        const bool include_gripper_or_not = true,
+        const double collision_buffer_input = 0,
         Eigen::VectorXi jtype_input = Eigen::VectorXi(0)
     );
 
@@ -100,6 +106,8 @@ public:
     );
 
     std::shared_ptr<Trajectories> trajPtr_;
+    VecX start;
+
 };
 
 }; // namespace Kinova

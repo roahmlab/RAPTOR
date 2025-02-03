@@ -18,19 +18,13 @@ KinovaPybindWrapper::KinovaPybindWrapper(const std::string urdf_filename,
     mynlp->display_info = display_info;
 
     app = IpoptApplicationFactory();
-    if (mynlp->enable_hessian) {
-        app->Options()->SetStringValue("hessian_approximation", "exact");
-    }
-    else {
-        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-    }
 
     joint_limits_buffer = VecX::Zero(model.nv);
     velocity_limits_buffer = VecX::Zero(model.nv);
     torque_limits_buffer = VecX::Zero(model.nv);
 }
 
-void KinovaPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp,
+void KinovaPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp,
                                         const double collision_buffer_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
@@ -82,9 +76,9 @@ void KinovaPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float q_d0_inp,
-                                                    const nb_1d_float q_dd0_inp,
+void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                    const nb_1d_double q_d0_inp,
+                                                    const nb_1d_double q_dd0_inp,
                                                     const double duration_inp) {
     if (q0_inp.shape(0) != model.nv || 
         q_d0_inp.shape(0) != model.nv || 
@@ -112,9 +106,9 @@ void KinovaPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
     has_optimized = false;                     
 }
 
-void KinovaPybindWrapper::set_buffer(const nb_1d_float joint_limits_buffer_inp,
-                                     const nb_1d_float velocity_limits_buffer_inp,
-                                     const nb_1d_float torque_limits_buffer_inp) {
+void KinovaPybindWrapper::set_buffer(const nb_1d_double joint_limits_buffer_inp,
+                                     const nb_1d_double velocity_limits_buffer_inp,
+                                     const nb_1d_double torque_limits_buffer_inp) {
     if (joint_limits_buffer_inp.shape(0) != model.nv || 
         velocity_limits_buffer_inp.shape(0) != model.nv || 
         torque_limits_buffer_inp.shape(0) != model.nv) {
@@ -131,7 +125,7 @@ void KinovaPybindWrapper::set_buffer(const nb_1d_float joint_limits_buffer_inp,
     has_optimized = false;                                                
 }
 
-void KinovaPybindWrapper::set_target(const nb_1d_float q_des_inp,
+void KinovaPybindWrapper::set_target(const nb_1d_double q_des_inp,
                                      const double tplan_inp) {
     tplan = tplan_inp;
 
@@ -188,6 +182,12 @@ nb::tuple KinovaPybindWrapper::optimize() {
                               torque_limits_buffer,
                               true,
                               collision_buffer);
+        if (mynlp->enable_hessian) {
+            app->Options()->SetStringValue("hessian_approximation", "exact");
+        }
+        else {
+            app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+        }
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -235,7 +235,7 @@ nb::tuple KinovaPybindWrapper::analyze_solution() {
     }
 
     // re-evaluate the solution on a finer time discretization
-    const int N_simulate = T * 24; // 24Hz
+    const int N_simulate = T * 24; // replay for 24 Hz
     tplan_n = int(tplan / T * N_simulate);
     tplan_n = fmin(fmax(0, tplan_n), N_simulate - 1);
     

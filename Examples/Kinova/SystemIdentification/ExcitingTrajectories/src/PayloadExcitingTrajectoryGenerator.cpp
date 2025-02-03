@@ -23,6 +23,9 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
     const VecX& q0_input,
     const VecX& q_d0_input,
     const Model& model_input, 
+    const std::vector<Vec3>& boxCenters,
+    const std::vector<Vec3>& boxOrientations,
+    const std::vector<Vec3>& boxSizes,
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
     const VecX& torque_limits_buffer_input,
@@ -105,27 +108,7 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
     constraintsNameVec_.push_back("torque limits"); 
 
     // Customized constraints (collision avoidance with obstacles)
-    std::vector<Vec3> boxCenters = {Vec3(0.0, 0.0, 0.15),
-                                    Vec3(0.53, 0.49, 0.56),  // back wall
-                                    Vec3(-0.39, -0.84, 0.56), // bar near the control
-                                    Vec3(-0.39, -0.17, 0.56), //bar bewteen 10 and 20 change to wall
-                                    Vec3(0.0, 0.0, 1.12), //ceiling
-                                    Vec3(0.47, -0.09, 1.04) // top camera  
-                                    };    
-    std::vector<Vec3> boxOrientations = {Vec3(0.0, 0.0, 0.0),
-                                         Vec3(0.0, 0.0, 0.0),
-                                         Vec3(0.0, 0.0, 0.0),
-                                         Vec3(0.0, 0.0, 0.0),
-                                         Vec3(0.0, 0.0, 0.0),
-                                         Vec3(0.0, 0.0, 0.0)
-                                        };
-    std::vector<Vec3> boxSizes = {Vec3(5.0, 5.0, 0.01),
-                                  Vec3(5.0, 0.05, 1.12),
-                                  Vec3( 0.05, 0.05, 1.12),
-                                  Vec3( 0.05, 1.28, 1.28),
-                                  Vec3( 5, 5, 0.05),
-                                  Vec3( 0.15, 0.15, 0.15)
-                                 };    
+    if (boxCenters.size() > 0) {
     constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
                                                                                model_input,
                                                                                boxCenters,
@@ -135,6 +118,7 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
                                                                                collison_buffer_input,
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
+    }
 
     x0 = x0_input.head(trajPtr_->varLength);
 
@@ -152,7 +136,7 @@ bool PayloadExcitingTrajectoryGenerator::get_nlp_info(
     numVars = trajPtr_->varLength;
     n = numVars;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;

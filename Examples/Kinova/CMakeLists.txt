@@ -3,11 +3,14 @@ add_library(Kinovalib SHARED
     InverseKinematics/src/KinovaIKSolver.cpp
     ArmourDiscrete/src/KinovaOptimizer.cpp
     ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
+    ArmourDiscrete/src/KinovaLongerHorizonOptimizer.cpp
+    ArmourDiscrete/src/DualKinovaOptimizer.cpp
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
-    SystemIdentification/ExcitingTrajectories/src/ConditionNumberOptimizer.cpp
+    SystemIdentification/ExcitingTrajectories/src/ExcitingTrajectoryGenerator.cpp
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
     SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp)
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentificationMomentum.cpp)
     
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -44,6 +47,7 @@ add_library(Armourlib SHARED
     Armour/src/ParameterizedTrajectory.cpp
     Armour/src/PZDynamics.cpp
     Armour/src/ArmourOptimizer.cpp
+    Armour/src/DualArmourOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingTrajectoryGenerator.cpp
 )
 
@@ -205,6 +209,26 @@ target_compile_options(KinovaPayloadExciting_example PUBLIC
 
 
 ###
+add_executable(DualKinova_example 
+    ArmourDiscrete/DualKinovaExample.cpp)
+target_include_directories(DualKinova_example PUBLIC
+    ArmourDiscrete/include)
+target_link_libraries(DualKinova_example PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Costslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(DualKinova_example PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+
+###
 add_executable(SysidFriction_test
     SystemIdentification/IterativeSystemIdentification/TestFrictionParametersIdentification.cpp)
 target_include_directories(SysidFriction_test PUBLIC
@@ -242,6 +266,26 @@ target_link_libraries(SysidEnd_test PUBLIC
     pinocchio::pinocchio)
 target_compile_options(SysidEnd_test PUBLIC
     ${PINOCCHIO_FLAGS})
+
+
+###
+add_executable(SysidEndMomentum_test
+    SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentificationMomentum.cpp)
+target_include_directories(SysidEndMomentum_test PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(SysidEndMomentum_test PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+target_compile_options(SysidEndMomentum_test PUBLIC
+    ${PINOCCHIO_FLAGS})
     
 
 ###
@@ -263,26 +307,23 @@ target_compile_options(Armour_example PUBLIC
     ${PINOCCHIO_FLAGS})
 
 
-###
-add_executable(ArmourExciting_example 
-    SystemIdentification/ExcitingTrajectories/KinovaSafeRegressorExamplePayload.cpp)
-target_include_directories(ArmourExciting_example PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include)
-target_link_libraries(ArmourExciting_example PUBLIC
+add_executable(DualArmour_example 
+    Armour/DualArmourExample.cpp)
+target_include_directories(DualArmour_example PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Armour/include)
+target_link_libraries(DualArmour_example PUBLIC
     trajlib 
     IDlib
     Conslib
-    Costslib
     Optlib
     Armourlib
     ipopt
     coinhsl
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio)
-target_compile_options(ArmourExciting_example PUBLIC
+target_compile_options(DualArmour_example PUBLIC
     ${PINOCCHIO_FLAGS})
-    
+
 
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
@@ -330,8 +371,121 @@ nanobind_add_module(armour_nanobind
     Armour/ArmourPybind.cpp
     Armour/src/ArmourPybindWrapper.cpp)
 target_include_directories(armour_nanobind PUBLIC
-    Kinova/Armour/include)
+    Armour/include)
 target_link_libraries(armour_nanobind PUBLIC
+    # trajlib 
+    # IDlib
+    # Conslib
+    # Optlib
+    Kinovalib
+    Armourlib
+    # ipopt
+    # coinhsl
+    # ${BOOST_LIBRARIES} 
+    # pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(armour_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET armour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(dualarmour_nanobind 
+    NB_SHARED LTO
+    Armour/DualArmourPybind.cpp
+    Armour/src/DualArmourPybindWrapper.cpp)
+target_include_directories(dualarmour_nanobind PUBLIC
+    Armour/include)
+target_link_libraries(dualarmour_nanobind PUBLIC
+    # trajlib 
+    # IDlib
+    # Conslib
+    # Optlib
+    Kinovalib
+    Armourlib
+    # ipopt
+    # coinhsl
+    # ${BOOST_LIBRARIES} 
+    # pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(dualarmour_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET dualarmour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(kinova_nanobind 
+    NB_SHARED LTO
+    ArmourDiscrete/KinovaPybind.cpp
+    ArmourDiscrete/src/KinovaPybindWrapper.cpp)
+target_include_directories(kinova_nanobind PUBLIC
+    ArmourDiscrete/include)
+target_link_libraries(kinova_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(kinova_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET kinova_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(kinova_longer_nanobind 
+    NB_SHARED LTO
+    ArmourDiscrete/KinovaLongerHorizonPybind.cpp
+    ArmourDiscrete/src/KinovaLongerHorizonPybindWrapper.cpp)
+target_include_directories(kinova_longer_nanobind PUBLIC
+    ArmourDiscrete/include)
+target_link_libraries(kinova_longer_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(kinova_longer_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET kinova_longer_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(kinova_waitr_nanobind SHARED
+    WaitrDiscrete/KinovaWaitrPybind.cpp
+    WaitrDiscrete/src/KinovaWaitrPybindWrapper.cpp)
+target_include_directories(kinova_waitr_nanobind PUBLIC
+    WaitrDiscrete/include)
+target_link_libraries(kinova_waitr_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Optlib
+    Kinovalib
+    ipopt
+    coinhsl
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(kinova_waitr_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET kinova_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+nanobind_add_module(safe_payload_exciting_nanobind 
+    NB_SHARED LTO
+    SystemIdentification/ExcitingTrajectories/SafePayloadExcitingPybind.cpp
+    SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingPybindWrapper.cpp
+    SystemIdentification/ExcitingTrajectories/src/SafePayloadExcitingTrajectoryGenerator.cpp)
+target_include_directories(safe_payload_exciting_nanobind PUBLIC
+    Armour/include
+    SystemIdentification/ExcitingTrajectories/include)
+target_link_libraries(safe_payload_exciting_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -343,18 +497,19 @@ target_link_libraries(armour_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(armour_nanobind PUBLIC
+nanobind_compile_options(safe_payload_exciting_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET armour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET safe_payload_exciting_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-nanobind_add_module(oracle_nanobind 
+nanobind_add_module(end_effector_sysid_nanobind 
     NB_SHARED LTO
-    ArmourDiscrete/KinovaPybind.cpp
-    ArmourDiscrete/src/KinovaPybindWrapper.cpp)
-target_include_directories(oracle_nanobind PUBLIC
-    Kinova/ArmourDiscrete/include)
-target_link_libraries(oracle_nanobind PUBLIC
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationPybindWrapper.cpp
+    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationPybind.cpp)
+target_include_directories(end_effector_sysid_nanobind PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(end_effector_sysid_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -365,17 +520,19 @@ target_link_libraries(oracle_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(oracle_nanobind PUBLIC
+nanobind_compile_options(end_effector_sysid_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET oracle_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET end_effector_sysid_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-nanobind_add_module(oracle_waitr_nanobind SHARED
-    WaitrDiscrete/KinovaWaitrPybind.cpp
-    WaitrDiscrete/src/KinovaWaitrPybindWrapper.cpp)
-target_include_directories(oracle_waitr_nanobind PUBLIC
-    WaitrDiscrete/include)
-target_link_libraries(oracle_waitr_nanobind PUBLIC
+nanobind_add_module(end_effector_sysid_momentum_nanobind 
+    NB_SHARED LTO
+    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationMomentumPybindWrapper.cpp
+    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationMomentumPybind.cpp)
+target_include_directories(end_effector_sysid_momentum_nanobind PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+target_link_libraries(end_effector_sysid_momentum_nanobind PUBLIC
     trajlib 
     IDlib
     Conslib
@@ -386,6 +543,6 @@ target_link_libraries(oracle_waitr_nanobind PUBLIC
     ${BOOST_LIBRARIES} 
     pinocchio::pinocchio
     ${PYTHON_LIBRARIES})
-nanobind_compile_options(oracle_waitr_nanobind PUBLIC
+nanobind_compile_options(end_effector_sysid_momentum_nanobind PUBLIC
     ${PINOCCHIO_FLAGS})
-set_property(TARGET oracle_waitr_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET end_effector_sysid_momentum_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)

@@ -87,6 +87,41 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     com_uncertainty = map_to_vector(RobotConfig["com_uncertainty"], num_joints);
     inertia_uncertainty = map_to_vector(RobotConfig["inertia_uncertainty"], num_joints);
 
+    if (RobotConfig["end_effector_mass_lb"].IsDefined() &&
+        RobotConfig["end_effector_mass_ub"].IsDefined() &&
+        RobotConfig["end_effector_com_lb"].IsDefined() &&
+        RobotConfig["end_effector_com_ub"].IsDefined() &&
+        RobotConfig["end_effector_inertia_lb"].IsDefined() &&
+        RobotConfig["end_effector_inertia_ub"].IsDefined()) {
+        if_end_effector_info_exist = true;
+        end_effector_mass_lb = RobotConfig["end_effector_mass_lb"].as<double>();
+        end_effector_mass_ub = RobotConfig["end_effector_mass_ub"].as<double>();
+        end_effector_com_lb = map_to_vector(RobotConfig["end_effector_com_lb"], 3);
+        end_effector_com_ub = map_to_vector(RobotConfig["end_effector_com_ub"], 3);
+        end_effector_inertia_lb = map_to_vector(RobotConfig["end_effector_inertia_lb"], 6);
+        end_effector_inertia_ub = map_to_vector(RobotConfig["end_effector_inertia_ub"], 6);
+
+        // consistency check
+        const double mass = model.inertias[model.nv].mass();
+        if (end_effector_mass_lb > mass ||
+            end_effector_mass_ub < mass) {
+            std::cerr << mass << " [" << end_effector_mass_lb << ", " << end_effector_mass_ub << "]\n";
+            throw std::runtime_error("End effector mass bounds are not within the range of the original mass.");
+        }
+        const Vec3& com = model.inertias[model.nv].lever();
+        if ((end_effector_com_lb - com).minCoeff() > 0 ||
+            (end_effector_com_ub - com).maxCoeff() < 0) {
+            std::cerr << com.transpose() << "\n[" << end_effector_com_lb.transpose() << ",\n " << end_effector_com_ub.transpose() << "]\n";
+            throw std::runtime_error("End effector com bounds are not within the range of the original com.");
+        }
+        const Vec6& inertia = model.inertias[model.nv].inertia().data();
+        if ((end_effector_inertia_lb - inertia).minCoeff() > 0 ||
+            (end_effector_inertia_ub - inertia).maxCoeff() < 0) {
+            std::cerr << inertia.transpose() << "\n[" << end_effector_inertia_lb.transpose() << ",\n " << end_effector_inertia_ub.transpose() << "]\n";
+            throw std::runtime_error("End effector inertia bounds are not within the range of the original inertia.");
+        }
+    }
+
     try {
         const YAML::Node& ultimate_bound_node = RobotConfig["ultimate_bound"];
         ultimate_bound_info.alpha = ultimate_bound_node["alpha"].as<double>();
@@ -117,6 +152,7 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
     }
 
     num_spheres = 0;
+    num_capsules = 0;
     sphere_radii.clear();
     for (const auto& entry : RobotConfig["collision_spheres"]) {
         std::string link_name = entry.first.as<std::string>();
@@ -152,6 +188,87 @@ RobotInfo::RobotInfo(const std::string& urdf_filename,
         else {
             throw std::runtime_error("Link " + link_name + " does not exist in the URDF file.");
         }
+    }
+
+    // Import tapered capsules
+    for (const auto& entry : RobotConfig["tapered_capsules"]){
+        std::string link_name = entry.first.as<std::string>();
+        const YAML::Node& spheres = entry.second;
+        for (const auto& sphere : spheres) {
+            const size_t sphere_1 = sphere["sphere_1"].as<size_t>();
+            const size_t sphere_2 = sphere["sphere_2"].as<size_t>();
+            tc_begin_and_end.push_back(std::make_pair(sphere_1, sphere_2));
+            num_capsules++;
+        }
+    }
+
+    // Generate list of self-collision checks
+    num_self_collisions = 0;
+    for (int arm_1_index = 0; arm_1_index < num_capsules - 2; arm_1_index++){
+        for (int arm_2_index = arm_1_index + 2; arm_2_index < num_capsules; arm_2_index++){
+            self_collision_checks.push_back(std::make_pair(arm_1_index, arm_2_index));
+            num_self_collisions++;
+        }
+    }
+}
+
+void RobotInfo::change_endeffector_inertial_parameters(const double mass,
+                                                       const Vec3& com,
+                                                       const Vec6& inertia,
+                                                       const double mass_eps,
+                                                       const double com_eps,
+                                                       const double inertia_eps) {
+    Mat3 inertia_matrix;
+    inertia_matrix << inertia(0), inertia(1), inertia(3),
+                      inertia(1), inertia(2), inertia(4),
+                      inertia(3), inertia(4), inertia(5);
+    model.inertias[model.nv - 1] = pinocchio::Inertia(mass, com, inertia_matrix);
+
+    if (mass_eps < 0 ||
+        com_eps < 0 ||
+        inertia_eps < 0) {
+        throw std::invalid_argument("Uncertainty values cannot be negative.");
+    }
+
+    mass_uncertainty(model.nv - 1) = mass_eps;
+    com_uncertainty(model.nv - 1)= com_eps;
+    inertia_uncertainty(model.nv - 1) = inertia_eps;
+}
+
+void RobotInfo::change_endeffector_inertial_parameters(const Vec10& inertial_parameters,
+                                                       const Vec10& inertial_parameters_lb,
+                                                       const Vec10& inertial_parameters_ub) {
+    model.inertias[model.nv] = pinocchio::Inertia::FromDynamicParameters(inertial_parameters);
+
+    if_end_effector_info_exist = true;
+
+    end_effector_mass_lb = inertial_parameters_lb(0);
+    end_effector_mass_ub = inertial_parameters_ub(0);
+
+    end_effector_com_lb = inertial_parameters_lb.segment<3>(1);
+    end_effector_com_ub = inertial_parameters_ub.segment<3>(1);
+
+    end_effector_inertia_lb = inertial_parameters_lb.segment<6>(4);
+    end_effector_inertia_ub = inertial_parameters_ub.segment<6>(4);
+
+    // consistency check
+    const double mass = model.inertias[model.nv].mass();
+    if (end_effector_mass_lb > mass ||
+        end_effector_mass_ub < mass) {
+        std::cerr << mass << " [" << end_effector_mass_lb << ", " << end_effector_mass_ub << "]\n";
+        throw std::runtime_error("End effector mass bounds are not within the range of the original mass.");
+    }
+    const Vec3& com = model.inertias[model.nv].lever();
+    if ((end_effector_com_lb - com).minCoeff() > 0 ||
+        (end_effector_com_ub - com).maxCoeff() < 0) {
+        std::cerr << com.transpose() << "\n[" << end_effector_com_lb.transpose() << ",\n " << end_effector_com_ub.transpose() << "]\n";
+        throw std::runtime_error("End effector com bounds are not within the range of the original com.");
+    }
+    const Vec6& inertia = model.inertias[model.nv].inertia().data();
+    if ((end_effector_inertia_lb - inertia).minCoeff() > 0 ||
+        (end_effector_inertia_ub - inertia).maxCoeff() < 0) {
+        std::cerr << inertia.transpose() << "\n[" << end_effector_inertia_lb.transpose() << ",\n " << end_effector_inertia_ub.transpose() << "]\n";
+        throw std::runtime_error("End effector inertia bounds are not within the range of the original inertia.");
     }
 }
 

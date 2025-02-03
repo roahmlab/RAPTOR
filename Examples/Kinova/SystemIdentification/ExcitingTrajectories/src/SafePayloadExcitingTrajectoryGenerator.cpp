@@ -10,8 +10,7 @@ bool SafePayloadExcitingTrajectoryGenerator::set_parameters(
     const std::shared_ptr<PZDynamics>& dynPtr_input,
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
-    const std::vector<Vec3>& boxSize_input,
-    const bool use_momentum_regressor_or_not
+    const std::vector<Vec3>& boxSize_input
  ) 
  {
     enable_hessian = false;
@@ -48,16 +47,9 @@ bool SafePayloadExcitingTrajectoryGenerator::set_parameters(
         TimeDiscretization::Uniform,
         atp);
 
-    // momentum regressor or torque (inverse dynamics) regressor
-    if (use_momentum_regressor_or_not) {
-        ridPtr_ = std::make_shared<MomentumRegressor>(robotInfoPtr_->model, 
-                                                      trajPtr_);
-    }
-    else {
-        ridPtr_ = std::make_shared<RegressorInverseDynamics>(robotInfoPtr_->model, 
-                                                             trajPtr_,
-                                                             true);
-    }
+    ridPtr_ = std::make_shared<RegressorInverseDynamics>(robotInfoPtr_->model, 
+                                                         trajPtr_,
+                                                         true);
 
     costPtr_ = std::make_unique<EndEffectorRegressorConditionNumber>(trajPtr_, 
                                                                      ridPtr_);
@@ -78,9 +70,8 @@ bool SafePayloadExcitingTrajectoryGenerator::get_nlp_info(
     numVars = NUM_FACTORS;
     n = NUM_FACTORS;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = NUM_FACTORS * num_time_steps + // torque limits
-              NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps + // contact constraints
               num_time_steps * num_spheres + // obstacle avoidance constraints
               NUM_FACTORS * 4; // joint position, velocity limits
     m = numCons;
@@ -136,13 +127,6 @@ bool SafePayloadExcitingTrajectoryGenerator::get_bounds_info(
     }    
     offset += NUM_FACTORS * num_time_steps;
 
-    // TODO: bounds for contact constraints
-    for( Index i = offset; i < offset + NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps; i++ ) {
-        g_l[i] = 0.0;
-        g_u[i] = 1e19;
-    }
-    offset += 3 * num_fixed_joints * num_time_steps;
-
     // collision avoidance constraints
     for( Index i = offset; i < offset + num_time_steps * num_spheres; i++ ) {
         g_l[i] = 0.0;
@@ -177,6 +161,9 @@ bool SafePayloadExcitingTrajectoryGenerator::get_bounds_info(
         g_l[i] = Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + robotInfoPtr_->ultimate_bound_info.qde;
         g_u[i] = Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - robotInfoPtr_->ultimate_bound_info.qde;
     }
+
+    g_lb_copy = Utils::initializeEigenVectorFromArray(g_l, m);
+    g_ub_copy = Utils::initializeEigenVectorFromArray(g_u, m);
 
     return true;
 }
@@ -239,7 +226,7 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_f(
     costPtr_->compute(k_actual, false);
     obj_value = costPtr_->f;
 
-    update_minimal_cost_solution(n, Utils::initializeEigenVectorFromArray(x, n), new_x, obj_value);
+    update_minimal_cost_solution(n, k, new_x, obj_value);
 
     return true;
 }
@@ -309,43 +296,6 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
         }
         offset += num_time_steps * NUM_FACTORS;
 
-        // TODO: add contact constraints
-        if (num_fixed_joints > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, x, g) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    // TODO: fill in the contact constraints
-
-                    // (1) support force larger than 0
-                    const Interval supportForceRange = 
-                        dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
-                            .slice(x);
-                    g[i * NUM_CONTACT_CONSTRAINTS + offset] = supportForceRange.lower();
-
-                    // (2) friction cone constraints
-                    for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
-                        const Interval frictionConstraintRange = dynPtr_->friction_PZs(j, i).slice(x);
-
-                        // need to make sure the lower bound is larger than 0
-                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + j + offset] = frictionConstraintRange.lower();
-                    }      
-
-                    // (3) ZMP constraints
-                    for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
-                        const Interval zmpConstraintRange = dynPtr_->zmp_PZs(j, i).slice(x);
-
-                        // need to make sure the lower bound is larger than 0
-                        g[i * NUM_CONTACT_CONSTRAINTS + 1 + FRICTION_CONE_LINEARIZED_SIZE + j + offset] = zmpConstraintRange.lower();
-                    }
-                }
-            }
-            catch (const std::exception& e) {
-                std::cerr << e.what() << std::endl;
-                THROW_EXCEPTION(IpoptException, "Error in eval_g!");
-            }
-            offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
-        }
-
         // obstacle avoidance constraints
         try {
             #pragma omp parallel for shared(dynPtr_, bcaPtrs, x, g) private(i) schedule(dynamic)
@@ -377,9 +327,11 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
         }
         offset += num_time_steps * num_spheres;
 
+        // joint limits
         trajIntervalPtr_->returnJointPositionExtremum(g + offset, x);
         offset += NUM_FACTORS * 2;
 
+        // velocity limits
         trajIntervalPtr_->returnJointVelocityExtremum(g + offset, x);
     }
     catch (const std::exception& e) {
@@ -387,10 +339,57 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_g(
         THROW_EXCEPTION(IpoptException, "Error in eval_g!");
     }
 
+    // update status of the current solution 
+    // originally computed in Optimizer.cpp but we have overwitten eval_g, so have to manually update it here
+    ifFeasibleCurrIter = true;
+    for (Index i = 0; i < m; i++) {
+        // test if constraints are feasible
+        if (g[i] - g_lb_copy[i] < -constr_viol_tol || 
+            g_ub_copy[i] - g[i] < -constr_viol_tol) {
+            ifFeasibleCurrIter = false;
+            break;
+        }
+    }
+
+    VecX z = Utils::initializeEigenVectorFromArray(x, n);
+    if (new_x) { // directly assign currentIpoptSolution if this x has never been evaluated before
+        currentIpoptSolution = z;
+        currentIpoptObjValue = std::numeric_limits<Number>::max();
+        ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                     OptimizerConstants::FeasibleState::FEASIBLE : 
+                                     OptimizerConstants::FeasibleState::INFEASIBLE;
+    }
+    else { // update currentIpoptSolution
+        if (Utils::ifTwoVectorEqual(currentIpoptSolution, z, 0)) {
+            if (currentIpoptObjValue == std::numeric_limits<Number>::max()) {
+                THROW_EXCEPTION(IpoptException, "*** Error currentIpoptObjValue is not initialized!");
+            }
+            else { // this has been evaluated in eval_f, just need to update the feasibility
+                ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                             OptimizerConstants::FeasibleState::FEASIBLE : 
+                                             OptimizerConstants::FeasibleState::INFEASIBLE;
+            }
+        }
+        else {
+            currentIpoptSolution = z;
+            currentIpoptObjValue = std::numeric_limits<Number>::max();
+            ifCurrentIpoptFeasible = ifFeasibleCurrIter ? 
+                                         OptimizerConstants::FeasibleState::FEASIBLE : 
+                                         OptimizerConstants::FeasibleState::INFEASIBLE;
+        }
+    }
+
+    // update the status of the optimal solution
+    if (ifCurrentIpoptFeasible == OptimizerConstants::FeasibleState::FEASIBLE &&
+        currentIpoptObjValue < optimalIpoptObjValue) {
+        optimalIpoptSolution = currentIpoptSolution;
+        optimalIpoptObjValue = currentIpoptObjValue;
+        ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
+    }
+
     return true;
 }
 // [TNLP_eval_g]
-
 
 // [TNLP_eval_jac_g]
 // return the structure or values of the Jacobian
@@ -440,21 +439,6 @@ bool SafePayloadExcitingTrajectoryGenerator::eval_jac_g(
             THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
         }
         offset += num_time_steps * NUM_FACTORS * NUM_FACTORS;
-
-        // TODO: add contact constraints gradient
-        if (num_fixed_joints > 0) {
-            try {
-                #pragma omp parallel for shared(dynPtr_, x, values) private(i) schedule(dynamic)
-                for (i = 0; i < num_time_steps; i++) {
-                    // TODO: fill in the contact constraints gradients
-                }
-            }
-            catch (const std::exception& e) {
-                std::cerr << e.what() << std::endl;
-                THROW_EXCEPTION(IpoptException, "Error in eval_jac_g!");
-            }
-            offset += 3 * num_fixed_joints * num_time_steps * NUM_FACTORS;
-        }
 
         // obstacle avoidance constraints gradient
         try {
@@ -546,12 +530,6 @@ void SafePayloadExcitingTrajectoryGenerator::summarize_constraints(
     }    
     offset += NUM_FACTORS * num_time_steps;
 
-    // TODO: fill in contact constraints validation
-    if (num_fixed_joints > 0) {
-
-        offset += NUM_CONTACT_CONSTRAINTS * num_fixed_joints * num_time_steps;
-    }
-
     // obstacle avoidance constraints
     for( Index i = 0; i < num_time_steps; i++ ) {
         for( Index j = 0; j < num_spheres; j++ ) {
@@ -589,7 +567,7 @@ void SafePayloadExcitingTrajectoryGenerator::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "SafePayloadExcitingTrajectoryGenerator.cpp: joint " << i + 1 - offset << " exceeds position limit when it reaches minimum!\n";
+                std::cout << "SafePayloadExcitingTrajectoryGenerator.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
@@ -614,7 +592,7 @@ void SafePayloadExcitingTrajectoryGenerator::summarize_constraints(
             ifFeasible = false;
                 
             if (verbose) {
-                std::cout << "SafePayloadExcitingTrajectoryGenerator.cpp: joint " << i + 1 - offset << " exceeds velocity limit when it reaches minimum!\n";
+                std::cout << "SafePayloadExcitingTrajectoryGenerator.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
                 std::cout << "    range: [ " << Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "

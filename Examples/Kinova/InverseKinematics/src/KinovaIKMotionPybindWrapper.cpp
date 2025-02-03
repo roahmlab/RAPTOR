@@ -14,7 +14,12 @@ KinovaIKMotionPybindWrapper::KinovaIKMotionPybindWrapper(const std::string urdf_
     app = IpoptApplicationFactory();
     app->Options()->SetStringValue("hessian_approximation", "exact");
 
-    endT = Transform(Vec3(M_PI, 0, 0), Vec3(0, 0, -0.061525));
+    // Note that this is the transformation matrix from the last joint to the contact point of the gripper
+    // This is hardcoded for Kinova-gen3
+    // Refer to the urdf (the last two fixed joints) for more information
+    Transform endT1(Eigen::Vector3d(M_PI, 0, 0), Eigen::Vector3d(0, 0, -0.061525)); // end effector -> gripper base
+    Transform endT2(Eigen::Vector3d(0, 0, M_PI_2), Eigen::Vector3d(0, 0, 0.12)); // gripper base -> contact joint
+    endT = endT1 * endT2;
 }
 
 void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d_double& desired_endeffector_transforms_inp) {
@@ -47,6 +52,28 @@ void KinovaIKMotionPybindWrapper::set_desired_endeffector_transforms(const nb_2d
     }
 
     set_transform_check = true;
+    has_optimized = false;
+}
+
+void KinovaIKMotionPybindWrapper::set_obstacles(const nb_2d_double& obstacles_inp,
+                                                const double collision_buffer_inp) {
+    if (obstacles_inp.shape(1) != 9) {
+        throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
+    }
+
+    num_obstacles = obstacles_inp.shape(0);
+    collision_buffer = collision_buffer_inp;
+
+    boxCenters.resize(num_obstacles);
+    boxOrientation.resize(num_obstacles);
+    boxSize.resize(num_obstacles);
+
+    for (int i = 0; i < num_obstacles; i++) {
+        boxCenters[i] << obstacles_inp(i, 0), obstacles_inp(i, 1), obstacles_inp(i, 2);
+        boxOrientation[i] << obstacles_inp(i, 3), obstacles_inp(i, 4), obstacles_inp(i, 5);
+        boxSize[i] << obstacles_inp(i, 6), obstacles_inp(i, 7), obstacles_inp(i, 8);
+    }
+
     has_optimized = false;
 }
 
@@ -105,13 +132,19 @@ nb::tuple KinovaIKMotionPybindWrapper::solve(const nb_1d_double& initial_guess) 
     }
 
     int pid = 0;
+    has_optimized = true;
     for (const auto& desiredTransform: desiredTransforms) {
         try {
             mynlp->reset();
             mynlp->set_parameters(z,
                                   model,
                                   desiredTransform,
-                                  endT);
+                                  boxCenters,
+                                  boxOrientation,
+                                  boxSize,
+                                  endT,
+                                  true,
+                                  collision_buffer);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;

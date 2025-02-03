@@ -291,8 +291,6 @@
     </collision>
   </link>
 
-
-
   <link name="gripper_right_spring_link">
     <inertial>
       <origin rpy="0 0 0" xyz="-9.7222E-12 0.028253 6.791E-10"/>
@@ -600,4 +598,34 @@
     <child link="gripper_left_pad"/>
     <axis xyz="0 0 0"/>
   </joint>
+
+  <!-- <joint name="gripper_dumbbell_joint" type="fixed">
+    <parent link="gripper_base"/>
+    <child link="gripper_dumbbell_approx"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.10155 0"/>
+  </joint>
+
+  <link name="gripper_dumbbell_approx">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.90718474"/>
+      <inertia ixx="0.0082732" ixy="0" ixz="-0.0000023" iyy="0.0031941" iyz="-0.0000033" izz="0.0062402"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0.102"/>
+      <geometry>
+        <mesh filename="../objects/cube.obj"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.89804 0.91765 0.92941 0.25"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="../objects/cube.obj"/>
+      </geometry>
+    </collision>
+  </link> -->
+  
 </robot>

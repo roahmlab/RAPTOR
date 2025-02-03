@@ -15,19 +15,24 @@ int main() {
 
 // INITIALIZATION
     // read robot model and info
-    const std::string robot_model_file = "../Robots/kinova-gen3/kinova.urdf";
-    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithoutGripperInfo.yaml";
+    const std::string robot_model_file = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
+    const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaWithGripperInfo.yaml";
+    // const std::string robot_model_file = "../Robots/kinova-gen3/kinova_grasp.urdf";
+    // const std::string robot_info_file = "../Examples/Kinova/Armour/KinovaSuctionCup.yaml";
     const std::shared_ptr<RobotInfo> robotInfoPtr_ = 
         std::make_shared<RobotInfo>(robot_model_file, robot_info_file);
 
     // create a trajectory instance (compute trajectory on continuous time intervals)
         // initial conditions of the trajectory
-    const Eigen::VectorXd q0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    // const Eigen::VectorXd q0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    // const Eigen::VectorXd q_d0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    // const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    Eigen::VectorXd q0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd q_dd0 = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
 
         // trajectory parameters and their ranges
-    const Eigen::VectorXd k_center = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
+    const Eigen::VectorXd k_center = Eigen::VectorXd::Zero(robotInfoPtr_->num_motors);
     const Eigen::VectorXd k_range = M_PI / 24 * Eigen::VectorXd::Ones(robotInfoPtr_->num_motors);
 
         // trajectory duration
@@ -62,7 +67,7 @@ int main() {
 
     // targets
     Eigen::VectorXd q_des = Eigen::VectorXd::Random(robotInfoPtr_->num_motors);
-    double t_plan = 0.5 * duration;
+    double t_plan = 0.5;
 
 // COMPUTATION IN ARMOUR 
     // generate Joint Trajectory Reachable Sets
@@ -102,8 +107,8 @@ int main() {
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

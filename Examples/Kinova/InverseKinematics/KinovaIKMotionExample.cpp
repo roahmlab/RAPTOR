@@ -24,6 +24,13 @@ int main() {
 
     const int N = 20;
     const double step_size = 0.005;
+
+    // Obstacle information (no obstacles in this example)
+    int num_obstacles = 0;
+    std::vector<Eigen::Vector3d> boxCenters;
+    std::vector<Eigen::Vector3d> boxOrientation;
+    std::vector<Eigen::Vector3d> boxSize;
+    double collision_buffer = 0;
     
     // Initialize Kinova optimizer
     SmartPtr<KinovaIKSolver> mynlp = new KinovaIKSolver();
@@ -68,7 +75,10 @@ int main() {
             mynlp->reset();
             mynlp->set_parameters(z,
                                   model,
-                                  desiredTransform);
+                                  desiredTransform,
+                                  boxCenters,
+                                  boxOrientation,
+                                  boxSize);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;

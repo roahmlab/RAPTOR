@@ -19,7 +19,12 @@ bool KinovaIKSolver::set_parameters(
     const VecX& x0_input,
     const Model& model_input,
     const Transform& desiredTransform_input,
+    const std::vector<Vec3>& boxCenters_input,
+    const std::vector<Vec3>& boxOrientation_input,
+    const std::vector<Vec3>& boxSize_input,
     const Transform endT_input,
+    const bool include_gripper_or_not,
+    const double collision_buffer_input,
     Eigen::VectorXi jtype_input
 )
 {
@@ -57,7 +62,25 @@ bool KinovaIKSolver::set_parameters(
                                                                          desiredTransform_input,
                                                                          endT_input,
                                                                          jtype_input));   
-    constraintsNameVec_.push_back("kinematics constraints");                                                                                                                                                                                            
+    constraintsNameVec_.push_back("kinematics constraints");   
+
+    if (boxCenters_input.size() != boxOrientation_input.size() || 
+        boxCenters_input.size() != boxSize_input.size()) {
+        throw std::invalid_argument("boxCenters_input, boxOrientation_input, and boxSize_input have different sizes!");
+    }                      
+
+    if (boxCenters_input.size() > 0) {
+        // Collision avoidance constraints
+        constraintsPtrVec_.push_back(std::make_unique<KinovaCustomizedConstraints>(trajPtr_,
+                                                                                   model_input,
+                                                                                   boxCenters_input,
+                                                                                   boxOrientation_input,
+                                                                                   boxSize_input,
+                                                                                   include_gripper_or_not,
+                                                                                   collision_buffer_input,
+                                                                                   jtype_input));
+        constraintsNameVec_.push_back("collision avoidance constraints");
+    }
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
 
@@ -79,7 +102,7 @@ bool KinovaIKSolver::get_nlp_info(
     numVars = trajPtr_->varLength;
     n = numVars;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;
@@ -196,7 +219,16 @@ bool KinovaIKSolver::eval_f(
 
     const VecX& q = trajPtr_->q(0);
 
-    obj_value = 0.5 * q.dot(q);
+    // minimize the distance to a given initial configuration
+    // kinova has 4 continuous joints
+    obj_value = pow(Utils::wrapToPi(q(0) - x0(0)), 2) + // These are continuous joints
+                pow(Utils::wrapToPi(q(2) - x0(2)), 2) + 
+                pow(Utils::wrapToPi(q(4) - x0(4)), 2) + 
+                pow(Utils::wrapToPi(q(6) - x0(6)), 2) + 
+                pow(q(1) - x0(1), 2) +                  // These are not continuous joints
+                pow(q(3) - x0(3), 2) + 
+                pow(q(5) - x0(5), 2);
+    obj_value = 0.5 * obj_value;
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -224,9 +256,14 @@ bool KinovaIKSolver::eval_grad_f(
     const VecX& q = trajPtr_->q(0);
     const MatX& pq_pz = trajPtr_->pq_pz(0);
 
-    VecX grad = q.transpose() * pq_pz;
-    for(Index i = 0; i < n; i++){
-        grad_f[i] = grad(i);
+    for (Index i = 0; i < n; i++) {
+        // kinova has 4 continuous joints
+        if (i % 2 == 0) {
+            grad_f[i] = Utils::wrapToPi(q(i) - x0(i)) * pq_pz(i, i);
+        }
+        else {
+            grad_f[i] = (q(i) - x0(i)) * pq_pz(i, i);
+        }
     }
 
     return true;

@@ -33,7 +33,6 @@ public:
     // Constructor
     IntervalMomentumRegressor(const Model& model_input, 
                               const std::shared_ptr<TrajectoryData>& trajPtr_input,
-                              const SensorNoiseInfo sensor_noise_input = SensorNoiseInfo(),
                               Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
@@ -45,12 +44,10 @@ public:
                          bool compute_hessian = false) final override;
 
     // class members:
-    SensorNoiseInfo sensor_noise;
-
     std::shared_ptr<Model> modelPtr_ = nullptr;
     std::shared_ptr<Data> dataPtr_ = nullptr;
 
-    std::shared_ptr<Trajectories> trajPtr_ = nullptr;
+    std::shared_ptr<TrajectoryData> trajPtr_ = nullptr;
 
     int N = 0; // number of time instances in tspan
 
@@ -72,6 +69,8 @@ public:
     Eigen::Array<MatXInt, 1, Eigen::Dynamic> ptau_pz;
 
     int NB = 0;
+
+    std::shared_ptr<MomentumRegressor> mrPtr_ = nullptr;
 };
 
 }; // namespace RAPTOR

@@ -7,8 +7,8 @@ namespace nb = nanobind;
 using namespace RAPTOR;
 using namespace Kinova;
 
-NB_MODULE(oracle_nanobind, m) {
-    m.doc() = "nanobind oracle_nanobind plugin";
+NB_MODULE(kinova_nanobind, m) {
+    m.doc() = "nanobind kinova_nanobind plugin";
 
     nb::class_<KinovaPybindWrapper>(m, "KinovaPybindWrapper")
         .def(nb::init<const std::string, const bool>())

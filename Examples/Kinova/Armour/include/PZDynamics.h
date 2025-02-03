@@ -3,6 +3,7 @@
 
 #include "pinocchio/algorithm/model.hpp"
 #include "pinocchio/algorithm/rnea.hpp"
+#include "pinocchio/algorithm/regressor.hpp"
 #include "pinocchio/algorithm/kinematics.hpp"
 #include "pinocchio/algorithm/frames.hpp"
 
@@ -30,12 +31,17 @@ public:
 
 	~PZDynamics() = default;
 
+	void reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr_input);
+
 	void reset_trajectory(const std::shared_ptr<BezierCurveInterval>& trajPtr_input);
 
 	void compute();
 
 	std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 	std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;
+
+	VecX phi;
+	Eigen::Vector<Interval, Eigen::Dynamic> phi_interval;
 
 	std::vector<pinocchio::ModelTpl<PZSparse>> model_sparses;
 	std::vector<pinocchio::DataTpl<PZSparse>> data_sparses;
@@ -47,10 +53,17 @@ public:
 	Eigen::Matrix<PZSparse, Eigen::Dynamic, Eigen::Dynamic> zmp_PZs;
 
 	// the radius of the torque PZs
-	Eigen::MatrixXd torque_radii;
+	MatX torque_radii;
 
 	// the radius of the sphere reachable sets
-	Eigen::MatrixXd sphere_radii;
+	MatX sphere_radii;
+
+	// hyperplanes for friction cone constraints
+	Eigen::Array<Eigen::Vector3d, FRICTION_CONE_LINEARIZED_SIZE, 1> S;
+
+	// hyperplanes for ZMP constraints
+	Eigen::Array<Eigen::Vector3d, ZMP_LINEARIZED_SIZE, 1> c;
+	Eigen::Array<Eigen::Vector3d, ZMP_LINEARIZED_SIZE, 1> A;
 };
 
 }; // namespace Armour

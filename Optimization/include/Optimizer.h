@@ -45,7 +45,7 @@ public:
     virtual ~Optimizer() = default;
 
     /** Method to reset the optimizer */
-    void reset();
+    virtual void reset();
 
     /**@name Overloaded from TNLP */
     //@{
@@ -239,7 +239,7 @@ public:
     std::vector<Number> g_copy;
 
     Number final_constr_violation = 0;
-    bool ifFeasible = true;
+    bool ifFeasible = false;
 
     // This is supposed to be consistent with the settings in IpoptApplicationFactory
     // But right now it is hardcoded here

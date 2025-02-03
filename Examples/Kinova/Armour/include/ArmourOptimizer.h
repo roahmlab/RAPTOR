@@ -3,6 +3,7 @@
 
 #include "PZDynamics.h"
 #include "BoxCollisionAvoidance.h"
+#include "TaperedCapsuleCollision.h"
 #include "Optimizer.h"
 
 namespace RAPTOR {
@@ -140,14 +141,23 @@ public:
     std::shared_ptr<PZDynamics> dynPtr_;
     
     std::vector<std::shared_ptr<BoxCollisionAvoidance>> bcaPtrs;
+    std::vector<std::shared_ptr<TaperedCapsuleCollision<NUM_FACTORS>>> tccPtrs;
 
     size_t num_time_steps = 0;
     size_t num_spheres = 0;
     size_t num_fixed_joints = 0;
     size_t num_obstacles = 0;
 
+    int num_self_collisions = 0;
+    int num_capsules = 0;
+    Eigen::Array<Vec3, Eigen::Dynamic, Eigen::Dynamic> sphere_locations;
+    Eigen::Array<MatX, Eigen::Dynamic, Eigen::Dynamic> sphere_gradient;
+
     VecX q_des;
     Number t_plan = 0;
+
+    VecX g_lb_copy;
+    VecX g_ub_copy;
 };
 
 }; // namespace Armour

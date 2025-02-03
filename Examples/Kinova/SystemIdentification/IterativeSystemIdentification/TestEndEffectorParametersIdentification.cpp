@@ -1,70 +1,64 @@
 #include "EndEffectorParametersIdentification.h"
 
+#include "BezierCurves.h"
+
 using namespace RAPTOR;
 
-const std::string folder_name = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/end_effector_params_data/";
-
-Eigen::MatrixXd theta_to_LMI(Eigen::VectorXd& theta);
-double BuresWassersteinDistance(Eigen::MatrixXd& A, Eigen::MatrixXd& B);
-Eigen::MatrixXd matrixSquareRoot(Eigen::MatrixXd& A);
-Eigen::VectorXd x_to_theta(Eigen::VectorXd& x);
-
 int main(int argc, char* argv[]) {
-    // check if the file number is provided
-    if (argc < 2) {
-        throw std::invalid_argument("No arguments provided. please choose the trajectory file");
-    }
-
-    std::string file_number = std::string(argv[1]);
-    int H = 5;
-
-    if (argc > 2) {
-        H = std::stoi(argv[2]);
-    }
-
     // Load the robot model
-    const std::string urdf_filename  = "/workspaces/RAPTOR/Robots/kinova-gen3/kinova.urdf";
+    const std::string urdf_filename  = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
 
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
     pinocchio::Data data(model);
 
-    Eigen::VectorXd phi = Eigen::VectorXd::Zero(10 * model.nv);
-    for (int i = 0; i < model.nv; i++) {
-        const int pinocchio_joint_id = i + 1;
-        phi.segment<10>(10 * i) =
-            model.inertias[pinocchio_joint_id]
-                .toDynamicParameters();
-    }
-
-    // load the data
-    std::string trajectory_filename = folder_name + "2024_11_17_no_gripper_id_" + std::string(argv[1]) + ".txt";
-    
-    // load friction parameters
-    const std::string friction_parameters_filename = folder_name + "friction_params.csv";
-    Eigen::VectorXd friction_parameters = Utils::initializeEigenMatrixFromFile(friction_parameters_filename).col(0);
-    if (friction_parameters.size() != 3 * model.nv &&
-        friction_parameters.size() != 4 * model.nv) {
-        std::cerr << "Friction_parameters size: " << friction_parameters.size() << std::endl;
-        throw std::runtime_error("Friction solution file is wrong");
-    }
-
-    model.friction = friction_parameters.head(model.nv);
-    model.damping = friction_parameters.segment(model.nv, model.nv);
-    model.armature  = friction_parameters.segment(2 * model.nv, model.nv);
+    model.friction.setConstant(1.0);
+    model.damping.setConstant(5.0);
+    model.armature.setConstant(0.0);
     Eigen::VectorXd offset = Eigen::VectorXd::Zero(model.nv);
-    if (friction_parameters.size() == 4 * model.nv) {
-        offset = friction_parameters.tail(model.nv);
-        std::cout << offset.transpose() << std::endl;
+
+    // Generate a random trajectory data
+    const double T = 10.0; // duration of the trajectory
+    const int N = 1000; // number of samples in the data
+
+        // to compute the acceleration and then the torque
+    std::shared_ptr<BezierCurves> test_trajectory = std::make_shared<BezierCurves>(
+        T, N, model.nv, TimeDiscretization::Uniform, 3);
+    test_trajectory->compute(Eigen::VectorXd::Random(test_trajectory->varLength), false);
+
+        // to store the position, velocity and torque data for system identification
+    std::shared_ptr<TrajectoryData> trajectory_data = std::make_shared<TrajectoryData>(
+        T, N, model.nv);
+
+        // the matrix that stores the acceleration data
+    Eigen::MatrixXd acceleration(N, model.nv);
+
+    for (int i = 0; i < N; i++) {
+        acceleration.row(i) = test_trajectory->q_dd(i);
+
+        pinocchio::rnea(model, data, test_trajectory->q(i), test_trajectory->q_d(i), test_trajectory->q_dd(i));
+
+        trajectory_data->q(i) = test_trajectory->q(i);
+        trajectory_data->q_d(i) = test_trajectory->q_d(i);
+        trajectory_data->q_dd(i) = data.tau + 
+                                   model.friction.cwiseProduct(test_trajectory->q_d(i).cwiseSign()) +
+                                   model.damping.cwiseProduct(test_trajectory->q_d(i)) +
+                                   offset;
     }
   
     // Initialize the Ipopt problem
     SmartPtr<EndEffectorParametersIdentification> mynlp = new EndEffectorParametersIdentification();
+
+    double setup_time = 0;
     try {
-	    mynlp->set_parameters(model, 
-                              trajectory_filename,
-                              H,
+        auto start = std::chrono::high_resolution_clock::now();
+	    mynlp->set_parameters(model,
                               offset);
+        mynlp->add_trajectory_file(trajectory_data,
+                                  acceleration);
+        auto end = std::chrono::high_resolution_clock::now();
+        setup_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Setup time: " << setup_time << " milliseconds.\n";
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -73,11 +67,11 @@ int main(int argc, char* argv[]) {
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-8);
-	app->Options()->SetNumericValue("max_wall_time", 100);
+    app->Options()->SetNumericValue("tol", 1e-10);
+	app->Options()->SetNumericValue("max_wall_time", 1.0);
 	app->Options()->SetIntegerValue("print_level", 5);
-    app->Options()->SetIntegerValue("max_iter", 3000);
-    app->Options()->SetStringValue("mu_strategy", "monotone");
+    app->Options()->SetIntegerValue("max_iter", 100);
+    app->Options()->SetStringValue("mu_strategy", "adaptive");
     app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
     if (mynlp->enable_hessian) {
@@ -89,7 +83,7 @@ int main(int argc, char* argv[]) {
 
     // // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetStringValue("derivative_test", "second-order");
     // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
     // app->Options()->SetNumericValue("point_perturbation_radius", 1);
@@ -116,117 +110,9 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
-    std::cout <<"solution x" << mynlp->solution.transpose()<< std::endl;
-    std::cout << "paramer solution: " << x_to_theta(mynlp->solution).transpose() << std::endl;
-    
-    Eigen::VectorXd phi_tail = phi.tail(10);
-    Eigen::MatrixXd LMI_original = theta_to_LMI(phi_tail);
-    Eigen::VectorXd theta_sol = x_to_theta(mynlp->solution);
-    Eigen::MatrixXd LMI_solution = theta_to_LMI(theta_sol);
-    double distance = BuresWassersteinDistance(LMI_original, LMI_solution);
-    std::cout << "Bures-Wasserstein distance: " << distance << std::endl;
-
-    // Utils::writeEigenMatrixToFile(mynlp->A, folder_name + "A.csv");
-    // Utils::writeEigenMatrixToFile(mynlp->b, folder_name + "b.csv");
+    std::cout << "solution: " << mynlp->solution.transpose()<< std::endl;
+    std::cout << "parameter solution: " << mynlp->z_to_theta(mynlp->solution).transpose() << std::endl;
+    std::cout << "groundtruth: " << mynlp->phi_original.tail(10).transpose() << std::endl;
 
     return 0;
-}
-
-// helfer functions
-double BuresWassersteinDistance(Eigen::MatrixXd& A, Eigen::MatrixXd& B) {
-    if (A.rows() != A.cols() || B.rows() != B.cols() || A.rows() != B.rows()) {
-        throw std::invalid_argument("Matrices A and B must be square and of the same size.");
-    }
-
-    Eigen::MatrixXd sqrtA = matrixSquareRoot(A);
-    Eigen::MatrixXd middle = sqrtA * B * sqrtA;
-    Eigen::MatrixXd sqrtMiddle = matrixSquareRoot(middle);
-
-    double traceA = A.trace();
-    double traceB = B.trace();
-    double traceSqrtMiddle = sqrtMiddle.trace();
-
-    return std::sqrt(traceA + traceB - 2 * traceSqrtMiddle);
-}
-
-Eigen::MatrixXd matrixSquareRoot(Eigen::MatrixXd& matrix) {
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(matrix);
-    Eigen::VectorXd eigenvalues = solver.eigenvalues();
-    Eigen::MatrixXd eigenvectors = solver.eigenvectors();
-
-    // Compute the square root of the diagonal matrix of eigenvalues
-    Eigen::VectorXd sqrtEigenvalues = eigenvalues.array().sqrt();
-
-    // Reconstruct the square root matrix
-    return eigenvectors * sqrtEigenvalues.asDiagonal() * eigenvectors.transpose();
-}
-
-Eigen::MatrixXd theta_to_LMI(Eigen::VectorXd& theta) {
-    // Extract mass
-    double mass = theta(0);
-
-    // Extract center of mass (com)
-    Eigen::Vector3d com = theta.segment<3>(1);
-
-    // Extract inertia elements
-    double Ixx = theta(4);
-    double Ixy = theta(5);
-    double Iyy = theta(6);
-    double Ixz = theta(7);
-    double Iyz = theta(8);
-    double Izz = theta(9);
-
-    // Construct the inertia matrix
-    Eigen::Matrix3d inertia;
-    inertia << Ixx, Ixy, Ixz,
-               Ixy, Iyy, Iyz,
-               Ixz, Iyz, Izz;
-
-    // Compute trace of the inertia matrix
-    double inertia_trace = inertia.trace();
-
-    // Compute the LMI matrix
-    Eigen::MatrixXd LMI(4, 4);
-    LMI.setZero();
-    LMI.block<3, 3>(0, 0) = 0.5 * inertia_trace * Eigen::Matrix3d::Identity() - inertia;
-    LMI.block<3, 1>(0, 3) = com;                                                        
-    LMI.block<1, 3>(3, 0) = com.transpose();                                          
-    LMI(3, 3) = mass;                                                                  
-
-    return LMI;
-}
-
-Eigen::VectorXd x_to_theta(Eigen::VectorXd& z) {
-    double d1 = z[0];
-    double d2 = z[1];
-    double d3 = z[2];
-    double d4 = z[3];
-    double s12 = z[4];
-    double s23 = z[5];
-    double s13 = z[6];
-    double t1 = z[7];
-    double t2 = z[8];
-    double t3 = z[9];
-
-    Eigen::Matrix4d U;
-    U << std::exp(d1), s12,      s13,      t1,
-        0.0,     std::exp(d2),  s23,      t2,
-        0.0,     0.0,      std::exp(d3),  t3,
-        0.0,     0.0,      0.0,      std::exp(d4);
-
-    // Compute LMI = U' * U
-    Eigen::Matrix4d LMI = U.transpose() * U;
-
-    // End-effector parameters
-    Eigen::VectorXd theta = Eigen::VectorXd::Zero(10);
-    theta(0) = LMI(3, 3);                        
-    theta.segment<3>(1) = LMI.block<3, 1>(0, 3); 
-    theta(4) = LMI(1, 1) + LMI(2, 2);            // IXX
-    theta(5) = -LMI(0, 1);                       // IXY
-    theta(6) = LMI(0, 0) + LMI(2, 2);            // IYY
-    theta(7) = -LMI(0, 2);                       // IXZ
-    theta(8) = -LMI(1, 2);                       // IYZ
-    theta(9) = LMI(0, 0) + LMI(1, 1);            // IZZ
-
-    return theta;
 }

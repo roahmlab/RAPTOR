@@ -7,8 +7,6 @@
 #include "pinocchio/algorithm/rnea.hpp"
 #include "pinocchio/algorithm/regressor.hpp"
 
-
-
 namespace RAPTOR {
 
 class FrictionParametersIdentification : public Optimizer {

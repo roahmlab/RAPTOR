@@ -14,6 +14,7 @@ NB_MODULE(armour_nanobind, m) {
     nb::class_<ArmourPybindWrapper>(m, "ArmourPybindWrapper")
         .def(nb::init<const std::string, const std::string, const bool>())
         .def("set_obstacles", &ArmourPybindWrapper::set_obstacles)
+        .def("set_endeffector_inertial_parameters", &ArmourPybindWrapper::set_endeffector_inertial_parameters)
         .def("set_ipopt_parameters", &ArmourPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &ArmourPybindWrapper::set_trajectory_parameters)
         .def("optimize", &ArmourPybindWrapper::optimize)

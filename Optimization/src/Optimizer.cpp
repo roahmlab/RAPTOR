@@ -84,7 +84,7 @@ bool Optimizer::get_bounds_info(
     }
 
     // report constraints distribution
-    if (display_info) {
+    if (display_info && constraintsPtrVec_.size() > 0) {
         std::cout << "Dimension of each constraints and their locations: \n";
         iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
@@ -250,7 +250,7 @@ bool Optimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     if (costsPtrVec_.size() == 0) {
@@ -308,7 +308,7 @@ bool Optimizer::eval_hess_f(
 ) 
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_hess_f!");
     }
 
     if (costsPtrVec_.size() == 0) {
@@ -773,7 +773,9 @@ void Optimizer::summarize_constraints(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in summarize_constraints!");
     }
 
-    if (display_info && verbose) std::cout << "Constraint violation report:" << std::endl;
+    if (display_info && verbose && constraintsPtrVec_.size() > 0) {
+        std::cout << "Constraint violation report:" << std::endl;
+    }
 
     Index iter = 0;
     ifFeasible = true;
@@ -816,7 +818,9 @@ void Optimizer::summarize_constraints(
         }
     }
 
-    if (display_info && verbose) std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    if (display_info && verbose && constraintsPtrVec_.size() > 0) {
+        std::cout << "Total constraint violation: " << final_constr_violation << std::endl;
+    }
 }
 // [TNLP_summarize_constraints]
 

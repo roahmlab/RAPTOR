@@ -23,7 +23,42 @@ ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
     }
 }
 
-void ArmourPybindWrapper::set_obstacles(const nb_2d_float obstacles_inp) {
+void ArmourPybindWrapper::set_endeffector_inertial_parameters(const nb_1d_double inertial_parameters,
+                                                              const nb_1d_double inertial_parameters_lb,
+                                                              const nb_1d_double inertial_parameters_ub) {
+    if (inertial_parameters.shape(0) != 10 || 
+        inertial_parameters_lb.shape(0) != 10 ||
+        inertial_parameters_ub.shape(0) != 10) {
+        throw std::invalid_argument("Inertial parameters must be of size 10");
+    }
+
+    Vec10 inertial_parameters_vec;
+    Vec10 inertial_parameters_lb_vec;
+    Vec10 inertial_parameters_ub_vec;
+    for (size_t i = 0; i < 10; i++) {
+        inertial_parameters_vec(i) = inertial_parameters(i);
+        inertial_parameters_lb_vec(i) = inertial_parameters_lb(i);
+        inertial_parameters_ub_vec(i) = inertial_parameters_ub(i);
+    }
+
+    robotInfoPtr_->change_endeffector_inertial_parameters(inertial_parameters_vec, 
+                                                          inertial_parameters_lb_vec,
+                                                          inertial_parameters_ub_vec);
+
+    if (trajPtr_ != nullptr) {
+        if (dynPtr_ == nullptr) {
+            dynPtr_ = std::make_shared<PZDynamics>(robotInfoPtr_, trajPtr_);
+        }
+        else {
+            dynPtr_->reset_robot_info(robotInfoPtr_);
+        }
+    }
+    else {
+        throw std::runtime_error("Trajectory parameters not set yet!");
+    }
+}
+
+void ArmourPybindWrapper::set_obstacles(const nb_2d_double obstacles_inp) {
     if (obstacles_inp.shape(1) != 9) {
         throw std::invalid_argument("Obstacles must have 9 columns, xyz, rpy, size");
     }
@@ -73,13 +108,14 @@ void ArmourPybindWrapper::set_ipopt_parameters(const double tol,
     has_optimized = false;
 }
 
-void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
-                                                    const nb_1d_float q_d0_inp,
-                                                    const nb_1d_float q_dd0_inp,
-                                                    const nb_1d_float k_center_inp,
-                                                    const nb_1d_float k_range_inp,
+void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
+                                                    const nb_1d_double q_d0_inp,
+                                                    const nb_1d_double q_dd0_inp,
+                                                    const nb_1d_double k_center_inp,
+                                                    const nb_1d_double k_range_inp,
                                                     const double duration_inp,
-                                                    const nb_1d_float q_des_inp) {
+                                                    const nb_1d_double q_des_inp,
+                                                    const double t_plan_inp) {
     if (q0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_d0_inp.shape(0) != robotInfoPtr_->num_motors || 
         q_dd0_inp.shape(0) != robotInfoPtr_->num_motors) {
@@ -105,6 +141,10 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
         throw std::invalid_argument("q_des must be of size robotInfoPtr_->num_motors");
     }
 
+    if (t_plan_inp <= 0.0 || t_plan_inp > 1.0) {
+        throw std::invalid_argument("t_plan must be positive and less than 1.0");
+    }
+
     q0.resize(robotInfoPtr_->num_motors);
     q_d0.resize(robotInfoPtr_->num_motors);
     q_dd0.resize(robotInfoPtr_->num_motors);
@@ -127,6 +167,8 @@ void ArmourPybindWrapper::set_trajectory_parameters(const nb_1d_float q0_inp,
     for (size_t i = 0; i < robotInfoPtr_->num_motors; i++) {
         q_des(i) = q_des_inp(i);
     }
+
+    t_plan = t_plan_inp;
 
     trajPtr_ = std::make_shared<BezierCurveInterval>(
         q0, q_d0, q_dd0, 
@@ -159,8 +201,6 @@ nb::tuple ArmourPybindWrapper::optimize() {
     std::cout << "    ArmourPybindWrapper: Time taken to generate reachable sets: " 
               << std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count() / 1000.0
               << " ms" << std::endl;
-
-    double t_plan = 1.0 * duration;
 
     // Initialize Kinova optimizer
     try {
@@ -202,6 +242,13 @@ nb::tuple ArmourPybindWrapper::optimize() {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
     }
 
+    if (status == Invalid_Problem_Definition) {
+        // reachable set size too large
+        // usually is torque reachable sets, print the size out for debugging
+        Utils::writeEigenMatrixToFile(dynPtr_->torque_radii, "torque_radii_armour.txt");
+        throw std::runtime_error("Invalid problem definition!");
+    }
+
     set_trajectory_parameters_check = false;
     has_optimized = mynlp->ifFeasible;
 
@@ -215,7 +262,8 @@ nb::tuple ArmourPybindWrapper::optimize() {
 
 nb::tuple ArmourPybindWrapper::analyze_solution() {
     if (!has_optimized) {
-        throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        // throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        std::cerr << "ArmourPybindWrapper::Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
     }
     
     // recover trajectory information
@@ -268,7 +316,40 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
 
     torque_radius = dynPtr_->torque_radii;
 
-    // TODO: recover contact constraints (reachable sets) here
+    // recover contact constraints (reachable sets) here
+    if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+        separation_force_center.resize(trajPtr_->num_time_steps);
+        separation_force_radius.resize(trajPtr_->num_time_steps);
+        friction_cone_center.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        friction_cone_radius.resize(FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        zmp_center.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+        zmp_radius.resize(ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps);
+
+        for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
+            // (1) support force larger than 0
+            const Interval supportForceRange = 
+                dynPtr_->data_sparses[i].f[dynPtr_->model_sparses[i].nv].linear()(2)
+                    .slice(mynlp->solution);
+            separation_force_center(i) = getCenter(supportForceRange);
+            separation_force_radius(i) = getRadius(supportForceRange);
+
+            // (2) friction cone constraints
+            for (size_t j = 0; j < FRICTION_CONE_LINEARIZED_SIZE; j++) {
+                const Interval frictionConstraintRange = 
+                    dynPtr_->friction_PZs(j, i).slice(mynlp->solution);
+                friction_cone_center(j, i) = getCenter(frictionConstraintRange);
+                friction_cone_radius(j, i) = getRadius(frictionConstraintRange);
+            }      
+
+            // (3) ZMP constraints
+            for (size_t j = 0; j < ZMP_LINEARIZED_SIZE; j++) {
+                const Interval zmpConstraintRange = 
+                    dynPtr_->zmp_PZs(j, i).slice(mynlp->solution);
+                zmp_center(j, i) = getCenter(zmpConstraintRange);
+                zmp_radius(j, i) = getRadius(zmpConstraintRange);
+            }
+        }
+    }
 
     // export to outputs
     const size_t shape_ptr1[] = {3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps};
@@ -319,8 +400,54 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
         nb::handle()
     );
 
-    // TODO: export contact constraints (reachable sets) here
+    const size_t shape_ptr4[] = {trajPtr_->num_time_steps};
+    auto separation_force_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        separation_force_center.data(),
+        1,
+        shape_ptr4,
+        nb::handle()
+    );
+    auto separation_force_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        separation_force_radius.data(),
+        1,
+        shape_ptr4,
+        nb::handle()
+    );
 
+    const size_t shape_ptr5[] = {FRICTION_CONE_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    auto friction_cone_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        friction_cone_center.data(),
+        2,
+        shape_ptr5,
+        nb::handle()
+    );
+    auto friction_cone_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        friction_cone_radius.data(),
+        2,
+        shape_ptr5,
+        nb::handle()
+    );
+
+    const size_t shape_ptr6[] = {ZMP_LINEARIZED_SIZE, trajPtr_->num_time_steps};
+    auto zmp_centers = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        zmp_center.data(),
+        2,
+        shape_ptr6,
+        nb::handle()
+    );
+    auto zmp_radii = nb::ndarray<nb::numpy, double, nb::shape<2, -1>>(
+        zmp_radius.data(),
+        2,
+        shape_ptr6,
+        nb::handle()
+    );
+
+    if (robotInfoPtr_->num_joints - robotInfoPtr_->num_motors == 1) {
+        return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii, 
+                              separation_force_centers, separation_force_radii, 
+                              friction_cone_centers, friction_cone_radii, 
+                              zmp_centers, zmp_radii);
+    }
     return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii);
 }
 
