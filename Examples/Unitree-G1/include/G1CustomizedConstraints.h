@@ -1,58 +1,58 @@
-#ifndef DIGIT_CUSTOMIZED_CONSTRAINTS_H
-#define DIGIT_CUSTOMIZED_CONSTRAINTS_H
+#ifndef G1_CUSTOMIZED_CONSTRAINTS_H
+#define G1_CUSTOMIZED_CONSTRAINTS_H
 
 #include "Constraints.h"
-#include "DigitConstrainedInverseDynamics.h"
-#include "DigitDynamicsConstraints.h"
+#include "G1ConstrainedInverseDynamics.h"
+#include "G1DynamicsConstraints.h"
 #include "Utils.h"
 
 namespace RAPTOR {
-namespace Digit {
+namespace G1 {
 
 typedef struct GaitParameters_ {
     double eps_torso_angle = Utils::deg2rad(1.5); // 1.5 degrees
-    double swingfoot_midstep_z_des = 0.15; // meters
-    double swingfoot_begin_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_begin_y_des = 0.00; // meters
-    double swingfoot_end_x_des = -0.22; // meters (negative if left stance, positive if right stance)
-    double swingfoot_end_y_des = 0.00; // meters
+    double swingfoot_midstep_z_des = 0.10; // meters
+    double swingfoot_begin_x_des = 0.00; // meters 
+    double swingfoot_begin_y_des = -0.17; // meters
+    double swingfoot_end_x_des = 0.00; // meters
+    double swingfoot_end_y_des = -0.17; // meters
 } GaitParameters;
 
-class DigitCustomizedConstraints : public Constraints {
+class G1CustomizedConstraints : public Constraints {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     // Constructor
-    DigitCustomizedConstraints() = default;
+    G1CustomizedConstraints() = default;
 
     // Constructor
-    DigitCustomizedConstraints(const Model& model_input,
-                               std::shared_ptr<Trajectories>& trajPtr_input,
-                               std::shared_ptr<DigitDynamicsConstraints>& dcPtr_input,
-                               const GaitParameters& gp_input);
+    G1CustomizedConstraints(const Model& model_input,
+                            std::shared_ptr<Trajectories>& trajPtr_input,
+                            std::shared_ptr<G1DynamicsConstraints>& dcPtr_input,
+                            const GaitParameters& gp_input);
 
     // Destructor
-    ~DigitCustomizedConstraints() = default;
+    ~G1CustomizedConstraints() = default;
 
     // class methods:
         // compute constraints
-    virtual void compute(const VecX& z, 
-                         bool compute_derivatives = true,
-                         bool compute_hessian = false) override;
+    void compute(const VecX& z, 
+                 bool compute_derivatives = true,
+                 bool compute_hessian = false) final override;
 
         // compute constraints lower bounds and upper bounds
-    virtual void compute_bounds() override;
+    void compute_bounds() final override;
 
-        // print violation info
-    virtual void print_violation_info() override;
+        // print violation information
+    void print_violation_info() final override;
 
     // class variables:
     GaitParameters gp;
 
     std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<DigitDynamicsConstraints> ddcPtr_;
+    std::shared_ptr<G1DynamicsConstraints> ddcPtr_;
 
     std::unique_ptr<Model> modelPtr_;
 
@@ -90,7 +90,7 @@ public:
     VecX g11, g11_lb, g11_ub;
 };
 
-} // namespace Digit
+} // namespace G1
 } // namespace RAPTOR
 
-#endif // DIGIT_CUSTOMIZED_CONSTRAINTS_H
+#endif // G1_CUSTOMIZED_CONSTRAINTS_H

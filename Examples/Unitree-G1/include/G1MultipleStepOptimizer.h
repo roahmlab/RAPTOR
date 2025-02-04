@@ -1,26 +1,42 @@
-#ifndef DIGIT_MULTIPLE_STEP_OPTIMIZER_H
-#define DIGIT_MULTIPLE_STEP_OPTIMIZER_H
+#ifndef G1_MULTIPLE_STEP_OPTIMIZER_H
+#define G1_MULTIPLE_STEP_OPTIMIZER_H
 
-#include "DigitSingleStepOptimizer.h"
-#include "DigitMultipleStepPeriodicityConstraints.h"
+#include "G1SingleStepOptimizer.h"
+#include "G1MultipleStepPeriodicityConstraints.h"
 
 namespace RAPTOR {
-namespace Digit {
+namespace G1 {
 
 using namespace Ipopt;
 
-class DigitMultipleStepOptimizer : public Optimizer {
+Eigen::VectorXd switchSolutionFromLeftToRight(const Eigen::VectorXd& z, 
+                                              const int degree) {
+    if (z.size() != (degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS) {
+        throw std::invalid_argument("z has wrong size in switchSolutionFromLeftToRight! A single step solution is required.");
+    }
+    
+    Eigen::VectorXd z_switched = z;
+
+    // swap left leg and right leg
+    z_switched.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+    z_switched.segment((degree + 1) * NUM_INDEPENDENT_JOINTS / 2, (degree + 1) * NUM_INDEPENDENT_JOINTS / 2) = 
+        z.head((degree + 1) * NUM_INDEPENDENT_JOINTS / 2);
+
+    return z_switched;
+}
+
+class G1MultipleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
-    using Data = pinocchio::Data;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    DigitMultipleStepOptimizer() = default;
+    G1MultipleStepOptimizer() = default;
 
     /** Default destructor */
-    ~DigitMultipleStepOptimizer() = default;
+    ~G1MultipleStepOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
@@ -31,8 +47,7 @@ public:
         const TimeDiscretization time_discretization_input,
         const int degree_input,
         const Model& model_input, 
-        const std::vector<GaitParameters>& gps_input,
-        const bool periodic = false
+        const std::vector<GaitParameters>& gps_input
     );
 
     /**@name Overloaded from TNLP */
@@ -114,26 +129,16 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    DigitMultipleStepOptimizer(
-       const DigitMultipleStepOptimizer&
+    G1MultipleStepOptimizer(
+       const G1MultipleStepOptimizer&
     );
 
-    DigitMultipleStepOptimizer& operator=(
-       const DigitMultipleStepOptimizer&
+    G1MultipleStepOptimizer& operator=(
+       const G1MultipleStepOptimizer&
     );
 
-    // switch the solution from left stance to right stance
-    // to be more specific, we have to perform the following changes:
-    // 1. swap the left leg joints and right leg joints
-    // 2. negate all joints
-    // since Digit joint directions are mirrored between left leg and right leg
-    VecX switchSolutionFromLeftToRight(std::shared_ptr<DigitConstrainedInverseDynamics>& currDcidPtr_,
-                                       std::shared_ptr<DigitConstrainedInverseDynamics>& nextDcidPtr_,
-                                       const VecX& z, 
-                                       const int degree);
-
-    std::vector<SmartPtr<DigitSingleStepOptimizer>> stepOptVec_;
-    std::vector<std::shared_ptr<DigitMultipleStepPeriodicityConstraints>> periodConsVec_;
+    std::vector<SmartPtr<G1SingleStepOptimizer>> stepOptVec_;
+    std::vector<std::shared_ptr<G1MultipleStepPeriodicityConstraints>> periodConsVec_;
     std::vector<Index> n_local;
     std::vector<Index> n_position; // record the position of decision variables of each walking step in the full decision vector
     std::vector<Index> m_local;
@@ -141,7 +146,7 @@ public:
     bool ifFeasibleCurrIter = false;
 };
 
-}; // namespace Digit
+}; // namespace G1
 }; // namespace RAPTOR
 
-#endif // DIGIT_MULTIPLE_STEP_OPTIMIZER_H
+#endif // G1_MULTIPLE_STEP_OPTIMIZER_H

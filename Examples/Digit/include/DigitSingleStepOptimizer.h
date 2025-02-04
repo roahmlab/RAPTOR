@@ -1,5 +1,5 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef DIGIT_SINGLE_STEP_OPTIMIZER_H
+#define DIGIT_SINGLE_STEP_OPTIMIZER_H
 
 #include "Optimizer.h"
 
@@ -104,4 +104,4 @@ public:
 }; // namespace Digit
 }; // namespace RAPTOR
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // DIGIT_SINGLE_STEP_OPTIMIZER_H

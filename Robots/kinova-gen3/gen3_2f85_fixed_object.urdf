@@ -713,7 +713,7 @@
         <mesh filename="meshes/dumbbell_2lb.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="">
-        <color rgba="0.89804 0.91765 0.92941 0.25"/>
+        <color rgba="0.89804 0.91765 0.92941 1"/>
       </material>
     </visual>
     <collision>

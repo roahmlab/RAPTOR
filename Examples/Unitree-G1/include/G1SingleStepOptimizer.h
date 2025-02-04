@@ -1,36 +1,36 @@
-#ifndef TALOS_SINGLE_STEP_OPTIMIZER_H
-#define TALOS_SINGLE_STEP_OPTIMIZER_H
+#ifndef G1_SINGLE_STEP_OPTIMIZER_H
+#define G1_SINGLE_STEP_OPTIMIZER_H
 
 #include "Optimizer.h"
 
 #include "BezierCurves.h"
 
-#include "TalosConstrainedInverseDynamics.h"
-#include "TalosDynamicsConstraints.h"
-#include "TalosSingleStepPeriodicityConstraints.h"
+#include "G1ConstrainedInverseDynamics.h"
+#include "G1DynamicsConstraints.h"
+#include "G1SingleStepPeriodicityConstraints.h"
 #include "Utils.h"
 
 #include "ConstrainedJointLimits.h"
 #include "TorqueLimits.h"
 #include "RectangleSurfaceContactConstraints.h"
-#include "TalosCustomizedConstraints.h"
+#include "G1CustomizedConstraints.h"
 
 namespace RAPTOR {
-namespace Talos {
+namespace G1 {
 
 using namespace Ipopt;
 
-class TalosSingleStepOptimizer : public Optimizer {
+class G1SingleStepOptimizer : public Optimizer {
 public:
     using Model = pinocchio::Model;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     /** Default constructor */
-    TalosSingleStepOptimizer() = default;
+    G1SingleStepOptimizer() = default;
 
     /** Default destructor */
-    ~TalosSingleStepOptimizer() = default;
+    ~G1SingleStepOptimizer() = default;
 
     // [set_parameters]
     bool set_parameters(
@@ -86,12 +86,12 @@ public:
     *  knowing. (See Scott Meyers book, "Effective C++")
     */
     //@{
-    TalosSingleStepOptimizer(
-       const TalosSingleStepOptimizer&
+    G1SingleStepOptimizer(
+       const G1SingleStepOptimizer&
     );
 
-    TalosSingleStepOptimizer& operator=(
-       const TalosSingleStepOptimizer&
+    G1SingleStepOptimizer& operator=(
+       const G1SingleStepOptimizer&
     );
 
     std::shared_ptr<BezierCurves> bcPtr_;
@@ -100,10 +100,10 @@ public:
     std::shared_ptr<DynamicsConstraints> dcPtr_;
     std::shared_ptr<InverseDynamics> idPtr_;
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
-    std::shared_ptr<TalosConstrainedInverseDynamics> dcidPtr_;
+    std::shared_ptr<G1ConstrainedInverseDynamics> dcidPtr_;
 };
 
-}; // namespace Talos
+}; // namespace G1
 }; // namespace RAPTOR
 
-#endif // TALOS_SINGLE_STEP_OPTIMIZER_H
+#endif // G1_SINGLE_STEP_OPTIMIZER_H

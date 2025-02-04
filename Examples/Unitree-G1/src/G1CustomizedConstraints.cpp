@@ -1,12 +1,12 @@
-#include "TalosCustomizedConstraints.h"
+#include "G1CustomizedConstraints.h"
 
 namespace RAPTOR {
-namespace Talos {
+namespace G1 {
 
-TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
-                                                       std::shared_ptr<Trajectories>& trajPtr_input,
-                                                       std::shared_ptr<TalosDynamicsConstraints>& ddcPtr_input,
-                                                       const GaitParameters& gp_input) : 
+G1CustomizedConstraints::G1CustomizedConstraints(const Model& model_input,
+                                                 std::shared_ptr<Trajectories>& trajPtr_input,
+                                                 std::shared_ptr<G1DynamicsConstraints>& ddcPtr_input,
+                                                 const GaitParameters& gp_input) : 
     trajPtr_(trajPtr_input),
     ddcPtr_(ddcPtr_input),
     gp(gp_input) {
@@ -32,11 +32,11 @@ TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
     initialize_memory(m, trajPtr_->varLength, false);
 }
 
-void TalosCustomizedConstraints::compute(const VecX& z, 
-                                         bool compute_derivatives,
-                                         bool compute_hessian) {
+void G1CustomizedConstraints::compute(const VecX& z, 
+                                      bool compute_derivatives,
+                                      bool compute_hessian) {
     if (compute_hessian) {
-        throw std::invalid_argument("TalosCustomizedConstraints does not support hessian computation");
+        throw std::invalid_argument("G1CustomizedConstraints does not support hessian computation");
     }
 
     trajPtr_->compute(z, compute_derivatives, compute_hessian);
@@ -47,11 +47,11 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     for (int i = 0; i < trajPtr_->N; i++) {
         if (ddcPtr_->stanceLeg == 'L') {
             swingfoot_endT = rightfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_right_6_joint");
+            swingfoot_id = modelPtr_->getJointId("right_ankle_roll_joint");
         }
         else {
             swingfoot_endT = leftfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_left_6_joint");
+            swingfoot_id = modelPtr_->getJointId("left_ankle_roll_joint");
         }
         
         VecX qi(modelPtr_->nq);
@@ -109,7 +109,7 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     }
     g5.tail(trajPtr_->N) = swingfoot_xyzrpy.row(1).array() - gp.swingfoot_begin_y_des;
 
-    // (4) torso height always larger than 0.95 meter
+    // (4) torso height always larger than 0.55 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
     //           stays between left foot and right foot
@@ -164,7 +164,7 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     }
 }
 
-void TalosCustomizedConstraints::compute_bounds() {
+void G1CustomizedConstraints::compute_bounds() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
@@ -186,10 +186,10 @@ void TalosCustomizedConstraints::compute_bounds() {
     g5_lb = VecX::Zero(2 + trajPtr_->N);
     g5_ub = VecX::Zero(2 + trajPtr_->N);
 
-    // (4) torso height always larger than 0.95 meter
+    // (4) torso height always larger than 0.55 meter
     //     roll and pitch always close to 0
     //     yaw always close to 0 when walking forward
-    g6_lb = VecX::Constant(trajPtr_->N, 0.95);
+    g6_lb = VecX::Constant(trajPtr_->N, 0.55);
     g6_ub = VecX::Constant(trajPtr_->N, 1e19);
     g7_lb = VecX::Constant(trajPtr_->N, -gp.eps_torso_angle);
     g7_ub = VecX::Constant(trajPtr_->N, gp.eps_torso_angle);
@@ -206,13 +206,13 @@ void TalosCustomizedConstraints::compute_bounds() {
     g_ub << g1_ub, g2_ub, g3_ub, g4_ub, g5_ub, g6_ub, g7_ub, g8_ub, g9_ub, g10_ub, g11_ub;
 }
 
-void TalosCustomizedConstraints::print_violation_info() {
+void G1CustomizedConstraints::print_violation_info() {
     // (1) swingfoot height always larger than 0
     //               height equal to 0 at the beginning and at the end
     //               height higher than the desired value in the middle
     for (int i = 0; i < trajPtr_->N; i++) {
         if (g1(i) <= g1_lb(i) - 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+            std::cout << "        G1CustomizedConstraints.cpp: swing foot height at time instance " 
                       << i 
                       << " is below lower limit: " 
                       << g1(i) 
@@ -221,7 +221,7 @@ void TalosCustomizedConstraints::print_violation_info() {
                       << std::endl;
         }
         if (g1(i) >= g1_ub(i) + 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot height at time instance " 
+            std::cout << "        G1CustomizedConstraints.cpp: swing foot height at time instance " 
                       << i 
                       << " is above upper limit: " 
                       << g1(i) 
@@ -234,21 +234,21 @@ void TalosCustomizedConstraints::print_violation_info() {
     // (2) swingfoot always flat and points forward
     for (int i = 0; i < trajPtr_->N; i++) {
         if (abs(g2(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot roll at time instance " 
+            std::cout << "        G1CustomizedConstraints.cpp: swing foot roll at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g2(i) 
                       << std::endl;
         }
         if (abs(g3(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot pitch at time instance " 
+            std::cout << "        G1CustomizedConstraints.cpp: swing foot pitch at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g3(i) 
                       << std::endl;
         }
         if (abs(g4(i)) >= 1e-4) {
-            std::cout << "        TalosCustomizedConstraints.cpp: swing foot yaw at time instance " 
+            std::cout << "        G1CustomizedConstraints.cpp: swing foot yaw at time instance " 
                       << i 
                       << " is not close to 0: " 
                       << g4(i) 
@@ -259,19 +259,19 @@ void TalosCustomizedConstraints::print_violation_info() {
     // (3) swingfoot xy equal to desired value at the beginning and at the end
     if (g5(0) <= g5_lb(0) - 1e-4 ||
         g5(0) >= g5_ub(0) + 1e-4) {
-        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at beginning is not equal to desired value: " 
+        std::cout << "        G1CustomizedConstraints.cpp: swing foot x at beginning is not equal to desired value: " 
                   << g5(0) 
                   << std::endl;
     }
     if (g5(1) <= g5_lb(1) - 1e-4 ||
         g5(1) >= g5_ub(1) + 1e-4) {
-        std::cout << "        TalosCustomizedConstraints.cpp: swing foot x at end is not equal to desired value: " 
+        std::cout << "        G1CustomizedConstraints.cpp: swing foot x at end is not equal to desired value: " 
                   << g5(1) 
                   << std::endl;
     }
 
-    // (4) torso height always larger than 0.95 meter
+    // (4) torso height always larger than 0.55 meter
 }
 
-}; // namespace Talos
+}; // namespace G1
 }; // namespace RAPTOR

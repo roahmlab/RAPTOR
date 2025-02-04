@@ -1,5 +1,5 @@
-#ifndef TALOSMULTIPLESTEPOPTIMIZER_H
-#define TALOSMULTIPLESTEPOPTIMIZER_H
+#ifndef TALOS_MULTIPLE_STEP_OPTIMIZER_H
+#define TALOS_MULTIPLE_STEP_OPTIMIZER_H
 
 #include "TalosSingleStepOptimizer.h"
 #include "TalosMultipleStepPeriodicityConstraints.h"
@@ -149,4 +149,4 @@ public:
 }; // namespace Talos
 }; // namespace RAPTOR
 
-#endif // TALOSMULTIPLESTEPOPTIMIZER_H
+#endif // TALOS_MULTIPLE_STEP_OPTIMIZER_H
