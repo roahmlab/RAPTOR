@@ -61,9 +61,9 @@ bool TalosSingleStepOptimizer::set_parameters(
 
     // Torque limits
     VecX TORQUE_LIMITS_LOWER_VEC = 
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS) * 1e6;          
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);          
     VecX TORQUE_LIMITS_UPPER_VEC =
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS) * 1e6;                                                                                                            
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);                                                                                                            
 
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
@@ -86,7 +86,7 @@ bool TalosSingleStepOptimizer::set_parameters(
     // Surface contact constraints
     const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<RectangleSurfaceContactConstraints>(cidPtr_, 
-                                                                             FRICTION_PARAMS));
+                                                                                      FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
     // kinematics constraints

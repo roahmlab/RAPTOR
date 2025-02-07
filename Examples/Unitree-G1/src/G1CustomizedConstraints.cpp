@@ -14,14 +14,8 @@ G1CustomizedConstraints::G1CustomizedConstraints(const Model& model_input,
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     // for regular gait optimization
-    // leftfoot_endT.p << 0, 0, -0.107;
-    // rightfoot_endT.p << 0, 0, -0.107;
-
-    // for single step fixed initial condition
-    // the initial condition has been fixed but the swing foot is slightly off the ground
-    // we take this into consideration so that the optimization does not stuck on this constraint forever
-    leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
-    rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    leftfoot_endT.p << 0.035, 0, -0.03;
+    rightfoot_endT.p << 0.035, 0, -0.03;
 
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);

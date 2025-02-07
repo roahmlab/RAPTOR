@@ -13,9 +13,9 @@ typedef struct GaitParameters_ {
     double eps_torso_angle = Utils::deg2rad(1.5); // 1.5 degrees
     double swingfoot_midstep_z_des = 0.10; // meters
     double swingfoot_begin_x_des = 0.00; // meters 
-    double swingfoot_begin_y_des = -0.17; // meters
+    double swingfoot_begin_y_des = -0.237013; // meters
     double swingfoot_end_x_des = 0.00; // meters
-    double swingfoot_end_y_des = -0.17; // meters
+    double swingfoot_end_y_des = -0.237013; // meters
 } GaitParameters;
 
 class G1CustomizedConstraints : public Constraints {

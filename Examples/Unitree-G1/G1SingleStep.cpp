@@ -14,7 +14,7 @@ const std::string filepath = "../Examples/Unitree-G1/data/";
 
 int main(int argc, char* argv[]) {
     // define robot model
-    const std::string urdf_filename = "../Robots/unitree_g1/g1_12dof_floatingbase.urdf";
+    const std::string urdf_filename = "../Robots/unitree-g1/g1_12dof_floatingbase.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     else {
         std::srand(std::time(nullptr));
     }
-    Eigen::VectorXd z = 0.1 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
+    Eigen::VectorXd z = 0.2 * Eigen::VectorXd::Random((degree + 1) * NUM_INDEPENDENT_JOINTS + NUM_JOINTS + NUM_DEPENDENT_JOINTS);
     
     SmartPtr<G1SingleStepOptimizer> mynlp = new G1SingleStepOptimizer();
     try {
@@ -148,39 +148,39 @@ int main(int argc, char* argv[]) {
         }
         solution.close();
 
-        // std::ofstream trajectory(filepath + "trajectory-g1.txt");
-        // trajectory << std::setprecision(20);
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
-        //     for (int j = 0; j < N; j++) {
-        //         trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
-        //     }
-        //     trajectory << std::endl;
-        // }
-        // trajectory.close();
+        std::ofstream trajectory(filepath + "trajectory-g1.txt");
+        trajectory << std::setprecision(20);
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->q(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->v(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->a(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_INDEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->tau(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        for (int i = 0; i < NUM_DEPENDENT_JOINTS; i++) {
+            for (int j = 0; j < N; j++) {
+                trajectory << mynlp->cidPtr_->lambda(j)(i) << ' ';
+            }
+            trajectory << std::endl;
+        }
+        trajectory.close();
     }
 
     return 0;
