@@ -17,61 +17,76 @@ int main(int argc, char* argv[]) {
     model.armature.setZero();
 
     // Define trajectory parameters
-    const double T = 10.0;
+    const double T = 7.5;
     const int N = 128;
-    const int degree = 5;
-    const double base_frequency = 2.0 * M_PI / T;
+    const int degree = 3;
+    // const double base_frequency = 2.0 * M_PI / T;
+    const double base_frequency = 0.2;
 
     // start from a specific static configuration
     Eigen::VectorXd q0(model.nv);
-    q0 << 1.001089876408351, 
-          0.09140272042061115,  
-          -1.648806446891836,   
-          2.381092213417765,
-          1.822374826812066,  
-          0.1466609489107418,  
-          0.9315315991321746;
+    q0 << -1.16396061,  0.34987045, -3.68094828, -1.75466411,  0.19968747, -1.09177839, -0.19841415;
     Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 0.05 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array();
+    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array();
     // z.segment((2 * degree + 1) * model.nv, model.nv) = 
     //     1.0 * Eigen::VectorXd::Random(model.nv).array();
     // z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
     //     0.5 * Eigen::VectorXd::Random(model.nv).array();
 
     // Define obstacles
+    // std::vector<Eigen::Vector3d> boxCenters = {
+    //     Eigen::Vector3d(0.0, 0.0, 0.18), // floor
+    //     Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
+    //     Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
+    //     Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
+    //     Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
+    //     Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
+    // };
+    // std::vector<Eigen::Vector3d> boxOrientations = {
+    //     Eigen::Vector3d(0.0, 0.0, 0.0),
+    //     Eigen::Vector3d(0.0, 0.0, 0.0),
+    //     Eigen::Vector3d(0.0, 0.0, 0.0),
+    //     Eigen::Vector3d(0.0, 0.0, 0.0),
+    //     Eigen::Vector3d(0.0, 0.0, 0.0),
+    //     Eigen::Vector3d(0.0, 0.0, 0.0)
+    // };
+    // std::vector<Eigen::Vector3d> boxSizes = {
+    //     Eigen::Vector3d(5.0, 5.0, 0.01),
+    //     Eigen::Vector3d(5.0, 0.05, 1.12),
+    //     Eigen::Vector3d(0.05, 0.05, 1.12),
+    //     Eigen::Vector3d(0.05, 1.28, 1.28),
+    //     Eigen::Vector3d(5, 5, 0.05),
+    //     Eigen::Vector3d(0.15, 0.15, 0.15)
+    // };
+
     std::vector<Eigen::Vector3d> boxCenters = {
-        Eigen::Vector3d(0.0, 0.0, 0.18), // floor
-        Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
-        Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
-        Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
-        Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
-        Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
+        Eigen::Vector3d(0.40, 0.40, 0.15), // another obstacle
+        Eigen::Vector3d(0.40, 0.40, 0.45), // another obstacle
+        Eigen::Vector3d(0.7, 0.0, 0.02), // ground
+        Eigen::Vector3d(-0.39, -0.2, 0.56) // side wall
     };
     std::vector<Eigen::Vector3d> boxOrientations = {
-        Eigen::Vector3d(0.0, 0.0, 0.0),
-        Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0)
     };
     std::vector<Eigen::Vector3d> boxSizes = {
-        Eigen::Vector3d(5.0, 5.0, 0.01),
-        Eigen::Vector3d(5.0, 0.05, 1.12),
-        Eigen::Vector3d(0.05, 0.05, 1.12),
-        Eigen::Vector3d(0.05, 1.28, 1.28),
-        Eigen::Vector3d(5, 5, 0.05),
-        Eigen::Vector3d(0.15, 0.15, 0.15)
+        Eigen::Vector3d(0.30, 0.30, 0.30),
+        Eigen::Vector3d(0.30, 0.30, 0.30),
+        Eigen::Vector3d(2.0, 2.0, 0.01),
+        Eigen::Vector3d(0.08, 2.0, 1.12)
     };
 
     // Define limits buffer
     Eigen::VectorXd joint_limits_buffer(model.nq);
     joint_limits_buffer.setConstant(0.02);
     Eigen::VectorXd velocity_limits_buffer(model.nq);
-    velocity_limits_buffer.setConstant(0.05);
+    // velocity_limits_buffer.setConstant(0.05);
+    velocity_limits_buffer.setZero();
     Eigen::VectorXd torque_limits_buffer(model.nq);
     torque_limits_buffer.setConstant(0.5);
 
@@ -103,10 +118,10 @@ int main(int argc, char* argv[]) {
 
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetNumericValue("constr_viol_tol", mynlp->constr_viol_tol);
-	app->Options()->SetNumericValue("max_wall_time", 60.0);
+	app->Options()->SetNumericValue("max_wall_time", 20.0);
 	app->Options()->SetIntegerValue("print_level", 5);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma57");
+    app->Options()->SetStringValue("linear_solver", "ma86");
     app->Options()->SetStringValue("ma57_automatic_scaling", "yes");
 	if (mynlp->enable_hessian) {
         app->Options()->SetStringValue("hessian_approximation", "exact");
@@ -161,7 +176,7 @@ int main(int argc, char* argv[]) {
         rid->compute(mynlp->solution, false);
 
         if (argc > 1) {
-            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T7.5_d3_obs_slower/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
             std::ofstream trajectory(outputfolder + "exciting-trajectory-" + std::string(argv[1]) + ".csv");
 
@@ -182,6 +197,7 @@ int main(int argc, char* argv[]) {
                 trajectory << traj->tspan(i) << ' ';
                 trajectory << traj->q(i).transpose() << ' ';
                 trajectory << traj->q_d(i).transpose() << ' ';
+                trajectory << traj->q_dd(i).transpose() << ' ';
                 trajectory << rid->tau(i).transpose() << std::endl;
             }
         }
@@ -189,9 +205,17 @@ int main(int argc, char* argv[]) {
             std::ofstream solution("exciting-solution.csv");
             std::ofstream trajectory("exciting-trajectory.csv");
 
+            solution << std::setprecision(16);
             for (int i = 0; i < mynlp->solution.size(); i++) {
                 solution << mynlp->solution(i) << std::endl;
             }
+            for (int i = 0; i < 7; ++i){
+                solution << q0(i) << std::endl;
+            }
+            for (int i = 0; i < 7; ++i){
+                solution << q_d0(i) << std::endl;
+            }
+            solution << base_frequency << std::endl;
 
             for (int i = 0; i < traj->N; i++) {
                 trajectory << traj->tspan(i) << ' ';

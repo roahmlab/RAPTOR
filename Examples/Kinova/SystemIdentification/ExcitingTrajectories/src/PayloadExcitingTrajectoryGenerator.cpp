@@ -96,6 +96,13 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
     //     Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
     //     torque_limits_buffer_input;
 
+    // Trajectory terminal constraints (terminal velocity and acceleration are zero to ensure safety)
+    constraintsPtrVec_.push_back(std::make_unique<TrajectoryTerminalConstraints>(trajPtr_, 
+                                                                                 VecX::Zero(0), 
+                                                                                 VecX::Zero(model_input.nv),
+                                                                                 VecX::Zero(model_input.nv)));
+    constraintsNameVec_.push_back("trajectory terminal constraints");
+
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
                                                                JOINT_LIMITS_LOWER_VEC, 

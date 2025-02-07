@@ -1,5 +1,6 @@
 add_library(Conslib SHARED
     src/Constraints.cpp
+    src/TrajectoryTerminalConstraints.cpp
     src/JointLimits.cpp
     src/VelocityLimits.cpp
     src/AccelerationLimits.cpp
