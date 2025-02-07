@@ -8,7 +8,7 @@ N: 16
 time_discretization: Chebyshev # Chebyshev, Uniform
 
   # degree of the Bezier curve (as the desired trajectory)
-degree: 5
+degree: 7
 
 ### Gait behavior settings
   # step height (in the middle of the gait)

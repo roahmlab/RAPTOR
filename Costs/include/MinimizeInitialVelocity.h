@@ -1,36 +1,34 @@
-#ifndef MINIMIZE_POWER_H
-#define MINIMIZE_POWER_H
+#ifndef MINIMIZE_INITIAL_VELOCITY_H
+#define MINIMIZE_INITIAL_VELOCITY_H
 
 #include <memory>
 
 #include "Costs.h"
 #include "Trajectories.h"
-#include "InverseDynamics.h"
 #include "Utils.h"
 
 namespace RAPTOR {
 
-namespace Power {
+namespace InitialVelocity {
 constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
-}; // namespace Power
+}; // namespace InitialVelocity
 
 /*
 minimize the torque required over the entire trajectory
 */
-class MinimizePower : public Costs {
+class MinimizeInitialVelocity : public Costs {
 public:
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 
     // Constructor
-    MinimizePower() = default;
+    MinimizeInitialVelocity() = default;
 
     // Constructor
-    MinimizePower(std::shared_ptr<Trajectories>& trajPtr_input, 
-                  std::shared_ptr<InverseDynamics>& idPtr_input);
+    MinimizeInitialVelocity(std::shared_ptr<Trajectories>& trajPtr_input);
 
     // Destructor
-    ~MinimizePower() = default;
+    ~MinimizeInitialVelocity() = default;
 
     // class methods:
         // compute constraints
@@ -40,9 +38,8 @@ public:
 
     // class members:
     std::shared_ptr<Trajectories> trajPtr_;
-    std::shared_ptr<InverseDynamics> idPtr_;
 };
 
 }; // namespace RAPTOR
 
-#endif // MINIMIZE_POWER_H
+#endif // MINIMIZE_INITIAL_VELOCITY_H

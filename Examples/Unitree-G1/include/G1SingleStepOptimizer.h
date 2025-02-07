@@ -16,6 +16,8 @@
 #include "G1CustomizedConstraints.h"
 
 #include "MinimizePower.h"
+#include "MinimizeInitialVelocity.h"
+#include "MinimizeInitialAcceleration.h"
 
 namespace RAPTOR {
 namespace G1 {
@@ -60,22 +62,6 @@ public:
         Index&          nnz_h_lag,
         IndexStyleEnum& index_style
     ) final override;
-
-    // /** Method to return the objective value */
-    // bool eval_f(
-    //     Index         n,
-    //     const Number* x,
-    //     bool          new_x,
-    //     Number&       obj_value
-    // ) final override;
-
-    // /** Method to return the gradient of the objective */
-    // bool eval_grad_f(
-    //     Index         n,
-    //     const Number* x,
-    //     bool          new_x,
-    //     Number*       grad_f
-    // ) final override;
 
     /**@name Methods to block default compiler methods.
     *

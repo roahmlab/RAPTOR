@@ -35,7 +35,7 @@ void MinimizePower::compute(const VecX& z,
         const VecX power = tau.cwiseProduct(v);
         const double power_squared = power.dot(power);
 
-        if (power_squared > Torque::SQUARE_ROOT_THRESHOLD) {
+        if (power_squared > Power::SQUARE_ROOT_THRESHOLD) {
             const double power_norm = std::sqrt(power_squared);
             f += power_norm;
 
