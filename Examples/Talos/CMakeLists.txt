@@ -20,6 +20,7 @@ target_link_libraries(Taloslib PUBLIC
     trajlib
     IDlib
     Conslib
+    Costslib
     Optlib
     ipopt
     coinhsl

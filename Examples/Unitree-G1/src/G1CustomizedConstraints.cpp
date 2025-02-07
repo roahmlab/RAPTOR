@@ -106,7 +106,6 @@ void G1CustomizedConstraints::compute(const VecX& z,
     // (4) torso height always larger than 0.55 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    //           stays between left foot and right foot
     g6 = q.row(2); // torso height
     g7 = Utils::wrapToPi(q.row(3)); // torso roll
     g8 = Utils::wrapToPi(q.row(4)); // torso pitch

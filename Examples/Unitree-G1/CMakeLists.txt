@@ -20,6 +20,7 @@ target_link_libraries(G1lib PUBLIC
     trajlib
     IDlib
     Conslib
+    Costslib
     Optlib
     ipopt
     coinhsl

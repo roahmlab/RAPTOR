@@ -50,6 +50,7 @@ target_link_libraries(DigitMultipleStep_example PRIVATE
     trajlib 
     IDlib
     Conslib
+    Costslib
     Optlib
     Digitlib
     ipopt

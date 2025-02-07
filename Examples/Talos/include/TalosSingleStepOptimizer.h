@@ -98,7 +98,6 @@ public:
     std::shared_ptr<Trajectories> trajPtr_; 
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
-    std::shared_ptr<InverseDynamics> idPtr_;
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
     std::shared_ptr<TalosConstrainedInverseDynamics> dcidPtr_;
 };

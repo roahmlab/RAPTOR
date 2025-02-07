@@ -1,6 +1,7 @@
 add_library(Costslib SHARED
     src/Costs.cpp
     src/MinimizeTorque.cpp
+    src/MinimizePower.cpp
     src/MinimizePathLength.cpp
     src/MinimizeJerk.cpp
     src/EndEffectorRegressorConditionNumber.cpp
