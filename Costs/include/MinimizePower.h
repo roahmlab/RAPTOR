@@ -11,7 +11,7 @@
 namespace RAPTOR {
 
 namespace Power {
-constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
+constexpr double SQUARE_ROOT_THRESHOLD = 1e-8;
 }; // namespace Power
 
 /*

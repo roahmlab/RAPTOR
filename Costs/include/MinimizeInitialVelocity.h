@@ -10,7 +10,7 @@
 namespace RAPTOR {
 
 namespace InitialVelocity {
-constexpr double SQUARE_ROOT_THRESHOLD = 1e-12;
+constexpr double SQUARE_ROOT_THRESHOLD = 1e-8;
 }; // namespace InitialVelocity
 
 /*

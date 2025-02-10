@@ -32,11 +32,10 @@ void MinimizeTorque::compute(const VecX& z,
     for (int i = 0; i < trajPtr_->N; i++) {
         const VecX& tau = idPtr_->tau(i);
         const double tau_squared = tau.dot(tau);
+        const double tau_norm = std::sqrt(tau_squared);
+        f += tau_norm;
 
-        if (tau_squared > Torque::SQUARE_ROOT_THRESHOLD) {
-            const double tau_norm = std::sqrt(tau_squared);
-            f += tau_norm;
-
+        if (tau_norm > Torque::SQUARE_ROOT_THRESHOLD) {
             if (compute_derivatives) {
                 const MatX& ptau_pz = idPtr_->ptau_pz(i);
                 const VecX ptau_square_pz = ptau_pz.transpose() * tau;

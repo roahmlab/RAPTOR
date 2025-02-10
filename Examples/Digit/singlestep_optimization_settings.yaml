@@ -62,4 +62,4 @@ mu_strategy: adaptive # "adaptive" for more aggressive attempts, "monotone" for 
 linear_solver: ma57 # ma27, ma57, ma86, ma97, pardiso
 
   # turn on gradient check or not
-gredient_check: false
+gredient_check: false # true, false

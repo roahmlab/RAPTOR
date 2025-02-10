@@ -19,11 +19,10 @@ void MinimizeInitialVelocity::compute(const VecX& z,
 
     const VecX& v0 = trajPtr_->q_d(0);
     const double v0_squared = v0.dot(v0);
+    const double v0_norm = std::sqrt(v0_squared);
+    f = v0_norm;
 
-    if (v0_squared > InitialVelocity::SQUARE_ROOT_THRESHOLD) {
-        const double v0_norm = std::sqrt(v0_squared);
-        f = v0_norm;
-
+    if (v0_norm > InitialVelocity::SQUARE_ROOT_THRESHOLD) {
         if (compute_derivatives) {
             const MatX& pv0_pz = trajPtr_->pq_d_pz(0);
             const VecX pv0_square_pz = pv0_pz.transpose() * v0;

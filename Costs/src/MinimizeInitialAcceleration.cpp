@@ -19,11 +19,10 @@ void MinimizeInitialAcceleration::compute(const VecX& z,
 
     const VecX& a0 = trajPtr_->q_dd(0);
     const double a0_squared = a0.dot(a0);
+    const double a0_norm = std::sqrt(a0_squared);
+    f = a0_norm;
 
-    if (a0_squared > InitialAcceleration::SQUARE_ROOT_THRESHOLD) {
-        const double a0_norm = std::sqrt(a0_squared);
-        f = a0_norm;
-
+    if (a0_norm > InitialAcceleration::SQUARE_ROOT_THRESHOLD) {
         if (compute_derivatives) {
             const MatX& pa0_pz = trajPtr_->pq_dd_pz(0);
             const VecX pa0_square_pz = pa0_pz.transpose() * a0;
