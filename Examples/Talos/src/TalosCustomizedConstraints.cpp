@@ -112,13 +112,12 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     // (4) torso height always larger than 0.95 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    //           stays between left foot and right foot
     g6 = q.row(2); // torso height
     g7 = Utils::wrapToPi(q.row(3)); // torso roll
     g8 = Utils::wrapToPi(q.row(4)); // torso pitch
     g9 = Utils::wrapToPi(q.row(5)); // torso yaw
 
-    // (5) 
+    // (5) make sure the torso stays between the two feet
     g10 = q.row(1); // torso y <= 0
     g11 = q.row(1) - swingfoot_xyzrpy.row(1); // torso y >= swingfoot y
 

@@ -2,7 +2,6 @@
 #define DIGIT_CUSTOMIZED_CONSTRAINTS_H
 
 #include "Constraints.h"
-#include "FourierCurves.h"
 #include "DigitConstrainedInverseDynamics.h"
 #include "DigitDynamicsConstraints.h"
 #include "Utils.h"
@@ -11,7 +10,7 @@ namespace RAPTOR {
 namespace Digit {
 
 typedef struct GaitParameters_ {
-    double eps_torso_angle = Utils::deg2rad(1.5); // 3 degrees
+    double eps_torso_angle = Utils::deg2rad(1.5); // 1.5 degrees
     double swingfoot_midstep_z_des = 0.15; // meters
     double swingfoot_begin_x_des = -0.22; // meters (negative if left stance, positive if right stance)
     double swingfoot_begin_y_des = 0.00; // meters

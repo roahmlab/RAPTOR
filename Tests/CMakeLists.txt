@@ -192,3 +192,29 @@ target_link_libraries(QRDecomposition_test PUBLIC
 
 target_compile_options(QRDecomposition_test PUBLIC
     ${PINOCCHIO_FLAGS})
+
+add_executable(TorqueCost_test 
+    Costs/TestMinimizeTorqueCosts.cpp)
+
+target_link_libraries(TorqueCost_test PUBLIC
+    trajlib
+    IDlib
+    Costslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(TorqueCost_test PUBLIC
+    ${PINOCCHIO_FLAGS})
+
+add_executable(PowerCost_test 
+    Costs/TestMinimizePowerCosts.cpp)
+
+target_link_libraries(PowerCost_test PUBLIC
+    trajlib
+    IDlib
+    Costslib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio)
+
+target_compile_options(PowerCost_test PUBLIC
+    ${PINOCCHIO_FLAGS})

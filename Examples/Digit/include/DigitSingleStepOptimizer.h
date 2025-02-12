@@ -1,5 +1,5 @@
-#ifndef DIGITSINGLESTEPOPTIMIZER_H
-#define DIGITSINGLESTEPOPTIMIZER_H
+#ifndef DIGIT_SINGLE_STEP_OPTIMIZER_H
+#define DIGIT_SINGLE_STEP_OPTIMIZER_H
 
 #include "Optimizer.h"
 
@@ -14,6 +14,11 @@
 #include "RectangleSurfaceContactConstraints.h"
 #include "DigitCustomizedConstraints.h"
 #include "DigitSingleStepPeriodicityConstraints.h"
+
+// #include "MinimizeTorque.h"
+#include "MinimizePower.h"
+#include "MinimizeInitialVelocity.h"
+#include "MinimizeInitialAcceleration.h"
 
 namespace RAPTOR {
 namespace Digit {
@@ -59,22 +64,6 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the objective value */
-    bool eval_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number&       obj_value
-    ) final override;
-
-    /** Method to return the gradient of the objective */
-    bool eval_grad_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number*       grad_f
-    ) final override;
-
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -99,9 +88,10 @@ public:
 
     std::shared_ptr<DigitConstrainedInverseDynamics> dcidPtr_;
     std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+    std::shared_ptr<InverseDynamics> idPtr_;
 };
 
 }; // namespace Digit
 }; // namespace RAPTOR
 
-#endif // DIGITSINGLESTEPOPTIMIZER_H
+#endif // DIGIT_SINGLE_STEP_OPTIMIZER_H

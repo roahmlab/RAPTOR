@@ -10,6 +10,7 @@
 
 #include "EndEffectorRegressorConditionNumber.h"
 
+#include "TrajectoryTerminalConstraints.h"
 #include "JointLimits.h"
 #include "VelocityLimits.h"
 #include "AccelerationLimits.h"

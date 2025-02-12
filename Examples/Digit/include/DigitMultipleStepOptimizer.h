@@ -1,5 +1,5 @@
-#ifndef DIGITMULTIPLESTEPOPTIMIZER_H
-#define DIGITMULTIPLESTEPOPTIMIZER_H
+#ifndef DIGIT_MULTIPLE_STEP_OPTIMIZER_H
+#define DIGIT_MULTIPLE_STEP_OPTIMIZER_H
 
 #include "DigitSingleStepOptimizer.h"
 #include "DigitMultipleStepPeriodicityConstraints.h"
@@ -144,4 +144,4 @@ public:
 }; // namespace Digit
 }; // namespace RAPTOR
 
-#endif // DIGITMULTIPLESTEPOPTIMIZER_H
+#endif // DIGIT_MULTIPLE_STEP_OPTIMIZER_H
