@@ -6,8 +6,6 @@ This class implements various types of constraints that are later incorporated i
 g_lb <= g(z) <= g_ub
 ```
 
-## Core Functions
-
 The primary function is 
 ```C++
 compute(const Eigen::VectorXd& z, bool compute_derivatives, bool compute_hessian)
@@ -26,7 +24,7 @@ This updates `g_lb` and `g_ub`, which are also public class members, allowing th
 
 There's also a function called 
 ```C++
-print_violation_information
+print_violation_information()
 ```
 which will be called by the optimizer class at the end of the optimization, to print relevant information for tuning and debugging.
 

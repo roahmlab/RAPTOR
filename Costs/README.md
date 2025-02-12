@@ -3,13 +3,12 @@
 ## Class Overview
 This class implements different types of cost functions that will be later put into the optimization.
 
-## Core Functions
 The primary function is
 ```C++
 compute(const Eigen::VectorXd& z, bool compute_derivatives, bool compute_hessian)
 ``` 
 
-The objective function value is stored in a double variable `f`, which is a public class member, for the optimizer class to access from outside.
+The objective function value is stored in a `double` variable `f`, which is a public class member, for the optimizer class to access from outside.
 The gradient is stored in an Eigen vector `grad_f` and the hessian is stored in an Eigen matrix `hess_f`.
 
 The cost class usually requires a shared pointer of a trajectory class in the constructor, or a shared pointer of a forward kinematics and inverse dynamics class depending on the purpose of the cost functions. 

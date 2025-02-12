@@ -71,9 +71,14 @@ We only cares about filling in the following functions:
  - `get_bounds_info`: initialize the bounds of the decision variable `z`, and the bounds of the constraints (where it will call `compute_bounds()` in each of the constraints class).
  - `eval_f`: provide the cost function value.
  - `eval_grad_f`: provide the gradient of the cost function.
+ - `eval_hess_f`: provide the hessian of the cost function.
  - `eval_g`: provide the constraints values.
  - `eval_jac_g`: provide the gradient (jacobian) of the constraints.
  - `eval_h`: provide the hessian of the entire Lagrange multiplier.
  - `finalize_solution`: `Ipopt` will return a solution here (may be infeasible or not reach the constraint violation tolerance yet), but you can check things here if you want to take this as a valid solution.
+ - `summarize_constraints`: After getting the final solution from `Ipopt`, you can fill in functions to print additional information or debug.
 
+ ### Utils
 
+A bunch of useful utility functions inside. 
+Check [Utils.h](../Utils/include/Utils.h) for more details.
