@@ -1,53 +1,70 @@
 # Trajectories
 
-## Overview
+## Trajectories Class Overview
 
-### Trajectories class
+This folder contains various trajectory classes that take the decision variable `z` from the optimization problem and compute the corresponding trajectories for each joint `j` of the robot.
 
-This folder contains a variety of trajectory classes that take in the decision variable `z` of the optimization problem and returns the trajectories of each joint `j` of the robot.
-By trajectories, we mean the position, velocity, and the acceleration of each joint `j` over a series of time instances.
-This series of time instances is predefined and fixed during the optimization process.
-The most common example would be a uniform distribution over a fixed time interval `[0,T]`, where `T` is the duration of the trajectory.
+By trajectories, we refer to the:
+- Positions, stored in public class member `q`, 
+- Velocities, stored in public class member `q_d`, 
+- Accelerations stored in public class member `q_dd`, 
 
-Right now, this duration and the distribution of time instances are fixed.
-There are papers that incorporate the duration as one of the optimization decision variable, in the favor of solving problems, for example, reaching some target with the minimum amount of time while satisfying the torque limits or velocity limits.
-Adaptive changes over the distribution of time instances are also widely discussed in the context of direct collocation methods or spectral methods.
-But these are not the focus of our method for now.
+over a series of predefined and fixed time instances.
 
-Specifically, the core function of all trajectory classes is `compute(const Eigen::VectorXd& z, bool compute_derivatives)`.
-This function takes in the decision variable `z` of the optimization problem and updates the class member `q`, `q_d`, `q_dd`.
+The most common example is a uniform distribution of time instances over a fixed interval `[0, T]`, where `T` represents the total trajectory duration.
 
- - `q` is an Eigen array of Eigen vectors.
- - `q(i)` stores all joint positions at time instance `i`.
- - `q(i)(j)` stores the position of joint `j` at time instance `i`.
- 
- If `compute_derivatives` is true, then the function will also computes the gradient of `q`, `q_d`, `q_dd` with respect to the decision variable `z`, which are stored in `pq_pz`, `pq_d_pz`, and `pq_dd_pz`.
+Another choice is Chebyshev nodes, to minimize the oscillations at the beginning and the end of trajectory.
 
- - `pq_pz` is an Eigen array of Eigen matrices.
- - `pq_pz(i)` is a Eigen matrix of the jacobians of all joint positions with respect to the decision variable `z` at time instance `i`.
+### Fixed vs. Adaptive Time Instances
 
-If `compute_hessian` is true, then the function will also computes the hessian of `q`, `q_d`, `q_dd` with respect to the decision variable `z`, which are stored in `pq_pz_pz`, `pq_d_pz_pz`, and `pq_dd_pz_pz`.
- - `pq_pz_pz` is a 2D Eigen array of Eigen matrices.
- - `pq_pz_pz(j, i)` is a square Eigen matrix of the hessian of the position with respect to the decision variable `z` for joint `j` at time instance `i`. 
+Currently, both trajectory duration (`T`) and the time distribution are fixed. However, in research literature, some approaches incorporate:
+- Variable trajectory duration as an optimization decision variable to solve problems like minimum-time motion planning, while satisfying torque or velocity constraints.
+- Adaptive time distributions, commonly explored in direct collocation methods and spectral methods for improved numerical performance.
 
-These gradients or hessians are later taken in by other classes to eventually compute the gradients of the constraints or costs in the optimization.
+For now, RAPTOR does not focus on these adaptive methods.
 
-### TrajectoryGroup class
+### Core Functions
+Specifically, the core function of all trajectory classes is 
+
+```C++
+compute(const Eigen::VectorXd& z, bool compute_derivatives, bool compute_hessian)
+```
+
+This function takes the decision variable `z` from the optimization problem and updates the public class members `q`, `q_d`, and `q_dd`, which are later utilized by the `Constraints` class or the `Costs` class to compute the gradients of constraints and cost functions, facilitating efficient trajectory optimization.
+
+#### Trajectory Representation
+- `q` is an Eigen array of Eigen vectors, representing joint positions over time.
+- `q(i)`: Stores all joint positions at time instance `i`.
+- `q(i)(j)`: Stores the position of joint `j` at time instance `i`.
+
+#### Gradient Computation
+If `compute_derivatives` is `true`, the function also computes the gradients of `q`, `q_d`, and `q_dd` with respect to `z`. These are stored as:
+
+- `pq_pz`: Eigen array of Eigen matrices, storing position gradients.
+- `pq_pz(i)`: Jacobian matrix of all joint positions with respect to `z` at time instance `i`.
+
+#### Hessian Computation
+If `compute_hessian` is `true`, the function also computes the Hessian of `q`, `q_d`, and `q_dd` with respect to `z`. These are stored as:
+
+- `pq_pz_pz`: 2D Eigen array of Eigen matrices, storing second-order derivatives.
+- `pq_pz_pz(j, i)`: A square Eigen matrix representing the Hessian of the position of joint `j` at time instance `i` with respect to `z`.
+
+## Trajectory Types
+
+<!-- ### TrajectoryGroup class
 
 `TrajectoryGroup` is a special type of the class that contains multiple trajectories.
 For example, for multiple-step humanoid gait optimization, you can assign multiple trajectories in the group for each walking step of the humanoid robot and optimize all of these steps simultaneously.
-For manipulation tasks, like the robotic arm picks one object and places it at another place, you can also assign one trajectory for pick motion and another trajectory for place motion, so that they can be optimized at the same time.
-
-## Introduction to Each Trajectories
+For manipulation tasks, like the robotic arm picks one object and places it at another place, you can also assign one trajectory for pick motion and another trajectory for place motion, so that they can be optimized at the same time. -->
 
 ### Plain
 
-This class implements a very naive "trajectory", which is just the joint positions at one time instance.
+This class implements a very naive "trajectory", which is just a point in the configuration space, in other words, the joint positions at one time instance.
 The velocity and the acceleration are by default zero since there's no actual movement.
 
 ### TrajectoryData
 
-This class does not define any trajectories, but load the time, joint positions and joint velocties from a file.
+This class does not define any trajectories, but load the time, joint positions and joint velocties from a file, which is used to load hardware data for system identification.
 Otherwise, it generates random joint trajectories for users.
 The file needs to contain a data matrix that
  - the first column is the time.

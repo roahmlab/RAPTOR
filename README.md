@@ -25,10 +25,10 @@ For some of the constraints, we implement the analytical hessian so that Ipopt c
 <img src="https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025" alt="Talos walking forward" width="300" height="300">
 
 ## Requirements
-- Ubuntu >= 20.04
+- Ubuntu >= 22.04
 - [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=3.4)
 - [GSL](https://www.gnu.org/software/gsl/): solve close-loop kinematics
-- [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html): compute inverse dynamics and its gradient
+- [Pinocchio >= 3.0](https://stack-of-tasks.github.io/pinocchio/download.html): compute inverse dynamics and its gradient
 - [Ipopt](https://coin-or.github.io/Ipopt/INSTALL.html): for nonlinear optimization
 
 A more detailed instruction is provided [here](Installation/README.md).
@@ -39,8 +39,10 @@ We recommend users to install the requirements through docker.
  - KinematicsDynamics/ : This folder contains implementation to compute forward kinematics and inverse dynamics of a robot.
  - Constraints/ : This folder contains implementation of multiple constriants that could be useful for trajectory optimization,
                   such as torque limits or collision avoidance.
+ - Costs/ : This folder contains implementation of multiple costs that could be useful for trajectory optimization,
+                  such as minimizing the total torque/power consumption or minimizing the path length.
  - Optimization/ : This folder contains a base class that provides interfaces to ipopt.  
- - Examples/ : This folder contains two examples of trajectory optimization problem implementation for Digit-v3 and Kinova-gen3.
+ - Examples/ : This folder contains several examples of trajectory optimization problem implementations, including gait optimization examples for multiple walking robots like Digit-v3, Talos, Unitree-G1, and a lot of examples related to collision avoidance or system identification for Kinova-gen3.
 
 A more detailed instruction on how to code your own optimization problem is provided [here](Coding/README.md).  
             
@@ -69,7 +71,7 @@ We provide the following examples
 
 ## Bibtex
 To cite **RAPTOR** in your academic research, please use the following bibtex entry:
-```
+```bibtex
 @misc{zhang2024rapidrobusttrajectoryoptimization,
 title={Rapid and Robust Trajectory Optimization for Humanoids}, 
 author={Bohao Zhang and Ram Vasudevan},
@@ -80,7 +82,54 @@ primaryClass={cs.RO},
 url={https://arxiv.org/abs/2409.00303}}
 ```
 
+## Related Projects
+**RAPTOR** also includes a better integrated implementation of our previous projects:
+
+[Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability](https://github.com/roahmlab/armour)
+<!-- ```bibtex
+@article{article,
+author = {Michaux, Jonathan and Holmes, Patrick and Zhang, Bohao and Chen, Che and Wang, Baiyue and Sahgal, Shrey and Zhang, Tiancheng and Dey, Sidhartha and Kousik, Shreyas and Vasudevan, Ram},
+year = {2023},
+month = {01},
+pages = {},
+title = {Can't Touch This: Real-Time, Safe Motion Planning and Control for Manipulators Under Uncertainty}
+doi={10.48550/arXiv.2301.13308}}
+``` -->
+
+[Wrench Analysis for Inertial Transport using Reachability](https://roahmlab.github.io/waitr-dev/)
+<!-- ```bibtex
+@ARTICLE{10403905,
+  author={Brei, Zachary and Michaux, Jonathan and Zhang, Bohao and Holmes, Patrick and Vasudevan, Ram},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Serving Time: Real-Time, Safe Motion Planning and Control for Manipulation of Unsecured Objects}, 
+  year={2024},
+  volume={9},
+  number={3},
+  pages={2383-2390},
+  keywords={Trajectory;Manipulators;Real-time systems;Uncertainty;Planning;Optimization;Safety;Collision avoidance;Manipulation planning;robot safety;collision avoidance},
+  doi={10.1109/LRA.2024.3355731}}
+``` -->
+
+[Safe Planning for Articulated Robots Using Reachability-based Obstacle Avoidance With Spheres](https://roahmlab.github.io/sparrows/)
+<!-- ```bibtex
+@INPROCEEDINGS{Michaux-SPARROWS-RSS-24, 
+  AUTHOR    = {Jonathan Michaux AND Adam Li AND Qingyi Chen AND Che Chen AND Ram Vasudevan},
+  TITLE     = {{Safe Planning for Articulated Robots Using Reachability-based Obstacle Avoidance With Spheres}},
+  BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+  YEAR      = {2024},
+  ADDRESS   = {Delft, Netherlands},
+  MONTH     = {July},
+  DOI       = {10.15607/RSS.2024.XX.035}
+}
+``` -->
+
 ## Credits
-Bohao Zhang (jimzhang@umich.edu)
+[Bohao Zhang](https://cfather.github.io/) (jimzhang@umich.edu): Project leader.
+
+Zichang Zhou (zhouzichang1234@gmail.com): System identification.
+
+<!-- [Matthew Ejakov](https://sites.google.com/umich.edu/matthew-ejakov/home) (matthewejakov@gmail.com): Tapered capsule distance -->
+
+Jiyang Wang (realwjy@umich.edu): Linearized reachability-based contact constraints. 
 
 This work is developed in [RoahmLab](http://www.roahmlab.com/), University of Michigan, Ann Arbor
