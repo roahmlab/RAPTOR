@@ -58,8 +58,8 @@ make -j4
 You will be able to find README in each of the examples presented in `Example/` folder.
 We provide the following examples
  - Kinova-gen3
-    - `InverseKinematics/`: A simple inverse kinematics example given a desired end effector transformation matrix.
-    - `ArmourDiscrete/`: The robot arm has nothing on its end effector. Reaching a target configuration while avoiding obstacles and satisfying torque limits.
+    - `CollisionAvoidanceInverseKinematics/`: A simple inverse kinematics example given a desired end effector transformation matrix.
+    - `CollisionAvoidanceTrajectory/`: The robot arm has nothing on its end effector. Reaching a target configuration while avoiding obstacles and satisfying torque limits.
     - `WaitrDiscrete/`: The robot arm is holding a tray with an object on it. Reaching a target configuratio while avoiding obstacles, satisfying torque limits, and making sure the object not fall off from the tray.
     - `SystemIdentification/`: **(Future work)** Multiple examples related to system identification of a robotic arm. 
  - Digit

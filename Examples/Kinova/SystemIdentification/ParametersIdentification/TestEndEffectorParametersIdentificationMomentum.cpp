@@ -2,7 +2,7 @@
 
 using namespace RAPTOR;
 
-const std::string folder_name = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/end_effector_params_data/";
+const std::string folder_name = "../Examples/Kinova/SystemIdentification/ParametersIdentification/end_effector_params_data/";
 
 int main(int argc, char* argv[]) {
     // check if the file number is provided

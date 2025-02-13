@@ -1,24 +1,24 @@
 # Kinova 
 add_library(Kinovalib SHARED
-    InverseKinematics/src/KinovaIKSolver.cpp
-    ArmourDiscrete/src/KinovaOptimizer.cpp
-    ArmourDiscrete/src/KinovaCustomizedConstraints.cpp
-    ArmourDiscrete/src/KinovaLongerHorizonOptimizer.cpp
-    ArmourDiscrete/src/DualKinovaOptimizer.cpp
+    CollisionAvoidanceInverseKinematics/src/KinovaIKSolver.cpp
+    CollisionAvoidanceTrajectory/src/KinovaOptimizer.cpp
+    CollisionAvoidanceTrajectory/src/KinovaCustomizedConstraints.cpp
+    CollisionAvoidanceTrajectory/src/KinovaLongerHorizonOptimizer.cpp
+    CollisionAvoidanceTrajectory/src/DualKinovaOptimizer.cpp
     WaitrDiscrete/src/KinovaWaitrOptimizer.cpp
     SystemIdentification/ExcitingTrajectories/src/ExcitingTrajectoryGenerator.cpp
     SystemIdentification/ExcitingTrajectories/src/PayloadExcitingTrajectoryGenerator.cpp
-    SystemIdentification/IterativeSystemIdentification/src/FrictionParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentification.cpp
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorParametersIdentificationMomentum.cpp)
+    SystemIdentification/ParametersIdentification/src/FrictionParametersIdentification.cpp
+    SystemIdentification/ParametersIdentification/src/EndEffectorParametersIdentification.cpp
+    SystemIdentification/ParametersIdentification/src/EndEffectorParametersIdentificationMomentum.cpp)
     
 target_include_directories(Kinovalib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/InverseKinematics/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/ArmourDiscrete/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/CollisionAvoidanceInverseKinematics/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/CollisionAvoidanceTrajectory/include
     ${CMAKE_CURRENT_SOURCE_DIR}/WaitrDiscrete/include
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/PZDynamics/include
     ${CMAKE_SOURCE_DIR}/Costs/include
@@ -77,9 +77,9 @@ target_link_libraries(Armourlib PUBLIC
 
 ###
 add_executable(KinovaIK_example 
-    InverseKinematics/KinovaIKExample.cpp)
+    CollisionAvoidanceInverseKinematics/KinovaIKExample.cpp)
 target_include_directories(KinovaIK_example PUBLIC
-    InverseKinematics)
+    CollisionAvoidanceInverseKinematics)
 target_link_libraries(KinovaIK_example PUBLIC
     trajlib 
     IDlib
@@ -96,9 +96,9 @@ target_compile_options(KinovaIK_example PUBLIC
 
 ###
 add_executable(KinovaIKMotion_example 
-    InverseKinematics/KinovaIKMotionExample.cpp)
+    CollisionAvoidanceInverseKinematics/KinovaIKMotionExample.cpp)
 target_include_directories(KinovaIKMotion_example PUBLIC
-    InverseKinematics/include)
+    CollisionAvoidanceInverseKinematics/include)
 target_link_libraries(KinovaIKMotion_example PUBLIC
     trajlib 
     IDlib
@@ -117,7 +117,7 @@ target_compile_options(KinovaIKMotion_example PUBLIC
 add_executable(KinovaHLP_example 
     WaypointPlanning/WaypointPlanningExample.cpp)
 target_include_directories(KinovaHLP_example PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(KinovaHLP_example PUBLIC
     trajlib 
     IDlib
@@ -132,9 +132,9 @@ target_compile_options(KinovaHLP_example PUBLIC
 
 ###
 add_executable(Kinova_example 
-    ArmourDiscrete/KinovaExample.cpp)
+    CollisionAvoidanceTrajectory/KinovaExample.cpp)
 target_include_directories(Kinova_example PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(Kinova_example PUBLIC
     trajlib 
     IDlib
@@ -173,7 +173,7 @@ add_executable(KinovaExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExample.cpp)
 target_include_directories(KinovaExciting_example PUBLIC
     SystemIdentification/ExcitingTrajectories/include
-    SystemIdentification/IterativeSystemIdentification/include)
+    SystemIdentification/ParametersIdentification/include)
 target_link_libraries(KinovaExciting_example PUBLIC
     trajlib 
     IDlib
@@ -193,7 +193,7 @@ add_executable(KinovaPayloadExciting_example
     SystemIdentification/ExcitingTrajectories/KinovaRegressorExamplePayload.cpp)
 target_include_directories(KinovaPayloadExciting_example PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ExcitingTrajectories/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(KinovaPayloadExciting_example PUBLIC
     trajlib 
     IDlib
@@ -210,9 +210,9 @@ target_compile_options(KinovaPayloadExciting_example PUBLIC
 
 ###
 add_executable(DualKinova_example 
-    ArmourDiscrete/DualKinovaExample.cpp)
+    CollisionAvoidanceTrajectory/DualKinovaExample.cpp)
 target_include_directories(DualKinova_example PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(DualKinova_example PUBLIC
     trajlib 
     IDlib
@@ -230,10 +230,10 @@ target_compile_options(DualKinova_example PUBLIC
 
 ###
 add_executable(SysidFriction_test
-    SystemIdentification/IterativeSystemIdentification/TestFrictionParametersIdentification.cpp)
+    SystemIdentification/ParametersIdentification/TestFrictionParametersIdentification.cpp)
 target_include_directories(SysidFriction_test PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(SysidFriction_test PUBLIC
     trajlib 
     IDlib
@@ -250,10 +250,10 @@ target_compile_options(SysidFriction_test PUBLIC
 
 ###
 add_executable(SysidEnd_test
-    SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentification.cpp)
+    SystemIdentification/ParametersIdentification/TestEndEffectorParametersIdentification.cpp)
 target_include_directories(SysidEnd_test PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(SysidEnd_test PUBLIC
     trajlib 
     IDlib
@@ -270,10 +270,10 @@ target_compile_options(SysidEnd_test PUBLIC
 
 ###
 add_executable(SysidEndMomentum_test
-    SystemIdentification/IterativeSystemIdentification/TestEndEffectorParametersIdentificationMomentum.cpp)
+    SystemIdentification/ParametersIdentification/TestEndEffectorParametersIdentificationMomentum.cpp)
 target_include_directories(SysidEndMomentum_test PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(SysidEndMomentum_test PUBLIC
     trajlib 
     IDlib
@@ -328,10 +328,10 @@ target_compile_options(DualArmour_example PUBLIC
 ### Python bindings 
 nanobind_add_module(KinovaIKMotion_nanobind 
     NB_SHARED LTO
-    InverseKinematics/KinovaIKMotionPybind.cpp
-    InverseKinematics/src/KinovaIKMotionPybindWrapper.cpp)
+    CollisionAvoidanceInverseKinematics/KinovaIKMotionPybind.cpp
+    CollisionAvoidanceInverseKinematics/src/KinovaIKMotionPybindWrapper.cpp)
 target_include_directories(KinovaIKMotion_nanobind PUBLIC
-    InverseKinematics/include)
+    CollisionAvoidanceInverseKinematics/include)
 target_link_libraries(KinovaIKMotion_nanobind PUBLIC
     trajlib 
     IDlib
@@ -350,7 +350,7 @@ nanobind_add_module(KinovaHLP_nanobind
     NB_SHARED LTO
     WaypointPlanning/WaypointPlanningPybind.cpp)
 target_include_directories(KinovaHLP_nanobind PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(KinovaHLP_nanobind PUBLIC
     trajlib 
     IDlib
@@ -414,10 +414,10 @@ set_property(TARGET dualarmour_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 nanobind_add_module(kinova_nanobind 
     NB_SHARED LTO
-    ArmourDiscrete/KinovaPybind.cpp
-    ArmourDiscrete/src/KinovaPybindWrapper.cpp)
+    CollisionAvoidanceTrajectory/KinovaPybind.cpp
+    CollisionAvoidanceTrajectory/src/KinovaPybindWrapper.cpp)
 target_include_directories(kinova_nanobind PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(kinova_nanobind PUBLIC
     trajlib 
     IDlib
@@ -436,10 +436,10 @@ set_property(TARGET kinova_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 nanobind_add_module(kinova_longer_nanobind 
     NB_SHARED LTO
-    ArmourDiscrete/KinovaLongerHorizonPybind.cpp
-    ArmourDiscrete/src/KinovaLongerHorizonPybindWrapper.cpp)
+    CollisionAvoidanceTrajectory/KinovaLongerHorizonPybind.cpp
+    CollisionAvoidanceTrajectory/src/KinovaLongerHorizonPybindWrapper.cpp)
 target_include_directories(kinova_longer_nanobind PUBLIC
-    ArmourDiscrete/include)
+    CollisionAvoidanceTrajectory/include)
 target_link_libraries(kinova_longer_nanobind PUBLIC
     trajlib 
     IDlib
@@ -504,11 +504,11 @@ set_property(TARGET safe_payload_exciting_nanobind PROPERTY POSITION_INDEPENDENT
 
 nanobind_add_module(end_effector_sysid_nanobind 
     NB_SHARED LTO
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationPybindWrapper.cpp
-    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationPybind.cpp)
+    SystemIdentification/ParametersIdentification/src/EndEffectorIdentificationPybindWrapper.cpp
+    SystemIdentification/ParametersIdentification/EndEffectorIdentificationPybind.cpp)
 target_include_directories(end_effector_sysid_nanobind PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(end_effector_sysid_nanobind PUBLIC
     trajlib 
     IDlib
@@ -527,11 +527,11 @@ set_property(TARGET end_effector_sysid_nanobind PROPERTY POSITION_INDEPENDENT_CO
 
 nanobind_add_module(end_effector_sysid_momentum_nanobind 
     NB_SHARED LTO
-    SystemIdentification/IterativeSystemIdentification/src/EndEffectorIdentificationMomentumPybindWrapper.cpp
-    SystemIdentification/IterativeSystemIdentification/EndEffectorIdentificationMomentumPybind.cpp)
+    SystemIdentification/ParametersIdentification/src/EndEffectorIdentificationMomentumPybindWrapper.cpp
+    SystemIdentification/ParametersIdentification/EndEffectorIdentificationMomentumPybind.cpp)
 target_include_directories(end_effector_sysid_momentum_nanobind PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification
-    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/IterativeSystemIdentification/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemIdentification/ParametersIdentification/include)
 target_link_libraries(end_effector_sysid_momentum_nanobind PUBLIC
     trajlib 
     IDlib

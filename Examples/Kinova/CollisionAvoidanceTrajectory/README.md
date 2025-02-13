@@ -9,7 +9,7 @@ The following constraints are activated:
 - Torque limits
 - Obstacle avoidance, where robot are represented as collection of spheres and the environment are represented as collection of boxes
 
-Analytical hessian of all constraints are provided.
+Analytical Hessian of all constraints are provided.
 
 The obstacles are defined in `KinovaExample.cpp`.
 Check line 29-33.

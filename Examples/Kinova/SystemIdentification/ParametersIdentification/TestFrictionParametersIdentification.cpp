@@ -27,13 +27,13 @@ int main(int argc, char* argv[]) {
 
     // Initialize data
     bool include_offset_input = false ;
-    const std::string posFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_downsampled_" 
+    const std::string posFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_downsampled_" 
                                 +std::string(argv[1])+ ".csv";
-    const std::string velFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_d_downsampled_"
+    const std::string velFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_d_downsampled_"
                                 + std::string(argv[1])+ ".csv";
-    const std::string accFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_dd_downsampled_"
+    const std::string accFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_dd_downsampled_"
                                 + std::string(argv[1]) +".csv";
-    const std::string torqueFile = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/tau_downsampled_"
+    const std::string torqueFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/tau_downsampled_"
                                 + std::string(argv[1]) +".csv";
 
     Eigen::MatrixXd posData = Utils::initializeEigenMatrixFromFile(posFile);
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
         std::cout << "parameter solution: " << (mynlp->solution).transpose() << std::endl;
 
         // Write the friction parameters into the file 
-        const std::string outputfolder = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";
+        const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/";
         std::ofstream solution(outputfolder + "friction_parameters_solution_" + std::string(argv[1]) + ".csv");
 
         solution << std::setprecision(16);
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
             tau_inertials.col(i) = data.tau;
         } 
 
-        const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";
+        const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/";
         std::ofstream estimate_tau(outputfolder1 + "friction_estimate_tau_"  + std::string(argv[1]) +".csv");
 
         for (Index i =0 ; i < N; i++) {
@@ -167,9 +167,9 @@ int main(int argc, char* argv[]) {
 
         // case 2
         // using the vaildation set with the training parameters
-        // const std::string posFile_check = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_downsampled_5.csv"; 
-        // const std::string velFile_check = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_d_downsampled_5.csv";
-        // const std::string accFile_check = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/q_dd_downsampled_5.csv";
+        // const std::string posFile_check = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_downsampled_5.csv"; 
+        // const std::string velFile_check = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_d_downsampled_5.csv";
+        // const std::string accFile_check = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_dd_downsampled_5.csv";
       
         // Eigen::MatrixXd posData_check = Utils::initializeEigenMatrixFromFile(posFile_check);
         // Eigen::MatrixXd velData_check = Utils::initializeEigenMatrixFromFile(velFile_check);
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
         // } 
 
 
-        // const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/IterativeSystemIdentification/full_params_data/";
+        // const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/";
         // std::ofstream estimate_tau(outputfolder1 + "friction_estimate_tau_"  + std::string(argv[1]) +".csv");
 
         // for (Index i =0 ; i < N; i++) {
