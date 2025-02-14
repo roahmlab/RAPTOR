@@ -24,6 +24,8 @@ For some of the constraints, we implement the analytical hessian so that Ipopt c
 
 <img src="https://github.com/user-attachments/assets/a68ab768-917e-4f6f-bd9b-64f0f337c025" alt="Talos walking forward" width="300" height="300">
 
+<img src="https://github.com/user-attachments/assets/07b0763b-6042-49a2-94f5-a655f0553ad2" alt="Unitree G1 walking forward" width="300" height="300">
+
 ## Requirements
 - Ubuntu >= 22.04
 - [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=3.4)
@@ -55,19 +57,32 @@ cmake ..
 make -j4
 ```
 
-You will be able to find README in each of the examples presented in `Example/` folder.
-We provide the following examples
- - Kinova-gen3
-    - `CollisionAvoidanceInverseKinematics/`: A simple inverse kinematics example given a desired end effector transformation matrix.
-    - `CollisionAvoidanceTrajectory/`: The robot arm has nothing on its end effector. Reaching a target configuration while avoiding obstacles and satisfying torque limits.
-    - `WaitrDiscrete/`: The robot arm is holding a tray with an object on it. Reaching a target configuratio while avoiding obstacles, satisfying torque limits, and making sure the object not fall off from the tray.
-    - `SystemIdentification/`: **(Future work)** Multiple examples related to system identification of a robotic arm. 
- - Digit
-    - Single step periodic gait optimization
-    - Multiple step gait optimization
- - Talos
-    - Single step gait optimization while starting from a fixed initial configuration
-    - Multiple step gait optimization
+You can find a README file with more details in each example within the `Example/` folder.
+We provide the following examples:
+
+- **Kinova-gen3**
+    - `CollisionAvoidanceInverseKinematics/`: Solves an inverse kinematics problem for a given desired end-effector transformation matrix while considering joint limits and collision avoidance.
+    - `CollisionAvoidanceTrajectory/`: The robot arm, without any payload, plans a trajectory to reach a target configuration while avoiding obstacles and satisfying torque limits.
+    - `Armour`: A better re-implementation that integrates our previous work [ARMOUR](https://roahmlab.github.io/armour/) and [WAITR](https://roahmlab.github.io/waitr-dev/), which is a provably-safe receding-horizon trajectory optimization framework.
+    - `SystemIdentification/`: Contains multiple examples related to system identification of a robotic arm.
+    <!-- - `WaitrDiscrete/`: The robot arm holds a tray with an object on it. It optimizes a trajectory to reach a target configuration while avoiding obstacles, satisfying torque limits, and ensuring the object remains stable on the tray. -->
+
+- **Digit**
+    - Single-step periodic gait optimization.
+    - Multi-step periodic gait optimization.
+    - Detailed explanations on incorporating closed-loop linkages as kinematic constraints in optimization.
+
+- **Talos**
+    - Single-step periodic gait optimization.
+    - Single-step gait optimization starting from a fixed initial configuration.
+    - Multi-step periodic gait optimization.
+    - Serves as a template for migrating the optimization framework to other humanoid robots.
+    - Follow the procedure in the [README](Examples/Talos/README.md) of the folder to optimize gaits for your own humanoid robot.
+
+- **Unitree-G1**
+    - Single-step periodic gait optimization
+    - Multi-step periodic gait optimization.
+    - A simple example migrated from code in [Talos](Examples/Talos/).
 
 ## Bibtex
 To cite **RAPTOR** in your academic research, please use the following bibtex entry:

@@ -2,17 +2,17 @@ name: G1SingleStep
 
 ### Trajectory settings
   # number of time nodes to evaluate constraints
-N: 20
+N: 14
 
   # distribution of the time nodes
 time_discretization: Chebyshev # Chebyshev, Uniform
 
   # degree of the Bezier curve (as the desired trajectory)
-degree: 8
+degree: 6
 
 ### Gait behavior settings
   # step height (in the middle of the gait)
-swingfoot_midstep_z_des: 0.1
+swingfoot_midstep_z_des: 0.05
 
   # position with respect to the forward direction of the robot at the beginning
 swingfoot_begin_x_des: -0.0
@@ -44,7 +44,7 @@ constr_viol_tol: 1e-4
 max_wall_time: 100.0
 
   # terminal condition 4: maximum number of iterations
-max_iter: 200
+max_iter: 500
 
   # scale the objective function
 obj_scaling_factor: 1e-3

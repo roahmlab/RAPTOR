@@ -2,13 +2,13 @@ name: TalosSingleStep
 
 ### Trajectory settings
   # number of time nodes to evaluate constraints
-N: 16
+N: 14
 
   # distribution of the time nodes
 time_discretization: Chebyshev # Chebyshev, Uniform
 
   # degree of the Bezier curve (as the desired trajectory)
-degree: 7
+degree: 6
 
 ### Gait behavior settings
   # step height (in the middle of the gait)

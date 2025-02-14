@@ -30,11 +30,11 @@ G1DynamicsConstraints::G1DynamicsConstraints(const std::shared_ptr<Model>& model
     }
 
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("left_ankle_roll_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0.035, 0, -0.03;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("right_ankle_roll_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0.035, 0, -0.03;
     }
 
@@ -52,11 +52,11 @@ void G1DynamicsConstraints::reinitialize() {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("left_ankle_roll_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0.035, 0, -0.03;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("right_ankle_roll_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0.035, 0, -0.03;
     }
 }

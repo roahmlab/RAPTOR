@@ -14,14 +14,14 @@ TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     // for regular gait optimization
-    // leftfoot_endT.p << 0, 0, -0.107;
-    // rightfoot_endT.p << 0, 0, -0.107;
+    leftfoot_endT.p << 0, 0, -0.107;
+    rightfoot_endT.p << 0, 0, -0.107;
 
-    // for single step fixed initial condition
-    // the initial condition has been fixed but the swing foot is slightly off the ground
-    // we take this into consideration so that the optimization does not stuck on this constraint forever
-    leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
-    rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // // for single step fixed initial condition
+    // // the initial condition has been fixed but the swing foot is slightly off the ground
+    // // we take this into consideration so that the optimization does not stuck on this constraint forever
+    // leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
 
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
@@ -47,11 +47,11 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     for (int i = 0; i < trajPtr_->N; i++) {
         if (ddcPtr_->stanceLeg == 'L') {
             swingfoot_endT = rightfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_right_6_joint");
+            swingfoot_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         }
         else {
             swingfoot_endT = leftfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_left_6_joint");
+            swingfoot_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         }
         
         VecX qi(modelPtr_->nq);

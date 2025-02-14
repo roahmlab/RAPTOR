@@ -112,7 +112,7 @@ bool G1SingleStepOptimizer::set_parameters(
     costsNameVec_.push_back("minimize power");
 
     costsPtrVec_.push_back(std::make_unique<MinimizeInitialVelocity>(trajPtr_));
-    costsWeightVec_.push_back(400.0);
+    costsWeightVec_.push_back(100.0);
     costsNameVec_.push_back("minimize initial velocity");
 
     costsPtrVec_.push_back(std::make_unique<MinimizeInitialAcceleration>(trajPtr_));

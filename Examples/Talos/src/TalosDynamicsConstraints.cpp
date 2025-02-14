@@ -30,11 +30,11 @@ TalosDynamicsConstraints::TalosDynamicsConstraints(const std::shared_ptr<Model>&
     }
 
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
 
@@ -52,11 +52,11 @@ void TalosDynamicsConstraints::reinitialize() {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
 }

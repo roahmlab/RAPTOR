@@ -87,5 +87,8 @@ constexpr double GAMMA = 0.7;
 constexpr double FOOT_WIDTH = 0.10; // (m)
 constexpr double FOOT_LENGTH = 0.03; // (m)
 
+constexpr char LEFT_FOOT_NAME[] = "left_ankle_roll_joint";
+constexpr char RIGHT_FOOT_NAME[] = "right_ankle_roll_joint";
+
 }; // namespace G1
 }; // namespace RAPTOR
