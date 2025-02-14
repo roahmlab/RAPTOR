@@ -84,8 +84,8 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
 
 constexpr double MU = 0.7;
 constexpr double GAMMA = 0.7;
-constexpr double FOOT_WIDTH = 0.20; // (m)
-constexpr double FOOT_LENGTH = 0.06; // (m)
+constexpr double FOOT_WIDTH = 0.10; // (m)
+constexpr double FOOT_LENGTH = 0.03; // (m)
 
 }; // namespace G1
 }; // namespace RAPTOR

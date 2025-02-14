@@ -12,12 +12,12 @@ namespace RAPTOR {
 namespace G1 {
 
 const std::string dependentJointNames[NUM_DEPENDENT_JOINTS] = {
-    "Px",
-    "Py",
-    "Pz",
-    "Rx",
-    "Ry",
-    "Rz"
+    "Px_joint",
+    "Py_joint",
+    "Pz_joint",
+    "Rx_joint",
+    "Ry_joint",
+    "Rz_joint"
 };
 
 const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] = {

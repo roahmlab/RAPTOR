@@ -1,5 +1,6 @@
 #include "G1SingleStepOptimizer.h"
 
+#include "pinocchio/algorithm/model.hpp"
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 
@@ -14,10 +15,27 @@ const std::string filepath = "../Examples/Unitree-G1/data/";
 
 int main(int argc, char* argv[]) {
     // define robot model
-    const std::string urdf_filename = "../Robots/unitree-g1/g1_12dof_floatingbase.urdf";
+    const std::string urdf_filename = "../Robots/unitree-g1/g1_22dof_floatingbase.urdf";
+    // const std::string urdf_filename = "../Robots/unitree-g1/g1_12dof_floatingbase.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
+
+    // lock the arm joints at a fixed position
+    pinocchio::Model model_armfixed;
+    std::vector<pinocchio::JointIndex> list_of_joints_to_lock_by_id(10);
+    for (int i = 0; i < 10; i++) {
+        list_of_joints_to_lock_by_id[i] = (pinocchio::JointIndex)(i + 12 + 6 + 1);
+    }
+    Eigen::VectorXd q_armfixed = Eigen::VectorXd::Zero(model.nq);
+    q_armfixed(12) = 0.6; // left_shoulder_pitch_joint
+    q_armfixed(13) = 0.2; // left_shoulder_roll_joint
+    q_armfixed(15) = 0.3; // left_elbow_pitch_joint
+    q_armfixed(17) = 0.6; // right_shoulder_pitch_joint
+    q_armfixed(18) = -0.2; // right_shoulder_roll_joint
+    q_armfixed(20) = 0.3; // right_elbow_pitch_joint
+    pinocchio::buildReducedModel(model, list_of_joints_to_lock_by_id, q_armfixed, model_armfixed);
+    model = model_armfixed;
     
     // ignore all motor dynamics
     model.armature.setZero();

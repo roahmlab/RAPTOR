@@ -25,7 +25,7 @@ G1DynamicsConstraints::G1DynamicsConstraints(const std::shared_ptr<Model>& model
             independentJointIds[i] = modelPtr_->getJointId(independentJointNames[i]) - 1;
         }
         else {
-            throw std::runtime_error("Can not find joint: " + dependentJointNames[i]);
+            throw std::runtime_error("Can not find joint: " + independentJointNames[i]);
         }
     }
 
@@ -211,7 +211,7 @@ void G1DynamicsConstraints::setupJointPosition(VecX& q, bool compute_derivatives
     }
 
     // fill in dependent joint positions 
-    fkPtr_->compute(modelPtr_->getJointId("Rz"), 
+    fkPtr_->compute(modelPtr_->getJointId("Rz_joint"), 
                     contact_joint_id, 
                     q, 
                     nullptr, 

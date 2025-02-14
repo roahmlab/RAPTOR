@@ -25,7 +25,7 @@ TalosDynamicsConstraints::TalosDynamicsConstraints(const std::shared_ptr<Model>&
             independentJointIds[i] = modelPtr_->getJointId(independentJointNames[i]) - 1;
         }
         else {
-            throw std::runtime_error("Can not find joint: " + dependentJointNames[i]);
+            throw std::runtime_error("Can not find joint: " + independentJointNames[i]);
         }
     }
 
