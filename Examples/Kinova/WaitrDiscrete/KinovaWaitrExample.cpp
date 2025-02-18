@@ -50,7 +50,7 @@ int main() {
 
     // Define contact surface parameters
     circleContactSurfaceParams csp;
-    // TODO: define contact surface parameters
+    // Simply use the default contact surface parameters
 
     // Define target
     Eigen::VectorXd qdes(NUM_JOINTS);

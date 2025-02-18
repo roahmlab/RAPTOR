@@ -9,7 +9,7 @@ Any results are stored as class members so that they can directly accessed by ot
 Here we an overview of each folder, which also represents different stages of implementation:
 
 ### Trajectories
-This class takes in the decision variable `z` of the optimization problem and returns the trajectories of each joint `j` of the robot.
+This class takes in the decision variable `z` of the optimization problem (the trajectory parameters) and returns the trajectories of each joint `j` of the robot.
 By trajectories, we mean the position, velocity, and the acceleration of each joint `j` over a series of time instances.
 This series of time instances is predefined and fixed during the optimization process.
 The most common example would be a uniform distribution over a fixed time interval `[0,T]`, where `T` is the duration of the trajectory.
@@ -101,6 +101,57 @@ Readers can refer to `Examples/Kinova/include/KinovaOptimizer.h` and `Examples/K
 
 More tutorials will be coming in the next release.
 
-### Recovering an Optimal Trajectory From Solution
+### Recovering an Optimal Trajectory From the Solution
 
-TODO
+**RAPTOR** parameterizes trajectories using primitives such as polynomials or Fourier series.  
+As a result, the solution of **RAPTOR** consists of **trajectory parameters** rather than the trajectory itself.  
+There are two main contexts in which the trajectory must be recovered from the optimal solution.
+
+#### Trajectories on a Finer Time Discretization For Visualization
+
+Trajectories in **RAPTOR** are typically evaluated on a predefined time grid, where the number of time instances is specified as the class variable `N` in the `Trajectories` class.  
+However, the default discretization may not be sufficient for visualization purposes or for checking constraint violations on a finer time grid.
+
+For example, the following code instantiates a shared pointer to a polynomial trajectory object with a duration of 1.0 second and a degree of 3 for a 7 dof robot, which will be evaluated over 10 time instances along the trajectory with a Chebyshev distribution. 
+The resulting object parameterizes the trajectory via polynomial coefficients that are later used to compute joint positions, velocities, and accelerations.
+```C++
+const int T = 1.0;
+const int N = 10;
+const int Nact = 7;
+const int degree = 3;
+std::shared_ptr<Trajectories> trajPtr_ = std::make_shared<Polynomial>(
+    T, N, Nact, Chebyshev, degree);
+```
+
+Suppose the optimal solution is stored in an Eigen vector `mynlp->solution`.  
+To evaluate the trajectory on a different time discretization, simply declare a new trajectory object and evaluate it using the solution:
+```C++
+const int N_finer = 1000;
+std::shared_ptr<Trajectories> finerTrajPtr_ = std::make_shared<Polynomial>(
+    T, N_finer, Nact, Uniform, degree);
+```
+and then simply evaluate it using the optimal solution:
+```C++
+finerTrajPtr_->compute(mynlp->solution);
+```
+Now, the trajectory can be accessed at a finer time discretization, making it more useful for visualization and further analysis:
+```C++
+for (int i = 0; i < finerTrajPtr_->N; i++) {
+    std::cout << finerTrajPtr_->q(i).transpose() << std::endl; // joint position
+    std::cout << finerTrajPtr_->q_d(i).transpose() << std::endl; // joint velocity
+    std::cout << finerTrajPtr_->q_dd(i).transpose() << std::endl; // joint acceleration
+}
+```
+
+#### Control (Track the Trajectory)
+
+Another important application is tracking the optimized trajectory using a controller.
+To be more specific, we would need an implementation of the following function (or something like that):
+```C++
+void compute(const Eigen::VectorXd& z, const double t, Eigen::VectorXd& q, Eigen::VectorXd& q_d, Eigen::VectorXd& q_dd);
+```
+where the decision variable `z` is taken in and the joint position `q`, velocity `q_d`, and acceleration `q_dd` are evaluated at a specific time `t`.
+
+Since this involves real-time trajectory execution, it requires a separate implementation, which is not supported in **RAPTOR**.
+However, RAPTOR already provides the necessary code to compute trajectories over a sequence of time instances via the class variable `tspan` in the `Trajectories class`.
+Users can reuse and adapt this existing functionality to implement trajectory tracking for control applications.
