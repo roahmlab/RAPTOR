@@ -70,13 +70,6 @@ public:
 
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-        // fkPtr_->compute(0, model.nq, z);
-        // Vec3 rpy = fkPtr_->getRPY();
-
-        // obj_value = roll_weight * rpy(0) + 
-        //             pitch_weight * rpy(1) + 
-        //             yaw_weight * rpy(2);
-
         fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 1);
         MatX Jrpy = fkPtr_->getRPYJacobian();
         Vec3 rpy = Jrpy * VecX::Ones(n);

@@ -46,7 +46,7 @@ void ForwardKinematicsSolver::compute(const int start,
         // pinocchio joint index starts from 1
         chain.push_back(search_id - 1);
 
-        if (search_id < 0 || search_id > modelPtr_->nv) {
+        if (search_id < 0 || search_id > modelPtr_->nv || chain.size() > modelPtr_->nv) {
             throw std::runtime_error("Can not find the end joint in the modelPtr_!");
         }
 

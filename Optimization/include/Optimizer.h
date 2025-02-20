@@ -209,7 +209,16 @@ public:
     // class members:
     std::chrono::_V2::system_clock::time_point start_time;
     std::chrono::_V2::system_clock::time_point end_time;
-    bool output_computation_time = false;
+    double nlp_f_time = 0; // us
+    int nlp_f_count = 0;
+    double nlp_g_time = 0; // us
+    int nlp_g_count = 0;
+    double nlp_grad_f_time = 0; // us
+    int nlp_grad_f_count = 0;
+    double nlp_jac_g_time = 0; // us
+    int nlp_jac_g_count = 0;
+    double nlp_hess_l_time = 0; // us
+    int nlp_hess_l_count = 0;
     
     bool enable_hessian = false;
 

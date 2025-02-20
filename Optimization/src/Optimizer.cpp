@@ -18,6 +18,17 @@ void Optimizer::reset() {
     optimalIpoptSolution = VecX();
     optimalIpoptObjValue = std::numeric_limits<Number>::max();
     ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+
+    nlp_f_time = 0;
+    nlp_f_count = 0;
+    nlp_g_time = 0;
+    nlp_g_count = 0;
+    nlp_grad_f_time = 0;
+    nlp_grad_f_count = 0;
+    nlp_jac_g_time = 0;
+    nlp_jac_g_count = 0;
+    nlp_hess_l_time = 0;
+    nlp_hess_l_count = 0;
 }
 
 // [TNLP_get_bounds_info]
@@ -203,16 +214,14 @@ bool Optimizer::eval_f(
         THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_ is empty!");
     }
 
+    start_time = std::chrono::high_resolution_clock::now();
+
     // fill in a Eigen Vector instance of decision variables
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
     obj_value = 0;
     for (Index f = 0; f < costsPtrVec_.size(); f++) {
         // compute cost functions
-        if (output_computation_time) {
-            start_time = std::chrono::high_resolution_clock::now();
-        }
-        
         try {
             costsPtrVec_[f]->compute(z, false);
         }
@@ -222,19 +231,14 @@ bool Optimizer::eval_f(
             THROW_EXCEPTION(IpoptException, "*** Error in eval_f: " + costsNameVec_[f] + "! Check previous error message.");
         }
 
-        if (output_computation_time) {
-            end_time = std::chrono::high_resolution_clock::now();
-            if (display_info) {
-                std::cout << "eval_f compute time for " << costsNameVec_[f] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
-            }
-        }
-
         obj_value += costsWeightVec_[f] * costsPtrVec_[f]->f;
     }
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
+
+    end_time = std::chrono::high_resolution_clock::now();
+    nlp_f_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    nlp_f_count++;
 
     return true;
 }
@@ -258,6 +262,8 @@ bool Optimizer::eval_grad_f(
         THROW_EXCEPTION(IpoptException, "*** Error costsPtrVec_ is empty!");
     }
 
+    start_time = std::chrono::high_resolution_clock::now();
+
     // fill in a Eigen Vector instance of decision variables
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
@@ -267,10 +273,6 @@ bool Optimizer::eval_grad_f(
 
     for (Index f = 0; f < costsPtrVec_.size(); f++) {
         // compute cost functions
-        if (output_computation_time) {
-            start_time = std::chrono::high_resolution_clock::now();
-        }
-        
         try {
             costsPtrVec_[f]->compute(z, true);
         }
@@ -280,19 +282,14 @@ bool Optimizer::eval_grad_f(
             THROW_EXCEPTION(IpoptException, "*** Error in eval_grad_f: " + costsNameVec_[f] + "! Check previous error message.");
         }
 
-        if (output_computation_time) {
-            end_time = std::chrono::high_resolution_clock::now();
-            if (display_info) {
-                std::cout << "eval_grad_f compute time for " << costsNameVec_[f] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
-            }
-        }
-
         for (Index i = 0; i < n; i++) {
             grad_f[i] += costsWeightVec_[f] * costsPtrVec_[f]->grad_f(i);
         }
     }
+
+    end_time = std::chrono::high_resolution_clock::now();
+    nlp_grad_f_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    nlp_grad_f_count++;
 
     return true;
 }
@@ -323,10 +320,6 @@ bool Optimizer::eval_hess_f(
 
     for (Index f = 0; f < costsPtrVec_.size(); f++) {
         // compute cost functions
-        if (output_computation_time) {
-            start_time = std::chrono::high_resolution_clock::now();
-        }
-        
         try {
             costsPtrVec_[f]->compute(z, true, true);
         }
@@ -334,15 +327,6 @@ bool Optimizer::eval_hess_f(
             std::cerr << "Error in " << costsNameVec_[f] << ": " << std::endl;
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f: " + costsNameVec_[f] + "! Check previous error message.");
-        }
-
-        if (output_computation_time) {
-            end_time = std::chrono::high_resolution_clock::now();
-            if (display_info) {
-                std::cout << "eval_hess_f compute time for " << costsNameVec_[f] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
-            }
         }
 
         hess_f += costsWeightVec_[f] * costsPtrVec_[f]->hess_f;
@@ -369,6 +353,8 @@ bool Optimizer::eval_g(
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of m in eval_g!");
     }
 
+    start_time = std::chrono::high_resolution_clock::now();
+
     // fill in a Eigen Vector instance of decision variables
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
@@ -376,10 +362,6 @@ bool Optimizer::eval_g(
     ifFeasibleCurrIter = true;
     for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
         // compute constraints
-        if (output_computation_time) {
-            start_time = std::chrono::high_resolution_clock::now();
-        }
-        
         try {
             constraintsPtrVec_[c]->compute(z, false);
         }
@@ -387,15 +369,6 @@ bool Optimizer::eval_g(
             std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
             std::cerr << e.what() << std::endl;
             THROW_EXCEPTION(IpoptException, "*** Error in eval_g: " + constraintsNameVec_[c] + "! Check previous error message.");
-        }
-
-        if (output_computation_time) {
-            end_time = std::chrono::high_resolution_clock::now();
-            if (display_info) {
-                std::cout << "eval_g compute time for " << constraintsNameVec_[c] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
-            }
         }
 
         // test if constraints are feasible
@@ -447,6 +420,10 @@ bool Optimizer::eval_g(
         ifOptimalIpoptFeasible = ifCurrentIpoptFeasible;
     }
 
+    end_time = std::chrono::high_resolution_clock::now();
+    nlp_g_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+    nlp_g_count++;
+
     return true;
 }
 // [TNLP_eval_g]
@@ -482,16 +459,14 @@ bool Optimizer::eval_jac_g(
         }
     }
     else {
+        start_time = std::chrono::high_resolution_clock::now();
+
         // fill in a Eigen Vector instance of decision variables
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
         Index iter = 0;
         for (Index c = 0; c < constraintsPtrVec_.size(); c++) {
             // compute constraints
-            if (output_computation_time) {
-                start_time = std::chrono::high_resolution_clock::now();
-            }
-
             try {
                 constraintsPtrVec_[c]->compute(z, true);
             }
@@ -499,13 +474,6 @@ bool Optimizer::eval_jac_g(
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_jac_g in: " + constraintsNameVec_[c] + "! Check previous error message.");
-            }
-
-            if (output_computation_time) {
-                end_time = std::chrono::high_resolution_clock::now();
-                std::cout << "eval_jac_g compute time for " << constraintsNameVec_[c] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
             }
 
             // fill in constraints
@@ -516,6 +484,10 @@ bool Optimizer::eval_jac_g(
                 }
             }
         }
+
+        end_time = std::chrono::high_resolution_clock::now();
+        nlp_jac_g_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        nlp_jac_g_count++;
     }
 
     return true;
@@ -566,6 +538,8 @@ bool Optimizer::eval_h(
         }
     }
     else {
+        start_time = std::chrono::high_resolution_clock::now();
+
         // fill in a Eigen Vector instance of decision variables
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
@@ -576,10 +550,6 @@ bool Optimizer::eval_h(
         hess_f.setZero();
 
         if (obj_factor != 0) {
-            if (output_computation_time) {
-                start_time = std::chrono::high_resolution_clock::now();
-            }
-
             try {
                 eval_hess_f(n, x, new_x, hess_f);
             }
@@ -587,12 +557,6 @@ bool Optimizer::eval_h(
                 std::cerr << "Error in eval_hess_f: " << std::endl;
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_hess_f! Check previous error message.");
-            }
-
-            if (output_computation_time) {
-                end_time = std::chrono::high_resolution_clock::now();
-                std::cout << "eval_hess_f compute time is" << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
             }
 
             hessian += obj_factor * hess_f;
@@ -614,10 +578,6 @@ bool Optimizer::eval_h(
             } 
 
             // compute constraints
-            if (output_computation_time) {
-                start_time = std::chrono::high_resolution_clock::now();
-            }
-
             try {
                 constraintsPtrVec_[c]->compute(z, true, true);
             }
@@ -625,13 +585,6 @@ bool Optimizer::eval_h(
                 std::cerr << "Error in " << constraintsNameVec_[c] << ": " << std::endl;
                 std::cerr << e.what() << std::endl;
                 THROW_EXCEPTION(IpoptException, "*** Error in eval_h in: " + constraintsNameVec_[c] + "! Check previous error message.");
-            }
-
-            if (output_computation_time) {
-                end_time = std::chrono::high_resolution_clock::now();
-                std::cout << "eval_hessian_g compute time for " << constraintsNameVec_[c] 
-                          << " is " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() 
-                          << " microseconds.\n";
             }
 
             if (constraintsPtrVec_[c]->pg_pz_pz.size() != constraintsPtrVec_[c]->m) {
@@ -673,8 +626,9 @@ bool Optimizer::eval_h(
             }
         }
 
-        // auto end_time = std::chrono::high_resolution_clock::now();
-        // std::cout << "eval_h time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds.\n";
+        end_time = std::chrono::high_resolution_clock::now();
+        nlp_hess_l_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        nlp_hess_l_count++;
     }
 
     return true;
@@ -749,7 +703,7 @@ void Optimizer::finalize_solution(
         summarize_constraints(m, g);
     }
 
-    if(display_info) std::cout << "Objective value: " << obj_value_copy << std::endl;
+    if (display_info) std::cout << "Objective value: " << obj_value_copy << std::endl;
 
     // clear the previous information
     ifFeasibleCurrIter = false;
@@ -759,6 +713,32 @@ void Optimizer::finalize_solution(
     optimalIpoptSolution = VecX();
     optimalIpoptObjValue = std::numeric_limits<Number>::max();
     ifOptimalIpoptFeasible = OptimizerConstants::FeasibleState::UNINITIALIZED;
+
+    if (display_info) {
+        // report the time taken for each function
+        printf("  optimizer  :     t_wall      (avg)    n_eval\n");
+        printf("      nlp_f  | %8.2fms (%7.2fus) %8d\n", nlp_f_time / 1000.0, nlp_f_time / nlp_f_count, nlp_f_count);
+        printf("      nlp_g  | %8.2fms (%7.2fus) %8d\n", nlp_g_time / 1000.0, nlp_g_time / nlp_g_count, nlp_g_count);
+        printf(" nlp_grad_f  | %8.2fms (%7.2fus) %8d\n", nlp_grad_f_time / 1000.0, nlp_grad_f_time / nlp_grad_f_count, nlp_grad_f_count);
+        printf("  nlp_jac_g  | %8.2fms (%7.2fus) %8d\n", nlp_jac_g_time / 1000.0, nlp_jac_g_time / nlp_jac_g_count, nlp_jac_g_count);
+        if (enable_hessian) {
+            printf("  nlp_hess_l | %8.2fms (%7.2fus) %8d\n", nlp_hess_l_time / 1000.0, nlp_hess_l_time / nlp_hess_l_count, nlp_hess_l_count);
+        }
+        double total_time = nlp_f_time + nlp_g_time + nlp_grad_f_time + nlp_jac_g_time + nlp_hess_l_time;
+        printf("      total  | %8.2fms (%7.2fms) %8d\n", total_time / 1000.0, total_time / 1000.0, 1);
+    }
+
+    // clear the timing information
+    nlp_f_time = 0;
+    nlp_f_count = 0;
+    nlp_g_time = 0;
+    nlp_g_count = 0;
+    nlp_grad_f_time = 0;
+    nlp_grad_f_count = 0;
+    nlp_jac_g_time = 0;
+    nlp_jac_g_count = 0;
+    nlp_hess_l_time = 0;
+    nlp_hess_l_count = 0;
 }
 // [TNLP_finalize_solution]
 

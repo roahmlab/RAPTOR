@@ -44,7 +44,7 @@ constr_viol_tol: 1e-4
 max_wall_time: 100.0
 
   # terminal condition 4: maximum number of iterations
-max_iter: 200
+max_iter: 100
 
   # scale the objective function
 obj_scaling_factor: 1e-3
