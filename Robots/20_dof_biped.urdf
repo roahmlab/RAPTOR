@@ -1,0 +1,290 @@
+<?xml version="1.0"?>
+<robot name="exported_robot">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+  </link>
+  <link name="Px">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Px_joint" type="prismatic">
+    <parent link="base_link"/>
+    <child link="Px"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.2000" upper="0.5000" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="Py">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Py_joint" type="prismatic">
+    <parent link="Px"/>
+    <child link="Py"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.0500" upper="0.5000" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="Pz">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Pz_joint" type="prismatic">
+    <parent link="Py"/>
+    <child link="Pz"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.5000" upper="1.2000" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="Rx">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Rx_joint" type="revolute">
+    <parent link="Pz"/>
+    <child link="Rx"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="Ry">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Ry_joint" type="revolute">
+    <parent link="Rx"/>
+    <child link="Ry"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="torso">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0992647058823529"/>
+      <mass value="17.0000000000000000"/>
+      <inertia ixx="0.2756595588235294" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.2754595588235295" iyz="0.0000000000000000" izz="0.0002000000000000"/>
+    </inertial>
+  </link>
+  <joint name="Rz_joint" type="revolute">
+    <parent link="Ry"/>
+    <child link="torso"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_leg_1">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_leg_1" type="revolute">
+    <parent link="torso"/>
+    <child link="left_leg_1"/>
+    <origin xyz="-0.0000000000000000 0.1000000000000000 -0.0000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.1047" upper="0.0000" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_leg_2">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0800000000000000"/>
+      <mass value="3.5000000000000000"/>
+      <inertia ixx="-0.0466666666666667" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0466666666666667" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_leg_2" type="revolute">
+    <parent link="left_leg_1"/>
+    <child link="left_leg_2"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3927" upper="0.3927" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_leg_3">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0800000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0333333333333333" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0333333333333333" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_leg_3" type="revolute">
+    <parent link="left_leg_2"/>
+    <child link="left_leg_3"/>
+    <origin xyz="-0.0000000000000000 -0.0000000000000000 -0.4000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.0873" upper="0.3142" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_leg_1">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_leg_1" type="revolute">
+    <parent link="torso"/>
+    <child link="right_leg_1"/>
+    <origin xyz="-0.0000000000000000 -0.1000000000000000 -0.0000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0000" upper="0.1047" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_leg_2">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0800000000000000"/>
+      <mass value="3.5000000000000000"/>
+      <inertia ixx="-0.0466666666666667" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0466666666666667" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_leg_2" type="revolute">
+    <parent link="right_leg_1"/>
+    <child link="right_leg_2"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3927" upper="0.3927" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_leg_3">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0800000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0333333333333333" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0333333333333333" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_leg_3" type="revolute">
+    <parent link="right_leg_2"/>
+    <child link="right_leg_3"/>
+    <origin xyz="-0.0000000000000000 -0.0000000000000000 -0.4000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.0873" upper="0.5236" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="shoulders">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="1.0000000000000000"/>
+      <inertia ixx="0.0049000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0049000000000000"/>
+    </inertial>
+  </link>
+  <joint name="shoulders" type="revolute">
+    <parent link="torso"/>
+    <child link="shoulders"/>
+    <origin xyz="-0.0000000000000000 -0.0000000000000000 0.4500000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="head">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0500000000000000"/>
+      <mass value="2.0000000000000000"/>
+      <inertia ixx="0.0016666666666667" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0016666666666667" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="head" type="revolute">
+    <parent link="shoulders"/>
+    <child link="head"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_arm_1">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_arm_1" type="revolute">
+    <parent link="shoulders"/>
+    <child link="left_arm_1"/>
+    <origin xyz="-0.0000000000000000 0.1750000000000000 -0.0000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_arm_2">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0750000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0130208333333333" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0130208333333333" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_arm_2" type="revolute">
+    <parent link="left_arm_1"/>
+    <child link="left_arm_2"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3142" upper="0.3142" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="left_arm_3">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.1200000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0187500000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0187500000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="left_arm_3" type="revolute">
+    <parent link="left_arm_2"/>
+    <child link="left_arm_3"/>
+    <origin xyz="-0.0000000000000000 -0.0000000000000000 -0.2500000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3142" upper="-0.1047" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_arm_1">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000"/>
+      <mass value="0.0000000000000000"/>
+      <inertia ixx="0.0000000000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="0.0000000000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_arm_1" type="revolute">
+    <parent link="shoulders"/>
+    <child link="right_arm_1"/>
+    <origin xyz="-0.0000000000000000 -0.1750000000000000 -0.0000000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.0314" upper="0.0314" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_arm_2">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.0750000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0130208333333333" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0130208333333333" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_arm_2" type="revolute">
+    <parent link="right_arm_1"/>
+    <child link="right_arm_2"/>
+    <origin xyz="0.0000000000000000 0.0000000000000000 0.0000000000000000" rpy="-0.0000000000000000 0.0000000000000000 -0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3142" upper="0.3142" effort="100.0" velocity="20.0000"/>
+  </joint>
+  <link name="right_arm_3">
+    <inertial>
+      <origin xyz="0.0000000000000000 0.0000000000000000 -0.1200000000000000"/>
+      <mass value="2.5000000000000000"/>
+      <inertia ixx="-0.0187500000000000" ixy="0.0000000000000000" ixz="0.0000000000000000" iyy="-0.0187500000000000" iyz="0.0000000000000000" izz="0.0000000000000000"/>
+    </inertial>
+  </link>
+  <joint name="right_arm_3" type="revolute">
+    <parent link="right_arm_2"/>
+    <child link="right_arm_3"/>
+    <origin xyz="-0.0000000000000000 -0.0000000000000000 -0.2500000000000000" rpy="0.0000000000000000 -0.0000000000000000 0.0000000000000000"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.3142" upper="-0.1047" effort="100.0" velocity="20.0000"/>
+  </joint>
+</robot>
