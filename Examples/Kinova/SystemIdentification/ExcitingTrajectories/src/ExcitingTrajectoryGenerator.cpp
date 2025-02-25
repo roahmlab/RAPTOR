@@ -82,6 +82,14 @@ bool ExcitingTrajectoryGenerator::set_parameters(
             Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_LOWER, NUM_JOINTS)) +
         velocity_limits_buffer_input;
 
+    // read acceleration limits from KinovaConstants.h
+    VecX ACCELERATION_LIMITS_LOWER_VEC = 
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(ACCELERATION_LIMITS_LOWER, NUM_JOINTS));
+    VecX ACCELERATION_LIMITS_UPPER_VEC =
+        Utils::deg2rad(
+            Utils::initializeEigenVectorFromArray(ACCELERATION_LIMITS_UPPER, NUM_JOINTS));
+
     VecX VELOCITY_LIMITS_UPPER_VEC = 
         Utils::deg2rad(
             Utils::initializeEigenVectorFromArray(VELOCITY_LIMITS_UPPER, NUM_JOINTS)) -
@@ -96,6 +104,13 @@ bool ExcitingTrajectoryGenerator::set_parameters(
         Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
         torque_limits_buffer_input;
 
+    // Trajectory terminal constraints (terminal velocity and acceleration are zero to ensure safety)
+    constraintsPtrVec_.push_back(std::make_unique<TrajectoryTerminalConstraints>(trajPtr_, 
+                                                                                 VecX::Zero(0), 
+                                                                                 VecX::Zero(model_input.nv),
+                                                                                 VecX::Zero(model_input.nv)));
+    constraintsNameVec_.push_back("trajectory terminal constraints");
+
     // Joint limits
     constraintsPtrVec_.push_back(std::make_unique<JointLimits>(trajPtr_, 
                                                                JOINT_LIMITS_LOWER_VEC, 
@@ -106,7 +121,13 @@ bool ExcitingTrajectoryGenerator::set_parameters(
     constraintsPtrVec_.push_back(std::make_unique<VelocityLimits>(trajPtr_, 
                                                                   VELOCITY_LIMITS_LOWER_VEC, 
                                                                   VELOCITY_LIMITS_UPPER_VEC));
-    constraintsNameVec_.push_back("velocity limits");        
+    constraintsNameVec_.push_back("velocity limits");     
+
+    // Acceleration limits
+    constraintsPtrVec_.push_back(std::make_unique<AccelerationLimits>(trajPtr_, 
+                                                                      ACCELERATION_LIMITS_LOWER_VEC, 
+                                                                      ACCELERATION_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("acceleration limits");   
 
     // Torque limits
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 

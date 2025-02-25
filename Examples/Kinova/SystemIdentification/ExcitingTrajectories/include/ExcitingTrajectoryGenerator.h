@@ -8,8 +8,10 @@
 #include "RegressorInverseDynamics.h"
 #include "FixedFrequencyFourierCurves.h"
 
+#include "TrajectoryTerminalConstraints.h"
 #include "JointLimits.h"
 #include "VelocityLimits.h"
+#include "AccelerationLimits.h"
 #include "TorqueLimits.h"
 #include "KinovaCustomizedConstraints.h"
 

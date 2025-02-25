@@ -29,13 +29,7 @@ int main(int argc, char* argv[]) {
 
     // start from a specific static configuration
     Eigen::VectorXd q0(model.nv);
-    q0 << 1.001089876408351, 
-          0.09140272042061115,  
-          -1.648806446891836,   
-          2.381092213417765,
-          1.822374826812066,  
-          0.1466609489107418,  
-          0.9315315991321746;
+    q0 << -1.16396061,  0.34987045, -3.68094828, -1.75466411,  0.19968747, -1.09177839, -0.19841415;
     Eigen::VectorXd q_d0 = Eigen::VectorXd::Zero(model.nv);
 
     // Define initial guess

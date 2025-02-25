@@ -17,11 +17,10 @@ int main(int argc, char* argv[]) {
     model.armature.setZero();
 
     // Define trajectory parameters
-    const double T = 7.5;
+    const double T = 10.0;
     const int N = 128;
     const int degree = 3;
-    // const double base_frequency = 2.0 * M_PI / T;
-    const double base_frequency = 0.2;
+    const double base_frequency = 2.0 * M_PI / T;
 
     // start from a specific static configuration
     Eigen::VectorXd q0(model.nv);
@@ -30,55 +29,32 @@ int main(int argc, char* argv[]) {
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv).array();
-    // z.segment((2 * degree + 1) * model.nv, model.nv) = 
-    //     1.0 * Eigen::VectorXd::Random(model.nv).array();
-    // z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
-    //     0.5 * Eigen::VectorXd::Random(model.nv).array();
+    Eigen::VectorXd z = 1.0 * Eigen::VectorXd::Random((2 * degree + 1) * model.nv).array();
 
     // Define obstacles
-    // std::vector<Eigen::Vector3d> boxCenters = {
-    //     Eigen::Vector3d(0.0, 0.0, 0.18), // floor
-    //     Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
-    //     Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
-    //     Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
-    //     Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
-    //     Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
-    // };
-    // std::vector<Eigen::Vector3d> boxOrientations = {
-    //     Eigen::Vector3d(0.0, 0.0, 0.0),
-    //     Eigen::Vector3d(0.0, 0.0, 0.0),
-    //     Eigen::Vector3d(0.0, 0.0, 0.0),
-    //     Eigen::Vector3d(0.0, 0.0, 0.0),
-    //     Eigen::Vector3d(0.0, 0.0, 0.0),
-    //     Eigen::Vector3d(0.0, 0.0, 0.0)
-    // };
-    // std::vector<Eigen::Vector3d> boxSizes = {
-    //     Eigen::Vector3d(5.0, 5.0, 0.01),
-    //     Eigen::Vector3d(5.0, 0.05, 1.12),
-    //     Eigen::Vector3d(0.05, 0.05, 1.12),
-    //     Eigen::Vector3d(0.05, 1.28, 1.28),
-    //     Eigen::Vector3d(5, 5, 0.05),
-    //     Eigen::Vector3d(0.15, 0.15, 0.15)
-    // };
-
     std::vector<Eigen::Vector3d> boxCenters = {
-        Eigen::Vector3d(0.40, 0.40, 0.15), // another obstacle
-        Eigen::Vector3d(0.40, 0.40, 0.45), // another obstacle
-        Eigen::Vector3d(0.7, 0.0, 0.02), // ground
-        Eigen::Vector3d(-0.39, -0.2, 0.56) // side wall
+        Eigen::Vector3d(0.0, 0.0, 0.18), // floor
+        Eigen::Vector3d(0.53, 0.49, 0.56), // back wall
+        Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
+        Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
+        Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
+        Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
     };
     std::vector<Eigen::Vector3d> boxOrientations = {
+        Eigen::Vector3d(0.0, 0.0, 0.0),
+        Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0),
         Eigen::Vector3d(0.0, 0.0, 0.0)
     };
     std::vector<Eigen::Vector3d> boxSizes = {
-        Eigen::Vector3d(0.30, 0.30, 0.30),
-        Eigen::Vector3d(0.30, 0.30, 0.30),
-        Eigen::Vector3d(2.0, 2.0, 0.01),
-        Eigen::Vector3d(0.08, 2.0, 1.12)
+        Eigen::Vector3d(5.0, 5.0, 0.01),
+        Eigen::Vector3d(5.0, 0.05, 1.12),
+        Eigen::Vector3d(0.05, 0.05, 1.12),
+        Eigen::Vector3d(0.05, 1.28, 1.28),
+        Eigen::Vector3d(5, 5, 0.05),
+        Eigen::Vector3d(0.15, 0.15, 0.15)
     };
 
     // Define limits buffer
