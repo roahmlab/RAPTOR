@@ -5,24 +5,26 @@ using namespace Kinova;
 using namespace Ipopt;
 
 int main(int argc, char* argv[]) {
-    const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix.csv";
-    // const std::string regroupMatrixFileName = "../Examples/Kinova/SystemIdentification/RegroupMatrix_withoutmotordynamics.csv";
-    
     // Define robot model
-    const std::string urdf_filename = "../Robots/kinova-gen3/kinova.urdf";
+    const std::string urdf_filename = "../Robots/kinova-gen3/gen3_2f85_fixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = GRAVITY;
     model.friction.setZero();
-    // model.damping.setZero();
-    // model.armature.setZero();
+    model.damping.setZero();
+    model.armature.setZero();
+
+    // Define the indices of identifiable parameters for the Kinova robot, determined solely by its kinematic model
+    // Refer to README on how to get this information for different robots
+    Eigen::VectorXi independent_param_inds(43);
+    independent_param_inds << 9, 11, 12, 14, 19, 18, 17, 15, 21, 22, 24, 29, 28, 27, 25, 31, 32, 34, 39, 38, 37, 35, 41, 42, 44, 49, 48, 47, 45, 51, 52, 54, 59, 58, 57, 55, 61, 62, 64, 69, 68, 67, 65;
 
     // Define trajectory parameters
     const double T = 10.0;
     const int N = 128;
-    const int degree = 5;
+    const int degree = 3;
     const double base_frequency = 2.0 * M_PI / T;
 
     // start from a specific static configuration
@@ -38,11 +40,7 @@ int main(int argc, char* argv[]) {
 
     // Define initial guess
     std::srand(static_cast<unsigned int>(time(0)));
-    Eigen::VectorXd z = 0.05 * Eigen::VectorXd::Random((2 * degree + 3) * model.nv);
-    // z.segment((2 * degree + 1) * model.nv, model.nv) = 
-    //     1.0 * Eigen::VectorXd::Random(model.nv).array();
-    // z.segment((2 * degree + 1) * model.nv + model.nv, model.nv) = 
-    //     0.5 * Eigen::VectorXd::Random(model.nv).array();
+    Eigen::VectorXd z = 0.5 * Eigen::VectorXd::Random((2 * degree + 1) * model.nv);
 
     // Define obstacles
     std::vector<Eigen::Vector3d> boxCenters = {
@@ -51,7 +49,7 @@ int main(int argc, char* argv[]) {
         Eigen::Vector3d(-0.39, -0.84, 0.56), // bar near the control
         Eigen::Vector3d(-0.39, -0.17, 0.56), // bar bewteen 10 and 20 change to wall
         Eigen::Vector3d(0.0, 0.0, 1.12), // ceiling
-        Eigen::Vector3d(0.47, -0.09, 1.04) // top camera  
+        Eigen::Vector3d(0.47, -0.09, 1.04) // top camera
     };
     std::vector<Eigen::Vector3d> boxOrientations = {
         Eigen::Vector3d(0.0, 0.0, 0.0),
@@ -89,7 +87,7 @@ int main(int argc, char* argv[]) {
                               q0,
                               q_d0,
                               model,
-                              regroupMatrixFileName,
+                              independent_param_inds,
                               boxCenters,
                               boxOrientations,
                               boxSizes,
@@ -143,10 +141,6 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::high_resolution_clock::now();
         solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cout << "Total solve time: " << solve_time << " milliseconds.\n";
-
-        // const Eigen::VectorXd initial_position_part = mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv);
-        // mynlp->solution.segment((2 * degree + 1) * model.nv, model.nv) =
-        //     Utils::wrapToPi(initial_position_part);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -169,7 +163,7 @@ int main(int argc, char* argv[]) {
         rid->compute(mynlp->solution, false);
 
         if (argc > 1) {
-            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d5_slower/";
+            const std::string outputfolder = "../Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/T10_d3/";
             std::ofstream solution(outputfolder + "exciting-solution-" + std::string(argv[1]) + ".csv");
             std::ofstream trajectory(outputfolder + "exciting-trajectory-" + std::string(argv[1]) + ".csv");
 

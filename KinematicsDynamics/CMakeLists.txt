@@ -1,7 +1,6 @@
 add_library(IDlib SHARED
     src/InverseDynamics.cpp
     src/CustomizedInverseDynamics.cpp
-    src/QRDecompositionSolver.cpp
     src/RegressorInverseDynamics.cpp
     src/MomentumRegressor.cpp
     src/IntervalRegressorInverseDynamics.cpp

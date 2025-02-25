@@ -2,7 +2,6 @@
 #define FRICTION_PARAMETERS_IDENTIFICATION_H
 
 #include "Optimizer.h"
-#include "QRDecompositionSolver.h"
 
 #include "pinocchio/algorithm/rnea.hpp"
 #include "pinocchio/algorithm/regressor.hpp"
@@ -29,7 +28,6 @@ public:
         const std::shared_ptr<MatX>& velPtr_input,
         const std::shared_ptr<MatX>& accPtr_input,
         const std::shared_ptr<MatX>& torquePtr_input,
-        // std::shared_ptr<QRDecompositionSolver> regroupPtr_input,
         const bool include_offset_input = false
     );
 
@@ -103,7 +101,6 @@ public:
 
     std::shared_ptr<Model> modelPtr_; // robot model
     std::shared_ptr<Data> dataPtr_; // robot data
-    // std::shared_ptr<QRDecompositionSolver> regroupPtr_;
 
     // shared pointers to data
     std::shared_ptr<MatX> posPtr_;

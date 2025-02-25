@@ -39,7 +39,7 @@ public:
         const VecX& q0_input,
         const VecX& q_d0_input,
         const Model& model_input, 
-        const std::string& regroupMatrixFileName,
+        const Eigen::VectorXi& independent_param_inds_input,
         const std::vector<Vec3>& boxCenters,
         const std::vector<Vec3>& boxOrientations,
         const std::vector<Vec3>& boxSizes,
@@ -97,11 +97,14 @@ public:
        const ExcitingTrajectoryGenerator&
     );
 
-    MatX regroupMatrix;
+    Eigen::VectorXi independent_param_inds;
 
     std::shared_ptr<Trajectories> trajPtr_;
 
     std::shared_ptr<RegressorInverseDynamics> ridPtr_;
+
+    MatX Y_independent;
+    MatX pY_independent_pz;
 };
 
 }; // namespace Kinova

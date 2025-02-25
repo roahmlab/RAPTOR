@@ -23,7 +23,7 @@ bool ExcitingTrajectoryGenerator::set_parameters(
     const VecX& q0_input,
     const VecX& q_d0_input,
     const Model& model_input, 
-    const std::string& regroupMatrixFileName,
+    const Eigen::VectorXi& independent_param_inds_input,
     const std::vector<Vec3>& boxCenters,
     const std::vector<Vec3>& boxOrientations,
     const std::vector<Vec3>& boxSizes,
@@ -35,9 +35,17 @@ bool ExcitingTrajectoryGenerator::set_parameters(
     Eigen::VectorXi jtype_input
 ) {
     enable_hessian = false;
-    // x0 = x0_input;
-    x0 = x0_input.segment(0,(2*degree_input+1)*model_input.nv);
-    regroupMatrix = Utils::initializeEigenMatrixFromFile(regroupMatrixFileName);
+    x0 = x0_input;
+
+    independent_param_inds = independent_param_inds_input;
+    for (int i = 0; i < independent_param_inds.size(); i++) {
+        if (independent_param_inds(i) >= 10 * model_input.nv) {
+            throw std::invalid_argument("independent_param_inds is out of range!");
+        }
+        if (independent_param_inds(i) < 0) {
+            throw std::invalid_argument("independent_param_inds is out of range!");
+        }
+    }
 
     // fixed frequency fourier curves
     trajPtr_ = std::make_shared<FixedFrequencyFourierCurves>(T_input, 
@@ -53,6 +61,9 @@ bool ExcitingTrajectoryGenerator::set_parameters(
                                                          trajPtr_,
                                                          false,
                                                          jtype_input);
+
+    Y_independent.resize(ridPtr_->Y.rows(), independent_param_inds.size());
+    pY_independent_pz.resize(ridPtr_->Y.rows(), independent_param_inds.size());
 
     // read joint limits from KinovaConstants.h
     VecX JOINT_LIMITS_LOWER_VEC = 
@@ -116,11 +127,6 @@ bool ExcitingTrajectoryGenerator::set_parameters(
                                                                                jtype_input));  
     constraintsNameVec_.push_back("obstacle avoidance constraints"); 
     }
-    
-    // check dimensions of regroupMatrix
-    if (ridPtr_->Y.cols() != regroupMatrix.rows()) {
-        throw std::invalid_argument("ExcitingTrajectoryGenerator: regroupMatrix has wrong dimensions!");
-    }
 
     return true;
 }
@@ -166,8 +172,12 @@ bool ExcitingTrajectoryGenerator::eval_f(
 
     ridPtr_->compute(z, false);
 
-    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
-    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+    // select the linearly independent columns of the regressor matrix
+    for (size_t i = 0; i < independent_param_inds.size(); i++) {
+        Y_independent.col(i) = ridPtr_->Y.col(independent_param_inds(i));
+    }
+
+    Eigen::JacobiSVD<MatX> svd(Y_independent, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
     const VecX& singularValues = svd.singularValues();
     const MatX& U = svd.matrixU();
@@ -198,8 +208,12 @@ bool ExcitingTrajectoryGenerator::eval_grad_f(
 
     ridPtr_->compute(z, true);
 
-    MatX regroupedObservationMatrix = ridPtr_->Y * regroupMatrix;
-    Eigen::JacobiSVD<MatX> svd(regroupedObservationMatrix, 
+    // select the linearly independent columns of the regressor matrix
+    for (size_t i = 0; i < independent_param_inds.size(); i++) {
+        Y_independent.col(i) = ridPtr_->Y.col(independent_param_inds(i));
+    }
+
+    Eigen::JacobiSVD<MatX> svd(Y_independent, 
                                Eigen::ComputeThinU | Eigen::ComputeThinV);
     const VecX& singularValues = svd.singularValues();
     const MatX& U = svd.matrixU();
@@ -212,10 +226,12 @@ bool ExcitingTrajectoryGenerator::eval_grad_f(
     // refer to https://j-towns.github.io/papers/svd-derivative.pdf
     // for analytical gradient of singular values
     for (Index i = 0; i < n; i++) {
-        MatX gradRegroupedObservationMatrix = ridPtr_->pY_pz(i) * regroupMatrix;
+        for (size_t j = 0; j < independent_param_inds.size(); j++) {
+            pY_independent_pz.col(j) = ridPtr_->pY_pz(i).col(independent_param_inds(j));
+        }
 
-        const Number gradSigmaMax = U.col(0).transpose()       * gradRegroupedObservationMatrix * V.col(0);
-        const Number gradSigmaMin = U.col(lastRow).transpose() * gradRegroupedObservationMatrix * V.col(lastRow);
+        const Number gradSigmaMax = U.col(0).transpose()       * pY_independent_pz * V.col(0);
+        const Number gradSigmaMin = U.col(lastRow).transpose() * pY_independent_pz * V.col(lastRow);
 
         grad_f[i] = gradSigmaMax / sigmaMax - gradSigmaMin / sigmaMin;
     }

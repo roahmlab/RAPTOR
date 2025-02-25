@@ -18,12 +18,7 @@ int main(int argc, char* argv[]) {
 
     model.friction.setZero();
     model.damping.setZero();
-    model.armature.setZero(); 
-
-    // Initialize Regroup matrix
-    auto qrSolverPtr_ = std::make_shared<QRDecompositionSolver>(model); 
-    qrSolverPtr_->generateRandomObservation(40000);
-    qrSolverPtr_->computeRegroupMatrix();
+    model.armature.setZero();
 
     // Initialize data
     bool include_offset_input = false ;
