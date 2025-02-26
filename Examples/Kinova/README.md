@@ -38,7 +38,8 @@ This folder contains an example of solving inverse kinematics with collision avo
 
 Since inverse kinematics deals with finding a single joint configuration rather than a full trajectory, the configuration is represented using `Plain`.
 
-The cost function minimizes the distance between the computed joint configuration and the initial guess. Conceptually, this can be interpreted as:
+The cost function minimizes the distance from the initial guess. 
+Conceptually, this can be interpreted as:
 
 - The robot is at a given configuration.
 - It must move to a new configuration that satisfies specific position and orientation constraints while avoiding obstacles.
