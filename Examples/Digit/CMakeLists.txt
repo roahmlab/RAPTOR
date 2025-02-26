@@ -6,6 +6,7 @@ add_library(Digitlib SHARED
     src/DigitCustomizedConstraints.cpp
     src/DigitSingleStepPeriodicityConstraints.cpp
     src/DigitMultipleStepPeriodicityConstraints.cpp
+    src/DigitWholeBodyDynamicsConstraints.cpp
 )
 
 target_include_directories(Digitlib PUBLIC
@@ -13,14 +14,15 @@ target_include_directories(Digitlib PUBLIC
     ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Costs/include
     ${CMAKE_SOURCE_DIR}/Optimization/include
-    ${CMAKE_SOURCE_DIR}/Utils/include
-    )
+    ${CMAKE_SOURCE_DIR}/Utils/include)
 
 target_link_libraries(Digitlib PUBLIC
     trajlib
     IDlib
     Conslib
+    Costslib
     Optlib
     ipopt
     coinhsl
@@ -47,18 +49,28 @@ add_executable(DigitMultipleStep_example
     DigitMultipleStep.cpp)
 
 target_link_libraries(DigitMultipleStep_example PRIVATE
-    trajlib 
-    IDlib
-    Conslib
-    Optlib
     Digitlib
-    ipopt
-    coinhsl
-    yaml-cpp
-    ${GSL_LIBRARIES}
-    ${BOOST_LIBRARIES}
-    pinocchio::pinocchio)
+    yaml-cpp)
 
 target_compile_options(DigitMultipleStep_example PUBLIC
     ${PINOCCHIO_FLAGS})
-   
+
+
+### Python bindings 
+nanobind_add_module(DigitFillUnactuated_nanobind 
+    NB_SHARED LTO
+    DigitFillUnactuatedJointsPybind.cpp)
+target_include_directories(DigitFillUnactuated_nanobind PUBLIC
+    include)
+target_link_libraries(DigitFillUnactuated_nanobind PUBLIC
+    trajlib 
+    IDlib
+    Conslib
+    Costslib
+    Digitlib
+    ${BOOST_LIBRARIES} 
+    pinocchio::pinocchio
+    ${PYTHON_LIBRARIES})
+nanobind_compile_options(DigitFillUnactuated_nanobind PUBLIC
+    ${PINOCCHIO_FLAGS})
+set_property(TARGET DigitFillUnactuated_nanobind PROPERTY POSITION_INDEPENDENT_CODE ON)

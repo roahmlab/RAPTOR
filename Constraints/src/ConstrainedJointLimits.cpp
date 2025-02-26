@@ -3,7 +3,7 @@
 namespace RAPTOR {
 
 ConstrainedJointLimits::ConstrainedJointLimits(std::shared_ptr<Trajectories>& trajPtr_input, 
-                                               std::shared_ptr<DynamicsConstraints>& dcPtr_input, 
+                                               std::shared_ptr<DynamicsConstraints>& dcPtr_input,
                                                const VecX& lowerLimits_input, 
                                                const VecX& upperLimits_input) {
     trajPtr_ = trajPtr_input;

@@ -87,5 +87,8 @@ constexpr double GAMMA = 0.7;
 constexpr double FOOT_WIDTH = 0.1344; // (m)
 constexpr double FOOT_LENGTH = 0.2208; // (m)
 
+constexpr char LEFT_FOOT_NAME[] = "leg_left_6_joint";
+constexpr char RIGHT_FOOT_NAME[] = "leg_right_6_joint";
+
 }; // namespace Talos
 }; // namespace RAPTOR

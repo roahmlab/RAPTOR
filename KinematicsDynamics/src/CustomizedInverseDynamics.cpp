@@ -138,10 +138,10 @@ void CustomizedInverseDynamics::compute(const VecX& z,
             const int parent_id = modelPtr_->parents[pinocchio_joint_id] - 1;
 
             if (compute_derivatives) {
-                jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, dXJdq, S(j), jtype(j), q(j));
             }
             else {
-                jcalc(XJ, S(j), jtype(j), q(j));
+                Spatial::jcalc(XJ, S(j), jtype(j), q(j));
             }
 
             vJ = S(j) * q_d(j);
@@ -153,7 +153,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
             if (parent_id > -1) {
                 v(j) = Xup(j) * v(parent_id) + vJ;
-                Mat6 crm_v_j = crm(v(j));
+                Mat6 crm_v_j = Spatial::crm(v(j));
                 a(j) = Xup(j) * a(parent_id) + crm_v_j * vJ + S(j) * q_dd(j);
 
                 if (compute_derivatives) {
@@ -241,7 +241,7 @@ void CustomizedInverseDynamics::compute(const VecX& z,
                 }
             }
 
-            Mat6 crf_v_j = crf(v(j));
+            Mat6 crf_v_j = Spatial::crf(v(j));
             Vec6 I_j_v_j = I(j) * v(j);
             f(j) = I(j) * a(j) + crf_v_j * I_j_v_j;
 
@@ -266,13 +266,13 @@ void CustomizedInverseDynamics::compute(const VecX& z,
 
             if (j < trajPtr_->Nact) {
                 tau(i)(j) = S(j).transpose() * f(j) + 
-                            modelPtr_->rotorInertia(j) * q_dd(j) +
+                            modelPtr_->armature(j) * q_dd(j) +
                             modelPtr_->damping(j) * q_d(j) +
                             modelPtr_->friction(j) * Utils::sign(q_d(j));
 
                 if (compute_derivatives) {
                     ptau_pz(i).row(j) = S(j).transpose() * pf_pz(j) + 
-                                        modelPtr_->rotorInertia(j) * pq_dd_pz.row(j) +
+                                        modelPtr_->armature(j) * pq_dd_pz.row(j) +
                                         modelPtr_->damping(j) * pq_d_pz.row(j);
                 }
             }

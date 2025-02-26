@@ -1,4 +1,3 @@
-
 #ifndef CONSTRAINTS_H
 #define CONSTRAINTS_H
 
@@ -56,8 +55,6 @@ public:
 
     VecX g_lb;
     VecX g_ub;
-
-    // define the variables that stores the results here
 };
 
 }; // namespace RAPTOR

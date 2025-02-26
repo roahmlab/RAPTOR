@@ -90,7 +90,7 @@ FixedFrequencyFourierCurves::FixedFrequencyFourierCurves(double T_input,
     }
 }
 
-void FixedFrequencyFourierCurves::compute(const VecX& z, 
+void FixedFrequencyFourierCurves::compute(const VecX& z,
                                           bool compute_derivatives,
                                           bool compute_hessian) {
     if (z.size() < varLength) {

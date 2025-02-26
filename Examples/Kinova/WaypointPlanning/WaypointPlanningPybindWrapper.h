@@ -41,7 +41,9 @@ public:
     WaypointPlanningPybindWrapper() = default;
 
     WaypointPlanningPybindWrapper(const std::string urdf_filename) {
-        pinocchio::urdf::buildModel(urdf_filename, model);
+        pinocchio::Model model_double;
+        pinocchio::urdf::buildModel(urdf_filename, model_double);
+        model = model_double.cast<double>();
 
         // Construct the robot configuration space
         space = std::make_shared<ob::RealVectorStateSpace>(NUM_JOINTS);
@@ -51,13 +53,13 @@ public:
         for (int i = 0; i < NUM_JOINTS; i++) {
             const double lower_bound = 
                 (JOINT_LIMITS_LOWER[i] == -1e19) ? 
-                    -M_PI : 
-                    JOINT_LIMITS_LOWER[i];
+                    -4 * M_PI : 
+                    JOINT_LIMITS_LOWER[i] * 0.9;
 
             const double upper_bound = 
                 (JOINT_LIMITS_UPPER[i] == 1e19) ? 
-                    M_PI : 
-                    JOINT_LIMITS_UPPER[i];
+                    4 * M_PI : 
+                    JOINT_LIMITS_UPPER[i] * 0.9;
 
             bounds.setLow(i, lower_bound);
             bounds.setHigh(i, upper_bound);
@@ -110,6 +112,18 @@ public:
             throw std::invalid_argument("Start and goal must be of size NUM_JOINTS");
         }
 
+        for (int i = 0; i < NUM_JOINTS; i++) {
+            if (start_inp(i) < JOINT_LIMITS_LOWER[i] || start_inp(i) > JOINT_LIMITS_UPPER[i]) {
+                std::cerr << i << ' ' << start_inp(i) << " [" << JOINT_LIMITS_LOWER[i] << ' ' << JOINT_LIMITS_UPPER[i] << "]\n"; 
+                throw std::invalid_argument("Start state is out of joint limits");
+            }
+
+            if (goal_inp(i) < JOINT_LIMITS_LOWER[i] || goal_inp(i) > JOINT_LIMITS_UPPER[i]) {
+                std::cerr << i << ' ' << goal_inp(i) << " [" << JOINT_LIMITS_LOWER[i] << ' ' << JOINT_LIMITS_UPPER[i] << "]\n";
+                throw std::invalid_argument("Goal state is out of joint limits");
+            }
+        }
+
         // Define the start and goal states
         ob::ScopedState<> start(space);
         ob::ScopedState<> goal(space);
@@ -124,7 +138,8 @@ public:
         set_start_goal_check = true;
     };
 
-    nb::ndarray<nb::numpy, const double> plan(const double timeout) {
+    nb::ndarray<nb::numpy, const double> plan(const double timeout,
+                                              const bool include_gripper_or_not = false) {
         if (!set_obstacles_check ||
             !set_start_goal_check) {
             throw std::runtime_error("Obstacles and start/goal must be set before planning");
@@ -132,13 +147,14 @@ public:
 
         std::shared_ptr<Trajectories> trajPtr_ = 
             std::make_shared<Plain>(NUM_JOINTS);
-        std::shared_ptr<Constraints> collisionCheckerPtr_ =
+        std::shared_ptr<KinovaCustomizedConstraints> collisionCheckerPtr_ =
             std::make_shared<KinovaCustomizedConstraints>(
                 trajPtr_,
                 model,
                 boxCenters,
                 boxOrientation,
-                boxSize
+                boxSize,
+                include_gripper_or_not
             );
 
         const double buffer_local = buffer;

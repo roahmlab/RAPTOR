@@ -22,7 +22,7 @@ class CircleSurfaceContactConstraints : public Constraints {
 public:
     using Force = pinocchio::Data::Force;
     using Vec3 = Eigen::Vector3d;
-    using Vec6 = Vector6d;
+    using Vec6 = Eigen::Vector<double, 6>;
     using VecX = Eigen::VectorXd;
     using MatX = Eigen::MatrixXd;
 

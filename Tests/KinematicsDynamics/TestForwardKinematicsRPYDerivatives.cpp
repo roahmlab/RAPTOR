@@ -70,13 +70,6 @@ public:
 
         VecX z = Utils::initializeEigenVectorFromArray(x, n);
 
-        // fkPtr_->compute(0, model.nq, z);
-        // Vec3 rpy = fkPtr_->getRPY();
-
-        // obj_value = roll_weight * rpy(0) + 
-        //             pitch_weight * rpy(1) + 
-        //             yaw_weight * rpy(2);
-
         fkPtr_->compute(0, model.nq, z, nullptr, nullptr, 1);
         MatX Jrpy = fkPtr_->getRPYJacobian();
         Vec3 rpy = Jrpy * VecX::Ones(n);
@@ -216,12 +209,13 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
 
 	app->Options()->SetNumericValue("max_wall_time", 1e-5);
 	app->Options()->SetIntegerValue("print_level", 5);
+    app->Options()->SetStringValue("linear_solver", "ma57");
     app->Options()->SetStringValue("hessian_approximation", "exact");
 
     // For gradient checking
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("derivative_test", "second-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
     app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
 
     // Initialize the IpoptApplication and process the options

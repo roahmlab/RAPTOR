@@ -1,5 +1,5 @@
-#ifndef CONSTRAINEDJOINTLIMITS_H
-#define CONSTRAINEDJOINTLIMITS_H
+#ifndef CONSTRAINED_JOINT_LIMITS_H
+#define CONSTRAINED_JOINT_LIMITS_H
 
 #include "JointLimits.h"
 #include "DynamicsConstraints.h"
@@ -42,4 +42,4 @@ public:
 
 }; // namespace RAPTOR
 
-#endif // CONSTRAINEDJOINTLIMITS_H
+#endif // CONSTRAINED_JOINT_LIMITS_H

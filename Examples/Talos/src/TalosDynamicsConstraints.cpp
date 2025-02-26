@@ -25,16 +25,16 @@ TalosDynamicsConstraints::TalosDynamicsConstraints(const std::shared_ptr<Model>&
             independentJointIds[i] = modelPtr_->getJointId(independentJointNames[i]) - 1;
         }
         else {
-            throw std::runtime_error("Can not find joint: " + dependentJointNames[i]);
+            throw std::runtime_error("Can not find joint: " + independentJointNames[i]);
         }
     }
 
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
 
@@ -52,11 +52,11 @@ void TalosDynamicsConstraints::reinitialize() {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("leg_left_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("leg_right_6_joint");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.p << 0, 0, -0.107;
     }
 }

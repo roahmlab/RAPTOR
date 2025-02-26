@@ -35,15 +35,14 @@
 *.asv
 *.mat
 
+*.csv
 .vscode/
 build/
 data/
 data_safecopy/
 Examples/Kinova/SystemIdentification/ExcitingTrajectories/data/
 
-test_oracle.py
-
-docker/HSL.zip
+*.zip
 docker/pardiso/
 HSL/
 
@@ -52,3 +51,9 @@ Examples/Digit-modified/singlestep_optimization_settings.yaml
 
 test_nanobind_planner.py
 
+backup/
+
+*.png
+*.lic
+*.tar
+*.tar.bz2

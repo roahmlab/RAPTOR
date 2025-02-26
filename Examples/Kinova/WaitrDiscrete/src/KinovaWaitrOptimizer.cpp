@@ -26,7 +26,7 @@ bool KinovaWaitrOptimizer::set_parameters(
     const std::vector<Vec3>& boxCenters_input,
     const std::vector<Vec3>& boxOrientation_input,
     const std::vector<Vec3>& boxSize_input,
-    const VecX& qdes_input,
+    const VecX& q_des_input,
     const int tplan_n_input,
     const VecX& joint_limits_buffer_input,
     const VecX& velocity_limits_buffer_input,
@@ -36,7 +36,7 @@ bool KinovaWaitrOptimizer::set_parameters(
     enable_hessian = false;
 
     x0 = x0_input;
-    qdes = qdes_input;
+    q_des = q_des_input;
     tplan_n = tplan_n_input;
 
     trajPtr_ = std::make_shared<ArmourBezierCurves>(T_input, 
@@ -120,12 +120,13 @@ bool KinovaWaitrOptimizer::set_parameters(
                                                                                boxCenters_input,
                                                                                boxOrientation_input,
                                                                                boxSize_input,
+                                                                               true,
                                                                                0.0,
                                                                                jtype_reduced));   
     constraintsNameVec_.push_back("obstacle avoidance constraints");                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                         
     assert(x0.size() == trajPtr_->varLength);
-    assert(qdes.size() == trajPtr_->Nact);
+    assert(q_des.size() == trajPtr_->Nact);
     assert(tplan_n >= 0 && tplan_n < trajPtr_->N);
 
     return true;
@@ -146,7 +147,7 @@ bool KinovaWaitrOptimizer::get_nlp_info(
     numVars = trajPtr_->varLength;
     n = numVars;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;
@@ -182,13 +183,13 @@ bool KinovaWaitrOptimizer::eval_f(
 
     const VecX& qplan = trajPtr_->q(tplan_n);
 
-    obj_value = pow(Utils::wrapToPi(qplan[0] - qdes[0]), 2) + // These are continuous joints
-                pow(Utils::wrapToPi(qplan[2] - qdes[2]), 2) + 
-                pow(Utils::wrapToPi(qplan[4] - qdes[4]), 2) + 
-                pow(Utils::wrapToPi(qplan[6] - qdes[6]), 2) + 
-                pow(qplan[1] - qdes[1], 2) +           // These are not continuous joints
-                pow(qplan[3] - qdes[3], 2) + 
-                pow(qplan[5] - qdes[5], 2);
+    obj_value = pow(Utils::wrapToPi(qplan[0] - q_des[0]), 2) + // These are continuous joints
+                pow(Utils::wrapToPi(qplan[2] - q_des[2]), 2) + 
+                pow(Utils::wrapToPi(qplan[4] - q_des[4]), 2) + 
+                pow(Utils::wrapToPi(qplan[6] - q_des[6]), 2) + 
+                pow(qplan[1] - q_des[1], 2) +           // These are not continuous joints
+                pow(qplan[3] - q_des[3], 2) + 
+                pow(qplan[5] - q_des[5], 2);
 
     update_minimal_cost_solution(n, z, new_x, obj_value);
 
@@ -206,7 +207,7 @@ bool KinovaWaitrOptimizer::eval_grad_f(
 )
 {
     if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
+       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
     }
 
     VecX z = Utils::initializeEigenVectorFromArray(x, n);
@@ -218,10 +219,10 @@ bool KinovaWaitrOptimizer::eval_grad_f(
 
     for(Index i = 0; i < n; i++){
         if (i % 2 == 0) {
-            grad_f[i] = (2 * Utils::wrapToPi(qplan[i] - qdes[i]) * pqplan_pz(i, i));
+            grad_f[i] = (2 * Utils::wrapToPi(qplan[i] - q_des[i]) * pqplan_pz(i, i));
         }
         else {
-            grad_f[i] = (2 * (qplan[i] - qdes[i]) * pqplan_pz(i, i));
+            grad_f[i] = (2 * (qplan[i] - q_des[i]) * pqplan_pz(i, i));
         }
     }
 

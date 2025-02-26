@@ -11,6 +11,7 @@
 #include <omp.h>
 
 #include "Utils.h"
+#include "Costs.h"
 #include "Constraints.h"
 
 namespace RAPTOR {
@@ -44,7 +45,7 @@ public:
     virtual ~Optimizer() = default;
 
     /** Method to reset the optimizer */
-    void reset();
+    virtual void reset();
 
     /**@name Overloaded from TNLP */
     //@{
@@ -102,7 +103,7 @@ public:
         const Number* x,
         bool          new_x,
         Number&       obj_value
-    ) = 0;
+    );
 
     /** Method to return the gradient of the objective */
     virtual bool eval_grad_f(
@@ -110,7 +111,7 @@ public:
         const Number* x,
         bool          new_x,
         Number*       grad_f
-    ) = 0;
+    );
 
     /** Method to return the hessian of the objective */
     virtual bool eval_hess_f(
@@ -208,7 +209,16 @@ public:
     // class members:
     std::chrono::_V2::system_clock::time_point start_time;
     std::chrono::_V2::system_clock::time_point end_time;
-    bool output_computation_time = false;
+    double nlp_f_time = 0; // us
+    int nlp_f_count = 0;
+    double nlp_g_time = 0; // us
+    int nlp_g_count = 0;
+    double nlp_grad_f_time = 0; // us
+    int nlp_grad_f_count = 0;
+    double nlp_jac_g_time = 0; // us
+    int nlp_jac_g_count = 0;
+    double nlp_hess_l_time = 0; // us
+    int nlp_hess_l_count = 0;
     
     bool enable_hessian = false;
 
@@ -216,6 +226,10 @@ public:
     Index numCons = 0; // number of constraints
 
     VecX x0; // stores the initial guess here
+
+    std::vector<std::unique_ptr<Costs>> costsPtrVec_;
+    std::vector<double> costsWeightVec_;
+    std::vector<std::string> costsNameVec_;
 
     std::vector<std::unique_ptr<Constraints>> constraintsPtrVec_;
     std::vector<std::string> constraintsNameVec_;
@@ -234,7 +248,7 @@ public:
     std::vector<Number> g_copy;
 
     Number final_constr_violation = 0;
-    bool ifFeasible = true;
+    bool ifFeasible = false;
 
     // This is supposed to be consistent with the settings in IpoptApplicationFactory
     // But right now it is hardcoded here

@@ -1,5 +1,5 @@
-#ifndef TALOSSINGLESTEPOPTIMIZER_H
-#define TALOSSINGLESTEPOPTIMIZER_H
+#ifndef TALOS_SINGLE_STEP_OPTIMIZER_H
+#define TALOS_SINGLE_STEP_OPTIMIZER_H
 
 #include "Optimizer.h"
 
@@ -14,6 +14,10 @@
 #include "TorqueLimits.h"
 #include "RectangleSurfaceContactConstraints.h"
 #include "TalosCustomizedConstraints.h"
+
+#include "MinimizePower.h"
+#include "MinimizeInitialVelocity.h"
+#include "MinimizeInitialAcceleration.h"
 
 namespace RAPTOR {
 namespace Talos {
@@ -59,22 +63,6 @@ public:
         IndexStyleEnum& index_style
     ) final override;
 
-    /** Method to return the objective value */
-    bool eval_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number&       obj_value
-    ) final override;
-
-    /** Method to return the gradient of the objective */
-    bool eval_grad_f(
-        Index         n,
-        const Number* x,
-        bool          new_x,
-        Number*       grad_f
-    ) final override;
-
     /**@name Methods to block default compiler methods.
     *
     * The compiler automatically generates the following three methods.
@@ -98,12 +86,12 @@ public:
     std::shared_ptr<Trajectories> trajPtr_; 
 
     std::shared_ptr<DynamicsConstraints> dcPtr_;
-    std::shared_ptr<InverseDynamics> idPtr_;
-    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
     std::shared_ptr<TalosConstrainedInverseDynamics> dcidPtr_;
+    std::shared_ptr<ConstrainedInverseDynamics> cidPtr_;
+    std::shared_ptr<InverseDynamics> idPtr_;
 };
 
 }; // namespace Talos
 }; // namespace RAPTOR
 
-#endif // TALOSSINGLESTEPOPTIMIZER_H
+#endif // TALOS_SINGLE_STEP_OPTIMIZER_H

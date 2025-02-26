@@ -84,7 +84,7 @@ void BezierCurves::compute(const VecX& z,
     if (constrain_initial_position) {
         if (constrain_initial_velocity) {
             coefficients.topRows(1) = q0.transpose();
-            coefficients.middleRows(1, 1) = q_d0.transpose();
+            coefficients.middleRows(1, 1) = q0.transpose() + q_d0.transpose() * T / 5.0;
             coefficients.bottomRows(degree - 1) = Utils::reshape(z.head((degree - 1) * Nact), 
                                                                  degree - 1, Nact);
         }

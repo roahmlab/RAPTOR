@@ -6,11 +6,13 @@ namespace Kinova {
 KinovaWaitrPybindWrapper::KinovaWaitrPybindWrapper(const std::string urdf_filename,
                                                    const bool display_info) {
     // Define robot model
-    pinocchio::urdf::buildModel(urdf_filename, model);
+    pinocchio::Model model_double;
+    pinocchio::urdf::buildModel(urdf_filename, model_double);
+    model = model_double.cast<double>();
 
     model.gravity.linear()(2) = GRAVITY;
 
-    qdes = VecX::Zero(NUM_JOINTS);
+    q_des = VecX::Zero(NUM_JOINTS);
     joint_limits_buffer = VecX::Zero(NUM_JOINTS);
     velocity_limits_buffer = VecX::Zero(NUM_JOINTS);
     torque_limits_buffer = VecX::Zero(NUM_JOINTS);
@@ -129,13 +131,13 @@ void KinovaWaitrPybindWrapper::set_ipopt_parameters(const double tol,
 }
 
 void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_inp,
-                                                         const nb_1d_double qd0_inp,
-                                                         const nb_1d_double qdd0_inp,
+                                                         const nb_1d_double q_d0_inp,
+                                                         const nb_1d_double q_dd0_inp,
                                                          const double duration_inp) {
     if (q0_inp.shape(0) != NUM_JOINTS || 
-        qd0_inp.shape(0) != NUM_JOINTS || 
-        qdd0_inp.shape(0) != NUM_JOINTS) {
-        throw std::invalid_argument("q0, qd0, qdd0 must be of size NUM_JOINTS");
+        q_d0_inp.shape(0) != NUM_JOINTS || 
+        q_dd0_inp.shape(0) != NUM_JOINTS) {
+        throw std::invalid_argument("q0, q_d0, q_dd0 must be of size NUM_JOINTS");
     }
 
     T = duration_inp;
@@ -150,8 +152,8 @@ void KinovaWaitrPybindWrapper::set_trajectory_parameters(const nb_1d_double q0_i
 
     for (int i = 0; i < NUM_JOINTS; i++) {
         atp.q0(i) = q0_inp(i);
-        atp.q_d0(i) = qd0_inp(i);
-        atp.q_dd0(i) = qdd0_inp(i);
+        atp.q_d0(i) = q_d0_inp(i);
+        atp.q_dd0(i) = q_dd0_inp(i);
     }     
 
     set_trajectory_parameters_check = true;    
@@ -190,7 +192,7 @@ void KinovaWaitrPybindWrapper::set_target(const nb_1d_double q_des_inp,
     }
 
     for (int i = 0; i < NUM_JOINTS; i++) {
-        qdes(i) = q_des_inp(i);
+        q_des(i) = q_des_inp(i);
     }
 
     tplan_n = int(tplan / T * N);
@@ -227,7 +229,7 @@ nb::tuple KinovaWaitrPybindWrapper::optimize() {
                               boxCenters,
                               boxOrientation,
                               boxSize,
-                              qdes,
+                              q_des,
                               tplan_n,
                               joint_limits_buffer,
                               velocity_limits_buffer,
@@ -295,7 +297,7 @@ nb::tuple KinovaWaitrPybindWrapper::analyze_solution() {
                                 boxCenters,
                                 boxOrientation,
                                 boxSize,
-                                qdes,
+                                q_des,
                                 tplan_n,
                                 joint_limits_buffer,
                                 velocity_limits_buffer,

@@ -5,14 +5,16 @@ First clone the repository
 git clone https://github.com/roahmlab/RAPTOR.git
 ```
 
-## Install Through Docker (Recommended)
+## Install Through Docker (Strongly Recommended)
 
 We strongly recommend using Docker. We have provided a Dockerfile that will automatically install all the required packages. If you don't have Docker installed, you can find the installation instructions [here](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
 
 ### HSL
 You should complete HSL steps BEFORE you build the docker image otherwise you will have error.
 
-We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem. Please follow the instructions below to complete the installation:
+We have selected [HSL](https://www.hsl.rl.ac.uk/) to solve large linear systems in the nonlinear optimization problem. 
+Please follow the instructions below to complete the installation.
+
 Besides official HSL code, we used [ThirdParty-HSL](https://github.com/coin-or-tools/ThirdParty-HSL), which is specifically tailored for COIN-OR projects, particularly Ipopt, offering easier integration and installation.
     ```
     git clone https://github.com/coin-or-tools/ThirdParty-HSL.git. 
@@ -92,4 +94,4 @@ You might need to create a symbolic link manually
 sudo ln -s libcoinhsl.so libhsl.so
 ```
 There are a lot of moving pieces here so something might not work or my README is still not enough.
-Please contact me (jimzhang@umich.edu) if you encounter any problems installing ipopt.
+Please raise a github [issue](https://github.com/roahmlab/RAPTOR/issues) if you encounter any problems installing ipopt.

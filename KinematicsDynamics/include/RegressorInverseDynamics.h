@@ -6,15 +6,16 @@
 
 #include "pinocchio/parsers/urdf.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
+#include "pinocchio/algorithm/regressor.hpp"
 
 #include "CustomizedInverseDynamics.h"
 #include "Spatial.h"
 #include "Trajectories.h"
 
 #include <cmath>
+#include <iostream> 
 #include <memory>
 #include <cstdio>
-#include <iostream>
 #include <cstdlib>
 
 namespace RAPTOR {
@@ -32,8 +33,9 @@ public:
     using MatX = Eigen::MatrixXd;
     using Vec3 = Eigen::Vector3d;
     using Mat3 = Eigen::Matrix3d;
-    using Vec6 = Vector6d;
-    using Mat6 = Matrix6d;
+    using Vec6 = Eigen::Vector<double, 6>;
+    using Mat6 = Eigen::Matrix<double, 6, 6>;
+    using MatRegressor = Eigen::Matrix<double, 6, 10>;
 
     // Constructor
     RegressorInverseDynamics() = default;
@@ -41,6 +43,7 @@ public:
     // Constructor
     RegressorInverseDynamics(const Model& model_input, 
                              const std::shared_ptr<Trajectories>& trajPtr_input,
+                             const bool include_motor_dynamics = true,
                              Eigen::VectorXi jtype_input = Eigen::VectorXi(0));
 
     // Destructor
@@ -49,21 +52,12 @@ public:
     // class methods:
     virtual void compute(const VecX& z,
                          bool compute_derivatives = true,
-                         bool compute_hessian = false) override; 
-                         
+                         bool compute_hessian = false) override;
+                                           
     // class members:
     Eigen::VectorXi jtype;
     Eigen::Array<Mat6, 1, Eigen::Dynamic> Xtree;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> I;
     Vec6 a_grav;
-    
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> Xup;
-    Eigen::Array<Mat6, 1, Eigen::Dynamic> dXupdq;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> S;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> v;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pv_pz;
-    Eigen::Array<Vec6, 1, Eigen::Dynamic> a;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pa_pz;
     
     VecX phi;
 
@@ -73,10 +67,7 @@ public:
     MatX Y;
     Eigen::Array<MatX, 1, Eigen::Dynamic> pY_pz;
 
-    MatX Yfull;
-    Eigen::Array<MatX, 1, Eigen::Dynamic> pYfull_pz;
-
-    MatX Ycurrent;
+    int NB = 0;
 };
 
 }; // namespace RAPTOR

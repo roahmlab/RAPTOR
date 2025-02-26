@@ -22,7 +22,7 @@ void CircleSurfaceContactConstraints::compute(const VecX& z,
     }
 
     if (compute_hessian) {
-        throw std::invalid_argument("CircleSurfaceContactConstraints: compute_hessian is not implemented yet!");
+        throw std::invalid_argument("CircleSurfaceContactConstraints does not support hessian computation");
     }
     
     idPtr_->compute(z, compute_derivatives, compute_hessian);
@@ -36,8 +36,8 @@ void CircleSurfaceContactConstraints::compute(const VecX& z,
         const Vec3& translation_force = lambda.tail(3);
 
         const double contact_force      = translation_force(2) + csp.maxSuctionForce;
-        const double friction_force     = sqrt(pow(translation_force(0), 2) + pow(translation_force(1), 2));
-        const double ZMP_moment         = sqrt(pow(rotation_torque(0), 2) + pow(rotation_torque(1), 2));
+        const double friction_force     = std::sqrt(pow(translation_force(0), 2) + pow(translation_force(1), 2));
+        const double ZMP_moment         = std::sqrt(pow(rotation_torque(0), 2) + pow(rotation_torque(1), 2));
 
         const double max_friction_force = csp.mu * contact_force;
         const double max_ZMP_moment     = csp.R * contact_force;

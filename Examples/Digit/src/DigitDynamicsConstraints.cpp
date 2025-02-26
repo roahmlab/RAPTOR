@@ -4,7 +4,7 @@ namespace RAPTOR {
 namespace Digit {
 
 DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>& modelPtr_input, 
-                                                   char stanceLeg_input, 
+                                                   const char stanceLeg_input, 
                                                    const Transform& stance_foot_T_des_input) :
     modelPtr_(modelPtr_input),
     stanceLeg(stanceLeg_input),
@@ -25,16 +25,16 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
             independentJointIds[i] = modelPtr_->getJointId(independentJointNames[i]) - 1;
         }
         else {
-            throw std::runtime_error("Can not find joint: " + dependentJointNames[i]);
+            throw std::runtime_error("Can not find joint: " + independentJointNames[i]);
         }
     }
 
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        if (modelPtr_->existJointName("left_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("left_toe_roll");
+        if (modelPtr_->existJointName(std::string(LEFT_FOOT_NAME))) {
+            contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         }
         else {
-            throw std::runtime_error("Can not find joint: left_toe_roll");
+            throw std::runtime_error("Can not find joint: " + std::string(LEFT_FOOT_NAME));
         }
 
         stance_foot_endT.R << 0,             1, 0,
@@ -43,11 +43,11 @@ DigitDynamicsConstraints::DigitDynamicsConstraints(const std::shared_ptr<Model>&
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
-        if (modelPtr_->existJointName("right_toe_roll")) {
-            contact_joint_id = modelPtr_->getJointId("right_toe_roll");
+        if (modelPtr_->existJointName(std::string(RIGHT_FOOT_NAME))) {
+            contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         }
         else {
-            throw std::runtime_error("Can not find joint: right_toe_roll");
+            throw std::runtime_error("Can not find joint: " + std::string(RIGHT_FOOT_NAME));
         }
 
         stance_foot_endT.R << 0,             -1, 0,
@@ -80,14 +80,14 @@ void DigitDynamicsConstraints::reinitialize(const char stanceLeg_input) {
 
     // reinitialize the stance leg end effector transformation matrix
     if (stanceLeg == 'L' || stanceLeg == 'l') {
-        contact_joint_id = modelPtr_->getJointId("left_toe_roll");
+        contact_joint_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         stance_foot_endT.R << 0,             1, 0,
                               -0.5,          0, sin(M_PI / 3),
                               sin(M_PI / 3), 0, 0.5;
         stance_foot_endT.p << 0, -0.05456, -0.0315;
     }
     else {
-        contact_joint_id = modelPtr_->getJointId("right_toe_roll");
+        contact_joint_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         stance_foot_endT.R << 0,             -1, 0,
                               0.5,           0,  -sin(M_PI / 3),
                               sin(M_PI / 3), 0,  0.5;

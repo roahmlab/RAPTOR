@@ -5,10 +5,9 @@ namespace RAPTOR {
 JointLimits::JointLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                          const VecX& lowerLimits_input, 
                          const VecX& upperLimits_input) : 
+    trajPtr_(trajPtr_input),
     lowerLimits(lowerLimits_input), 
     upperLimits(upperLimits_input) {
-    trajPtr_ = trajPtr_input;
-
     if (lowerLimits.size() != upperLimits.size()) {
         throw std::invalid_argument("lowerLimits and upperLimits must be the same size");
     }

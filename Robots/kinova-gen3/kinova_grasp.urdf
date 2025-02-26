@@ -216,10 +216,9 @@
 
   <link name="bracelet_link">
     <inertial>
-      <!-- This is different from the documentation -->
-      <origin rpy="0 0 0" xyz="0.000281 0.011402 -0.029798"/>
-      <mass value="0.5"/>
-      <inertia ixx="0.000587" ixy="3E-06" ixz="3E-06" iyy="0.000369" iyz="-0.000118" izz="0.000609"/>
+      <origin xyz="-0.000281 -0.011402 -0.029798" rpy="0 0 0" />
+      <mass value="0.5006" />
+      <inertia ixx="0.000587" ixy="3E-06" ixz="3E-06" iyy="0.000369" iyz="0.000118" izz="0.000609" />
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -606,7 +605,7 @@
   <!-- tray and cube code -->
 
 
-  <joint name="waiter_tray_joint" type="revolute">
+  <joint name="waiter_tray_joint" type="fixed">
      <origin rpy="0 1.5707 0" xyz="0 -0.14948 0" />
      <parent link="gripper_base" />
      <child link="waiter_tray_link" />
@@ -675,6 +674,4 @@
       </geometry>
     </collision>
   </link>
-
-
 </robot>

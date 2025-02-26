@@ -19,7 +19,7 @@ double distancePointAndLineSegment(const Eigen::Vector3d& point,
     Eigen::Vector3d w = point - p1; //!< Vector from p1 to the point
 
     double lambda = w.dot(v) / v.dot(v);
-    double t = std::max(0.0, std::min(1.0, lambda));
+    double t = fmax(0.0, fmin(1.0, lambda));
     Eigen::Vector3d projection = p1 + t * v; //!< Projected point on the line segment
 
     // Compute the distance between the projected point and the given point
@@ -101,7 +101,7 @@ Eigen::Vector3d BoxCollisionAvoidance::computeDifferenceWithCloestPoint(const Ve
 	for (int i = 0; i < 3; i++) {
 		distancesWithFace[i][0] = localPoint(i) + boxSize[obs_id](i) / 2.0;
 		distancesWithFace[i][1] = boxSize[obs_id](i) / 2.0 - localPoint(i);
-		localClosestPoint(i) = std::max(-boxSize[obs_id](i) / 2.0, std::min(localPoint(i), boxSize[obs_id](i) / 2.0));
+		localClosestPoint(i) = fmax(-boxSize[obs_id](i) / 2.0, fmin(localPoint(i), boxSize[obs_id](i) / 2.0));
 
 		if (localClosestPoint(i) != localPoint(i)) {
 			isInside = 1.0;

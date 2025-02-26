@@ -16,9 +16,15 @@ constexpr double VELOCITY_LIMITS_LOWER[NUM_JOINTS] = {-100, -100, -100, -100, -1
 
 constexpr double VELOCITY_LIMITS_UPPER[NUM_JOINTS] = {100, 100, 100, 100, 180, 180, 180}; // degree/s
 
-constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4}; // N*m
+constexpr double ACCELERATION_LIMITS_LOWER[NUM_JOINTS] = {-297.94, -297.94, -297.94, -297.94, -572.95, -572.95, -572.95}; // degree/s^2
 
-constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m
+constexpr double ACCELERATION_LIMITS_UPPER[NUM_JOINTS] = {297.94, 297.94, 297.94, 297.94, 572.95, 572.95, 572.95}; // degree/s^2
+
+// constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4}; // N*m, warning
+constexpr double TORQUE_LIMITS_LOWER[NUM_JOINTS] = {-90.0, -90.0, -90.0, -90.0, -45.0, -45.0, -45.0}; // N*m, 90% of hard limits
+
+// constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4}; // N*m, warning
+constexpr double TORQUE_LIMITS_UPPER[NUM_JOINTS] = {90.0, 90.0, 90.0, 90.0, 45.0, 45.0, 45.0}; // N*m, 90% of hard limits
 
 constexpr double GRAVITY = -9.81; // m/s^2
 

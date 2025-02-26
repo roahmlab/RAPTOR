@@ -13,6 +13,7 @@ target_include_directories(Taloslib PUBLIC
     ${CMAKE_SOURCE_DIR}/KinematicsDynamics/include
     ${CMAKE_SOURCE_DIR}/Trajectories/include
     ${CMAKE_SOURCE_DIR}/Constraints/include
+    ${CMAKE_SOURCE_DIR}/Costs/include
     ${CMAKE_SOURCE_DIR}/Optimization/include
     ${CMAKE_SOURCE_DIR}/Utils/include)
 
@@ -20,6 +21,7 @@ target_link_libraries(Taloslib PUBLIC
     trajlib
     IDlib
     Conslib
+    Costslib
     Optlib
     ipopt
     coinhsl
@@ -28,8 +30,8 @@ target_link_libraries(Taloslib PUBLIC
 )
 
 add_executable(Talos_example 
-    # TalosSingleStep.cpp)
-    TalosSingleStepFixedPosition.cpp)
+    TalosSingleStep.cpp)
+    # TalosSingleStepFixedPosition.cpp)
     # VisualizationHelper.cpp)
 
 target_link_libraries(Talos_example PUBLIC

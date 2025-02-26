@@ -59,8 +59,8 @@ public:
                               const bool gradient_check);
 
     void set_trajectory_parameters(const nb_1d_double q0_inp,
-                                   const nb_1d_double qd0_inp,
-                                   const nb_1d_double qdd0_inp,
+                                   const nb_1d_double q_d0_inp,
+                                   const nb_1d_double q_dd0_inp,
                                    const double duration_inp);
 
     void set_buffer(const nb_1d_double joint_limits_buffer_inp,
@@ -89,7 +89,7 @@ public:
     double T = 1;
     int N = 32;
     int degree = ARMOUR_BEZIER_CURVE_DEGREE;
-    VecX qdes;
+    VecX q_des;
     double tplan = 0;
     int tplan_n = 0;
 

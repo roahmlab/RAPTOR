@@ -2,10 +2,12 @@ add_library(IDlib SHARED
     src/InverseDynamics.cpp
     src/CustomizedInverseDynamics.cpp
     src/RegressorInverseDynamics.cpp
+    src/MomentumRegressor.cpp
+    src/IntervalRegressorInverseDynamics.cpp
+    src/IntervalMomentumRegressor.cpp
     src/DynamicsConstraints.cpp
     src/ConstrainedInverseDynamics.cpp
     src/Transform.cpp
-    src/Spatial.cpp
     src/ForwardKinematics.cpp
 )
 

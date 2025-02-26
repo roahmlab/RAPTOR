@@ -93,9 +93,10 @@ void ArmourBezierCurves::compute(const VecX& z,
 
     if (is_computed(z, compute_derivatives, compute_hessian)) return;
 
-    coefficients.row(5) = z.transpose();
-    coefficients.row(4) = z.transpose();
-    coefficients.row(3) = z.transpose();
+    const VecX qfinal = atp.q0 + z;
+    coefficients.row(5) = qfinal.transpose();
+    coefficients.row(4) = qfinal.transpose();
+    coefficients.row(3) = qfinal.transpose();
 
     for (int x = 0; x < N; x++) {
         double t = tspan(x) / T;

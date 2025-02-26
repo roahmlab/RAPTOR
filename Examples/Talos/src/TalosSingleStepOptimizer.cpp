@@ -58,12 +58,13 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                  stanceLeg, 
                                                                  stance_foot_T_des);                                                          
     cidPtr_ = dcidPtr_; // convert to base class
+    idPtr_ = cidPtr_; // convert to base class
 
     // Torque limits
     VecX TORQUE_LIMITS_LOWER_VEC = 
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS) * 1e6;          
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_INDEPENDENT_JOINTS);          
     VecX TORQUE_LIMITS_UPPER_VEC =
-        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS) * 1e6;                                                                                                            
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_INDEPENDENT_JOINTS);                                                                                                            
 
     constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
                                                                 cidPtr_, 
@@ -86,7 +87,7 @@ bool TalosSingleStepOptimizer::set_parameters(
     // Surface contact constraints
     const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
     constraintsPtrVec_.push_back(std::make_unique<RectangleSurfaceContactConstraints>(cidPtr_, 
-                                                                             FRICTION_PARAMS));
+                                                                                      FRICTION_PARAMS));
     constraintsNameVec_.push_back("contact constraints");
 
     // kinematics constraints
@@ -103,6 +104,20 @@ bool TalosSingleStepOptimizer::set_parameters(
                                                                                              FRICTION_PARAMS));    
         constraintsNameVec_.push_back("reset map constraints");     
     }
+
+    // Cost functions
+    costsPtrVec_.push_back(std::make_unique<MinimizePower>(trajPtr_, 
+                                                           idPtr_));
+    costsWeightVec_.push_back(1.0);
+    costsNameVec_.push_back("minimize power");
+
+    costsPtrVec_.push_back(std::make_unique<MinimizeInitialVelocity>(trajPtr_));
+    costsWeightVec_.push_back(50.0);
+    costsNameVec_.push_back("minimize initial velocity");
+
+    costsPtrVec_.push_back(std::make_unique<MinimizeInitialAcceleration>(trajPtr_));
+    costsWeightVec_.push_back(0.5);
+    costsNameVec_.push_back("minimize initial acceleration");
 
     return true;
 }
@@ -121,7 +136,7 @@ bool TalosSingleStepOptimizer::get_nlp_info(
     numVars = trajPtr_->varLength;
     n = numVars;
 
-    // number of inequality constraint
+    // number of constraints
     numCons = 0;
     for ( Index i = 0; i < constraintsPtrVec_.size(); i++ ) {
         numCons += constraintsPtrVec_[i]->m;
@@ -137,114 +152,6 @@ bool TalosSingleStepOptimizer::get_nlp_info(
     return true;
 }
 // [TNLP_get_nlp_info]
-
-// [TNLP_eval_f]
-// returns the value of the objective function
-bool TalosSingleStepOptimizer::eval_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   Number&       obj_value
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    cidPtr_->compute(z, false);
-
-    obj_value = 0;
-    
-    // minimize control torque
-    for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        obj_value += sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));
-    }
-    obj_value /= cidPtr_->N;
-
-    // minimize initial velocity
-    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    obj_value += 100 * sqrt(initial_velocity.dot(initial_velocity));
-
-    // minimize initial acceleration
-    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    obj_value += 20 * sqrt(initial_acceleration.dot(initial_acceleration));
-
-    // // minimize reset velocity
-    // const VecX& reset_velocity = z.segment(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
-    // obj_value += 200 * sqrt(reset_velocity.dot(reset_velocity));
-
-    update_minimal_cost_solution(n, z, new_x, obj_value);
-
-    return true;
-}
-// [TNLP_eval_f]
-
-// [TNLP_eval_grad_f]
-// return the gradient of the objective function grad_{x} f(x)
-bool TalosSingleStepOptimizer::eval_grad_f(
-   Index         n,
-   const Number* x,
-   bool          new_x,
-   Number*       grad_f
-)
-{
-    if(n != numVars){
-       THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in eval_grad_f!");
-    }
-
-    VecX z = Utils::initializeEigenVectorFromArray(x, n);
-
-    cidPtr_->compute(z, true);
-
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] = 0;
-    }
-
-    for ( Index i = 0; i < cidPtr_->N; i++ ) {
-        VecX v = cidPtr_->ptau_pz(i).transpose() * cidPtr_->tau(i);
-        const double norm = sqrt(cidPtr_->tau(i).dot(cidPtr_->tau(i)));   
-
-        if (norm >= 1e-10) {
-            for ( Index j = 0; j < n; j++ ) {
-                grad_f[j] += v(j) / norm;
-            }
-        }
-    }
-    for ( Index i = 0; i < n; i++ ) {
-        grad_f[i] /= cidPtr_->N;
-    }
-
-    const VecX& initial_velocity = cidPtr_->trajPtr_->q_d(0);
-    const VecX& initial_velocity_pz = cidPtr_->trajPtr_->pq_d_pz(0).transpose() * initial_velocity;
-    const double initial_velocity_norm = sqrt(initial_velocity.dot(initial_velocity));
-    if (initial_velocity_norm > 1e-10) { // avoid singularity when initial_velocity_norm is close to 0
-        for ( Index i = 0; i < n; i++ ) {
-            grad_f[i] += 100 * initial_velocity_pz(i) / initial_velocity_norm;
-        }
-    }
-
-    const VecX& initial_acceleration = cidPtr_->trajPtr_->q_dd(0);
-    const VecX& initial_acceleration_pz = cidPtr_->trajPtr_->pq_dd_pz(0).transpose() * initial_acceleration;
-    const double initial_acceleration_norm = sqrt(initial_acceleration.dot(initial_acceleration));
-    if (initial_acceleration_norm > 1e-10) { // avoid singularity when initial_acceleration_norm is close to 0
-        for ( Index i = 0; i < n; i++ ) {
-            grad_f[i] += 20 * initial_acceleration_pz(i) / initial_acceleration_norm;
-        }
-    }
-
-    // const VecX& reset_velocity = z.segment(trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS, NUM_JOINTS);
-    // const double reset_velocity_norm = sqrt(reset_velocity.dot(reset_velocity));
-    // if (reset_velocity_norm > 1e-10) { // avoid singularity when reset_velocity_norm is close to 0
-    //     for ( Index i = trajPtr_->varLength - NUM_JOINTS - NUM_DEPENDENT_JOINTS; i < NUM_JOINTS; i++ ) {
-    //         grad_f[i] += 200 * z(i) / reset_velocity_norm;
-    //     }
-    // }
-
-    return true;
-}
-// [TNLP_eval_grad_f]
 
 }; // namespace Talos
 }; // namespace RAPTOR

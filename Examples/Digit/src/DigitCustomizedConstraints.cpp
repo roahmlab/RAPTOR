@@ -47,11 +47,11 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     for (int i = 0; i < trajPtr_->N; i++) {
         if (ddcPtr_->stanceLeg == 'L') {
             swingfoot_endT = rightfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("right_toe_roll");
+            swingfoot_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         }
         else {
             swingfoot_endT = leftfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("left_toe_roll");
+            swingfoot_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         }
         
         VecX qi(modelPtr_->nq);
@@ -94,8 +94,8 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     g2 = Utils::wrapToPi(swingfoot_xyzrpy.row(3)); // swingfoot roll
     g3 = Utils::wrapToPi(swingfoot_xyzrpy.row(4)); // swingfoot pitch
     g4 = (ddcPtr_->stanceLeg == 'L') ? 
-        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI / 2) :
-        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() - M_PI / 2); // swingfoot yaw
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() + M_PI_2) :
+        Utils::wrapToPi(swingfoot_xyzrpy.row(5).array() - M_PI_2); // swingfoot yaw
 
     // (3) swingfoot xy equal to desired value 
     //     at the beginning and at the end of each walking step
@@ -112,8 +112,8 @@ void DigitCustomizedConstraints::compute(const VecX& z,
     g9 = Utils::wrapToPi(q.row(3)); // torso roll
     g10 = Utils::wrapToPi(q.row(4)); // torso pitch
     g11 = (ddcPtr_->stanceLeg == 'L') ?
-        Utils::wrapToPi(q.row(5).array() + M_PI / 2) :
-        Utils::wrapToPi(q.row(5).array() - M_PI / 2); // torso yaw
+        Utils::wrapToPi(q.row(5).array() + M_PI_2) :
+        Utils::wrapToPi(q.row(5).array() - M_PI_2); // torso yaw
 
     g << g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11;
 

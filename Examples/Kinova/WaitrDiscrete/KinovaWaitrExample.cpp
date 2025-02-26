@@ -17,7 +17,7 @@ int main() {
     pinocchio::urdf::buildModel(urdf_filename, model);
 
     model.gravity.linear()(2) = GRAVITY;
-    model.rotorInertia.setZero();
+    model.armature.setZero();
     model.damping.setZero();
     model.friction.setZero();
 
@@ -40,7 +40,7 @@ int main() {
     // Define trajectories
     ArmourTrajectoryParameters atp;
     atp.q0 = Eigen::VectorXd::Zero(NUM_JOINTS);
-    atp.q0(1) = -M_PI / 2;
+    atp.q0(1) = -M_PI_2;
     atp.q_d0 = Eigen::VectorXd::Zero(NUM_JOINTS);
     atp.q_dd0 = Eigen::VectorXd::Zero(NUM_JOINTS);
 
@@ -50,7 +50,7 @@ int main() {
 
     // Define contact surface parameters
     circleContactSurfaceParams csp;
-    // TODO: define contact surface parameters
+    // Simply use the default contact surface parameters
 
     // Define target
     Eigen::VectorXd qdes(NUM_JOINTS);

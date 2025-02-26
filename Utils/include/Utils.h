@@ -5,35 +5,57 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <Eigen/Dense>
 
 namespace RAPTOR {
 namespace Utils {
 
+// Converts degrees to radians
+// @param deg: Angle in degrees
+// @return: Angle in radians
 inline double deg2rad(const double deg) {
     return deg * M_PI / 180.0;
 }
 
+// Converts radians to degrees
+// @param rad: Angle in radians
+// @return: Angle in degrees
 inline double rad2deg(const double rad) {
     return rad * 180.0 / M_PI;
 }
 
+// Converts a vector of angles in degrees to radians
+// @param deg: Vector of angles in degrees
+// @return: Vector of angles in radians
 inline Eigen::Vector3d deg2rad(const Eigen::Vector3d& deg) {
     return deg * M_PI / 180.0;
 }
 
+// Converts a vector of angles in radians to degrees
+// @param rad: Vector of angles in radians
+// @return: Vector of angles in degrees
 inline Eigen::Vector3d rad2deg(const Eigen::Vector3d& rad) {
     return rad * 180.0 / M_PI;
 }
 
+// Converts a vector of angles in degrees to radians
+// @param deg: Vector of angles in degrees
+// @return: Vector of angles in radians
 inline Eigen::VectorXd deg2rad(const Eigen::VectorXd& deg) {
     return deg * M_PI / 180.0;
 }
 
+// Converts a vector of angles in radians to degrees
+// @param rad: Vector of angles in radians
+// @return: Vector of angles in degrees
 inline Eigen::VectorXd rad2deg(const Eigen::VectorXd& rad) {
     return rad * 180.0 / M_PI;
 }
 
+// Wraps an angle to the range [-pi, pi]
+// @param angle: Angle in radians
+// @return: Wrapped angle in radians
 inline double wrapToPi(const double angle) {
     double res = angle;
     while (res > M_PI) {
@@ -45,6 +67,9 @@ inline double wrapToPi(const double angle) {
     return res;
 }
 
+// Wraps a vector of angles to the range [-pi, pi]
+// @param angles: Vector of angles in radians
+// @return: Vector of wrapped angles in radians
 inline Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
     Eigen::VectorXd res = angles;
     for (int i = 0; i < res.size(); i++) {
@@ -53,6 +78,10 @@ inline Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
     return res;
 }
 
+// Returns the sign of a value
+// @param val: Input value
+// @param eps: Tolerance for zero
+// @return: 1.0 if val > eps, -1.0 if val < -eps, 0.0 otherwise
 inline double sign(double val, double eps = 1e-8) {
     if (val > eps) {
         return 1.0;
@@ -65,6 +94,11 @@ inline double sign(double val, double eps = 1e-8) {
     }
 }
 
+// Checks if two vectors are equal within a tolerance
+// @param a: First vector
+// @param b: Second vector
+// @param tol: Tolerance for equality
+// @return: True if vectors are equal, false otherwise
 inline bool ifTwoVectorEqual(const Eigen::VectorXd& a, 
                              const Eigen::VectorXd& b, 
                              double tol = 1e-10) {
@@ -79,6 +113,11 @@ inline bool ifTwoVectorEqual(const Eigen::VectorXd& a,
     return true;
 }
 
+// Checks if two matrices are equal within a tolerance
+// @param a: First matrix
+// @param b: Second matrix
+// @param tol: Tolerance for equality
+// @return: True if matrices are equal, false otherwise
 inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a, 
                              const Eigen::MatrixXd& b, 
                              double tol = 1e-10) {
@@ -95,12 +134,20 @@ inline bool ifTwoMatrixEqual(const Eigen::MatrixXd& a,
     return true;
 }
 
+// Reshapes a vector into a matrix
+// @param vec: Input vector
+// @param rows: Number of rows in the output matrix
+// @param cols: Number of columns in the output matrix
+// @return: Reshaped matrix
 inline Eigen::MatrixXd reshape(const Eigen::VectorXd& vec, 
                                int rows, 
                                int cols) {
     return Eigen::Map<const Eigen::MatrixXd>(vec.data(), rows, cols);
 }
 
+// Computes the skew-symmetric matrix of a vector
+// @param v: Input vector
+// @return: Skew-symmetric matrix
 inline Eigen::Matrix3d skew(const Eigen::Vector3d& v) {
     Eigen::Matrix3d res;
     res << 0,    -v(2), v(1),
@@ -109,6 +156,9 @@ inline Eigen::Matrix3d skew(const Eigen::Vector3d& v) {
     return res;
 }
 
+// Computes the vector from a skew-symmetric matrix
+// @param m: Input skew-symmetric matrix
+// @return: Vector
 inline Eigen::Vector3d skew(const Eigen::Matrix3d& m) {
     Eigen::Vector3d res;
     res << m(2,1) - m(1,2), 
@@ -117,6 +167,9 @@ inline Eigen::Vector3d skew(const Eigen::Matrix3d& m) {
     return 0.5 * res;
 }
 
+// Computes the vector from a skew-symmetric matrix
+// @param m: Input skew-symmetric matrix
+// @return: Vector
 inline Eigen::Vector3d unskew(const Eigen::Matrix3d& m) {
     Eigen::Vector3d res;
     res << m(2,1), 
@@ -125,14 +178,22 @@ inline Eigen::Vector3d unskew(const Eigen::Matrix3d& m) {
     return res;
 }
 
+// Computes the plucker transformation matrix
+// @param R: Rotation matrix
+// @param p: Translation vector
+// @return: Plucker transformation matrix
 inline Eigen::Matrix<double, 6, 6> plux(const Eigen::Matrix3d& R, 
-                                        const Eigen::Vector3d& p) {
+                                       const Eigen::Vector3d& p) {
     Eigen::Matrix<double, 6, 6> res;
     res << R,            Eigen::MatrixXd::Zero(3, 3),
            -R * skew(p), R;
     return res;
 }
 
+// Initializes an Eigen vector from an array
+// @param array: Input array
+// @param size: Size of the array
+// @return: Eigen vector
 inline Eigen::VectorXd initializeEigenVectorFromArray(const double* array, 
                                                       size_t size) {
     Eigen::VectorXd res(size);
@@ -142,6 +203,9 @@ inline Eigen::VectorXd initializeEigenVectorFromArray(const double* array,
     return res;
 }
 
+// Initializes an Eigen matrix from a file
+// @param filename: Name of the file
+// @return: Eigen matrix
 inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -161,6 +225,10 @@ inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename)
         data.push_back(lineData);
     }
 
+    if (data.size() == 0) {
+        throw std::runtime_error("Empty file: " + filename);
+    }
+
     Eigen::MatrixXd res(data.size(), data[0].size());
     for (int i = 0; i < data.size(); i++) {
         for (int j = 0; j < data[0].size(); j++) {
@@ -171,12 +239,19 @@ inline Eigen::MatrixXd initializeEigenMatrixFromFile(const std::string filename)
     return res;
 }
 
+// Writes an Eigen matrix to a file
+// @param matrix: Input matrix
+// @param filename: Name of the file
+// @param precision: Precision of the output
 inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix, 
-                                   const std::string filename) {
+                                   const std::string filename,
+                                   const size_t precision = 6) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file " + filename);
     }
+
+    file << std::setprecision(precision);
 
     for (int i = 0; i < matrix.rows(); i++) {
         for (int j = 0; j < matrix.cols(); j++) {
@@ -188,6 +263,10 @@ inline void writeEigenMatrixToFile(const Eigen::MatrixXd& matrix,
     file.close();
 }
 
+// Uniformly samples a vector
+// @param vec: Input vector
+// @param numSamples: Number of samples
+// @return: Sampled vector
 inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec, 
                                              int numSamples) {
     Eigen::VectorXd samples(0);
@@ -218,19 +297,21 @@ inline Eigen::VectorXd uniformlySampleVector(const Eigen::VectorXd& vec,
     return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
-                                                   int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
-
+// Uniformly samples a matrix in rows
+// @param mat: Input matrix
+// @param samples: Output sampled matrix
+// @param numSamples: Number of samples
+inline void uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat, 
+                                        Eigen::MatrixXd& samples,
+                                        int numSamples) {
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
         mat.cols() == 0) {
-        return samples; 
+        throw std::invalid_argument("Invalid input arguments");
     }
 
     if (numSamples >= mat.rows()) {
-        samples = mat;
-        return samples;
+        throw std::invalid_argument("Number of samples should be less than the number of rows in the matrix");
     }
 
     samples.resize(numSamples, mat.cols());
@@ -244,23 +325,23 @@ inline Eigen::MatrixXd uniformlySampleMatrixInRows(const Eigen::MatrixXd& mat,
             samples.row(i) = mat.row(idx);
         }
     }
-
-    return samples;
 }
 
-inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
-                                                   int numSamples) {
-    Eigen::MatrixXd samples(0, 0);
-
+// Uniformly samples a matrix in columns
+// @param mat: Input matrix
+// @param samples: Output sampled matrix
+// @param numSamples: Number of samples
+inline void uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat, 
+                                        Eigen::MatrixXd& samples,
+                                        int numSamples) {
     if (numSamples <= 0 || 
         mat.rows() == 0 || 
         mat.cols() == 0) {
-        return samples; 
+        throw std::invalid_argument("Invalid input arguments");
     }
 
     if (numSamples >= mat.cols()) {
-        samples = mat;
-        return samples;
+        throw std::invalid_argument("Number of samples should be less than the number of columns in the matrix");
     }
 
     samples.resize(mat.rows(), numSamples);
@@ -274,8 +355,6 @@ inline Eigen::MatrixXd uniformlySampleMatrixInCols(const Eigen::MatrixXd& mat,
             samples.col(i) = mat.col(idx);
         }
     }
-
-    return samples;
 }
 
 }; // namespace Utils

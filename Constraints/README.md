@@ -1,17 +1,34 @@
 # Constraints
 
-This class implements different types of constraints that will be later put into the optimization.
-Specifically, we would like to provide the formulation `g_lb <= g(z) <= g_ub`.
-The core function is called `compute(const Eigen::VectorXd& z, bool compute_derivatives)`. 
-The constraint class usually requires a shared pointer of a trajectory class in the constructor, and a shared pointer of a forward kinematics and inverse dynamics class. 
-The results are stored in `g`, which is a class member, for the optimizer class to access.
-The gradient is stored in `pg_pz` and the hessian is stored in `pg_pz_pz`
+## Class Overview
+This class implements various types of constraints that are later incorporated into the optimization process. The constraints are formulated as:
+```C++
+g_lb <= g(z) <= g_ub
+```
 
-Another core function is called `compute_bounds()`.
+The primary function is 
+```C++
+compute(const Eigen::VectorXd& z, bool compute_derivatives, bool compute_hessian)
+``` 
+This function evaluates the constraint function `g(z)`.
+ - The computed constraint values are stored in an Eigen vector `g`, a public class member, allowing the optimizer to access them from outside.
+ - If compute_derivatives is true, the gradient (the jacobian matrix) is computed and stored in an Eigen matrix `pg_pz`.
+ - If compute_hessian is true, the Hessian is computed and stored in `pg_pz_pz`. Note that `pg_pz_pz` is an 1-D Eigen array of Eigen matrices, where `pg_pz_pz(i)` stores the Hessian matrix of the `i`th constraint.
+
+Another core function is called 
+```C++
+compute_bounds()
+```
 This is called by the optimizer class at the very beginning of the optimization.
-This updates `g_lb` and `g_ub`, which are also class members.
+This updates `g_lb` and `g_ub`, which are also public class members, allowing the optimizer to access them from outside.
 
-There's also a function called `print_violation_information`, which will be called by the optimizer class at the end of the optimization, to print relevant information for tuning and debugging.
+There's also a function called 
+```C++
+print_violation_information()
+```
+which will be called by the optimizer class at the end of the optimization, to print relevant information for tuning and debugging.
+
+## Constraint Types
 
 ### JointLimits
 
@@ -19,11 +36,27 @@ Constrain robot joint angles by user-defined lower bounds and upper bounds.
 
 Hessian implementation: **Yes**
 
+### ConstrainedJointLimits
+
+A special version of `JointLimits` for constrained systems (systems with kinematics constraints, such as [Digit-v3](../Examples/Digit/), which incorporates closed-loop kinematics constraints at its knees and ankles)
+
+Hessian implementation: **No**
+
 ### VelocityLimits
 
 Constrain robot joint velocities by user-defined upper bounds.
 
 Hessian implementation: **Yes**
+
+### AccelerationLimits
+
+Constrain robot joint accelerations by user-defined upper bounds.
+
+Hessian implementation: **Yes**
+
+### TrajectoryTerminalConstraints
+
+Constrain robot position, velocity, or acceleration at the end of the trajectory by user-defined values.
 
 ### TorqueLimits
 
@@ -44,7 +77,8 @@ Hessian implementation: **Yes**
 
 ### RectangleSurfaceContactConstraints
 
-Enforcing contacts between the robot and one object or the ground, where the contact surface is flat and rectangle.
+Enforcing contacts between the robot and one object or the ground, where the contact surface is **rectangle**.
+
 For example, the object to manipulate should be attached on the end effector of the robot, or the robot stays on the ground on its stance foot.
 We need to satisfy certain constraints so that the object keeps a rigid contact with the robot.
 We first need to access the contact wrench between the object and the robot.
@@ -71,7 +105,18 @@ Hessian implementation: **No**
 
 ### CircleSurfaceContactConstraints
 
-Enforcing contacts between the robot and one object or the ground, where the contact surface is circle.
+Enforcing contacts between the robot and one object or the ground, where the contact surface is **circle**.
 The constraints are formulated similarly to `RectangleSurfaceContactConstraints`, but with a much simpler ZMP constraints formulation.
 
 Hessian implementation: **No**
+
+## A Special Type of "Constraint": CollisionAvoidance
+
+`CollisionAvoidance` is actually a separate class, which is not inherited from `Constraints` class.
+It aims to compute the minimum distance between the environment and a point.
+Given the gradient and the Hessian of the point (with respect to certain decision variables), it also computes the gradient and the Hessian of the distance.
+It can be used in constraint classes that enforce collision avoidance, in other words, the distance between the environment and a specific point on the robot greater than a threshold.
+An example of such constraint class can be found in `KinovaCustomizedConstraints`.
+
+In **RAPTOR**, we have only implemented a class called `BoxCollisionAvoidance` inherited from `CollisionAvoidance`.
+The `BoxCollisionAvoidance` class takes a vector of boxes representing objects in the environment and computes the minimum distance between a specified point and all the boxes.

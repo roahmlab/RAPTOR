@@ -1,0 +1,62 @@
+name: G1SingleStep
+
+### Trajectory settings
+  # number of time nodes to evaluate constraints
+N: 14
+
+  # distribution of the time nodes
+time_discretization: Chebyshev # Chebyshev, Uniform
+
+  # degree of the Bezier curve (as the desired trajectory)
+degree: 6
+
+### Gait behavior settings
+  # step height (in the middle of the gait)
+swingfoot_midstep_z_des: 0.05
+
+  # position with respect to the forward direction of the robot at the beginning
+swingfoot_begin_x_des: -0.0
+
+  # position with respect to the forward direction of the robot at the end
+swingfoot_end_x_des: 0.0
+
+  # examples:
+  # 1. swingfoot_begin_x_des/swingfoot_end_x_des being positive 
+  #    means the swing foot is in front of the robot.
+  # 2. swingfoot_begin_x_des/swingfoot_end_x_des being negative 
+  #    means the swing foot is behind the robot.
+  # 3. swingfoot_begin_x_des being negative, and swingfoot_end_x_des being positive 
+  #    means the robot is walking forward.
+  # 4. swingfoot_begin_x_des being positive, and swingfoot_end_x_des being negative
+  #    means the robot is walking backward.
+  # 5. For periodic gaits, the absolute values of swingfoot_begin_x_des and swingfoot_end_x_des should be the same,
+  #    since the gait should be symmetric.
+  #    Otherwise, you need to turn off or change the periodicity reset map constraint.
+
+### Ipopt Optimization settings
+  # terminal condition 1: optimality tolerance
+tol: 1e-4
+
+  # terminal condition 2: constraint violation tolerance
+constr_viol_tol: 1e-4
+
+  # terminal condition 3: maximum wall time
+max_wall_time: 100.0
+
+  # terminal condition 4: maximum number of iterations
+max_iter: 500
+
+  # scale the objective function
+obj_scaling_factor: 1e-3
+
+  # print level
+print_level: 5 # 0: no output, 5: detailed output that is usually enough for tuning parameters
+
+  # mu_strategy
+mu_strategy: adaptive # adaptive for more aggressive attempts, monotone for more conservative convergence
+
+  # linear solver (HSL)
+linear_solver: ma57 # ma27, ma57, ma86, ma97, pardiso
+
+  # turn on gradient check or not
+gredient_check: false # true, false

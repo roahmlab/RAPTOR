@@ -5,10 +5,9 @@ namespace RAPTOR {
 VelocityLimits::VelocityLimits(std::shared_ptr<Trajectories>& trajPtr_input,
                                const VecX& lowerLimits_input, 
                                const VecX& upperLimits_input) : 
+    trajPtr_(trajPtr_input),
     lowerLimits(lowerLimits_input), 
     upperLimits(upperLimits_input) {
-    trajPtr_ = trajPtr_input;
-
     if (lowerLimits.size() != upperLimits.size()) {
         throw std::invalid_argument("lowerLimits and upperLimits must be the same size");
     }
@@ -70,12 +69,12 @@ void VelocityLimits::print_violation_info() {
                 std::cout << "        VelocityLimits.cpp: Joint " 
                           << j 
                           << " at time instance "
-                           << i 
-                           << " is above upper limit: " 
-                           << g(i * trajPtr_->Nact + j) 
-                           << " > " 
-                           << upperLimits(j) 
-                           << std::endl;
+                          << i 
+                          << " is above upper limit: " 
+                          << g(i * trajPtr_->Nact + j) 
+                          << " > " 
+                          << upperLimits(j) 
+                          << std::endl;
             }
         }
     }

@@ -131,5 +131,8 @@ constexpr double FOOT_LENGTH = 0.1175; // (m)
 // pulled out from digit-v3.xml
 constexpr double GRAVITY = -9.806; // m/s^2
 
+constexpr char LEFT_FOOT_NAME[] = "left_toe_roll";
+constexpr char RIGHT_FOOT_NAME[] = "right_toe_roll";
+
 }; // namespace Digit
 }; // namespace RAPTOR

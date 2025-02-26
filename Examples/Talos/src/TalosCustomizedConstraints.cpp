@@ -14,14 +14,14 @@ TalosCustomizedConstraints::TalosCustomizedConstraints(const Model& model_input,
     fkPtr_ = std::make_unique<ForwardKinematicsSolver>(modelPtr_.get());
 
     // for regular gait optimization
-    // leftfoot_endT.p << 0, 0, -0.107;
-    // rightfoot_endT.p << 0, 0, -0.107;
+    leftfoot_endT.p << 0, 0, -0.107;
+    rightfoot_endT.p << 0, 0, -0.107;
 
-    // for single step fixed initial condition
-    // the initial condition has been fixed but the swing foot is slightly off the ground
-    // we take this into consideration so that the optimization does not stuck on this constraint forever
-    leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
-    rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // // for single step fixed initial condition
+    // // the initial condition has been fixed but the swing foot is slightly off the ground
+    // // we take this into consideration so that the optimization does not stuck on this constraint forever
+    // leftfoot_endT.p << 0, 0, -0.107 + 0.00029036;
+    // rightfoot_endT.p << 0, 0, -0.107 + 0.00029036;
 
     q = MatX::Zero(modelPtr_->nv, trajPtr_->N);
     pq_pz.resize(1, trajPtr_->N);
@@ -47,11 +47,11 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     for (int i = 0; i < trajPtr_->N; i++) {
         if (ddcPtr_->stanceLeg == 'L') {
             swingfoot_endT = rightfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_right_6_joint");
+            swingfoot_id = modelPtr_->getJointId(std::string(RIGHT_FOOT_NAME));
         }
         else {
             swingfoot_endT = leftfoot_endT;
-            swingfoot_id = modelPtr_->getJointId("leg_left_6_joint");
+            swingfoot_id = modelPtr_->getJointId(std::string(LEFT_FOOT_NAME));
         }
         
         VecX qi(modelPtr_->nq);
@@ -112,13 +112,12 @@ void TalosCustomizedConstraints::compute(const VecX& z,
     // (4) torso height always larger than 0.95 meter
     //           roll and pitch always close to 0
     //           yaw always close to 0 when walking forward
-    //           stays between left foot and right foot
     g6 = q.row(2); // torso height
     g7 = Utils::wrapToPi(q.row(3)); // torso roll
     g8 = Utils::wrapToPi(q.row(4)); // torso pitch
     g9 = Utils::wrapToPi(q.row(5)); // torso yaw
 
-    // (5) 
+    // (5) make sure the torso stays between the two feet
     g10 = q.row(1); // torso y <= 0
     g11 = q.row(1) - swingfoot_xyzrpy.row(1); // torso y >= swingfoot y
 

@@ -127,23 +127,16 @@ void ConstrainedInverseDynamics::compute(const VecX& z,
                                               prnea_pq, prnea_pv, prnea_pa);
         }
 
-        // adjust with damping force and rotor inertia force
+        // adjust with damping force
         tau(i) = dataPtr_->tau + 
-                 modelPtr_->damping.cwiseProduct(v(i)) + 
-                 modelPtr_->rotorInertia.cwiseProduct(a(i));
+                 modelPtr_->damping.cwiseProduct(v(i));
                 
         if (compute_derivatives) {
             // prnea_pa is just the inertia matrix.
             // pinocchio only computes the upper triangle part of it.
             for (int mi = 0; mi < prnea_pa.rows(); mi++) {
                 for (int mj = 0; mj <= mi; mj++) {
-                    if (mi == mj) {
-                        // pinocchio rnea does not take rotor inertia into account
-                        prnea_pa(mi, mj) += modelPtr_->rotorInertia(mi);
-                    }
-                    else {
-                        prnea_pa(mi, mj) = prnea_pa(mj, mi);
-                    }
+                    prnea_pa(mi, mj) = prnea_pa(mj, mi);
                 }
             }
 
