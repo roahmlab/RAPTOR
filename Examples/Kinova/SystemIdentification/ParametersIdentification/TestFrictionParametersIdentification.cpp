@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     const std::string accFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/q_dd_downsampled_"
                                 + std::string(argv[1]) +".csv";
     const std::string torqueFile = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/tau_downsampled_"
-                                + std::string(argv[1]) +".csv";
+                                   + std::string(argv[1]) +".csv";
 
     Eigen::MatrixXd posData = Utils::initializeEigenMatrixFromFile(posFile);
     Eigen::MatrixXd velData = Utils::initializeEigenMatrixFromFile(velFile);
@@ -186,8 +186,7 @@ int main(int argc, char* argv[]) {
         //     pinocchio::rnea(model, data, q, v, a);
         //     tau_inertials.col(i) = data.tau;
         // } 
-
-
+        
         // const std::string outputfolder1 = "../Examples/Kinova/SystemIdentification/ParametersIdentification/full_params_data/";
         // std::ofstream estimate_tau(outputfolder1 + "friction_estimate_tau_"  + std::string(argv[1]) +".csv");
 
@@ -213,7 +212,6 @@ int main(int argc, char* argv[]) {
         //     }
         //     estimate_tau << std::endl;
         // }
-        
     }
     catch (std::exception& e) {
         throw std::runtime_error("Error solving optimization problem! Check previous error message!");
