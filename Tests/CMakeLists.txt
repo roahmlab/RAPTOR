@@ -181,18 +181,6 @@ target_link_libraries(ReachableSets_test PUBLIC
     yaml-cpp
     pinocchio::pinocchio)
 
-add_executable(QRDecomposition_test
-    KinematicsDynamics/TestQRDecomposition.cpp)
-
-target_link_libraries(QRDecomposition_test PUBLIC
-    trajlib 
-    IDlib
-    ${BOOST_LIBRARIES} 
-    pinocchio::pinocchio)
-
-target_compile_options(QRDecomposition_test PUBLIC
-    ${PINOCCHIO_FLAGS})
-
 add_executable(TorqueCost_test 
     Costs/TestMinimizeTorqueCosts.cpp)
 

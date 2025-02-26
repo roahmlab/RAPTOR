@@ -87,14 +87,14 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
         Utils::deg2rad(
             Utils::initializeEigenVectorFromArray(ACCELERATION_LIMITS_UPPER, NUM_JOINTS));
 
-    // // read torque limits from KinovaConstants.h
-    // VecX TORQUE_LIMITS_LOWER_VEC = 
-    //     Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_JOINTS) + 
-    //     torque_limits_buffer_input;
+    // read torque limits from KinovaConstants.h
+    VecX TORQUE_LIMITS_LOWER_VEC = 
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_LOWER, NUM_JOINTS) + 
+        torque_limits_buffer_input;
 
-    // VecX TORQUE_LIMITS_UPPER_VEC = 
-    //     Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
-    //     torque_limits_buffer_input;
+    VecX TORQUE_LIMITS_UPPER_VEC = 
+        Utils::initializeEigenVectorFromArray(TORQUE_LIMITS_UPPER, NUM_JOINTS) -
+        torque_limits_buffer_input;
 
     // Trajectory terminal constraints (terminal velocity and acceleration are zero to ensure safety)
     constraintsPtrVec_.push_back(std::make_unique<TrajectoryTerminalConstraints>(trajPtr_, 
@@ -121,12 +121,12 @@ bool PayloadExcitingTrajectoryGenerator::set_parameters(
                                                                       ACCELERATION_LIMITS_UPPER_VEC));
     constraintsNameVec_.push_back("acceleration limits");   
 
-    // // Torque limits
-    // constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
-    //                                                             ridPtr_,
-    //                                                             TORQUE_LIMITS_LOWER_VEC, 
-    //                                                             TORQUE_LIMITS_UPPER_VEC));
-    // constraintsNameVec_.push_back("torque limits"); 
+    // Torque limits
+    constraintsPtrVec_.push_back(std::make_unique<TorqueLimits>(trajPtr_, 
+                                                                ridPtr_,
+                                                                TORQUE_LIMITS_LOWER_VEC, 
+                                                                TORQUE_LIMITS_UPPER_VEC));
+    constraintsNameVec_.push_back("torque limits"); 
 
     // Customized constraints (collision avoidance with obstacles)
     if (boxCenters.size() > 0) {
