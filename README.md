@@ -87,14 +87,12 @@ We provide the following examples:
 ## Bibtex
 To cite **RAPTOR** in your academic research, please use the following bibtex entry:
 ```bibtex
-@misc{zhang2024rapidrobusttrajectoryoptimization,
-title={Rapid and Robust Trajectory Optimization for Humanoids}, 
-author={Bohao Zhang and Ram Vasudevan},
-year={2024},
-eprint={2409.00303},
-archivePrefix={arXiv},
-primaryClass={cs.RO},
-url={https://arxiv.org/abs/2409.00303}}
+@article{zhang2024rapidrobusttrajectoryoptimization,
+  title={Rapid and Robust Trajectory Optimization for Humanoids},
+  author={Bohao Zhang and Ram Vasudevan},
+  journal={arXiv preprint arXiv:2409.00303},
+  year={2024}
+}
 ```
 
 ## Related Projects
