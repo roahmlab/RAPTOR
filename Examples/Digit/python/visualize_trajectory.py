@@ -4,40 +4,28 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 
-### settings
-timeStep = 0.1
-
-### read data
-# data = np.loadtxt("../data/trajectory-digit-simulation.txt")
-
-data = np.loadtxt("../data/full-trajectories.txt")
+# load the trajectory data here
+data = np.loadtxt("../data/full-trajectories-upstairs.txt")
 data = data.T
 
-### connect to simulator
+# connect to simulator
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pd.getDataPath())
 
-# Load a simple plane
-# plane_id = p.loadURDF("plane.urdf")
+# create and visualize the robot in pybullet
 urdf_filename = "../../../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf"
 robot = p.loadURDF(urdf_filename, useFixedBase=True)
+nq = 36 # number of joints
 
-# Start the simulation
+# start the simulation
 p.setGravity(0, 0, -9.81)
-p.setTimeStep(timeStep)
 num_joints = p.getNumJoints(robot)
 
-# input("Press Enter to continue...")
-
+# visualize the trajectory along the time
 for tid in range(0, data.shape[1]):
-    # base_xyz = data[0:3, tid]
-    # base_rpy = data[3:6, tid]
-    # base_quat = p.getQuaternionFromEuler(base_rpy)
-    # pos = data[6:36, tid]
+    pos = data[:nq, tid]
     
-    # p.resetBasePositionAndOrientation(robot, base_xyz, base_quat)
-    pos = data[:36, tid]
-    
+    # directly set the joint angles
     id = 0
     for i in range(num_joints):
         joint_info = p.getJointInfo(robot, i)
@@ -53,5 +41,4 @@ for tid in range(0, data.shape[1]):
     
 input("Press Enter to continue...")
 
-# Disconnect from PyBullet
 p.disconnect()
