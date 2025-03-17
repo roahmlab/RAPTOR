@@ -60,33 +60,33 @@ bool DigitMultipleStepOptimizer::set_parameters(
     }
 
     // refine the initial guess for right stance phase
-    int oneStepSize = x0.size() / NSteps_input;
-    for (int i = 0; i < NSteps_input; i++) {
-        if (i % 2 == 0) {
-            // assume the initial guess is correct for left stance phase
-            // do nothing here
-            // x0.segment(i * oneStepSize, oneStepSize) = z_onestep;
-        }
-        else {
-            const VecX z_onestep = x0.segment(i * oneStepSize, oneStepSize);
-            if (i < NSteps_input - 1) {
-                x0.segment(i * oneStepSize, oneStepSize) = 
-                    switchSolutionFromLeftToRight(
-                        stepOptVec_[i]->dcidPtr_,
-                        stepOptVec_[i + 1]->dcidPtr_,
-                        z_onestep, 
-                        degree_input);
-            }
-            else {
-                x0.segment(i * oneStepSize, oneStepSize) = 
-                    switchSolutionFromLeftToRight(
-                        stepOptVec_[i]->dcidPtr_,
-                        stepOptVec_[0]->dcidPtr_,
-                        z_onestep, 
-                        degree_input);
-            }
-        }
-    }
+    // int oneStepSize = x0.size() / NSteps_input;
+    // for (int i = 0; i < NSteps_input; i++) {
+    //     if (i % 2 == 0) {
+    //         // assume the initial guess is correct for left stance phase
+    //         // do nothing here
+    //         // x0.segment(i * oneStepSize, oneStepSize) = z_onestep;
+    //     }
+    //     else {
+    //         const VecX z_onestep = x0.segment(i * oneStepSize, oneStepSize);
+    //         if (i < NSteps_input - 1) {
+    //             x0.segment(i * oneStepSize, oneStepSize) = 
+    //                 switchSolutionFromLeftToRight(
+    //                     stepOptVec_[i]->dcidPtr_,
+    //                     stepOptVec_[i + 1]->dcidPtr_,
+    //                     z_onestep, 
+    //                     degree_input);
+    //         }
+    //         else {
+    //             x0.segment(i * oneStepSize, oneStepSize) = 
+    //                 switchSolutionFromLeftToRight(
+    //                     stepOptVec_[i]->dcidPtr_,
+    //                     stepOptVec_[0]->dcidPtr_,
+    //                     z_onestep, 
+    //                     degree_input);
+    //         }
+    //     }
+    // }
 
     // define constraints for multiple steps continuity
     const rectangleContactSurfaceParams FRICTION_PARAMS(MU, GAMMA, FOOT_WIDTH, FOOT_LENGTH);
@@ -226,8 +226,6 @@ bool DigitMultipleStepOptimizer::get_nlp_info(
     m = numCons;
 
     nnz_h_lag = n * (n + 1) / 2;
-
-    std::cout << "nnz_jac_g: " << nnz_jac_g << std::endl;
 
     // use the C style indexing (0-based)
     index_style = TNLP::C_STYLE;

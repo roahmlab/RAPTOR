@@ -58,6 +58,10 @@ int main(int argc, char* argv[]) {
         std::string time_discretization_str = config["time_discretization"].as<std::string>();
         time_discretization = (time_discretization_str == "Uniform") ? Uniform : Chebyshev;
 
+        if (NSteps % 2 != 0) {
+            throw std::runtime_error("Error parsing YAML file: NSteps (number of steps) must be even for multiple-step gait optimization!");
+        }
+
         auto swingfoot_midstep_z_des = config["swingfoot_midstep_z_des"].as<std::vector<double>>();
         auto swingfoot_begin_y_des = config["swingfoot_begin_y_des"].as<std::vector<double>>();
         auto swingfoot_end_y_des = config["swingfoot_end_y_des"].as<std::vector<double>>();
@@ -80,17 +84,24 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Error parsing YAML file! Check previous error message!");
     }
     
-    Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
-    Eigen::VectorXd z0(z_onestep.size() * NSteps);
-    for (int i = 0; i < NSteps; i++) {
-        z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
+    // Eigen::VectorXd z_onestep = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit.txt");
+    // Eigen::VectorXd z0(z_onestep.size() * NSteps);
+    // for (int i = 0; i < NSteps; i++) {
+    //     z0.segment(i * z_onestep.size(), z_onestep.size()) = z_onestep;
+    // }
+    Eigen::VectorXd z_twosteps = Utils::initializeEigenMatrixFromFile(filepath + "initial-digit-two-step-5.txt");
+    Eigen::VectorXd z0(z_twosteps.size() * NSteps / 2);
+    for (int i = 0; i < NSteps / 2; i++) {
+        z0.segment(i * z_twosteps.size(), z_twosteps.size()) = z_twosteps;
     }
+
     // add noise to initial guess to explore the solution space
     // std::srand(std::time(nullptr));
     // z = z + 0.01 * Eigen::VectorXd::Random(z.size());
 
     SmartPtr<DigitMultipleStepOptimizer> mynlp = new DigitMultipleStepOptimizer();
     try {
+        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
 	    mynlp->set_parameters(NSteps,
                               z0,
                               T,
@@ -100,7 +111,6 @@ int main(int argc, char* argv[]) {
                               model,
                               gps,
                               true);
-        mynlp->constr_viol_tol = config["constr_viol_tol"].as<double>();
     }
     catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
