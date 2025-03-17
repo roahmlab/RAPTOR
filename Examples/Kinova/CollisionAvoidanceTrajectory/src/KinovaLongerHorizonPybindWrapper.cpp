@@ -100,7 +100,13 @@ void KinovaLongerHorizonPybindWrapper::set_trajectory_parameters(const nb_1d_dou
     for (int i = 0; i < model.nv; i++) {
         q0(i) = q0_inp(i);
         qT(i) = qT_inp(i);
-    }     
+    }
+
+    // fix difference for Kinova, since joint 1, 3, 5, 7 are continuous (360 degree) joints
+    qT(0) = q0(0) + Utils::wrapToPi(qT(0) - q0(0));
+    qT(2) = q0(2) + Utils::wrapToPi(qT(2) - q0(2));
+    qT(4) = q0(4) + Utils::wrapToPi(qT(4) - q0(4));
+    qT(6) = q0(6) + Utils::wrapToPi(qT(6) - q0(6));
 
     set_trajectory_parameters_check = true;        
     has_optimized = false;                     
@@ -137,6 +143,7 @@ nb::tuple KinovaLongerHorizonPybindWrapper::optimize() {
     // a series of Bezier curves with degree + 1 control points, straight from q0 to qT
     VecX z0 = VecX::Zero(model.nv * degree * 3);
     VecX qdiff = (qT - q0) / (degree + 1);
+
     for (int i = 0; i < degree; i++) {
         z0.segment(i * model.nv * 3, model.nv) = q0 + qdiff * (i + 1);
     }
