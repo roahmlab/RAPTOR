@@ -189,6 +189,7 @@ int main(int argc, char* argv[]) {
         }
         solution.close();
 
+        // write out trajectory for each step
         for (int p = 0; p < NSteps; p++) {
             std::ofstream trajectory(filepath + "trajectory-digit-multiple-step-" + std::to_string(p) + ".txt");
             trajectory << std::setprecision(20);

@@ -11,8 +11,24 @@ Note that there is no dynamics or control considered.
 This tool is useful for visually inspecting trajectory feasibility for further refinement and tuning.
 
 ### Usage
-The `visualize_trajectory.py` script loads a text file that stores the open-loop trajectory as a matrix.
-The first 36 entries of each row of the matrix represents the joint positions.
+The `visualize_trajectory.py` script loads a text file that stores the open-loop trajectory as a matrix, with the following format:
+
+```math
+\left[
+\begin{array}{c}
+q(t_1)^T, \dot{q}(t_1)^T, \ddot{q}(t_1)^T, \tau^T(t_1), \lambda^T(t_1)\\
+q(t_2)^T, \dot{q}(t_2)^T, \ddot{q}(t_2)^T, \tau^T(t_2), \lambda^T(t_2)\\
+\vdots\\
+q(t_N)^T, \dot{q}(t_N)^T, \ddot{q}(t_N)^T, \tau^T(t_N), \lambda^T(t_N)
+\end{array}
+\right]
+```
+
+In this instance, the data matrix has `N` columns, which is equal to the number of time instances specified in the optimization problem (for example, variable `N` defined in line 46 of `DigitSingleStep.cpp`, or `N` loaded from the yaml file).
+The first 36 entries of each row of the matrix represents the joint positions at the corresponding time instance along the trajectory (since the Digit model in this example has 36 joints in total).
+
+Line 217-249 of `DigitSingleStep.cpp` provides the code as an example to generate such data matrix after solving the optimization problem, so that `visualize_trajectory.py` can parse and visualize the optimal trajectory.
+You can change the filename or the path of this data matrix.
 
 ## digit_simulation.py
 
@@ -24,8 +40,15 @@ The script also handles various closed-loop constraints and contact models for t
 In terms of forward simulating a system with constraints, this script is extended from one [official example](https://github.com/stack-of-tasks/pinocchio/blob/master/examples/simulation-closed-kinematic-chains.py) from pinocchio.
 Readers should refer to [1] for more theoretical information.
 
-### Usage
+<!-- ### Usage
+Similarly to `visualize_trajectory.py`, `digit_simulation.py` also requires an data matrix that stores the  -->
 
+## export_pybullet_info_for_blender.py
+This script is helpful to generate blender animation for Digit.
+It uses PyBullet as forward kinematics helper to retrive the positions and orientations of each mesh file (for each link) following a sequence of joint positions (a trajectory, in other words).
+
+Readers should refer to [this repo](https://github.com/huy-ha/pybullet-blender-recorder) for a more general introduction.
+There will not be any further documentation  for this script.
 
 ## References
 
