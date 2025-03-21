@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
         }
         solution.close();
 
-        std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + degree + ".txt");
+        std::ofstream trajectory(filepath + "trajectory-digit-Bezier-" + std::to_string(degree) + ".txt");
         trajectory << std::setprecision(20);
         for (int i = 0; i < NUM_JOINTS; i++) {
             for (int j = 0; j < N; j++) {
