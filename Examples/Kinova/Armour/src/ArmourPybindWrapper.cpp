@@ -7,6 +7,7 @@ namespace Armour {
 ArmourPybindWrapper::ArmourPybindWrapper(const std::string urdf_filename,
                                          const std::string config_filename,
                                          const bool display_info) {
+    pinocchio::urdf::buildModel(urdf_filename, model);
     robotInfoPtr_ = std::make_shared<RobotInfo>(urdf_filename, config_filename);
 
     q_des = VecX::Zero(robotInfoPtr_->num_motors);
@@ -268,10 +269,10 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
     
     // recover trajectory information
     trajInfo.resize(3 * robotInfoPtr_->num_motors + 1, trajPtr_->num_time_steps);
+    VecX q(robotInfoPtr_->num_motors);
+    VecX qd(robotInfoPtr_->num_motors);
+    VecX qdd(robotInfoPtr_->num_motors);
     for (size_t i = 0; i < trajPtr_->num_time_steps; i++) {
-        VecX q(robotInfoPtr_->num_motors);
-        VecX qd(robotInfoPtr_->num_motors);
-        VecX qdd(robotInfoPtr_->num_motors);
         const double t = duration * (i + 0.5) / trajPtr_->num_time_steps;
         trajPtr_->computeTrajectories(mynlp->solution, t, q, qd, qdd);
         trajInfo.col(i).head(robotInfoPtr_->num_motors) = q;
@@ -449,6 +450,32 @@ nb::tuple ArmourPybindWrapper::analyze_solution() {
                               zmp_centers, zmp_radii);
     }
     return nb::make_tuple(traj, sphere_xs, sphere_ys, sphere_zs, sphere_radii, torque_centers, torque_radii);
+}
+
+void ArmourPybindWrapper::get_trajectory_data(const nb_1d_double time_array,
+                                              const std::string traj_filename) {
+    if (!has_optimized) {
+        // throw std::runtime_error("No optimization has been performed or the optimization is not feasible!");
+        std::cerr << "ArmourPybindWrapper::Warning: No optimization has been performed or the optimization is not feasible!" << std::endl;
+    }
+
+    MatX traj_data = MatX::Zero(time_array.shape(0), 3 * robotInfoPtr_->num_motors + 1);
+
+    VecX q(robotInfoPtr_->num_motors);
+    VecX qd(robotInfoPtr_->num_motors);
+    VecX qdd(robotInfoPtr_->num_motors);
+    pinocchio::Data data(model);
+    for (size_t i = 0; i < time_array.shape(0); i++) {
+        const double t = time_array(i);
+        trajPtr_->computeTrajectories(mynlp->solution, t, q, qd, qdd);
+        pinocchio::rnea(model, data, q, qd, qdd);
+        traj_data.row(i)(0) = t;
+        traj_data.row(i).segment(1, robotInfoPtr_->num_motors) = q;
+        traj_data.row(i).segment(1 + robotInfoPtr_->num_motors, robotInfoPtr_->num_motors) = qd;
+        traj_data.row(i).segment(1 + robotInfoPtr_->num_motors * 2, robotInfoPtr_->num_motors) = data.tau;
+    }
+
+    Utils::writeEigenMatrixToFile(traj_data, traj_filename);
 }
 
 }; // namespace Armour

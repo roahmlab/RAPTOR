@@ -1,7 +1,34 @@
 import numpy as np
 import pinocchio as pin
+import pybullet as p
+import math
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
+
+def goal_distance(diff):
+    """
+    Computes the Euclidean distance of a vector after wrapping specific angles 
+    to the range [-π, π].
+
+    The function adjusts the angles at indices 0, 2, 4, and 6 of the input 
+    vector `diff` to ensure they are within the range [-π, π]. It then calculates 
+    the Euclidean norm of the resulting vector.
+
+    Parameters:
+        diff (numpy.ndarray): A vector containing angular differences.
+
+    Returns:
+        float: The Euclidean norm of the wrapped angle vector.
+        
+    Notes:
+        Kinova contains some continuous joints, that's why we need to wrap the angle for some of the joints.
+    """
+    wrapped_angle = diff
+    wrapped_angle[0] = (diff[0] + math.pi) % (2 * math.pi) - math.pi
+    wrapped_angle[2] = (diff[2] + math.pi) % (2 * math.pi) - math.pi
+    wrapped_angle[4] = (diff[4] + math.pi) % (2 * math.pi) - math.pi
+    wrapped_angle[6] = (diff[6] + math.pi) % (2 * math.pi) - math.pi
+    return np.linalg.norm(wrapped_angle)
 
 def integrate(model, ts_sim, x0, desired_trajectory, controller, method='RK45'):
     """
@@ -90,3 +117,31 @@ def integrate(model, ts_sim, x0, desired_trajectory, controller, method='RK45'):
         taus[i] = controller(q, v, qd, qd_d, qd_dd)
     
     return qs, vs, taus
+
+def set_position(robot, q):
+    """
+    Sets the joint positions of Kinova in a PyBullet.
+
+    This function iterates through all the joints of the given robot and sets their positions
+    based on the provided list of target values `q`. Fixed joints are reset to a target value
+    of 0, while other joints are set to the corresponding values in `q`. After updating the
+    joint states, the physics simulation is stepped.
+
+    Args:
+        robot (int): The unique ID of the robot in the physics simulation.
+        q (list of float): A list of target joint positions for the robot. The length of this
+            list should match the number of non-fixed joints in the robot.
+
+    Raises:
+        IndexError: If the length of `q` is less than the number of non-fixed joints in the robot.
+    """
+    id = 0
+    for i in range(p.getNumJoints(robot)):
+        joint_info = p.getJointInfo(robot, i)
+        joint_type = joint_info[2]
+        if joint_type == p.JOINT_FIXED:
+            p.resetJointState(robot, i, targetValue=0)
+        else:
+            p.resetJointState(robot, i, targetValue=q[id])
+            id += 1
+    p.stepSimulation()

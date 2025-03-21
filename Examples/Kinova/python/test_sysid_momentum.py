@@ -21,8 +21,8 @@ def desired_trajectory(t):
         - qd_d (numpy.ndarray): The desired joint velocities, a 7-element array where each element is cos(t).
         - qd_dd (numpy.ndarray): The desired joint accelerations, a 7-element array where each element is -sin(t).
         
-    Note:
-        This trajectory is not an exciting one, so the results may not be good on hardware
+    Notes:
+        This trajectory is not an exciting one, so the results may not be good on hardware.
     """
     qd = np.sin(t) * np.ones(7)
     qd_d = np.cos(t) * np.ones(7)
@@ -69,7 +69,6 @@ def main():
     np.savetxt("traj_data.csv", traj_data, delimiter=" ")
     
     # initialization for system identification
-    H = 10 # forward integration horizon
     
     # motor friction parameters
     # [ --- static friction                 ---
@@ -82,7 +81,7 @@ def main():
     sysid_solver = end_effector_sysid_momentum_nanobind.EndEffectorIdentificationMomentumPybindWrapper(
         urdf_filename, 
         friction_parameters, 
-        H,                   # forward integration horizon
+        10,                  # forward integration horizon
         'Second',            # format of time data, 'Second' or 'Nanosecond'
         True                 # display information or not
     )
