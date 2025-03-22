@@ -14,7 +14,7 @@ import end_effector_sysid_momentum_nanobind
 ### initializations
 display_info = False
 
-urdf_filename = "/workspaces/RAPTOR/Robots/kinova-gen3/gen3_2f85_fixed.urdf" # this urdf only has 7 joints for visualization
+urdf_filename = "/workspaces/RAPTOR/Robots/kinova-gen3/gen3_2f85_fixed_object.urdf" # this urdf only has 7 joints for visualization
 config_filename = "/workspaces/RAPTOR/Examples/Kinova/Armour/KinovaWithGripperInfo.yaml" # edit this yaml file if necessary
 
 p.connect(p.GUI)
@@ -61,7 +61,7 @@ for i, obs in enumerate(obstacles):
 theta_lb = np.array([1.2, -0.4, -0.4, -1.0, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2])
 theta_ub = np.array([5.2,  0.4,  0.4, -0.1,  0.2,  0.2,  0.2,  0.2,  0.2,  0.2])
                    # mass, comx, comy, comz, Ixx,  Ixy,  Iyy,  Ixz,  Iyz,  Izz
-theta_solution = 0.5 * (theta_lb + theta_ub)
+theta_estimation = 0.5 * (theta_lb + theta_ub)
     
 # motor friction parameters
 # [ --- static friction                 ---
@@ -118,8 +118,10 @@ t_plan = 1.0 # choose between [0.0, 1.0]
 for iter in range(20):
     # set up the local planner
     q_des = goal # desired joint configuration of the current planning iteration
-    k_center = np.pi/12 * (q_des - q0) / np.linalg.norm(q_des - q0) # searching k at this point, pi/6 forward from start to goal
-    k_range = np.pi/24 * np.ones(7)
+    k_center = np.zeros(7)
+    k_range = np.ones(7)
+    k_range[:4] = np.pi/64
+    k_range[4:] = np.pi/24
     
     planner.set_trajectory_parameters(
         q0, \
@@ -132,7 +134,7 @@ for iter in range(20):
         t_plan
     )
     planner.set_endeffector_inertial_parameters(
-        theta_solution,
+        theta_estimation,
         theta_lb,
         theta_ub
     )
@@ -172,9 +174,16 @@ for iter in range(20):
     print("solution:\n", theta_solution)
     print("uncertainty:\n", theta_uncertainty)
     
-    theta_lb = theta_solution - theta_uncertainty
-    theta_ub = theta_solution + theta_uncertainty
+    theta_lb_new = theta_solution - theta_uncertainty
+    theta_ub_new = theta_solution + theta_uncertainty
     
+    for i in range(10):
+        if theta_lb_new[i] > theta_lb[i]:
+            theta_lb[i] = theta_lb_new[i]
+        if theta_ub_new[i] < theta_ub[i]:
+            theta_ub[i] = theta_ub_new[i]
+        theta_estimation[i] = 0.5 * (theta_lb[i] + theta_ub[i])
+        
     print("lower bound:\n", theta_lb)
     print("upper bound:\n", theta_ub)
     
