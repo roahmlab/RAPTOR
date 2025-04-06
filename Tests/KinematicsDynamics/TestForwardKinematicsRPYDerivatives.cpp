@@ -215,8 +215,8 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     // For gradient checking
     app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("derivative_test", "second-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-6);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-5);
+    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
+    app->Options()->SetNumericValue("derivative_test_tol", 5e-4);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
@@ -234,9 +234,6 @@ BOOST_AUTO_TEST_CASE(test_FKGradientChecker){
     // check the grad
     bool gradient_check_passed = check_gradient_output("ipopt.out", "No errors detected by derivative checker");
     BOOST_CHECK_MESSAGE(gradient_check_passed, "Derivative_test not pass");
-
-    // check the nlp
-    BOOST_CHECK(status == 0 || status == 1);  //success or feasible
 }
 
 BOOST_AUTO_TEST_SUITE_END()

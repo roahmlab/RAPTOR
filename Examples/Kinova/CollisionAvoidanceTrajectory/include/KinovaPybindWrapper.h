@@ -77,7 +77,7 @@ public:
     // trajectory information
     ArmourTrajectoryParameters atp;
     double T = 1;
-    int N = 17;
+    int N = 25;
     int degree = 5;
     VecX q_des;
     double tplan = 0;

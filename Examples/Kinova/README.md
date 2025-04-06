@@ -4,12 +4,12 @@ This folder contains multiple optimization examples related to the Kinova-gen3, 
 
 ## CollisionAvoidanceTrajectory
 
-This folder contains two examples of trajectory generation that satisfy the following constraints over a predefined set of time instances:
+This folder contains two examples of trajectory generation that satisfy the following constraints over a predefined set of discrete time instances:
 
 - Joint limits
 - Velocity limits
 - Torque limits
-- Collision avoidance with a series of box obstacles
+- Collision avoidance with box obstacles
 
 In addition to ensuring safety through these constraints, the following optimization formulations are considered:
 
@@ -34,7 +34,7 @@ This folder contains an example of solving inverse kinematics with collision avo
 
 - Joint limits.
 - End-effector kinematic constraints, including position and orientation constraints.
-- Collision avoidance with a series of box obstacles.
+- Collision avoidance with box obstacles.
 
 Since inverse kinematics deals with finding a single joint configuration rather than a full trajectory, the configuration is represented using `Plain`.
 

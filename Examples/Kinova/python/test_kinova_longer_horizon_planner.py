@@ -103,8 +103,8 @@ planner.set_obstacles(
 )
 
 # trajectory information
-duration = 8.0 # sec, duration of the trajectory
-degree = 3 # number of control points in the middle
+duration = 4.0 # sec, duration of the trajectory
+degree = 2 # number of control points in the middle
 planner.set_trajectory_parameters(
     start, 
     goal, 
@@ -127,10 +127,7 @@ z, if_success = planner.optimize()
 if if_success:
     traj, _, _, _ = planner.analyze_solution()
 
-    sio.savemat("traj.mat", {"traj": traj})
-    np.savetxt("traj.txt", traj)
-
-    # replay the trajectories
+    # replay the trajectories in pybullet
     for tid in range(traj.shape[0]):
         set_position(robot, traj[tid, :7])
         time.sleep(0.05)
