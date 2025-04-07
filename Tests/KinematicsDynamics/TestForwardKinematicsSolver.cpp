@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(TestForwardKinematicsAccuracy)
     // set the start and end joint
     int start = 0;
     int end = model.getJointId("left_toe_B");
-    fkSolver.compute(start, end, q);;
+    fkSolver.compute(start, end, q);
 
     // compare the results
     Eigen::Vector3d pinocchio_translation = data.oMi[model.getJointId("left_toe_B")].translation();

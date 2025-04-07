@@ -18,5 +18,6 @@ NB_MODULE(armour_nanobind, m) {
         .def("set_ipopt_parameters", &ArmourPybindWrapper::set_ipopt_parameters)
         .def("set_trajectory_parameters", &ArmourPybindWrapper::set_trajectory_parameters)
         .def("optimize", &ArmourPybindWrapper::optimize)
-        .def("analyze_solution", &ArmourPybindWrapper::analyze_solution);
+        .def("analyze_solution", &ArmourPybindWrapper::analyze_solution)
+        .def("get_trajectory_data", &ArmourPybindWrapper::get_trajectory_data);
 }

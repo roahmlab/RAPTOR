@@ -79,9 +79,7 @@ for mesh in meshes:
         
         
 # Read trajectories info
-# traj_filename = '../data/full-trajectories_forward_1.0.txt'
-# traj_filename = '../data/8_pi_turning.txt'
-traj_filename = '../data/full-trajectories_upstairs.txt'
+traj_filename = '../data/full-trajectories_forward_1.0.txt'
 data = np.loadtxt(traj_filename)
 data = data.T
 

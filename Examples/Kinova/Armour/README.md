@@ -24,3 +24,7 @@ The following constraints are activated:
 - Obstacle avoidance, where robot are represented as collection of spheres and the environment are represented as collection of boxes
 
 The Hessian of this optimization problem is not provided.
+
+## Getting Started in Python
+
+Check [test_armour.py](../python/test_armour.py) for more information on how to use this trajectory planner in Python.

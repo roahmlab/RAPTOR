@@ -11,6 +11,30 @@ def integrate(model, constraint_model, constraint_data,
               Kp = None, Kd = None,
               kind='zero',
               method='RK45'):
+    """
+    Integrate the dynamics of a constrained system using a specified numerical method.
+    Parameters:
+    model (pinocchio.Model): The Pinocchio model of the system.
+    constraint_model (pinocchio.Model): The Pinocchio model of the constraints.
+    constraint_data (pinocchio.Data): The Pinocchio data structure for the constraints.
+    ts_sim (numpy.ndarray): The time steps for the simulation.
+    x0 (numpy.ndarray): The initial state vector.
+    ts (numpy.ndarray, optional): The time steps for the desired trajectory. Default is None.
+    xs (numpy.ndarray, optional): The desired state trajectory. Default is None.
+    us (numpy.ndarray, optional): The desired control inputs. Default is None.
+    act_matrix (numpy.ndarray, optional): The actuation matrix. Default is None.
+    Kp (numpy.ndarray, optional): The proportional gain matrix for the PD controller. Default is None.
+    Kd (numpy.ndarray, optional): The derivative gain matrix for the PD controller. Default is None.
+    kind (str, optional): The kind of interpolation to use for the desired trajectory. Default is 'zero'.
+    method (str, optional): The numerical integration method to use. Default is 'RK45'.
+    Returns:
+        tuple:
+        - position (numpy.ndarray): The simulated positions over time.
+        - velocity (numpy.ndarray): The simulated velocities over time.
+        - controls (list): The control inputs applied at each time step.
+        - position_errors (list): The position tracking errors at each time step.
+        - velocity_errors (list): The velocity tracking errors at each time step.
+    """
     t = 0.0
     nq = model.nq
     nv = model.nv
@@ -19,6 +43,18 @@ def integrate(model, constraint_model, constraint_data,
     prox_settings = pin.ProximalSettings(1e-12, 1e-12, 100)
     
     def control(t, x):
+        """
+        Compute the control input for the system at time t given the state x.
+        The controller uses a combination of open-loop and feedback (PD) control to track the desired trajectory.
+        Parameters:
+        t (float): The current time.
+        x (numpy.ndarray): The current state vector of the system.
+        Returns:
+            tuple:
+            - u (numpy.ndarray): The control input vector.
+            - e (numpy.ndarray): The position tracking error vector.
+            - edot (numpy.ndarray): The velocity tracking error vector.
+        """
         u_openloop = interp1d(ts, us.T, kind=kind)(t)
         
         xdes = interp1d(ts, xs.T, kind=kind)(t)
@@ -36,6 +72,18 @@ def integrate(model, constraint_model, constraint_data,
         return u_openloop + u_feedback, e, edot
 
     def dynamics(t, x):
+        """
+        Compute the dynamics of the constrained system using embedded functions from pinocchio.
+        Parameters:
+        t (float): The current time.
+        x (numpy.ndarray): The state vector, where the first nq elements are positions (q) and the remaining nv elements are velocities (v).
+        Returns:
+        numpy.ndarray: The concatenated vector of velocities (v) and accelerations (a).
+        Notes:
+        - If `ts` is None, the control input `tau` is set to zero.
+        - Otherwise, the control input `tau` is computed using the control function and the actuation matrix.
+        - The acceleration `a` is computed using the constraint dynamics function from the Pinocchio library.
+        """
         q = x[:nq]
         v = x[nq:]
         
@@ -77,6 +125,10 @@ def integrate(model, constraint_model, constraint_data,
     return position, velocity, controls, position_errors, velocity_errors
 
 if __name__ == "__main__":
+### 
+# Constant parameters initialization
+###
+    # create Digit model
     urdf_filename = "../../../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf"
     model = pin.buildModelFromUrdf(urdf_filename)
     data = model.createData()
@@ -88,8 +140,18 @@ if __name__ == "__main__":
     act_matrix = np.zeros((nv, nu))
     act_matrix[[6,7,8,11,13,16, 21,22,23,26,28,31], :] = np.eye(nu)
                 # left leg      right leg
-    
-    # Create dynamics
+                
+    # forward simulation settings
+    dt_sim = 5e-4
+    T_ss = 0.35
+        
+    # load results from RAPTOR
+    step_length = 0.8
+    trajectories = np.loadtxt('../data/solution-digit-forward-' + str(step_length) + '.txt')
+  
+### 
+# Create constraints for the system, including contact constraints and closed-loop linkage constraints
+###  
     constraint_models = []
 
     # left toe A closed loop
@@ -243,15 +305,10 @@ if __name__ == "__main__":
     constraint_models.extend([contact_model_rfc])
     
     constraint_datas = [cm.createData() for cm in constraint_models]
-        
-    # forward simulation settings
-    dt_sim = 5e-4
-    T_ss = 0.35
-        
-    # load results from RAPTOR
-    step_length = 0.8
-    trajectories = np.loadtxt('../data/solution-digit-forward-' + str(step_length) + '.txt')
-
+      
+### 
+# Simulation
+###
     ts_raptor = np.linspace(0, T_ss, len(trajectories))
     xs_raptor = np.zeros((len(ts_raptor), nq + nv)) 
     us_raptor = np.zeros((len(ts_raptor), nu))
@@ -291,6 +348,9 @@ if __name__ == "__main__":
         ts_raptor, xs_raptor, us_raptor, act_matrix,
         Kp, Kd)
     
+### 
+# Post-processing
+###
     # swing foot statistics
     model.addFrame(pin.Frame('right_foot', model.getJointId('right_toe_roll'), 0, pl_rightfoot, pin.FrameType.OP_FRAME))
     data = model.createData()

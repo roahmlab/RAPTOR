@@ -16,3 +16,7 @@ Analytical Hessian of all constraints are provided.
 
 The obstacles are defined in `KinovaExample.cpp`.
 Check line 29-33.
+
+## Getting Started in Python
+
+Check [test_kinova_longer_horizon_planner.py](../python/test_kinova_longer_horizon_planner.py) for more information on how to use this trajectory planner in Python.

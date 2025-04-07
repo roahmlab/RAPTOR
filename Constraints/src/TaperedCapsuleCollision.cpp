@@ -216,7 +216,7 @@ template<int factors> inline double TaperedCapsuleCollision<factors>::distanceIn
         VecF H1;
         VecF H2;
         VecF pt_pz = VecF::Zero();
-        VecF pu_pz = VecF::Zero();;
+        VecF pu_pz = VecF::Zero();
 
         switch(ind) {
             case 0:
