@@ -42,7 +42,7 @@ bool Optimizer::get_bounds_info(
    Number* g_u
 )
 {
-    // here, the n and m we gave IPOPT in get_nlp_info are passed back to us.
+    // here, the n and m we gave Ipopt in get_nlp_info are passed back to us.
     // If desired, we could assert to make sure they are what we think they are.
     if (n != numVars) {
         THROW_EXCEPTION(IpoptException, "*** Error wrong value of n in get_bounds_info!");

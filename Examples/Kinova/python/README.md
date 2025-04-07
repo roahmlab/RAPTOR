@@ -116,3 +116,26 @@ An example script to interface our previous work [ARMOUR](https://roahmlab.githu
 - Collision avoidance with box obstacles
 
 More information can be found at the [README](../Armour/README.md) in `Armour` folder.
+
+## Parameters
+
+### Common Ipopt Parameters
+
+| Parameters           | Description                                                                                     |
+|:---------------------|:------------------------------------------------------------------------------------------------|
+| tol                  | optimality tolerance |
+| constr_viol_tol      | constraint violation tolerance |
+| print_level          | verbosity of Ipopt output. 0 for completely quiet, 5 to see constraint violation and cost function value at each iteration. |
+| ipopt_max_wall_time  | Maximum time in **seconds** allocated for Ipopt to solve the problem.                                          |
+| max_iter             | Maximum number of iterations run in Ipopt.
+| mu_strategy    | Update strategy for the barrier parameter. `"monotone"` is more conservative that prioritize satisfying constraints, while `"adaptive"` is more aggressive that could converge faster or become unbounded. |
+| linear_solver        | ma57 is the most popular option. choose ma86 for better performance but slower speed. |
+
+### Other Common Parameters
+
+| Parameters           | Description                                                                                     |
+|:---------------------|:------------------------------------------------------------------------------------------------|
+| collision_buffer     | Buffer for collision avoidance constraints in **meters**. Since some examples only check collisions at discrete time steps, an additional safety margin is recommended to ensure the entire trajectory is collision-free. |
+| duration             | Total duration of the trajectory in **seconds**.                                                               |
+| degree               | Number of control points in the middle of the trajectory. A higher degree enables more complex motion but increases the size and thus the computation time of the optimization problem. |
+| forward integration horizon | Number of time intervals used in forward integration. For example, if the data is recorded in a frequency of 1kHz, horizon = 10 means forward integrating for 10 ms. |

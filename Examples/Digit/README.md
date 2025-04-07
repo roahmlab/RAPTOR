@@ -13,6 +13,8 @@ cd RAPTOR/build
 The desired behavior and Ipopt settings are specified in `singlestep_optimization_settings.yaml`.
 Please read it carefully to generate desired gaits.
 
+Also, check [python/](python/README.md) folder for python scripts related to simulation and visualization.
+
 ## Optimization Formulation
 The active constraints:
 - JointLimits

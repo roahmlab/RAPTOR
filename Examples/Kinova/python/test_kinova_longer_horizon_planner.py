@@ -91,7 +91,7 @@ planner.set_ipopt_parameters(
     10.0,          # ipopt_obj_scaling_factor
     20.0,          # ipopt_max_wall_time
     5,             # ipopt_print_level
-    "adaptive",    # ipopt_mu_strategy
+    "adaptive",    # mu_strategy
     "ma57",        # ipopt_linear_solver   
     False          # ipopt_gradient_check
 )
