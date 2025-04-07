@@ -37,7 +37,9 @@ This formulation eliminates the need for acceleration estimation by integrating 
 
 Users should first take a look at the documentation of `TrajectoryData` class, where the trajectory data is imported and stored.
 
-More documentation on python bindings will be coming!
+Check [test_sysid_inverse_dynamics.py](../../python/test_sysid_inverse_dynamics.py) for more information on how to perform system identification based on inverse dynamics in Python.
+
+Check [test_sysid_momentum.py](../../python/test_sysid_momentum.py) for more information on how to perform system identification based on momentum in Python.
 
 ## References
 [1] C. Rucker and P. M. Wensing, "Smooth Parameterization of Rigid-Body Inertia," in IEEE Robotics and Automation Letters, vol. 7, no. 2, pp. 2771-2778, April 2022, doi: 10.1109/LRA.2022.3144517.

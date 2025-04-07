@@ -79,7 +79,7 @@ link_directories(${PINOCCHIO_LIBRARY_DIRS})
 
 # Find ompl library
 find_package(ompl REQUIRED)
-set(OMPL_INCLUDE_DIRS /usr/local/include/ompl-1.6)
+set(OMPL_INCLUDE_DIRS /usr/local/include/ompl-1.7)
 set(OMPL_LIBRARY_DIRS /usr/local/share)
 include_directories(${OMPL_INCLUDE_DIRS})
 link_directories(${OMPL_LIBRARY_DIRS})

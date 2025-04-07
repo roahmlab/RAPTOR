@@ -67,7 +67,11 @@ public:
 
     nb::tuple analyze_solution();
 
+    void get_trajectory_data(const nb_1d_double time_array,
+                             const std::string traj_filename);
+
     // Class members
+    pinocchio::Model model;
     std::shared_ptr<RobotInfo> robotInfoPtr_ = nullptr;
 
     std::shared_ptr<BezierCurveInterval> trajPtr_ = nullptr;

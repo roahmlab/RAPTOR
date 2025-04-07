@@ -220,7 +220,10 @@ nb::tuple KinovaLongerHorizonPybindWrapper::analyze_solution() {
     }
 
     // re-evaluate the solution on a finer time discretization
-    const int N_simulate = T * 24; // replay for 24 Hz
+    int N_simulate = T * 24; // replay for 24 Hz
+    if (N_simulate % (degree + 1) != 0) {
+        N_simulate += (degree + 1) - (N_simulate % (degree + 1)); // make sure it is divisible by degree + 1
+    }
     
     SmartPtr<KinovaLongerHorizonOptimizer> testnlp = new KinovaLongerHorizonOptimizer();
     try {

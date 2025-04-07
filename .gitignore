@@ -57,3 +57,5 @@ backup/
 *.lic
 *.tar
 *.tar.bz2
+
+*.pyc

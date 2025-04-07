@@ -700,26 +700,26 @@
     <child link="wrist_camera_mount_link"/>
   </joint> -->
 
-  <!-- 2lb dumbbell -->
+  <!-- 6lb dumbbell -->
   <link name="object_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.9072"/>
-      <inertia ixx="0.000251741322" ixy="0" ixz="0" iyy="0.00238495614" iyz="0" izz="0.00238495614"/>
+      <mass value="2.72155422"/>
+      <inertia ixx="0.00154549554" ixy="0" ixz="0" iyy="0.01219668034" iyz="0" izz="0.01219668034"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="-0.07 -0.0225 -0.0225"/>
       <geometry>
-        <mesh filename="meshes/dumbbell_2lb.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="meshes/dumbbell_6lb.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="">
-        <color rgba="0.89804 0.91765 0.92941 1"/>
+        <color rgba="0.89804 0.91765 0.92941 0.25"/>
       </material>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="-0.07 -0.0225 -0.0225"/>
       <geometry>
-        <mesh filename="meshes/dumbbell_2lb.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="meshes/dumbbell_6lb.STL" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
