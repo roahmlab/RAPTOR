@@ -1,6 +1,7 @@
 # Kinova-gen3 Examples
 
-This folder contains multiple optimization examples related to the Kinova-gen3, a 7-degree-of-freedom robotic manipulator. A Python interface is also provided to enable the use of these examples in Python.
+This folder contains multiple optimization examples related to the Kinova-gen3, a 7-degree-of-freedom robotic manipulator. 
+Python interfaces are also provided to enable the use of these examples in Python, which can be found in [python/](python/README.md) folder.
 
 ## CollisionAvoidanceTrajectory
 

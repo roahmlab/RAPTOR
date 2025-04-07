@@ -1,6 +1,6 @@
-# Example Python Scripts for Kinova
+# Python Scripts for Kinova
 
-This folder contains multiple python scripts related to multiple trajectory optimization examples and system identification examples for Kinova.
+This folder contains python scripts related to multiple trajectory optimization examples and system identification examples for Kinova.
 
 ## Before You Run These Scripts
 
@@ -78,7 +78,7 @@ where:
 
 The obstacles are visualized in PyBullet with:
 - Semi-transparent red color (rgba=[1,0,0,0.2])
-- Zero mass (static obstacles)
+- Zero mass and fixed (static obstacles not considered in dynamics)
 - Both collision and visual shapes for proper physics simulation and visualization
 
 ### test_sysid_momentum.py
