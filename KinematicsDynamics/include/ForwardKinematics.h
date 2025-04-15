@@ -1,6 +1,7 @@
 #ifndef FORWARD_KINEMATICS_HPP
 #define FORWARD_KINEMATICS_HPP
 
+#include "Utils.h"
 #include "Transform.h"
 #include "HigherOrderDerivatives.h"
 
@@ -34,6 +35,14 @@ public:
 
 	// get the forward kinematics result in different formats
 	Transform getTransform() const;
+
+	const Transform& getTransformChain(const VecX& q,
+									   const int start,
+									   const int end);
+
+	const Transform& getTransformDerivative(const VecX& q,
+											const int id,
+											const int order);
 
 	Vec3 getTranslation() const;
 
@@ -73,15 +82,13 @@ public:
 	std::vector<std::vector<Transform>> ddTddq;
 	std::vector<std::vector<std::vector<Transform>>> dddTdddq;
 
-	// 	// internal copies
-	// int current_order = -1;
-	// int end_copy = -1;
-	// int start_copy = -1;
-	// VecX q_copy;
-	// Transform T_copy;
-	// std::vector<Transform> dTdq_copy;
-	// std::vector<std::vector<Transform>> ddTddq_copy;
-	// std::vector<std::vector<std::vector<Transform>>> dddTdddq_copy;
+	Transform T_identity;
+
+	VecX current_q;
+	std::unordered_map<std::string, Transform> T_chains_collection;
+	std::unordered_map<int, Transform> dTjdq_collections;
+	std::unordered_map<int, Transform> ddTjddq_collections;
+	std::unordered_map<int, Transform> dddTjdddq_collections;
 };
 
 }  // namespace RAPTOR

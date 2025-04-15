@@ -16,6 +16,136 @@ ForwardKinematicsSolver::ForwardKinematicsSolver(const Model* model_input,
     else {
         jtype = convertPinocchioJointType(*modelPtr_);
     }
+
+    T_identity = Transform();
+
+    // allocate memory
+    T = Transform();
+    dTdq.resize(modelPtr_->nv);
+    ddTddq.resize(modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        ddTddq[i].resize(modelPtr_->nv);
+    }
+    dddTdddq.resize(modelPtr_->nv);
+    for (int i = 0; i < modelPtr_->nv; i++) {
+        dddTdddq[i].resize(modelPtr_->nv);
+        for (int j = 0; j < modelPtr_->nv; j++) {
+            dddTdddq[i][j].resize(modelPtr_->nv);
+        }
+    }
+
+    T_chains_collection.reserve(modelPtr_->nv * (modelPtr_->nv + 1) / 2);
+    dTjdq_collections.reserve(modelPtr_->nv);
+    ddTjddq_collections.reserve(modelPtr_->nv);
+    dddTjdddq_collections.reserve(modelPtr_->nv);
+}
+
+const Transform& ForwardKinematicsSolver::getTransformDerivative(const VecX& q,
+                                                                 const int id,
+                                                                 const int order) {
+    if (modelPtr_ == nullptr) {
+        throw std::runtime_error("modelPtr_ is not initialized!");
+    }
+
+    if (jtype.size() != modelPtr_->nv) {
+        throw std::runtime_error("jtype is not initialized!");
+    }
+
+    if (id < 0 || id >= modelPtr_->nv) {
+        throw std::invalid_argument("id is out of range!");
+    }
+
+    if (order < 1 || order > 3) {
+        throw std::invalid_argument("order has to be 1, 2, or 3!");
+    }
+
+    if (!Utils::ifTwoVectorEqual(current_q, q, 0)) {
+        current_q = q;
+        T_chains_collection.clear();
+        dTjdq_collections.clear();
+        ddTjddq_collections.clear();
+        dddTjdddq_collections.clear();
+    }
+
+    const auto& jointPlacement = modelPtr_->jointPlacements[id + 1];
+
+    if (order == 1) {
+        if (dTjdq_collections.find(id) == dTjdq_collections.end()) {
+            dTjdq_collections[id] = jointPlacement * Transform(jtype(id), q(id), 1);
+        }
+
+        return dTjdq_collections[id];
+    }
+    else if (order == 2) {
+        if (ddTjddq_collections.find(id) == ddTjddq_collections.end()) {
+            ddTjddq_collections[id] = jointPlacement * Transform(jtype(id), q(id), 2);
+        }
+        return ddTjddq_collections[id];
+    }
+    else if (order == 3) {
+        if (dddTjdddq_collections.find(id) == dddTjdddq_collections.end()) {
+            dddTjdddq_collections[id] = jointPlacement * Transform(jtype(id), q(id), 3);
+        }
+        return dddTjdddq_collections[id];
+    }
+    else {
+        throw std::invalid_argument("order has to be less than or equal to 3!");
+    }
+}
+
+const Transform& ForwardKinematicsSolver::getTransformChain(const VecX& q,
+															const int chain_start,
+															const int chain_end) {
+    if (modelPtr_ == nullptr) {
+        throw std::runtime_error("modelPtr_ is not initialized!");
+    }
+
+    if (jtype.size() != modelPtr_->nv) {
+        throw std::runtime_error("jtype is not initialized!");
+    }
+    
+    if (chain.empty()) {
+        throw std::invalid_argument("chain is empty!");
+    }
+
+    if (chain_start > chain_end) {
+        // throw std::invalid_argument("chain_start has to be less than chain_end!");
+        return T_identity;
+    }
+
+    if (chain_start < 0 || chain_start >= chain.size() || 
+        chain_end   < 0 || chain_end   >= chain.size()) {
+        throw std::invalid_argument("chain_start or chain_end is out of range!");
+    }
+
+    const std::string chain_name = std::to_string(chain_start) + "-" + std::to_string(chain_end);
+
+    if (!Utils::ifTwoVectorEqual(current_q, q, 0)) {
+        current_q = q;
+        T_chains_collection.clear();
+        dTjdq_collections.clear();
+        ddTjddq_collections.clear();
+        dddTjdddq_collections.clear();
+    }
+
+    if (T_chains_collection.find(chain_name) != T_chains_collection.end()) {
+        return T_chains_collection[chain_name];
+    }
+
+    Transform T_chain = Transform();
+    for (int i = chain_start; i <= chain_end; i++) {
+        const int joint_id = chain[i];
+
+        // pinocchio joint index starts from 1
+        const auto& jointPlacement = modelPtr_->jointPlacements[joint_id + 1];
+        
+        Transform Tj(jtype(joint_id), q(joint_id));
+
+        T_chain *= (jointPlacement * Tj);
+    }
+
+    T_chains_collection[chain_name] = T_chain;
+    return T_chains_collection[chain_name];
 }
 
 void ForwardKinematicsSolver::compute(const int start,
@@ -54,143 +184,76 @@ void ForwardKinematicsSolver::compute(const int start,
     }
     std::reverse(chain.begin(), chain.end());
 
-    // allocate memory
-    T = Transform();
+    T = getTransformChain(q, 0, chain.size() - 1);
+
     if (order >= 1) {
-        dTdq.resize(modelPtr_->nv);
-
-        if (order >= 2) {
-            ddTddq.resize(modelPtr_->nv);
-            for (int i = 0; i < modelPtr_->nv; i++) {
-                ddTddq[i].resize(modelPtr_->nv);
-            }
-
-            if (order >= 3) {
-                dddTdddq.resize(modelPtr_->nv);
-                for (int i = 0; i < modelPtr_->nv; i++) {
-                    dddTdddq[i].resize(modelPtr_->nv);
-                    for (int j = 0; j < modelPtr_->nv; j++) {
-                        dddTdddq[i][j].resize(modelPtr_->nv);
-                    }
-                }
-            }
+        for (int i = 0; i < chain.size(); i++) {
+            dTdq[chain[i]] = getTransformChain(q, 0, i - 1) * 
+                             getTransformDerivative(q, chain[i], 1) * 
+                             getTransformChain(q, i + 1, chain.size() - 1);
         }
     }
 
-    // initialize memory with start transformation matrix
-    if (startT != nullptr) {
-        T = (*startT);
-
-        if (order >= 1) {
-            for (auto i : chain) {
-                dTdq[i] = (*startT);
-
-                if (order >= 2) {
-                    for (auto j : chain) {
-                        ddTddq[i][j] = (*startT);
-
-                        if (order >= 3) {
-                            for (auto k : chain) {
-                                dddTdddq[i][j][k] = (*startT);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else {
-        T = Transform();
-
-        if (order >= 1) {
-            for (auto i : chain) {
-                dTdq[i] = Transform();
-
-                if (order >= 2) {
-                    for (auto j : chain) {
-                        ddTddq[i][j] = Transform();
-
-                        if (order >= 3) {
-                            for (auto k : chain) {
-                                dddTdddq[i][j][k] = Transform();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // iterative process to compute the forward kinematics
-    for (auto i : chain) {
-        // pinocchio joint index starts from 1
-        const auto& jointPlacement = modelPtr_->jointPlacements[i + 1];
-        
-        Transform Tj(jtype(i), q(i));
-        Transform dTjdq(jtype(i), q(i), 1);
-        Transform ddTjddq(jtype(i), q(i), 2);
-        Transform dddTjdddq(jtype(i), q(i), 3);
-
-        T *= (jointPlacement * Tj);
-        
-        if (order >= 1) {
-            for (auto j : chain) {
-                dTdq[j] *= jointPlacement;
-                if (j == i) {
-                    dTdq[j] *= dTjdq;
+    if (order >= 2) {
+        for (int i = 0; i < chain.size(); i++) {
+            for (int j = i; j < chain.size(); j++) {
+                if (i == j) {
+                    ddTddq[chain[i]][chain[j]] = getTransformChain(q, 0, i - 1) * 
+                                                 getTransformDerivative(q, chain[i], 2) * 
+                                                 getTransformChain(q, i + 1, chain.size() - 1);
                 }
                 else {
-                    dTdq[j] *= Tj;
+                    ddTddq[chain[i]][chain[j]] = getTransformChain(q, 0, i - 1) * 
+                                                 getTransformDerivative(q, chain[i], 1) * 
+                                                 getTransformChain(q, i + 1, j - 1) * 
+                                                 getTransformDerivative(q, chain[j], 1) * 
+                                                 getTransformChain(q, j + 1, chain.size() - 1);
+                    ddTddq[chain[j]][chain[i]] = ddTddq[chain[i]][chain[j]];
                 }
-
-                if (order >= 2) {
-                    for (auto k : chain) {
-                        if (k >= j) {
-                            ddTddq[j][k] *= jointPlacement;
-                            if (j == i && k == i) {
-                                ddTddq[j][k] *= ddTjddq;
-                            } 
-                            else if (j == i || k == i) {
-                                ddTddq[j][k] *= dTjdq;
-                            } 
-                            else {
-                                ddTddq[j][k] *= Tj;
-                            }
-                        } 
-                        else {
-                            ddTddq[j][k] = ddTddq[k][j];
-                        }
-
-                        if (order >= 3) {
-                            for (auto h : chain) {
-                                if (h >= k && k >= j) {
-                                    dddTdddq[j][k][h] *= jointPlacement;
-                                    if (j == i && k == i && h == i) {
-                                        dddTdddq[j][k][h] *= dddTjdddq;
-                                    } 
-                                    else if ((j == i && k == i) || (j == i && h == i) || (k == i && h == i)) {
-                                        dddTdddq[j][k][h] *= ddTjddq;
-                                    } 
-                                    else if (j == i || k == i || h == i) {
-                                        dddTdddq[j][k][h] *= dTjdq;
-                                    }
-                                    else {
-                                        dddTdddq[j][k][h] *= Tj;
-                                    }
-                                }
-                                else {
-                                    if (h < k) {
-                                        dddTdddq[j][k][h] = dddTdddq[j][h][k];
-                                    }
-                                    else if (k < j) {
-                                        dddTdddq[j][k][h] = dddTdddq[k][j][h];
-                                    }
-                                    else {
-                                        dddTdddq[j][k][h] = dddTdddq[h][k][j];
-                                    }
-                                }
-                            }
-                        }
+            }
+        }
+    }
+    
+    if (order >= 3) {
+        for (int i = 0; i < chain.size(); i++) {
+            for (int j = i; j < chain.size(); j++) {
+                for (int k = j; k < chain.size(); k++) {
+                    if (i == j && j == k) {
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                                                                 getTransformDerivative(q, chain[i], 3) * 
+                                                                 getTransformChain(q, i + 1, chain.size() - 1);
+                    }
+                    else if (i == j) {
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                                                                 getTransformDerivative(q, chain[i], 2) *
+                                                                 getTransformChain(q, i + 1, k - 1) * 
+                                                                 getTransformDerivative(q, chain[k], 1) * 
+                                                                 getTransformChain(q, k + 1, chain.size() - 1);
+                        dddTdddq[chain[k]][chain[j]][chain[i]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[i]][chain[k]][chain[j]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                    }
+                    else if (j == k) {
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                                                                 getTransformDerivative(q, chain[i], 1) * 
+                                                                 getTransformChain(q, i + 1, j - 1) * 
+                                                                 getTransformDerivative(q, chain[j], 2) * 
+                                                                 getTransformChain(q, j + 1, chain.size() - 1);
+                        dddTdddq[chain[j]][chain[i]][chain[k]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[j]][chain[k]][chain[i]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                    }
+                    else {
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                                                                 getTransformDerivative(q, chain[i], 1) * 
+                                                                 getTransformChain(q, i + 1, j - 1) * 
+                                                                 getTransformDerivative(q, chain[j], 1) * 
+                                                                 getTransformChain(q, j + 1, k - 1) * 
+                                                                 getTransformDerivative(q, chain[k], 1) * 
+                                                                 getTransformChain(q, k + 1, chain.size() - 1);
+                        dddTdddq[chain[k]][chain[j]][chain[i]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[k]][chain[i]][chain[j]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[j]][chain[k]][chain[i]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[j]][chain[i]][chain[k]] = dddTdddq[chain[i]][chain[j]][chain[k]];
+                        dddTdddq[chain[i]][chain[k]][chain[j]] = dddTdddq[chain[i]][chain[j]][chain[k]];
                     }
                 }
             }
