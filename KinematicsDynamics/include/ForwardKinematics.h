@@ -83,6 +83,7 @@ public:
 	std::vector<std::vector<std::vector<Transform>>> dddTdddq;
 
 	Transform T_identity;
+	Transform T_start;
 
 	VecX current_q;
 	std::unordered_map<std::string, Transform> T_chains_collection;

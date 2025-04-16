@@ -132,19 +132,21 @@ const Transform& ForwardKinematicsSolver::getTransformChain(const VecX& q,
         return T_chains_collection[chain_name];
     }
 
-    Transform T_chain = Transform();
-    for (int i = chain_start; i <= chain_end; i++) {
-        const int joint_id = chain[i];
-
-        // pinocchio joint index starts from 1
+    if (chain_start == chain_end) {
+        const int joint_id = chain[chain_start];
         const auto& jointPlacement = modelPtr_->jointPlacements[joint_id + 1];
-        
-        Transform Tj(jtype(joint_id), q(joint_id));
-
-        T_chain *= (jointPlacement * Tj);
+        T_chains_collection[chain_name] = jointPlacement * 
+                                          Transform(jtype(joint_id), q(joint_id));
+        return T_chains_collection[chain_name];
     }
 
-    T_chains_collection[chain_name] = T_chain;
+    // check the nearest chain
+    const int joint_id = chain[chain_start];
+    const auto& jointPlacement = modelPtr_->jointPlacements[joint_id + 1];
+    T_chains_collection[chain_name] = jointPlacement * 
+                                      Transform(jtype(joint_id), q(joint_id)) *
+                                      getTransformChain(q, chain_start + 1, chain_end);
+    
     return T_chains_collection[chain_name];
 }
 
@@ -184,11 +186,19 @@ void ForwardKinematicsSolver::compute(const int start,
     }
     std::reverse(chain.begin(), chain.end());
 
-    T = getTransformChain(q, 0, chain.size() - 1);
+    if (startT != nullptr) {
+        T_start = *startT;
+    }
+    else {
+        T_start = Transform();
+    }
+
+    T = T_start * getTransformChain(q, 0, chain.size() - 1);
 
     if (order >= 1) {
         for (int i = 0; i < chain.size(); i++) {
-            dTdq[chain[i]] = getTransformChain(q, 0, i - 1) * 
+            dTdq[chain[i]] = T_start *
+                             getTransformChain(q, 0, i - 1) * 
                              getTransformDerivative(q, chain[i], 1) * 
                              getTransformChain(q, i + 1, chain.size() - 1);
         }
@@ -198,12 +208,14 @@ void ForwardKinematicsSolver::compute(const int start,
         for (int i = 0; i < chain.size(); i++) {
             for (int j = i; j < chain.size(); j++) {
                 if (i == j) {
-                    ddTddq[chain[i]][chain[j]] = getTransformChain(q, 0, i - 1) * 
+                    ddTddq[chain[i]][chain[j]] = T_start * 
+                                                 getTransformChain(q, 0, i - 1) * 
                                                  getTransformDerivative(q, chain[i], 2) * 
                                                  getTransformChain(q, i + 1, chain.size() - 1);
                 }
                 else {
-                    ddTddq[chain[i]][chain[j]] = getTransformChain(q, 0, i - 1) * 
+                    ddTddq[chain[i]][chain[j]] = T_start * 
+                                                 getTransformChain(q, 0, i - 1) * 
                                                  getTransformDerivative(q, chain[i], 1) * 
                                                  getTransformChain(q, i + 1, j - 1) * 
                                                  getTransformDerivative(q, chain[j], 1) * 
@@ -219,12 +231,14 @@ void ForwardKinematicsSolver::compute(const int start,
             for (int j = i; j < chain.size(); j++) {
                 for (int k = j; k < chain.size(); k++) {
                     if (i == j && j == k) {
-                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = T_start * 
+                                                                 getTransformChain(q, 0, i - 1) * 
                                                                  getTransformDerivative(q, chain[i], 3) * 
                                                                  getTransformChain(q, i + 1, chain.size() - 1);
                     }
                     else if (i == j) {
-                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = T_start * 
+                                                                 getTransformChain(q, 0, i - 1) * 
                                                                  getTransformDerivative(q, chain[i], 2) *
                                                                  getTransformChain(q, i + 1, k - 1) * 
                                                                  getTransformDerivative(q, chain[k], 1) * 
@@ -233,7 +247,8 @@ void ForwardKinematicsSolver::compute(const int start,
                         dddTdddq[chain[i]][chain[k]][chain[j]] = dddTdddq[chain[i]][chain[j]][chain[k]];
                     }
                     else if (j == k) {
-                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = T_start * 
+                                                                 getTransformChain(q, 0, i - 1) * 
                                                                  getTransformDerivative(q, chain[i], 1) * 
                                                                  getTransformChain(q, i + 1, j - 1) * 
                                                                  getTransformDerivative(q, chain[j], 2) * 
@@ -242,7 +257,8 @@ void ForwardKinematicsSolver::compute(const int start,
                         dddTdddq[chain[j]][chain[k]][chain[i]] = dddTdddq[chain[i]][chain[j]][chain[k]];
                     }
                     else {
-                        dddTdddq[chain[i]][chain[j]][chain[k]] = getTransformChain(q, 0, i - 1) * 
+                        dddTdddq[chain[i]][chain[j]][chain[k]] = T_start * 
+                                                                 getTransformChain(q, 0, i - 1) * 
                                                                  getTransformDerivative(q, chain[i], 1) * 
                                                                  getTransformChain(q, i + 1, j - 1) * 
                                                                  getTransformDerivative(q, chain[j], 1) * 
