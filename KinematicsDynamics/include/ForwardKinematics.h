@@ -86,6 +86,8 @@ public:
 	Transform T_start;
 
 	VecX current_q;
+	int current_start = -1;
+	int current_end = -1;
 	std::unordered_map<std::string, Transform> T_chains_collection;
 	std::unordered_map<int, Transform> dTjdq_collections;
 	std::unordered_map<int, Transform> ddTjddq_collections;

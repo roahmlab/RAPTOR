@@ -172,19 +172,29 @@ void ForwardKinematicsSolver::compute(const int start,
     }
 
     // find the kinematics chain
-    chain.clear();
-    int search_id = end;
-    while (search_id != start) {
-        // pinocchio joint index starts from 1
-        chain.push_back(search_id - 1);
+    if (current_start != start || current_end != end) {
+        current_start = start;
+        current_end = end;
 
-        if (search_id < 0 || search_id > modelPtr_->nv || chain.size() > modelPtr_->nv) {
-            throw std::runtime_error("Can not find the end joint in the modelPtr_!");
+        chain.clear();
+        int search_id = end;
+        while (search_id != start) {
+            // pinocchio joint index starts from 1
+            chain.push_back(search_id - 1);
+
+            if (search_id < 0 || search_id > modelPtr_->nv || chain.size() > modelPtr_->nv) {
+                throw std::runtime_error("Can not find the end joint in the modelPtr_!");
+            }
+
+            search_id = modelPtr_->parents[search_id];
         }
+        std::reverse(chain.begin(), chain.end());
 
-        search_id = modelPtr_->parents[search_id];
+        T_chains_collection.clear();
+        dTjdq_collections.clear();
+        ddTjddq_collections.clear();
+        dddTjdddq_collections.clear();
     }
-    std::reverse(chain.begin(), chain.end());
 
     if (startT != nullptr) {
         T_start = *startT;
