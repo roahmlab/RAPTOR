@@ -49,12 +49,20 @@ const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] =
                                         "left_knee",
                                         "left_toe_A",
                                         "left_toe_B",
+                                        "left_shoulder_roll",
+                                        "left_shoulder_pitch",
+                                        "left_shoulder_yaw",
+                                        "left_elbow",
                                         "right_hip_roll",
                                         "right_hip_yaw",
                                         "right_hip_pitch",
                                         "right_knee",
                                         "right_toe_A",
-                                        "right_toe_B"};
+                                        "right_toe_B",
+                                        "right_shoulder_roll",
+                                        "right_shoulder_pitch",
+                                        "right_shoulder_yaw",
+                                        "right_elbow"};
 
 class DigitDynamicsConstraints : public DynamicsConstraints {
 public:

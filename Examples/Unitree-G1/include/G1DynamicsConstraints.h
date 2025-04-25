@@ -32,7 +32,15 @@ const std::string independentJointNames[NUM_INDEPENDENT_JOINTS] = {
     "right_hip_yaw_joint",
     "right_knee_joint",
     "right_ankle_pitch_joint",
-    "right_ankle_roll_joint"
+    "right_ankle_roll_joint",
+    "left_shoulder_pitch_joint",
+    "left_shoulder_roll_joint",
+    "left_shoulder_yaw_joint",
+    "left_elbow_joint",
+    "right_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_shoulder_yaw_joint",
+    "right_elbow_joint"
 };
 
 class G1DynamicsConstraints : public DynamicsConstraints {

@@ -28,7 +28,15 @@ const std::string JOINT_MAP[NUM_INDEPENDENT_JOINTS][2] = {
     {"right_hip_yaw_joint",     "left_hip_yaw_joint"},
     {"right_knee_joint",        "left_knee_joint"},
     {"right_ankle_pitch_joint", "left_ankle_pitch_joint"},
-    {"right_ankle_roll_joint",  "left_ankle_roll_joint"}
+    {"right_ankle_roll_joint",  "left_ankle_roll_joint"},
+    {"left_shoulder_pitch_joint", "right_shoulder_pitch_joint"},
+    {"left_shoulder_roll_joint", "right_shoulder_roll_joint"},
+    {"left_shoulder_yaw_joint", "right_shoulder_yaw_joint"},
+    {"left_elbow_joint", "right_elbow_joint"},
+    {"right_shoulder_pitch_joint", "left_shoulder_pitch_joint"},
+    {"right_shoulder_roll_joint", "left_shoulder_roll_joint"},
+    {"right_shoulder_yaw_joint", "left_shoulder_yaw_joint"},
+    {"right_elbow_joint", "left_elbow_joint"}
 };
 
 class G1SingleStepPeriodicityConstraints : public Constraints {

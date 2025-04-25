@@ -14,7 +14,7 @@ const std::string filepath = "../Examples/Digit/data/";
 
 int main(int argc, char* argv[]) {
     // define robot model
-    const std::string urdf_filename = "../Robots/digit-v3/digit-v3-armfixedspecific-floatingbase-springfixed.urdf";
+    const std::string urdf_filename = "../Robots/digit-v3/digit-v3-floatingbase-springfixed.urdf";
     
     pinocchio::Model model;
     pinocchio::urdf::buildModel(urdf_filename, model);
@@ -31,12 +31,20 @@ int main(int argc, char* argv[]) {
     model.armature(model.getJointId("left_knee") - 1) = 0.1204731904;
     model.armature(model.getJointId("left_toe_A") - 1) = 0.036089475;
     model.armature(model.getJointId("left_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("left_shoulder_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("left_shoulder_pitch") - 1) = 0.173823936;
+    model.armature(model.getJointId("left_shoulder_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("left_elbow") - 1) = 0.173823936;
     model.armature(model.getJointId("right_hip_roll") - 1) = 0.173823936;
     model.armature(model.getJointId("right_hip_yaw") - 1) = 0.067899975;
     model.armature(model.getJointId("right_hip_pitch") - 1) = 0.1204731904;
     model.armature(model.getJointId("right_knee") - 1) = 0.1204731904;
     model.armature(model.getJointId("right_toe_A") - 1) = 0.036089475;
     model.armature(model.getJointId("right_toe_B") - 1) = 0.036089475;
+    model.armature(model.getJointId("right_shoulder_roll") - 1) = 0.173823936;
+    model.armature(model.getJointId("right_shoulder_pitch") - 1) = 0.173823936;
+    model.armature(model.getJointId("right_shoulder_yaw") - 1) = 0.067899975;
+    model.armature(model.getJointId("right_elbow") - 1) = 0.173823936;
 
     // load settings
     YAML::Node config;

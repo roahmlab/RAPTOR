@@ -4,9 +4,9 @@ namespace RAPTOR {
 namespace G1 {
 
 // constants related to talos
-constexpr int NUM_JOINTS = 18;
+constexpr int NUM_JOINTS = 26;
 constexpr int NUM_DEPENDENT_JOINTS = 6;
-constexpr int NUM_INDEPENDENT_JOINTS = 12;
+constexpr int NUM_INDEPENDENT_JOINTS = 20;
 
 // pulled from talos_reduced_armfixed.urdf
 constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
@@ -27,7 +27,15 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -2.7576,         // right_hip_yaw_joint 
     -0.087267,       // right_knee_joint   
     -0.87267,        // right_ankle_pitch_joint
-    -0.2618          // right_ankle_roll_joint
+    -0.2618,         // right_ankle_roll_joint
+    -3.0892,         // left_shoulder_pitch_joint
+    -1.5882,         // left_shoulder_roll_joint
+    -2.618,          // left_shoulder_yaw_joint
+    -1.0472,         // left_elbow_joint
+    -3.0892,         // right_shoulder_pitch_joint
+    -1.5882,         // right_shoulder_roll_joint
+    -2.618,          // right_shoulder_yaw_joint
+    -1.0472          // right_elbow_joint
 };
 
 // pulled from talos_reduced_armfixed.urdf
@@ -48,8 +56,16 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     0.5236,         // right_hip_roll_joint
     2.7576,         // right_hip_yaw_joint
     2.8798,         // right_knee_joint
-    0.5236,          // right_ankle_pitch_joint
-    0.2618          // right_ankle_roll_joint
+    0.5236,         // right_ankle_pitch_joint
+    0.2618,         // right_ankle_roll_joint
+    2.6704,         // left_shoulder_pitch_joint
+    1.5882,         // left_shoulder_roll_joint
+    2.618,          // left_shoulder_yaw_joint
+    2.0944,         // left_elbow_joint
+    2.6704,         // right_shoulder_pitch_joint
+    1.5882,         // right_shoulder_roll_joint
+    2.618,          // right_shoulder_yaw_joint
+    2.0944          // right_elbow_joint
 };
 
 constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
@@ -64,7 +80,15 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -88, // right_hip_yaw_joint
     -139, // right_knee_joint
     -50, // right_ankle_pitch_joint
-    -50  // right_ankle_roll_joint
+    -50, // right_ankle_roll_joint
+    -25, // left_shoulder_pitch_joint
+    -25, // left_shoulder_roll_joint
+    -25, // left_shoulder_yaw_joint
+    -25, // left_elbow_joint
+    -25, // right_shoulder_pitch_joint
+    -25, // right_shoulder_roll_joint
+    -25, // right_shoulder_yaw_joint
+    -25 // right_elbow_joint
 };
 
 constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
@@ -79,7 +103,15 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     88,  // right_hip_yaw_joint
     139, // right_knee_joint
     50,  // right_ankle_pitch_joint
-    50   // right_ankle_roll_joint
+    50,  // right_ankle_roll_joint
+    25,  // left_shoulder_pitch_joint
+    25,  // left_shoulder_roll_joint
+    25,  // left_shoulder_yaw_joint
+    25,  // left_elbow_joint
+    25,  // right_shoulder_pitch_joint
+    25,  // right_shoulder_roll_joint
+    25,  // right_shoulder_yaw_joint
+    25,  // right_elbow_joint
 };
 
 constexpr double MU = 0.7;

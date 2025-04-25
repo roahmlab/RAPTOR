@@ -4,9 +4,9 @@ namespace RAPTOR {
 namespace Digit {
 
 // constants related to digit-v3
-constexpr int NUM_JOINTS = 36;
+constexpr int NUM_JOINTS = 44;
 constexpr int NUM_DEPENDENT_JOINTS = 24;
-constexpr int NUM_INDEPENDENT_JOINTS = 12;
+constexpr int NUM_INDEPENDENT_JOINTS = 20;
 
 // pulled out from digit-v3.xml
 // This is in degree!!!
@@ -32,6 +32,10 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -10,      // left-B2
     -44,      // left-toe-pitch
     -37,      // left-toe-roll
+    -75,      // left-shoulder-roll
+    -145,     // left-shoulder-pitch
+    -100,     // left-shoulder-yaw
+    -77.5,    // left-elbow
     -60,      // right-hip-roll
     -40,      // right-hip-yaw
     -90,      // right-hip-pitch
@@ -46,7 +50,11 @@ constexpr double JOINT_LIMITS_LOWER[NUM_JOINTS] = {
     -180,     // right-toe-B-rod
     -10,      // right-B2
     -34,      // right-toe-pitch
-    -33       // right-toe-roll
+    -33,      // right-toe-roll
+    -75,      // right-shoulder-roll
+    -145,     // right-shoulder-pitch
+    -100,     // right-shoulder-yaw
+    -77.5     // right-elbow
 };
 
 // pulled out from digit-v3.xml
@@ -73,6 +81,10 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     10,      // left-B2
     34,      // left-toe-pitch
     33,      // left-toe-roll
+    75,      // left-shoulder-roll
+    145,     // left-shoulder-pitch
+    100,     // left-shoulder-yaw
+    77.5,    // left-elbow
     60,      // right-hip-roll
     40,      // right-hip-yaw
     60,      // right-hip-pitch
@@ -87,7 +99,11 @@ constexpr double JOINT_LIMITS_UPPER[NUM_JOINTS] = {
     180,     // right-toe-B-rod
     10,      // right-B2
     44,      // right-toe-pitch
-    37       // right-toe-roll
+    37,      // right-toe-roll
+    75,      // right-shoulder-roll
+    145,     // right-shoulder-pitch
+    100,     // right-shoulder-yaw
+    77.5     // right-elbow
 };
 
 // pulled out from digit-v3.xml
@@ -98,12 +114,20 @@ constexpr double TORQUE_LIMITS_LOWER[NUM_INDEPENDENT_JOINTS] = {
     -231.317,   // left-knee
     -41.9759,   // left-toe-A
     -41.9759,   // left-toe-B
+    -113.000,   // left-shoulder-roll
+    -113.000,   // left-shoulder-pitch
+    -79.1765,   // left-shoulder-yaw
+    -113.000,   // left-elbow
     -126.682,   // right-hip-roll
     -79.1765,   // right-hip-yaw
     -216.928,   // right-hip-pitch
     -231.317,   // right-knee
     -41.9759,   // right-toe-A
     -41.9759,   // right-toe-B
+    -113.000,   // right-shoulder-roll
+    -113.000,   // right-shoulder-pitch
+    -79.1765,   // right-shoulder-yaw
+    -113.000    // right-elbow
 };
 
 // pulled out from digit-v3.xml
@@ -114,12 +138,20 @@ constexpr double TORQUE_LIMITS_UPPER[NUM_INDEPENDENT_JOINTS] = {
     231.317,   // left-knee
     41.9759,   // left-toe-A
     41.9759,   // left-toe-B
+    113.000,   // left-shoulder-roll
+    113.000,   // left-shoulder-pitch
+    79.1765,   // left-shoulder-yaw
+    113.000,   // left-elbow
     126.682,   // right-hip-roll
     79.1765,   // right-hip-yaw
     216.928,   // right-hip-pitch
     231.317,   // right-knee
     41.9759,   // right-toe-A
     41.9759,   // right-toe-B
+    113.000,   // right-shoulder-roll
+    113.000,   // right-shoulder-pitch
+    79.1765,   // right-shoulder-yaw
+    113.000    // right-elbow
 };
 
 // pulled out from digit-v3.xml
