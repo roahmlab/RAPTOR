@@ -862,9 +862,9 @@ void ArmourOptimizer::summarize_constraints(
             if (verbose) {
                 std::cout << "ArmourOptimizer.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds position limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
-                std::cout << "    range: [ " << Utils::deg2rad(JOINT_LIMITS_LOWER[i - offset]) + 
+                std::cout << "    range: [ " << Utils::deg2rad(JOINT_LIMITS_LOWER[(i - offset) % NUM_FACTORS]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qe << ", "
-                                             << Utils::deg2rad(JOINT_LIMITS_UPPER[i - offset]) - 
+                                             << Utils::deg2rad(JOINT_LIMITS_UPPER[(i - offset) % NUM_FACTORS]) - 
                                                 robotInfoPtr_->ultimate_bound_info.qe << " ]\n";
             }
         }
@@ -887,9 +887,9 @@ void ArmourOptimizer::summarize_constraints(
             if (verbose) {
                 std::cout << "ArmourOptimizer.cpp: joint " << (i - offset) % NUM_FACTORS + 1 << " exceeds velocity limit when it reaches minimum!\n";
                 std::cout << "    value: " << g[i] << "\n";
-                std::cout << "    range: [ " << Utils::deg2rad(VELOCITY_LIMITS_LOWER[i - offset]) + 
+                std::cout << "    range: [ " << Utils::deg2rad(VELOCITY_LIMITS_LOWER[(i - offset) % NUM_FACTORS]) + 
                                                 robotInfoPtr_->ultimate_bound_info.qde << ", "
-                                             << Utils::deg2rad(VELOCITY_LIMITS_UPPER[i - offset]) - 
+                                             << Utils::deg2rad(VELOCITY_LIMITS_UPPER[(i - offset) % NUM_FACTORS]) - 
                                                 robotInfoPtr_->ultimate_bound_info.qde << " ]\n";
             }
         }
