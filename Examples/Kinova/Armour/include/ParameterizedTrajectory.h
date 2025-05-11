@@ -11,7 +11,7 @@ namespace RAPTOR {
 namespace Kinova {
 namespace Armour {
 
-constexpr size_t DEFAULT_NUM_TIME_STEPS = 64; // Number of time intervals partitioning the trajectory
+constexpr size_t DEFAULT_NUM_TIME_STEPS = 96; // Number of time intervals partitioning the trajectory
 
 // These values are specifically corresponded with a Bezuer curve parameterization
 constexpr double QDD_DES_K_DEP_MAXIMA = (0.5 - sqrtf(3.0) / 6);

@@ -45,35 +45,35 @@ void PZDynamics::reset_robot_info(const std::shared_ptr<RobotInfo>& robotInfoPtr
     model_sparses[0] = model.cast<PZSparse>();
     data_sparses[0] = pinocchio::DataTpl<PZSparse>(model_sparses[0]);
 
-    // // add model uncertainty here
+    // add model uncertainty here
     model_sparses_interval[0] = model_sparses[0];
-    // size_t initialize_index = (robotInfoPtr_->if_end_effector_info_exist) ? 
-    //     (model_sparses_interval[0].nv - 1) :
-    //     model_sparses_interval[0].nv;
-    // for (size_t i = 0; i < initialize_index; i++) {
-    //     model_sparses_interval[0].inertias[i].mass() += 
-    //         robotInfoPtr_->mass_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].mass();
-    //     for (size_t j = 0; j < 3; j++) {
-    //         model_sparses_interval[0].inertias[i].lever()(j) += 
-    //             robotInfoPtr_->com_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].lever()(j);   
-    //     }
-    //     for (size_t j = 0; j < 6; j++) {
-    //         model_sparses_interval[0].inertias[i].inertia().data()(j) += 
-    //             robotInfoPtr_->inertia_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].inertia().data()(j);
-    //     }
-    // }
+    size_t initialize_index = (robotInfoPtr_->if_end_effector_info_exist) ? 
+        (model_sparses_interval[0].nv - 1) :
+        model_sparses_interval[0].nv;
+    for (size_t i = 0; i < initialize_index; i++) {
+        model_sparses_interval[0].inertias[i].mass() += 
+            robotInfoPtr_->mass_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].mass();
+        for (size_t j = 0; j < 3; j++) {
+            model_sparses_interval[0].inertias[i].lever()(j) += 
+                robotInfoPtr_->com_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].lever()(j);   
+        }
+        for (size_t j = 0; j < 6; j++) {
+            model_sparses_interval[0].inertias[i].inertia().data()(j) += 
+                robotInfoPtr_->inertia_uncertainty(i) * Interval(-1.0, 1.0) * model.inertias[i].inertia().data()(j);
+        }
+    }
     if (robotInfoPtr_->if_end_effector_info_exist) {
         size_t end_effector_index = model_sparses_interval[0].nv;
-        // model_sparses_interval[0].inertias[end_effector_index].mass() = 
-        //     PZSparse(Interval(robotInfoPtr_->end_effector_mass_lb, robotInfoPtr_->end_effector_mass_ub));
-        // for (size_t j = 0; j < 3; j++) {
-        //     model_sparses_interval[0].inertias[end_effector_index].lever()(j) = 
-        //         PZSparse(Interval(robotInfoPtr_->end_effector_com_lb(j), robotInfoPtr_->end_effector_com_ub(j)));
-        // }
-        // for (size_t j = 0; j < 6; j++) {
-        //     model_sparses_interval[0].inertias[end_effector_index].inertia().data()(j) = 
-        //         PZSparse(Interval(robotInfoPtr_->end_effector_inertia_lb(j), robotInfoPtr_->end_effector_inertia_ub(j)));
-        // }
+        model_sparses_interval[0].inertias[end_effector_index].mass() = 
+            PZSparse(Interval(robotInfoPtr_->end_effector_mass_lb, robotInfoPtr_->end_effector_mass_ub));
+        for (size_t j = 0; j < 3; j++) {
+            model_sparses_interval[0].inertias[end_effector_index].lever()(j) = 
+                PZSparse(Interval(robotInfoPtr_->end_effector_com_lb(j), robotInfoPtr_->end_effector_com_ub(j)));
+        }
+        for (size_t j = 0; j < 6; j++) {
+            model_sparses_interval[0].inertias[end_effector_index].inertia().data()(j) = 
+                PZSparse(Interval(robotInfoPtr_->end_effector_inertia_lb(j), robotInfoPtr_->end_effector_inertia_ub(j)));
+        }
 
         phi_interval(10 * (end_effector_index - 1)) = 
             Interval(robotInfoPtr_->end_effector_mass_lb, robotInfoPtr_->end_effector_mass_ub);
@@ -181,21 +181,21 @@ void PZDynamics::compute() {
 
             pinocchio::forwardKinematics(model_sparses[t_ind], data_sparses[t_ind], q);
             pinocchio::updateFramePlacements(model_sparses[t_ind], data_sparses[t_ind]);
-            if (num_joints > num_motors) { // just to compute data.f (forces between bodies)
+            // if (num_joints > num_motors) { // just to compute data.f (forces between bodies)
                 pinocchio::rnea(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
-            }
-            // pinocchio::rnea(model_sparses_interval[t_ind], data_sparses_interval[t_ind], q, qd, qdd);
-            pinocchio::computeJointTorqueRegressor(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
+            // }
+            pinocchio::rnea(model_sparses_interval[t_ind], data_sparses_interval[t_ind], q, qd, qdd);
+            // pinocchio::computeJointTorqueRegressor(model_sparses[t_ind], data_sparses[t_ind], q, qd, qdd);
 
-            for (int i = 0; i < num_joints; i++) {
-                data_sparses[t_ind].tau(i) = 0.0;
-                data_sparses_interval[t_ind].tau(i) = 0.0;
-                for (int j = 0; j < 10 * num_joints; j++) {
-                    data_sparses[t_ind].tau(i) += data_sparses[t_ind].jointTorqueRegressor(i, j) * phi(j);
-                    data_sparses_interval[t_ind].tau(i) += data_sparses[t_ind].jointTorqueRegressor(i, j) * (phi_interval(j) - phi(j));
-                }
-                data_sparses[t_ind].tau(i) += model_sparses[t_ind].armature(i) * qdd(i);
-            }
+            // for (int i = 0; i < num_joints; i++) {
+            //     data_sparses[t_ind].tau(i) = 0.0;
+            //     data_sparses_interval[t_ind].tau(i) = 0.0;
+            //     for (int j = 0; j < 10 * num_joints; j++) {
+            //         data_sparses[t_ind].tau(i) += data_sparses[t_ind].jointTorqueRegressor(i, j) * phi(j);
+            //         data_sparses_interval[t_ind].tau(i) += data_sparses[t_ind].jointTorqueRegressor(i, j) * (phi_interval(j) - phi(j));
+            //     }
+            //     data_sparses[t_ind].tau(i) += model_sparses[t_ind].armature(i) * qdd(i);
+            // }
 
             for (int i = 0; i < robotInfoPtr_->num_spheres; i++) {
                 const std::string sphere_name = "collision-" + std::to_string(i);
@@ -209,7 +209,7 @@ void PZDynamics::compute() {
 
             for (int i = 0; i < num_motors; i++) {
                 // now data_sparses_interval stores the disturbance PZs from model uncertainty
-                // data_sparses_interval[t_ind].tau(i) -= data_sparses[t_ind].tau(i);
+                data_sparses_interval[t_ind].tau(i) -= data_sparses[t_ind].tau(i);
 
                 // add motor damping force to the torque PZ
                 // since there's no model uncertainty in damping, this does not affect the previous step
