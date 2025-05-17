@@ -339,9 +339,9 @@ Transform Transform::operator*=(const Transform& x) {
         p = R * x.p;
     }
     else {
-        p = R * x.p + p;
+        p += R * x.p;
     }
-    R = R * x.R;
+    R *= x.R;
     ifDerivative |= x.ifDerivative;
     return *this;
 }
@@ -359,9 +359,16 @@ Transform Transform::operator*=(const SE3& x) {
 }
 
 Transform operator*(const pinocchio::SE3Tpl<double>& x, const Transform& sRp) {
-    return Transform(x.rotation() * sRp.R, 
-                     x.rotation() * sRp.p + x.translation(), 
-                     sRp.ifDerivative);
+    if (sRp.ifDerivative) {
+        return Transform(x.rotation() * sRp.R, 
+                         x.rotation() * sRp.p, 
+                         sRp.ifDerivative);
+    }
+    else {
+        return Transform(x.rotation() * sRp.R, 
+                         x.rotation() * sRp.p + x.translation(), 
+                         sRp.ifDerivative);
+    }
 }
 
 Transform Transform::inverse() const {

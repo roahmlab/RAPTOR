@@ -716,16 +716,41 @@ void Optimizer::finalize_solution(
 
     if (display_info) {
         // report the time taken for each function
-        printf("  optimizer  :     t_wall      (avg)    n_eval\n");
-        printf("      nlp_f  | %8.2fms (%7.2fus) %8d\n", nlp_f_time / 1000.0, nlp_f_time / nlp_f_count, nlp_f_count);
-        printf("      nlp_g  | %8.2fms (%7.2fus) %8d\n", nlp_g_time / 1000.0, nlp_g_time / nlp_g_count, nlp_g_count);
-        printf(" nlp_grad_f  | %8.2fms (%7.2fus) %8d\n", nlp_grad_f_time / 1000.0, nlp_grad_f_time / nlp_grad_f_count, nlp_grad_f_count);
-        printf("  nlp_jac_g  | %8.2fms (%7.2fus) %8d\n", nlp_jac_g_time / 1000.0, nlp_jac_g_time / nlp_jac_g_count, nlp_jac_g_count);
+        printf("  optimizer  :     t_wall      avg     n_eval\n");
+        if (nlp_f_count > 0) {
+            printf("      nlp_f  | %8.2fms %8.2fus %8d\n", nlp_f_time / 1000.0, nlp_f_time / nlp_f_count, nlp_f_count);
+        }
+        else {
+            printf("      nlp_f  | %8.2fms %8s %8d\n", 0.0, "N/A", 0);
+        }
+        if (nlp_g_count > 0) {
+            printf("      nlp_g  | %8.2fms %8.2fus %8d\n", nlp_g_time / 1000.0, nlp_g_time / nlp_g_count, nlp_g_count);
+        }
+        else {
+            printf("      nlp_g  | %8.2fms %8s %8d\n", 0.0, "N/A", 0);
+        }
+        if (nlp_grad_f_count > 0) {
+            printf(" nlp_grad_f  | %8.2fms %8.2fus %8d\n", nlp_grad_f_time / 1000.0, nlp_grad_f_time / nlp_grad_f_count, nlp_grad_f_count);
+        }
+        else {
+            printf(" nlp_grad_f  | %8.2fms %8s %8d\n", 0.0, "N/A", 0);
+        }
+        if (nlp_jac_g_count > 0) {
+            printf("  nlp_jac_g  | %8.2fms %8.2fus %8d\n", nlp_jac_g_time / 1000.0, nlp_jac_g_time / nlp_jac_g_count, nlp_jac_g_count);
+        }
+        else {
+            printf("  nlp_jac_g  | %8.2fms %8s %8d\n", 0.0, "N/A", 0);
+        }
         if (enable_hessian) {
-            printf("  nlp_hess_l | %8.2fms (%7.2fus) %8d\n", nlp_hess_l_time / 1000.0, nlp_hess_l_time / nlp_hess_l_count, nlp_hess_l_count);
+            if (nlp_hess_l_count > 0) {
+                printf("  nlp_hess_l | %8.2fms %8.2fus %8d\n", nlp_hess_l_time / 1000.0, nlp_hess_l_time / nlp_hess_l_count, nlp_hess_l_count);
+            }
+            else {
+                printf("  nlp_hess_l | %8.2fms %8s %8d\n", 0.0, "N/A", 0);
+            }
         }
         double total_time = nlp_f_time + nlp_g_time + nlp_grad_f_time + nlp_jac_g_time + nlp_hess_l_time;
-        printf("      total  | %8.2fms (%7.2fms) %8d\n", total_time / 1000.0, total_time / 1000.0, 1);
+        printf("      total  | %8.2fms %8.2fms %8d\n", total_time / 1000.0, total_time / 1000.0, 1);
     }
 
     // clear the timing information

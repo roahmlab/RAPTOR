@@ -1,5 +1,6 @@
 git clone https://github.com/ompl/ompl.git
 cd ompl
+git checkout tags/1.7.0
 mkdir build
 cd build
 cmake ..
